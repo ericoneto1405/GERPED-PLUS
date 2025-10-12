@@ -35,14 +35,29 @@ document.addEventListener('DOMContentLoaded', () => {
             return Number.isFinite(valor) ? valor : null;
         }
         if (typeof valor === 'string') {
-            const sanitized = valor
+            let sanitized = valor
                 .trim()
                 .replace(/\s+/g, '')
                 .replace(/^R\$/i, '')
+                .replace(/[Oo]/g, '0')
                 .replace(/\.(?=\d{3}(?:\D|$))/g, '')
                 .replace(',', '.');
-            const parsed = Number(sanitized);
-            return Number.isNaN(parsed) ? null : parsed;
+
+            const parts = sanitized.split('.');
+            if (parts.length > 2) {
+                const decimal = parts.pop();
+                sanitized = parts.join('') + '.' + decimal;
+            }
+
+            const match = sanitized.match(/(\d+)(?:\.(\d+))?/);
+            if (!match) return null;
+
+            let numeric = Number(match[0]);
+            if (Number.isNaN(numeric)) {
+                return null;
+            }
+
+            return Math.round((numeric + Number.EPSILON) * 100) / 100;
         }
         return null;
     };
@@ -163,6 +178,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         
                         if (valorNumerico !== null) {
                             valorInput.value = valorNumerico.toFixed(2);
+                            valorInput.dataset.originalValue = valorNumerico.toFixed(2);
                             console.log('✅ Campo valor preenchido com:', valorInput.value);
                             foundSomething = true;
                         } else {
@@ -321,3 +337,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+    valorInput.addEventListener('blur', () => {
+        const parsed = parseValor(valorInput.value);
+        if (parsed !== null) {
+            valorInput.value = parsed.toFixed(2);
+        }
+    });

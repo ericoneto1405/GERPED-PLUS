@@ -1,0 +1,69 @@
+{
+  "generated_at": "2025-10-12T05:28:55Z",
+  "environment": "local-preview",
+  "deploy": {
+    "script": "scripts/deploy_with_rollback.sh",
+    "status": "ready",
+    "notes": [
+      "Script parametrizado suporta hooks de pré/pós deploy e rollback automático.",
+      "É necessário fornecer artefato .tar.gz e ajustar variáveis (DEPLOY_ROOT, MIGRATION_CMD, etc.).",
+      "Rollback é acionado automaticamente em caso de falha de migração ou pós-deploy."
+    ]
+  },
+  "monitoring": {
+    "agent_script": "scripts/monitoring_agent.py",
+    "status": "ready",
+    "metrics_collected": [
+      "cpu_percent",
+      "ram_percent",
+      "latency_ms"
+    ],
+    "sample_command": "python3 scripts/monitoring_agent.py --target-url http://localhost:5000/healthz --interval 60 --output /var/log/sap/monitoring.jsonl"
+  },
+  "logging": {
+    "stack": "Grafana + Loki + Promtail + Alertmanager",
+    "status": "provisioning_ready",
+    "compose_file": "infrastructure/logging/docker-compose.yml",
+    "alert_channels": [
+      "telegram",
+      "email"
+    ],
+    "notes": [
+      "A stack é opcional via Docker Compose; configure variáveis no arquivo .env antes de subir.",
+      "O Promtail coleta os logs JSON estruturados em instance/logs/*.log."
+    ]
+  },
+  "access_control": {
+    "status": "enforced",
+    "config_flags": {
+      "ROLLOUT_INTERNAL_ONLY_ENABLED": true,
+      "ROLLOUT_ALLOWED_ROLES": [
+        "admin",
+        "financeiro"
+      ],
+      "ROLLOUT_ALLOWED_USERS": [],
+      "ROLLOUT_INTERNAL_DURATION_DAYS": 7
+    },
+    "description": "login_obrigatorio agora bloqueia usuários fora do grupo interno durante o período de go-live e registra tentativas no Log de Atividades."
+  },
+  "rollout": {
+    "internal_phase_days": 7,
+    "auto_release": true,
+    "release_condition": "Acesso público liberado automaticamente após a janela interna expirar.",
+    "activity_audit_module": "rollout"
+  },
+  "metrics_summary": {
+    "cpu_percent_avg": null,
+    "ram_percent_avg": null,
+    "latency_ms_p95": null,
+    "notes": "Coletar amostras reais com o monitoring_agent e atualizar estes campos."
+  },
+  "alert_log": [],
+  "pending_actions": [
+    "Construir pipeline CI para gerar artefatos .tar.gz compatíveis com o script de deploy.",
+    "Instalar dependências opcionais (psutil) no host do monitoring_agent.",
+    "Ajustar alertas e canais reais no Alertmanager (Telegram/E-mail).",
+    "Executar simulação de rollback em ambiente de staging antes do go-live.",
+    "Popular metrics_summary e alert_log após 7 dias de monitoramento estável."
+  ]
+}

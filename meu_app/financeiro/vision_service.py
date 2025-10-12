@@ -19,6 +19,7 @@ class VisionOcrService:
     _client = None
     _storage_client = None
     _initialized = False
+    MAX_VALID_AMOUNT = 1_000_000_000  # Valores acima disso são tratados como falsos positivos
     
     @classmethod
     def _get_client(cls):
@@ -310,7 +311,7 @@ class VisionOcrService:
                     continue
                 try:
                     valor = VisionOcrService._parse_currency_value(valor_bruto)
-                    if valor > 0:
+                    if 0 < valor <= VisionOcrService.MAX_VALID_AMOUNT:
                         numeros.append(valor)
                 except (ValueError, TypeError):
                     continue
@@ -320,7 +321,7 @@ class VisionOcrService:
                 for match in re.findall(inteiro_pattern, fragment_clean):
                     try:
                         valor = float(match.replace('.', '').replace(' ', ''))
-                        if valor > 0:
+                        if 0 < valor <= VisionOcrService.MAX_VALID_AMOUNT:
                             numeros.append(valor)
                     except (ValueError, TypeError):
                         continue
@@ -331,7 +332,7 @@ class VisionOcrService:
                         continue
                     try:
                         valor = float(match)
-                        if valor > 0:
+                        if 0 < valor <= VisionOcrService.MAX_VALID_AMOUNT:
                             numeros.append(valor)
                     except (ValueError, TypeError):
                         continue
@@ -356,7 +357,10 @@ class VisionOcrService:
                 valores_prioritarios.extend(extract_numbers(snippet))
 
         if valores_prioritarios:
-            valores_prioritarios = [v for v in valores_prioritarios if v >= 5.0]
+            valores_prioritarios = [
+                v for v in valores_prioritarios
+                if 5.0 <= v <= VisionOcrService.MAX_VALID_AMOUNT
+            ]
             if valores_prioritarios:
                 return max(valores_prioritarios)
 
@@ -380,7 +384,8 @@ class VisionOcrService:
             for match in matches:
                 try:
                     valor = VisionOcrService._parse_currency_value(match)
-                    high_priority_values.append(valor)
+                    if 0 < valor <= VisionOcrService.MAX_VALID_AMOUNT:
+                        high_priority_values.append(valor)
                 except (ValueError, TypeError):
                     continue
 
@@ -391,12 +396,15 @@ class VisionOcrService:
         for line in lines:
             all_values.extend(extract_numbers(line))
 
-        all_values = [v for v in all_values if v >= 5.0]
+        all_values = [
+            v for v in all_values
+            if 5.0 <= v <= VisionOcrService.MAX_VALID_AMOUNT
+        ]
         if not all_values:
             return None
 
         max_valor = max(all_values)
-        if max_valor > 1_000_000_000:
+        if max_valor > VisionOcrService.MAX_VALID_AMOUNT:
             return None
 
         return max_valor
@@ -446,6 +454,7 @@ class VisionOcrService:
             
             # PIX - Diversos formatos
             r'(?:ID\s+DA\s+TRANSACAO|ID\s+TRANSACAO|IDENTIFICACAO)\s*[:\-]?\s*([a-zA-Z0-9]{8,50})',
+            r'\bID\b\s*[:\-]?\s*([A-Z0-9]{8,50})',
             r'(?:CODIGO\s+DA\s+TRANSACAO|CODIGO\s+TRANSACAO)\s*[:\-]?\s*([a-zA-Z0-9]{8,50})',
             
             # Termos comuns
@@ -460,16 +469,23 @@ class VisionOcrService:
             # Nubank/Inter (UUID-like)
             r'([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})',
         ]
+        explicit_candidates: List[str] = []
         
         for pattern in explicit_patterns:
             matches = re.findall(pattern, text_normalized, re.IGNORECASE)
-            if matches:
-                candidate = matches[0].strip()
-                # Validar que não é data ou valor monetário
-                if not re.match(r'^\d{1,2}[/\-\.]\d{1,2}', candidate):
-                    # Validar tamanho mínimo razoável (8+ chars)
-                    if len(candidate) >= 8:
-                        return candidate
+            for match in matches:
+                candidate = match.strip()
+                if re.match(r'^\d{1,2}[/\-\.]\d{1,2}', candidate):
+                    continue
+                if len(candidate) >= 8:
+                    explicit_candidates.append(candidate)
+        
+        def is_pix_txid(value: str) -> bool:
+            return bool(re.fullmatch(r'[ED][0-9]{25,40}', value))
+        
+        for candidate in explicit_candidates:
+            if is_pix_txid(candidate):
+                return candidate
         
         # Padrão 2: IDs PIX padrão brasileiro (começam com E ou D)
         # Formato: E00000000202510021939023026977590 (32+ caracteres)
@@ -498,6 +514,17 @@ class VisionOcrService:
                     # Não pode ter padrão de data
                     if not re.search(r'\d{2}[/\-\.]\d{2}', candidate):
                         return candidate
+        
+        for candidate in explicit_candidates:
+            if not candidate.isdigit():
+                return candidate
+        
+        for candidate in explicit_candidates:
+            if len(candidate) >= 15:
+                return candidate
+        
+        if explicit_candidates:
+            return explicit_candidates[0]
 
         return None
 

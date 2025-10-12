@@ -133,28 +133,47 @@ def painel():
             Pedido.data <= data_fim
         ).count()
 
-        # Pedidos pagos (baseado em pagamentos efetivamente registrados)
-        pedidos_pagos = db.session.query(Pedido).join(Pagamento, Pedido.id == Pagamento.pedido_id).filter(
+        # Pedidos pagos (completamente pagos - liberados para coleta)
+        pedidos_pagos = Pedido.query.filter(
             Pedido.data >= data_inicio,
-            Pedido.data <= data_fim
-        ).distinct().count()
+            Pedido.data <= data_fim,
+            Pedido.status.in_([
+                StatusPedido.PAGAMENTO_APROVADO,
+                StatusPedido.COLETA_PARCIAL,
+                StatusPedido.COLETA_CONCLUIDA
+            ])
+        ).count()
 
-        # Faturamento total (valor total de vendas de pedidos pagos)
+        # Faturamento total (apenas pedidos completamente pagos)
         faturamento_total = float(
             db.session.query(func.coalesce(func.sum(ItemPedido.valor_total_venda), 0))
             .join(Pedido, ItemPedido.pedido_id == Pedido.id)
-            .join(Pagamento, Pedido.id == Pagamento.pedido_id)
-            .filter(Pedido.data >= data_inicio, Pedido.data <= data_fim)
+            .filter(
+                Pedido.data >= data_inicio,
+                Pedido.data <= data_fim,
+                Pedido.status.in_([
+                    StatusPedido.PAGAMENTO_APROVADO,
+                    StatusPedido.COLETA_PARCIAL,
+                    StatusPedido.COLETA_CONCLUIDA
+                ])
+            )
             .scalar()
             or 0
         )
 
-        # CPV Total (custo dos produtos vendidos de pedidos pagos)
+        # CPV Total (custo dos produtos vendidos de pedidos completamente pagos)
         cpv_total = float(
             db.session.query(func.coalesce(func.sum(ItemPedido.valor_total_compra), 0))
             .join(Pedido, ItemPedido.pedido_id == Pedido.id)
-            .join(Pagamento, Pedido.id == Pagamento.pedido_id)
-            .filter(Pedido.data >= data_inicio, Pedido.data <= data_fim)
+            .filter(
+                Pedido.data >= data_inicio,
+                Pedido.data <= data_fim,
+                Pedido.status.in_([
+                    StatusPedido.PAGAMENTO_APROVADO,
+                    StatusPedido.COLETA_PARCIAL,
+                    StatusPedido.COLETA_CONCLUIDA
+                ])
+            )
             .scalar()
             or 0
         )
@@ -217,7 +236,7 @@ def painel():
             ).order_by(Pedido.data.desc()).limit(5).all()
         )
 
-        # Gráfico de vendas por dia (últimos 30 dias) - apenas pedidos pagos
+        # Gráfico de vendas por dia (últimos 30 dias) - apenas pedidos completamente pagos
         data_30_dias_atras = datetime.now() - timedelta(days=30)
         vendas_por_dia = (
             db.session.query(
@@ -225,8 +244,14 @@ def painel():
                 func.sum(ItemPedido.valor_total_venda).label('total')
             )
             .join(ItemPedido, ItemPedido.pedido_id == Pedido.id)
-            .join(Pagamento, Pedido.id == Pagamento.pedido_id)
-            .filter(Pedido.data >= data_30_dias_atras)
+            .filter(
+                Pedido.data >= data_30_dias_atras,
+                Pedido.status.in_([
+                    StatusPedido.PAGAMENTO_APROVADO,
+                    StatusPedido.COLETA_PARCIAL,
+                    StatusPedido.COLETA_CONCLUIDA
+                ])
+            )
             .group_by(func.date(Pedido.data))
             .order_by(func.date(Pedido.data))
             .all()

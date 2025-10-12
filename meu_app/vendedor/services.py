@@ -114,13 +114,17 @@ class VendedorService:
         pedidos = Pedido.query.filter_by(cliente_id=cliente_id)\
                              .order_by(desc(Pedido.data)).all()
         
-        # Calcular estatísticas
+        # Calcular estatísticas (apenas pedidos completamente pagos)
+        from meu_app.models import StatusPedido
+        
         total_gasto = 0
         for pedido in pedidos:
-            valor_pedido = db.session.query(
-                func.sum(ItemPedido.valor_total_venda)
-            ).filter(ItemPedido.pedido_id == pedido.id).scalar() or 0
-            total_gasto += float(valor_pedido)
+            # Considerar apenas pedidos completamente pagos
+            if pedido.status in [StatusPedido.PAGAMENTO_APROVADO, StatusPedido.COLETA_PARCIAL, StatusPedido.COLETA_CONCLUIDA]:
+                valor_pedido = db.session.query(
+                    func.sum(ItemPedido.valor_total_venda)
+                ).filter(ItemPedido.pedido_id == pedido.id).scalar() or 0
+                total_gasto += float(valor_pedido)
         
         total_pedidos = len(pedidos)
         ticket_medio = total_gasto / total_pedidos if total_pedidos > 0 else 0
@@ -223,12 +227,19 @@ class VendedorService:
                 filtro_data_inicio = datetime.combine(filtro, datetime.min.time())
                 filtro_data_fim = datetime.combine(hoje, datetime.max.time())
         
-        # Query base - buscar clientes com pedidos
+        # Query base - buscar clientes com pedidos completamente pagos
+        from meu_app.models import StatusPedido
+        
         query = db.session.query(
             Cliente.id,
             Cliente.nome,
             func.count(Pedido.id).label('total_pedidos')
-        ).join(Pedido, Cliente.id == Pedido.cliente_id)
+        ).join(Pedido, Cliente.id == Pedido.cliente_id)\
+         .filter(Pedido.status.in_([
+            StatusPedido.PAGAMENTO_APROVADO,
+            StatusPedido.COLETA_PARCIAL,
+            StatusPedido.COLETA_CONCLUIDA
+        ]))
         
         if filtro_data_inicio:
             query = query.filter(Pedido.data >= filtro_data_inicio)
@@ -240,11 +251,18 @@ class VendedorService:
         # Calcular valores totais e custos para cada cliente
         clientes_com_valores = []
         for cliente_data in clientes_data:
-            # Calcular valor total (receita)
+            # Calcular valor total (receita) - apenas pedidos completamente pagos
             valor_total = db.session.query(
                 func.sum(ItemPedido.valor_total_venda)
             ).join(Pedido, ItemPedido.pedido_id == Pedido.id)\
-             .filter(Pedido.cliente_id == cliente_data.id)
+             .filter(
+                Pedido.cliente_id == cliente_data.id,
+                Pedido.status.in_([
+                    StatusPedido.PAGAMENTO_APROVADO,
+                    StatusPedido.COLETA_PARCIAL,
+                    StatusPedido.COLETA_CONCLUIDA
+                ])
+            )
             
             if filtro_data_inicio:
                 valor_total = valor_total.filter(Pedido.data >= filtro_data_inicio)
@@ -253,11 +271,18 @@ class VendedorService:
             
             valor_total = valor_total.scalar() or 0
             
-            # Calcular custo total
+            # Calcular custo total (CPV) - apenas pedidos completamente pagos
             custo_total = db.session.query(
                 func.sum(ItemPedido.valor_total_compra)
             ).join(Pedido, ItemPedido.pedido_id == Pedido.id)\
-             .filter(Pedido.cliente_id == cliente_data.id)
+             .filter(
+                Pedido.cliente_id == cliente_data.id,
+                Pedido.status.in_([
+                    StatusPedido.PAGAMENTO_APROVADO,
+                    StatusPedido.COLETA_PARCIAL,
+                    StatusPedido.COLETA_CONCLUIDA
+                ])
+            )
             
             if filtro_data_inicio:
                 custo_total = custo_total.filter(Pedido.data >= filtro_data_inicio)

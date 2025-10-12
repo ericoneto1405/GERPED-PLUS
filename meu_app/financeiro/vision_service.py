@@ -299,33 +299,42 @@ class VisionOcrService:
         def extract_numbers(fragment: str) -> list[float]:
             numeros = []
             fragment_clean = fragment.replace('O', '0').replace('º', '0').replace('L', '1')
+            has_hint = any(token in fragment_clean for token in ('R$', 'VALOR', 'TOTAL', 'PAGAMENTO', 'PIX'))
 
             decimal_pattern = r'R?\$?\s*(\d+(?:[.,\s]\d{3})*[.,]\d{2})'
-            for match in re.findall(decimal_pattern, fragment_clean):
+            for match in re.finditer(decimal_pattern, fragment_clean):
+                valor_bruto = match.group(1)
+                fim = match.end()
+                prox = fragment_clean[fim:fim + 1]
+                if prox in {'/', '-'} or prox.isdigit():
+                    continue
                 try:
-                    valor = VisionOcrService._parse_currency_value(match)
+                    valor = VisionOcrService._parse_currency_value(valor_bruto)
                     if valor > 0:
                         numeros.append(valor)
                 except (ValueError, TypeError):
                     continue
 
-            inteiro_pattern = r'R?\$?\s*(\d{1,3}(?:[.\s]\d{3})+)(?![,\d])'
-            for match in re.findall(inteiro_pattern, fragment_clean):
-                try:
-                    valor = float(match.replace('.', '').replace(' ', ''))
-                    if valor > 0:
-                        numeros.append(valor)
-                except (ValueError, TypeError):
-                    continue
+            if has_hint:
+                inteiro_pattern = r'R?\$?\s*(\d{1,3}(?:[.\s]\d{3})+)(?![,\d])'
+                for match in re.findall(inteiro_pattern, fragment_clean):
+                    try:
+                        valor = float(match.replace('.', '').replace(' ', ''))
+                        if valor > 0:
+                            numeros.append(valor)
+                    except (ValueError, TypeError):
+                        continue
 
-            plain_pattern = r'R?\$?\s*(\d{5,})'
-            for match in re.findall(plain_pattern, fragment_clean):
-                try:
-                    valor = float(match)
-                    if valor > 0:
-                        numeros.append(valor)
-                except (ValueError, TypeError):
-                    continue
+                plain_pattern = r'R?\$?\s*(\d{4,})'
+                for match in re.findall(plain_pattern, fragment_clean):
+                    if '/' in match or '-' in match:
+                        continue
+                    try:
+                        valor = float(match)
+                        if valor > 0:
+                            numeros.append(valor)
+                    except (ValueError, TypeError):
+                        continue
 
             return numeros
 
@@ -379,38 +388,16 @@ class VisionOcrService:
             return max(high_priority_values)
 
         all_values = []
-        for match in re.findall(r'R?\$?\s*(\d+(?:[.,\s]\d{3})*[.,]\d{2})', text_normalized):
-            try:
-                valor = VisionOcrService._parse_currency_value(match)
-                if valor > 0:
-                    all_values.append(valor)
-            except (ValueError, TypeError):
-                continue
+        for line in lines:
+            all_values.extend(extract_numbers(line))
 
-        for match in re.findall(r'R?\$?\s*(\d{1,3}(?:[.\s]\d{3})+)(?![,\d])', text_normalized):
-            try:
-                valor = float(match.replace('.', '').replace(' ', ''))
-                if valor > 0:
-                    all_values.append(valor)
-            except (ValueError, TypeError):
-                continue
-
-        for match in re.findall(r'R?\$?\s*(\d{5,})', text_normalized):
-            try:
-                valor = float(match)
-                if valor > 0:
-                    all_values.append(valor)
-            except (ValueError, TypeError):
-                continue
-
+        all_values = [v for v in all_values if v >= 5.0]
         if not all_values:
             return None
 
         max_valor = max(all_values)
-        if max_valor >= 5.00:
-            candidatos = [v for v in all_values if v >= 5.00]
-            if candidatos:
-                return max(candidatos)
+        if max_valor > 1_000_000_000:
+            return None
 
         return max_valor
 

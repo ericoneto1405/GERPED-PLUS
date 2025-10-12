@@ -9,7 +9,7 @@ Data: Outubro 2025
 """
 
 import os
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 
 class BaseConfig:
@@ -72,6 +72,38 @@ class BaseConfig:
     # RQ (Redis Queue) - Fase 7
     REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
     RQ_ASYNC_ENABLED = os.getenv('RQ_ASYNC_ENABLED', 'True').lower() == 'true'
+
+    # Go-live / Rollout control
+    ROLLOUT_INTERNAL_ONLY_ENABLED = os.getenv('ROLLOUT_INTERNAL_ONLY_ENABLED', 'True').lower() == 'true'
+    ROLLOUT_ALLOWED_ROLES = [
+        role.strip().lower()
+        for role in os.getenv('ROLLOUT_ALLOWED_ROLES', 'admin,financeiro').split(',')
+        if role.strip()
+    ]
+    ROLLOUT_ALLOWED_USERS = [
+        user.strip().lower()
+        for user in os.getenv('ROLLOUT_ALLOWED_USERS', '').split(',')
+        if user.strip()
+    ]
+    ROLLOUT_INTERNAL_DURATION_DAYS = int(os.getenv('ROLLOUT_INTERNAL_DURATION_DAYS', '7'))
+    _rollout_start_env = os.getenv('ROLLOUT_START_DATE')
+    try:
+        ROLLOUT_START_DATE = datetime.fromisoformat(_rollout_start_env) if _rollout_start_env else None
+    except ValueError:
+        ROLLOUT_START_DATE = None
+    del _rollout_start_env
+    ROLLOUT_CONTROL = {
+        'enabled': ROLLOUT_INTERNAL_ONLY_ENABLED,
+        'allowed_roles': ROLLOUT_ALLOWED_ROLES,
+        'allowed_users': ROLLOUT_ALLOWED_USERS,
+        'internal_days': ROLLOUT_INTERNAL_DURATION_DAYS,
+        'start_at': ROLLOUT_START_DATE,
+        'blocked_message': os.getenv(
+            'ROLLOUT_BLOCKED_MESSAGE',
+            'Ambiente em fase de go-live controlado. Apenas usuários autorizados podem acessar no momento.'
+        ),
+        'alert_channel': os.getenv('ROLLOUT_ALERT_CHANNEL', 'logs'),
+    }
 
 
 class DevelopmentConfig(BaseConfig):

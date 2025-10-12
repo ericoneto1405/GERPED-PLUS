@@ -10,8 +10,105 @@ Data: 2024
 """
 
 from functools import wraps
+from typing import Optional, Tuple, Dict, Any
 from flask import session, redirect, url_for, request, jsonify, current_app
-from datetime import datetime
+from datetime import datetime, timedelta
+
+
+def _register_rollout_event(event_type: str, descricao: str, extras: Optional[Dict[str, Any]] = None):
+    """
+    Registra evento relacionado ao rollout usando o módulo de log de atividades.
+    Importação lazy para evitar dependência circular durante import.
+    """
+    try:
+        from .log_atividades.services import LogAtividadesService  # noqa: WPS433 import inside function
+        service = LogAtividadesService()
+        service.registrar_atividade(
+            tipo_atividade=event_type,
+            titulo="Controle de Go-Live",
+            descricao=descricao,
+            modulo='rollout',
+            dados_extras=extras or {},
+            ip_address=request.remote_addr
+        )
+    except Exception as exc:  # pragma: no cover - logging defensivo
+        current_app.logger.error(f"Falha ao registrar evento de rollout: {exc}")
+
+
+def _rollout_allows_access() -> Tuple[bool, Optional[Tuple[Any, int, Dict[str, str]]]]:
+    """
+    Controla o acesso enquanto o go-live estiver restrito a um grupo interno.
+    Retorna (permitido, (response_body, status_code, headers_dict)).
+    """
+    rollout_cfg = current_app.config.get('ROLLOUT_CONTROL') or {}
+    if not rollout_cfg.get('enabled'):
+        return True, None
+
+    start_at = rollout_cfg.get('start_at')
+    internal_days = rollout_cfg.get('internal_days', 7)
+
+    # Se não houver data configurada, utiliza o primeiro acesso como marco inicial.
+    if start_at is None:
+        start_at = datetime.utcnow()
+        rollout_cfg['start_at'] = start_at
+        _register_rollout_event(
+            'rollout_iniciado',
+            f"Rollout interno iniciado automaticamente em {start_at.isoformat()}",
+        )
+
+    # Desativa controle após janela interna expirar
+    if internal_days is not None and internal_days >= 0:
+        janela_final = start_at + timedelta(days=internal_days)
+        if datetime.utcnow() >= janela_final:
+            rollout_cfg['enabled'] = False
+            current_app.logger.info("Janela de rollout interno expirou; acesso público liberado automaticamente.")
+            _register_rollout_event(
+                'rollout_concluido',
+                'Janela de go-live interno concluída automaticamente; acesso liberado.',
+                {'start_at': start_at.isoformat(), 'internal_days': internal_days}
+            )
+            return True, None
+
+    usuario_nome = (session.get('usuario_nome') or '').lower()
+    usuario_tipo = (session.get('usuario_tipo') or '').lower()
+
+    allowed_roles = {role.lower() for role in rollout_cfg.get('allowed_roles', [])}
+    allowed_users = {user.lower() for user in rollout_cfg.get('allowed_users', [])}
+
+    if usuario_tipo in allowed_roles or usuario_nome in allowed_users:
+        return True, None
+
+    mensagem = rollout_cfg.get(
+        'blocked_message',
+        'Ambiente em go-live controlado. Tente novamente após a liberação oficial.'
+    )
+
+    current_app.logger.warning(
+        "Acesso bloqueado durante rollout: usuário=%s, role=%s, rota=%s",
+        session.get('usuario_nome', 'desconhecido'),
+        session.get('usuario_tipo', 'desconhecido'),
+        request.path,
+    )
+    _register_rollout_event(
+        'rollout_acesso_negado',
+        f"Acesso negado a {session.get('usuario_nome', 'desconhecido')} na rota {request.path}",
+        {
+            'usuario': session.get('usuario_nome'),
+            'tipo': session.get('usuario_tipo'),
+            'endpoint': request.endpoint,
+            'path': request.path,
+        }
+    )
+
+    payload = {
+        'error': True,
+        'message': mensagem,
+        'type': 'RolloutRestrictedAccess',
+        'timestamp': datetime.utcnow().isoformat(),
+    }
+
+    body = jsonify(payload)
+    return False, (body, 403, {'Retry-After': '3600'})
 
 
 def login_obrigatorio(f):
@@ -40,6 +137,11 @@ def login_obrigatorio(f):
             
             # Para requisições normais, redirecionar para login
             return redirect(url_for('main.login'))
+        
+        permitido, resposta = _rollout_allows_access()
+        if not permitido and resposta:
+            body, status, headers = resposta
+            return body, status, headers
         
         return f(*args, **kwargs)
     return decorated_function

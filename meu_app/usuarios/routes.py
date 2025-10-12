@@ -113,7 +113,7 @@ def redefinir_senha_usuario(id):
     
     return redirect(url_for('usuarios.listar_usuarios'))
 
-@usuarios_bp.route('/excluir/<int:id>')
+@usuarios_bp.route('/excluir/<int:id>', methods=['POST'])
 @login_obrigatorio
 @admin_necessario
 def excluir_usuario(id):

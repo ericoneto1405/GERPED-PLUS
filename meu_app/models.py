@@ -290,7 +290,7 @@ class Apuracao(db.Model):
 
 class LogAtividade(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=True)  # Pode ser None para atividades do sistema
+    usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id', ondelete='SET NULL'), nullable=True)  # Pode ser None para atividades do sistema
     usuario = db.relationship('Usuario', backref='atividades')
     
     # Informações da atividade

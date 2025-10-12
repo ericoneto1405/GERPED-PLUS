@@ -95,7 +95,7 @@
                 <td>
                     <div class="action-buttons">
                         <!-- Botão Editar -->
-                        <button onclick="abrirModalEditarUsuario({{ usuario.id }}, '{{ usuario.nome }}', '{{ usuario.tipo }}', {
+                        <button onclick="abrirModalEditarUsuario({{ usuario.id }}, {{ usuario.nome|tojson }}, {{ usuario.tipo|tojson }}, {
                             'acesso_clientes': {{ usuario.acesso_clientes|lower }},
                             'acesso_produtos': {{ usuario.acesso_produtos|lower }},
                             'acesso_pedidos': {{ usuario.acesso_pedidos|lower }},
@@ -104,17 +104,20 @@
                         }})" class="btn btn-primary btn-sm">✏️ Editar</button>
                         
                         <!-- Botão Alterar Senha -->
-                        <button onclick="abrirModalAlterarSenha({{ usuario.id }}, '{{ usuario.nome }}')" class="btn btn-warning btn-sm">🔑 Senha</button>
+                        <button onclick="abrirModalAlterarSenha({{ usuario.id }}, {{ usuario.nome|tojson }})" class="btn btn-warning btn-sm">🔑 Senha</button>
                         
                         <!-- Botão Redefinir Senha (apenas para admins) -->
                         {% if session.usuario_tipo == 'admin' %}
-                        <button onclick="abrirModalRedefinirSenha({{ usuario.id }}, '{{ usuario.nome }}')" class="btn btn-info btn-sm">🔄 Redefinir</button>
+                        <button onclick="abrirModalRedefinirSenha({{ usuario.id }}, {{ usuario.nome|tojson }})" class="btn btn-info btn-sm">🔄 Redefinir</button>
                         {% endif %}
                         
                         <!-- Botão Excluir -->
                         {% if usuario.nome != 'admin' %}
-                            <a href="{{ url_for('usuarios.excluir_usuario', id=usuario.id) }}" class="btn btn-danger btn-sm" 
-                               onclick="return confirm('Tem certeza que deseja excluir este usuário?')">🗑️ Excluir</a>
+                            <form method="POST" action="{{ url_for('usuarios.excluir_usuario', id=usuario.id) }}" style="display:inline;" 
+                                  onsubmit="return confirm('Tem certeza que deseja excluir este usuário?')">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-danger btn-sm">🗑️ Excluir</button>
+                            </form>
                         {% else %}
                             <span class="protected-user">Protegido</span>
                         {% endif %}

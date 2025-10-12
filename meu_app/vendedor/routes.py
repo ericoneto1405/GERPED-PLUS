@@ -109,9 +109,14 @@ def buscar_cliente():
     
     resultados = []
     for cliente in clientes:
-        # Buscar última compra
-        from meu_app.models import Pedido
+        # Buscar última compra (apenas pedidos completamente pagos)
+        from meu_app.models import Pedido, StatusPedido
         ultimo_pedido = Pedido.query.filter_by(cliente_id=cliente.id)\
+                                   .filter(Pedido.status.in_([
+                                        StatusPedido.PAGAMENTO_APROVADO,
+                                        StatusPedido.COLETA_PARCIAL,
+                                        StatusPedido.COLETA_CONCLUIDA
+                                   ]))\
                                    .order_by(Pedido.data.desc()).first()
         
         resultados.append({

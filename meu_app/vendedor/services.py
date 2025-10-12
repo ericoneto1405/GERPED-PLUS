@@ -11,9 +11,10 @@ class VendedorService:
         """
         Organiza clientes em 4 categorias baseadas na data da última compra
         """
+        from meu_app.models import StatusPedido
         hoje = datetime.now().date()
         
-        # Buscar todos os clientes com dados de última compra
+        # Buscar todos os clientes com dados de última compra (apenas pedidos completamente pagos)
         # Primeiro, buscar a data da última compra de cada cliente
         clientes_ultima_compra = db.session.query(
             Cliente.id,
@@ -22,16 +23,26 @@ class VendedorService:
             Cliente.telefone,
             func.max(Pedido.data).label('ultima_compra')
         ).join(Pedido, Cliente.id == Pedido.cliente_id)\
+         .filter(Pedido.status.in_([
+            StatusPedido.PAGAMENTO_APROVADO,
+            StatusPedido.COLETA_PARCIAL,
+            StatusPedido.COLETA_CONCLUIDA
+        ]))\
          .group_by(Cliente.id, Cliente.nome, Cliente.fantasia, Cliente.telefone)\
          .all()
         
         # Para cada cliente, buscar o valor da última compra
         clientes_com_pedidos = []
         for cliente in clientes_ultima_compra:
-            # Buscar o valor total do último pedido
+            # Buscar o valor total do último pedido (apenas pedidos completamente pagos)
             ultimo_pedido = db.session.query(Pedido).filter(
                 Pedido.cliente_id == cliente.id,
-                Pedido.data == cliente.ultima_compra
+                Pedido.data == cliente.ultima_compra,
+                Pedido.status.in_([
+                    StatusPedido.PAGAMENTO_APROVADO,
+                    StatusPedido.COLETA_PARCIAL,
+                    StatusPedido.COLETA_CONCLUIDA
+                ])
             ).first()
             
             if ultimo_pedido:
@@ -110,30 +121,40 @@ class VendedorService:
         """
         cliente = Cliente.query.get_or_404(cliente_id)
         
-        # Buscar pedidos do cliente
-        pedidos = Pedido.query.filter_by(cliente_id=cliente_id)\
-                             .order_by(desc(Pedido.data)).all()
-        
-        # Calcular estatísticas (apenas pedidos completamente pagos)
+        # Buscar apenas pedidos completamente pagos do cliente
         from meu_app.models import StatusPedido
         
+        pedidos = Pedido.query.filter_by(cliente_id=cliente_id)\
+                             .filter(Pedido.status.in_([
+                                StatusPedido.PAGAMENTO_APROVADO,
+                                StatusPedido.COLETA_PARCIAL,
+                                StatusPedido.COLETA_CONCLUIDA
+                             ]))\
+                             .order_by(desc(Pedido.data)).all()
+        
+        # Calcular estatísticas
         total_gasto = 0
         for pedido in pedidos:
-            # Considerar apenas pedidos completamente pagos
-            if pedido.status in [StatusPedido.PAGAMENTO_APROVADO, StatusPedido.COLETA_PARCIAL, StatusPedido.COLETA_CONCLUIDA]:
-                valor_pedido = db.session.query(
-                    func.sum(ItemPedido.valor_total_venda)
-                ).filter(ItemPedido.pedido_id == pedido.id).scalar() or 0
-                total_gasto += float(valor_pedido)
+            valor_pedido = db.session.query(
+                func.sum(ItemPedido.valor_total_venda)
+            ).filter(ItemPedido.pedido_id == pedido.id).scalar() or 0
+            total_gasto += float(valor_pedido)
         
         total_pedidos = len(pedidos)
         ticket_medio = total_gasto / total_pedidos if total_pedidos > 0 else 0
         
-        # Produtos diferentes comprados
+        # Produtos diferentes comprados (apenas em pedidos completamente pagos)
         produtos_diferentes = db.session.query(
             func.count(func.distinct(ItemPedido.produto_id))
         ).join(Pedido, ItemPedido.pedido_id == Pedido.id)\
-         .filter(Pedido.cliente_id == cliente_id).scalar() or 0
+         .filter(
+            Pedido.cliente_id == cliente_id,
+            Pedido.status.in_([
+                StatusPedido.PAGAMENTO_APROVADO,
+                StatusPedido.COLETA_PARCIAL,
+                StatusPedido.COLETA_CONCLUIDA
+            ])
+         ).scalar() or 0
         
         # Primeiro e último pedido
         primeiro_pedido = pedidos[-1] if pedidos else None
@@ -368,16 +389,22 @@ class VendedorService:
         """
         Retorna resumo geral do dashboard
         """
+        from meu_app.models import StatusPedido
         hoje = datetime.now().date()
         
         # Total de clientes
         total_clientes = Cliente.query.count()
         
-        # Clientes com última compra
+        # Clientes com última compra (apenas pedidos completamente pagos)
         clientes_ultima_compra = db.session.query(
             Cliente.id,
             func.max(Pedido.data).label('ultima_compra')
         ).join(Pedido, Cliente.id == Pedido.cliente_id)\
+         .filter(Pedido.status.in_([
+            StatusPedido.PAGAMENTO_APROVADO,
+            StatusPedido.COLETA_PARCIAL,
+            StatusPedido.COLETA_CONCLUIDA
+        ]))\
          .group_by(Cliente.id).all()
         
         # Categorizar por período
@@ -408,9 +435,10 @@ class VendedorService:
         Retorna lista de clientes baseado no período sem comprar
         periodo: 'todos', '7', '15', '30'
         """
+        from meu_app.models import StatusPedido
         hoje = datetime.now().date()
         
-        # Buscar clientes com última compra
+        # Buscar clientes com última compra (apenas pedidos completamente pagos)
         clientes_query = db.session.query(
             Cliente.id,
             Cliente.nome,
@@ -418,6 +446,11 @@ class VendedorService:
             Cliente.telefone,
             func.max(Pedido.data).label('ultima_compra')
         ).join(Pedido, Cliente.id == Pedido.cliente_id)\
+         .filter(Pedido.status.in_([
+            StatusPedido.PAGAMENTO_APROVADO,
+            StatusPedido.COLETA_PARCIAL,
+            StatusPedido.COLETA_CONCLUIDA
+        ]))\
          .group_by(Cliente.id, Cliente.nome, Cliente.fantasia, Cliente.telefone)
         
         if periodo == 'todos':
@@ -444,6 +477,11 @@ class VendedorService:
         resultado = []
         for cliente in clientes:
             ultimo_pedido = Pedido.query.filter_by(cliente_id=cliente.id)\
+                                        .filter(Pedido.status.in_([
+                                            StatusPedido.PAGAMENTO_APROVADO,
+                                            StatusPedido.COLETA_PARCIAL,
+                                            StatusPedido.COLETA_CONCLUIDA
+                                        ]))\
                                         .order_by(Pedido.data.desc()).first()
             
             if ultimo_pedido:
@@ -470,8 +508,9 @@ class VendedorService:
     @staticmethod
     def get_ranking_produtos(limite=10, data_inicio=None, data_fim=None):
         """
-        Retorna ranking de produtos por valor vendido
+        Retorna ranking de produtos por valor vendido (apenas pedidos completamente pagos)
         """
+        from meu_app.models import StatusPedido
         inicio = VendedorService._parse_data_param(data_inicio)
         fim = VendedorService._parse_data_param(data_fim)
         if inicio and fim and inicio > fim:
@@ -485,7 +524,12 @@ class VendedorService:
             func.sum(ItemPedido.valor_total_venda).label('valor_total'),
             func.sum(ItemPedido.quantidade).label('quantidade_total')
         ).join(ItemPedido, Produto.id == ItemPedido.produto_id)\
-         .join(Pedido, ItemPedido.pedido_id == Pedido.id)
+         .join(Pedido, ItemPedido.pedido_id == Pedido.id)\
+         .filter(Pedido.status.in_([
+            StatusPedido.PAGAMENTO_APROVADO,
+            StatusPedido.COLETA_PARCIAL,
+            StatusPedido.COLETA_CONCLUIDA
+        ]))
 
         if inicio_dt:
             ranking_query = ranking_query.filter(Pedido.data >= inicio_dt)
@@ -506,9 +550,15 @@ class VendedorService:
     @staticmethod
     def get_pedidos_cliente(cliente_id):
         """
-        Retorna lista de pedidos de um cliente
+        Retorna lista de pedidos de um cliente (apenas pedidos completamente pagos)
         """
+        from meu_app.models import StatusPedido
         pedidos = Pedido.query.filter_by(cliente_id=cliente_id)\
+                             .filter(Pedido.status.in_([
+                                StatusPedido.PAGAMENTO_APROVADO,
+                                StatusPedido.COLETA_PARCIAL,
+                                StatusPedido.COLETA_CONCLUIDA
+                             ]))\
                              .order_by(desc(Pedido.data)).all()
         
         resultado = []
@@ -529,8 +579,9 @@ class VendedorService:
     @staticmethod
     def get_produtos_cliente(cliente_id):
         """
-        Retorna lista de produtos compilados comprados por um cliente
+        Retorna lista de produtos compilados comprados por um cliente (apenas pedidos completamente pagos)
         """
+        from meu_app.models import StatusPedido
         produtos = db.session.query(
             Produto.nome,
             func.sum(ItemPedido.quantidade).label('quantidade_total'),
@@ -538,7 +589,14 @@ class VendedorService:
             func.max(Pedido.data).label('ultima_compra')
         ).join(ItemPedido, Produto.id == ItemPedido.produto_id)\
          .join(Pedido, ItemPedido.pedido_id == Pedido.id)\
-         .filter(Pedido.cliente_id == cliente_id)\
+         .filter(
+            Pedido.cliente_id == cliente_id,
+            Pedido.status.in_([
+                StatusPedido.PAGAMENTO_APROVADO,
+                StatusPedido.COLETA_PARCIAL,
+                StatusPedido.COLETA_CONCLUIDA
+            ])
+         )\
          .group_by(Produto.nome)\
          .order_by(desc(func.sum(ItemPedido.quantidade)))\
          .all()

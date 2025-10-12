@@ -9,7 +9,6 @@ from typing import Dict
 from .config import FinanceiroConfig
 from .exceptions import OcrProcessingError
 from .vision_service import VisionOcrService
-from .local_ocr import LocalOcrFallback
 from .. import db
 from ..models import OcrQuota
 
@@ -143,11 +142,6 @@ class OcrService:
                     'error': 'OCR remoto desabilitado neste ambiente.',
                     'backend': 'google_vision_disabled'
                 }
-
-            if result.get('error'):
-                fallback_result = LocalOcrFallback.process(file_path)
-                if fallback_result:
-                    result = fallback_result
 
             result['bank_info'] = result.get('bank_info') or {}
             result.setdefault('fallback_used', False)

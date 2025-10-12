@@ -3285,4 +3285,392 @@ html body .login-container .login-card {
     }
 }
 
+/* ========================================
+   RESPONSIVIDADE MOBILE - SMARTPHONES
+   Módulos: Dashboard, Financeiro, Coletas
+   Implementado: 12/10/2025
+   ======================================== */
+
+@media (max-width: 768px) {
+    
+    /* ============ SIDEBAR E LAYOUT GLOBAL ============ */
+    
+    /* Sidebar oculta por padrão em mobile */
+    .sidebar {
+        transform: translateX(-260px);
+        transition: transform 0.3s ease;
+        z-index: 1001;
+    }
+    
+    .sidebar.active {
+        transform: translateX(0);
+    }
+    
+    /* Conteúdo principal ocupa tela toda */
+    .main-content {
+        margin-left: 0 !important;
+        padding: 12px !important;
+    }
+    
+    /* Header compacto */
+    .header-logo {
+        height: 100px !important;
+        max-width: 150px !important;
+    }
+    
+    .page-title {
+        font-size: 0.85rem !important;
+    }
+    
+    .user-info span {
+        display: none; /* Oculta nome do usuário em mobile */
+    }
+    
+    /* Cards globais */
+    .card {
+        padding: 12px !important;
+        margin-bottom: 12px !important;
+    }
+    
+    /* ============ DASHBOARD (painel.html) ============ */
+    
+    /* KPI Grid - 1 coluna em mobile */
+    .kpi-grid {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+    }
+    
+    .kpi-card {
+        padding: 16px !important;
+        font-size: 0.9rem;
+        gap: 12px !important;
+    }
+    
+    .kpi-value {
+        font-size: 1.5rem !important;
+    }
+    
+    .kpi-subtitle {
+        font-size: 0.75rem;
+    }
+    
+    /* Gráficos responsivos */
+    .chart-container {
+        height: 250px !important;
+    }
+    
+    /* Filtros em coluna */
+    .filter-form .d-flex {
+        flex-direction: column !important;
+        gap: 8px !important;
+    }
+    
+    .filter-form .form-group {
+        width: 100% !important;
+        margin-bottom: 8px;
+    }
+    
+    .filter-form select,
+    .filter-form .btn {
+        width: 100% !important;
+    }
+    
+    /* Necessidade de compra - Dashboard */
+    .necessidade-compra-section {
+        padding: 16px !important;
+    }
+    
+    .necessidade-table {
+        font-size: 0.75rem !important;
+    }
+    
+    .necessidade-table th,
+    .necessidade-table td {
+        padding: 6px 4px !important;
+    }
+    
+    .badge-compra,
+    .badge-critico,
+    .badge-zerado,
+    .badge-ok {
+        font-size: 0.7rem !important;
+        padding: 4px 6px !important;
+    }
+    
+    /* Termômetro financeiro */
+    .thermometer-container {
+        padding: 16px !important;
+    }
+    
+    .alert-value {
+        font-size: 1.3rem !important;
+    }
+    
+    /* ============ FINANCEIRO ============ */
+    
+    /* Tabela de comprovantes */
+    .comprovantes-table {
+        font-size: 0.75rem !important;
+    }
+    
+    .comprovantes-table th,
+    .comprovantes-table td {
+        padding: 6px 4px !important;
+    }
+    
+    /* Cards de cliente */
+    .cliente-card {
+        margin-bottom: 16px !important;
+    }
+    
+    .cliente-header {
+        padding: 12px !important;
+    }
+    
+    .cliente-nome {
+        font-size: 1.1rem !important;
+    }
+    
+    /* Valores legíveis */
+    .valor-pagamento {
+        font-size: 0.95rem !important;
+    }
+    
+    .pedido-numero {
+        font-size: 0.9rem !important;
+    }
+    
+    /* Badges menores */
+    .metodo-badge {
+        font-size: 0.65rem !important;
+        padding: 4px 6px !important;
+    }
+    
+    /* ID Transação */
+    .id-transacao {
+        font-size: 0.65rem !important;
+        padding: 3px 5px !important;
+    }
+    
+    /* Botão ver comprovante */
+    .btn-ver-comprovante {
+        font-size: 0.75rem !important;
+        padding: 6px 10px !important;
+    }
+    
+    /* Filtros de período */
+    .financeiro .filter-form,
+    .comprovantes-pagamento .filter-form {
+        margin-bottom: 16px;
+    }
+    
+    /* ============ COLETAS ============ */
+    
+    /* Cards de coleta */
+    .coleta-card {
+        padding: 12px !important;
+        margin-bottom: 12px !important;
+    }
+    
+    .coleta-card h5 {
+        font-size: 1rem !important;
+    }
+    
+    /* Lista de pedidos */
+    .pedido-item {
+        padding: 10px !important;
+        font-size: 0.85rem;
+    }
+    
+    /* Botões de ação em coletas */
+    .btn-processar,
+    .btn-coleta,
+    .btn-finalizar {
+        width: 100% !important;
+        margin-bottom: 8px !important;
+        font-size: 0.9rem;
+        padding: 10px;
+    }
+    
+    /* Status badges coletas */
+    .status-coleta,
+    .status-badge {
+        font-size: 0.7rem !important;
+        padding: 4px 8px !important;
+    }
+    
+    /* Dashboard coletas */
+    .coletas-dashboard .stat-card {
+        padding: 16px !important;
+    }
+    
+    .coletas-dashboard .stat-value {
+        font-size: 1.5rem !important;
+    }
+    
+    /* Detalhes do pedido coletas */
+    .detalhes-pedido-coleta .info-group {
+        margin-bottom: 12px;
+    }
+    
+    .detalhes-pedido-coleta h6 {
+        font-size: 0.9rem;
+    }
+    
+    /* ============ TABELAS (TODOS OS 3 MÓDULOS) ============ */
+    
+    /* Scroll horizontal suave */
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        margin-bottom: 16px;
+    }
+    
+    table {
+        min-width: 600px; /* Força scroll horizontal se necessário */
+    }
+    
+    th {
+        white-space: nowrap;
+        font-size: 0.75rem !important;
+        padding: 8px 6px !important;
+    }
+    
+    td {
+        white-space: nowrap;
+        font-size: 0.8rem !important;
+        padding: 8px 6px !important;
+    }
+    
+    /* ============ FORMULÁRIOS (3 MÓDULOS) ============ */
+    
+    .form-control,
+    .form-select {
+        font-size: 16px !important; /* Previne zoom automático no iOS */
+        padding: 10px !important;
+    }
+    
+    .form-label {
+        font-size: 0.9rem;
+        margin-bottom: 4px;
+    }
+    
+    .form-group {
+        margin-bottom: 12px !important;
+    }
+    
+    /* Botões de formulário */
+    .btn-primary,
+    .btn-secondary,
+    .btn-success,
+    .btn-danger {
+        font-size: 0.9rem;
+        padding: 10px 16px;
+    }
+    
+    /* ============ MODALS ============ */
+    
+    .modal-content {
+        margin: 10px;
+        padding: 16px !important;
+    }
+    
+    .modal-header h5 {
+        font-size: 1.1rem !important;
+    }
+    
+    .modal-body {
+        padding: 12px !important;
+    }
+    
+    /* ============ ALERTAS E NOTIFICAÇÕES ============ */
+    
+    .alert {
+        font-size: 0.85rem;
+        padding: 10px 12px;
+    }
+    
+    .notification-container {
+        top: 70px; /* Abaixo do header mobile */
+        right: 10px;
+        left: 10px;
+    }
+    
+    .notification {
+        font-size: 0.85rem;
+        padding: 12px;
+    }
+}
+
+/* ========================================
+   SMARTPHONES MUITO PEQUENOS (< 400px)
+   ======================================== */
+
+@media (max-width: 400px) {
+    
+    .main-content {
+        padding: 8px !important;
+    }
+    
+    /* Dashboard */
+    .kpi-card {
+        padding: 12px !important;
+    }
+    
+    .kpi-value {
+        font-size: 1.3rem !important;
+    }
+    
+    /* Títulos menores */
+    h1 {
+        font-size: 1.3rem !important;
+    }
+    
+    h2 {
+        font-size: 1.2rem !important;
+    }
+    
+    h3 {
+        font-size: 1.1rem !important;
+    }
+    
+    /* Botões compactos */
+    .btn {
+        font-size: 0.85rem;
+        padding: 8px 12px;
+    }
+    
+    /* Tabelas ainda menores */
+    th, td {
+        font-size: 0.7rem !important;
+        padding: 6px 4px !important;
+    }
+}
+
+/* ========================================
+   OVERLAY PARA SIDEBAR MOBILE
+   ======================================== */
+
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    transition: opacity 0.3s ease;
+}
+
+.sidebar-overlay.active {
+    display: block;
+}
+
+@media (min-width: 769px) {
+    .sidebar-overlay {
+        display: none !important;
+    }
+}
+
 

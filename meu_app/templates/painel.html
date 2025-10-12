@@ -54,46 +54,48 @@
     </div>
     
     {% if necessidade_compra %}
-    <table class="necessidade-table">
-        <thead>
-            <tr>
-                <th>PRODUTO</th>
-                <th>QTD PEDIDOS LIBERADOS</th>
-                <th>QTD ESTOQUE</th>
-                <th>SALDO</th>
-                <th>NECESSIDADE DE COMPRA</th>
-                <th>STATUS</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for item in necessidade_compra %}
-            <tr class="{% if item.status == 'CRÍTICO' %}row-critico{% elif item.status == 'ZERADO' %}row-zerado{% else %}row-ok{% endif %}">
-                <td style="text-align: left; font-weight: 600;">{{ item.produto_nome }}</td>
-                <td>{{ item.quantidade_pedida }}</td>
-                <td>{{ item.quantidade_estoque }}</td>
-                <td class="{% if item.saldo < 0 %}text-danger{% elif item.saldo > 0 %}text-success{% else %}text-warning{% endif %}">
-                    {{ item.saldo }}
-                </td>
-                <td class="necessidade-cell">
-                    {% if item.necessidade_compra > 0 %}
-                        <span class="badge-compra">{{ item.necessidade_compra }} un.</span>
-                    {% else %}
-                        <span style="color: #28a745;">—</span>
-                    {% endif %}
-                </td>
-                <td>
-                    {% if item.status == 'CRÍTICO' %}
-                        <span class="badge-critico">🚨 CRÍTICO</span>
-                    {% elif item.status == 'ZERADO' %}
-                        <span class="badge-zerado">⚠️ ZERADO</span>
-                    {% else %}
-                        <span class="badge-ok">✅ SUFICIENTE</span>
-                    {% endif %}
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="table-responsive">
+        <table class="necessidade-table">
+            <thead>
+                <tr>
+                    <th>PRODUTO</th>
+                    <th>QTD PEDIDOS LIBERADOS</th>
+                    <th>QTD ESTOQUE</th>
+                    <th>SALDO</th>
+                    <th>NECESSIDADE DE COMPRA</th>
+                    <th>STATUS</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in necessidade_compra %}
+                <tr class="{% if item.status == 'CRÍTICO' %}row-critico{% elif item.status == 'ZERADO' %}row-zerado{% else %}row-ok{% endif %}">
+                    <td style="text-align: left; font-weight: 600;">{{ item.produto_nome }}</td>
+                    <td>{{ item.quantidade_pedida }}</td>
+                    <td>{{ item.quantidade_estoque }}</td>
+                    <td class="{% if item.saldo < 0 %}text-danger{% elif item.saldo > 0 %}text-success{% else %}text-warning{% endif %}">
+                        {{ item.saldo }}
+                    </td>
+                    <td class="necessidade-cell">
+                        {% if item.necessidade_compra > 0 %}
+                            <span class="badge-compra">{{ item.necessidade_compra }} un.</span>
+                        {% else %}
+                            <span style="color: #28a745;">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if item.status == 'CRÍTICO' %}
+                            <span class="badge-critico">🚨 CRÍTICO</span>
+                        {% elif item.status == 'ZERADO' %}
+                            <span class="badge-zerado">⚠️ ZERADO</span>
+                        {% else %}
+                            <span class="badge-ok">✅ SUFICIENTE</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
     
     <div class="legenda-necessidade" style="margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
         <strong>Legenda:</strong>

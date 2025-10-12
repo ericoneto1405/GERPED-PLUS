@@ -70,83 +70,85 @@
         </div>
     </div>
 
-    <table class="table">
-        <thead>
-            <tr>
-                <th>ID Pedido</th>
-                <th>Cliente</th>
-                <th>Data do Pedido</th>
-                <th>Status</th>
-                <th>Total Pedido</th>
-                <th>Total Pago</th>
-                <th>Saldo</th>
-                <th>Ações</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for item in pedidos %}
-            {% set pedido = item.pedido %}
-            {% set total = item.total_pedido %}
-            {% set pago = item.total_pago %}
-            <tr class="align-middle">
-                <td>#{{ pedido.id }}</td>
-                <td>{{ pedido.cliente.nome }}</td>
-                <td>{{ pedido.data.strftime('%d/%m/%Y %H:%M') }}</td>
-                <td>
-                    {% if item.status == 'Pago' %}
-                        <span class="badge bg-success">✅ Pago</span>
-                    {% elif item.status == 'Parcial' %}
-                        <span class="badge bg-warning">⚠️ Parcial</span>
-                    {% elif item.status == 'Pendente' %}
-                        <span class="badge bg-danger">❌ Pendente</span>
-                    {% else %}
-                        <span class="badge bg-secondary">📄 {{ item.status }}</span>
-                    {% endif %}
-                </td>
-                <td>R$ {{ '%.2f' % total }}</td>
-                <td>R$ {{ '%.2f' % pago }}</td>
-                <td>R$ {{ '%.2f' % (total - pago if total - pago > 0 else 0) }}</td>
-                <td>
-                    <a href="{{ url_for('pedidos.visualizar_pedido', id=pedido.id, origem='financeiro') }}" class="btn btn-sm btn-warning" target="_blank" title="Visualizar Pedido">👁️</a>
-                    <button class="btn btn-sm btn-info" type="button" data-bs-toggle="collapse" data-bs-target="#details-{{ pedido.id }}" aria-expanded="false" aria-controls="details-{{ pedido.id }}" title="Detalhes dos Pagamentos">📜</button>
-                    {% if item.status == 'Pendente' or item.status == 'Parcial' %}
-                        <a href="{{ url_for('financeiro.registrar_pagamento', pedido_id=pedido.id) }}" class="btn btn-sm btn-success" title="Registrar Pagamento">💳</a>
-                    {% endif %}
-                </td>
-            </tr>
-            <tr class="collapse" id="details-{{ pedido.id }}">
-                <td colspan="8">
-                    <div class="p-3 bg-light">
-                        <h5>Histórico de Pagamentos do Pedido #{{ pedido.id }}</h5>
-                        {% if pedido.pagamentos %}
-                            <ul>
-                                {% for pagamento in pedido.pagamentos %}
-                                    <li>
-                                        {{ pagamento.data_pagamento.strftime('%d/%m/%Y %H:%M') }} - 
-                                        <strong>R$ {{ '%.2f' % pagamento.valor }}</strong> - 
-                                        <em>{{ pagamento.metodo_pagamento }}</em>
-                                        {% if pagamento.caminho_recibo %}
-                                            <a href="{{ url_for('financeiro.ver_recibo', filename=pagamento.caminho_recibo) }}" class="btn btn-sm btn-outline-primary ms-2" target="_blank">Ver Comprovante</a>
-                                        {% endif %}
-                                        {% if pagamento.id_transacao %}
-                                            <span class="badge bg-dark ms-2">ID: {{ pagamento.id_transacao }}</span>
-                                        {% endif %}
-                                    </li>
-                                {% endfor %}
-                            </ul>
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>ID Pedido</th>
+                    <th>Cliente</th>
+                    <th>Data do Pedido</th>
+                    <th>Status</th>
+                    <th>Total Pedido</th>
+                    <th>Total Pago</th>
+                    <th>Saldo</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in pedidos %}
+                {% set pedido = item.pedido %}
+                {% set total = item.total_pedido %}
+                {% set pago = item.total_pago %}
+                <tr class="align-middle">
+                    <td>#{{ pedido.id }}</td>
+                    <td>{{ pedido.cliente.nome }}</td>
+                    <td>{{ pedido.data.strftime('%d/%m/%Y %H:%M') }}</td>
+                    <td>
+                        {% if item.status == 'Pago' %}
+                            <span class="badge bg-success">✅ Pago</span>
+                        {% elif item.status == 'Parcial' %}
+                            <span class="badge bg-warning">⚠️ Parcial</span>
+                        {% elif item.status == 'Pendente' %}
+                            <span class="badge bg-danger">❌ Pendente</span>
                         {% else %}
-                            <p>Nenhum pagamento registrado para este pedido.</p>
+                            <span class="badge bg-secondary">📄 {{ item.status }}</span>
                         {% endif %}
-                    </div>
-                </td>
-            </tr>
-            {% else %}
-            <tr>
-                <td colspan="8" class="text-center">Nenhum pedido encontrado.</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+                    </td>
+                    <td>R$ {{ '%.2f' % total }}</td>
+                    <td>R$ {{ '%.2f' % pago }}</td>
+                    <td>R$ {{ '%.2f' % (total - pago if total - pago > 0 else 0) }}</td>
+                    <td>
+                        <a href="{{ url_for('pedidos.visualizar_pedido', id=pedido.id, origem='financeiro') }}" class="btn btn-sm btn-warning" target="_blank" title="Visualizar Pedido">👁️</a>
+                        <button class="btn btn-sm btn-info" type="button" data-bs-toggle="collapse" data-bs-target="#details-{{ pedido.id }}" aria-expanded="false" aria-controls="details-{{ pedido.id }}" title="Detalhes dos Pagamentos">📜</button>
+                        {% if item.status == 'Pendente' or item.status == 'Parcial' %}
+                            <a href="{{ url_for('financeiro.registrar_pagamento', pedido_id=pedido.id) }}" class="btn btn-sm btn-success" title="Registrar Pagamento">💳</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr class="collapse" id="details-{{ pedido.id }}">
+                    <td colspan="8">
+                        <div class="p-3 bg-light">
+                            <h5>Histórico de Pagamentos do Pedido #{{ pedido.id }}</h5>
+                            {% if pedido.pagamentos %}
+                                <ul>
+                                    {% for pagamento in pedido.pagamentos %}
+                                        <li>
+                                            {{ pagamento.data_pagamento.strftime('%d/%m/%Y %H:%M') }} - 
+                                            <strong>R$ {{ '%.2f' % pagamento.valor }}</strong> - 
+                                            <em>{{ pagamento.metodo_pagamento }}</em>
+                                            {% if pagamento.caminho_recibo %}
+                                                <a href="{{ url_for('financeiro.ver_recibo', filename=pagamento.caminho_recibo) }}" class="btn btn-sm btn-outline-primary ms-2" target="_blank">Ver Comprovante</a>
+                                            {% endif %}
+                                            {% if pagamento.id_transacao %}
+                                                <span class="badge bg-dark ms-2">ID: {{ pagamento.id_transacao }}</span>
+                                            {% endif %}
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <p>Nenhum pagamento registrado para este pedido.</p>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8" class="text-center">Nenhum pedido encontrado.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 
 <style>

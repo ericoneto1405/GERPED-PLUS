@@ -32,22 +32,24 @@
                             {% if coleta.observacoes %}
                             <p><strong>Observações:</strong> {{ coleta.observacoes }}</p>
                             {% endif %}
-                            <table class="table table-sm table-bordered">
-                                <thead class="table-dark">
-                                    <tr>
-                                        <th>Produto</th>
-                                        <th>Quantidade Coletada</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for item in coleta.itens_coletados %}
-                                    <tr>
-                                        <td>{{ item.item_pedido.produto.nome }}</td>
-                                        <td>{{ item.quantidade_coletada }}</td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>Produto</th>
+                                            <th>Quantidade Coletada</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for item in coleta.itens_coletados %}
+                                        <tr>
+                                            <td>{{ item.item_pedido.produto.nome }}</td>
+                                            <td>{{ item.quantidade_coletada }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                     {% endfor %}

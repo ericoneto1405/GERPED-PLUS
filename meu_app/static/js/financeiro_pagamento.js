@@ -238,10 +238,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         chavePixRecebedorInput.value = data.chave_pix_recebedor;
                     }
                     
-                    // Limpar o campo de arquivo após processar OCR para evitar re-envio
-                    // Isso previne erro de duplicação quando o usuário confirmar o pagamento
-                    console.log('🗑️ Limpando campo de arquivo após OCR processado');
-                    reciboInput.value = '';
+                    // Manter o arquivo selecionado para que seja enviado junto com o formulário
+                    console.log('📌 Mantendo arquivo selecionado para enviar com o pagamento');
                     
                     // NOVO: Validação do recebedor (MAIS VISÍVEL E PROFISSIONAL)
                     if (data.validacao_recebedor) {

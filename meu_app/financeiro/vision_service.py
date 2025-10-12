@@ -419,6 +419,10 @@ class VisionOcrService:
         """Converte string de valor monetário para float"""
         value_str = value_str.replace(' ', '')
         value_str = value_str.replace('O', '0').replace('o', '0')
+        value_str = re.sub(r'(?<=\d)[,\.](?=\d{3}(?:\D|$))', '', value_str)
+
+        if re.fullmatch(r'\d{5,}', value_str):
+            return float(value_str)
         if '.' in value_str and ',' in value_str:
             if value_str.rfind('.') > value_str.rfind(','):
                 # Formato americano: 1,234.56

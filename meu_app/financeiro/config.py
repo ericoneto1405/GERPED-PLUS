@@ -23,6 +23,7 @@ class FinanceiroConfig:
     # Configurações de quota OCR
     OCR_ENFORCE_LIMIT = True
     OCR_MONTHLY_LIMIT = 1000
+    USE_LOCAL_OCR_ONLY = os.getenv('FINANCEIRO_OCR_LOCAL_ONLY', 'False').lower() == 'true'
     
     # Configurações Google Vision
     GOOGLE_VISION_CREDENTIALS_PATH = '/Users/ericobrandao/keys/gvision-credentials.json'
@@ -98,6 +99,14 @@ class FinanceiroConfig:
     def get_ocr_monthly_limit(cls) -> int:
         """Retorna o limite mensal de OCR"""
         return cls.OCR_MONTHLY_LIMIT
+    
+    @classmethod
+    def use_local_ocr_only(cls) -> bool:
+        """Retorna se o OCR remoto deve ser ignorado e apenas fallback local usado"""
+        env_value = os.getenv('FINANCEIRO_OCR_LOCAL_ONLY')
+        if env_value is not None:
+            return env_value.lower() == 'true'
+        return cls.USE_LOCAL_OCR_ONLY
     
     @classmethod
     def get_ocr_operation_timeout(cls) -> int:

@@ -243,11 +243,24 @@ def processar_recibo_ocr():
                 'nome_recebedor': ocr_results.get('bank_info', {}).get('nome_recebedor'),
                 'cnpj_recebedor': ocr_results.get('bank_info', {}).get('cnpj_recebedor'),
                 'validacao_recebedor': ocr_results.get('validacao_recebedor'),  # NOVO
+                'ocr_backend': ocr_results.get('backend', 'google_vision'),
+                'fallback_used': ocr_results.get('fallback_used', False),
                 'ocr_status': 'success'  # Indicar que OCR funcionou
             }
 
-            # Se OCR retornou erro, marcar como falha mas não bloquear
-            if ocr_results.get('error'):
+            # Ajustar mensagem/status conforme backend
+            if ocr_results.get('fallback_used'):
+                response_data['ocr_status'] = 'fallback'
+                response_data['ocr_message'] = 'Dados extraídos automaticamente (modo offline)'
+                fallback_found = any([
+                    response_data.get('valor_encontrado'),
+                    response_data.get('id_transacao_encontrado'),
+                    response_data.get('data_encontrada'),
+                    response_data.get('banco_emitente'),
+                ])
+                if not fallback_found:
+                    response_data['ocr_message'] = 'Modo offline não encontrou dados úteis. Digite manualmente.'
+            elif ocr_results.get('error'):
                 response_data['ocr_status'] = 'failed'
                 response_data['ocr_error'] = ocr_results.get('error')
                 response_data['ocr_message'] = 'OCR indisponível - digite os dados manualmente'

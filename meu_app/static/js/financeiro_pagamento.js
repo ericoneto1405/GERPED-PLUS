@@ -160,16 +160,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     const ocrStatusText = data.ocr_status || 'unknown';
                     const ocrMessage = data.ocr_message || '';
+                    const treatedAsSuccess = ['success', 'fallback'];
+                    const isSuccessState = treatedAsSuccess.includes(ocrStatusText);
 
                     const statusDiv = document.createElement('div');
                     statusDiv.style.marginBottom = '10px';
                     statusDiv.style.fontWeight = 'bold';
-                    statusDiv.textContent =
-                        ocrStatusText === 'success'
-                            ? `🤖 ${ocrMessage}`
-                            : `⚠️ ${ocrMessage}`;
-                    statusDiv.style.color = ocrStatusText === 'success' ? 'green' : 'orange';
+                    if (isSuccessState) {
+                        const icon = ocrStatusText === 'fallback' ? '🛠️' : '🤖';
+                        statusDiv.textContent = `${icon} ${ocrMessage}`;
+                    } else {
+                        statusDiv.textContent = `⚠️ ${ocrMessage}`;
+                    }
+                    statusDiv.style.color = isSuccessState ? (ocrStatusText === 'fallback' ? '#1f618d' : 'green') : 'orange';
                     ocrStatus.appendChild(statusDiv);
+
+                    if (ocrStatusText === 'fallback') {
+                        const fallbackInfo = document.createElement('div');
+                        fallbackInfo.style.marginTop = '6px';
+                        fallbackInfo.style.fontSize = '0.9em';
+                        fallbackInfo.style.color = '#1f618d';
+                        fallbackInfo.textContent = 'Modo offline ativado: confira os valores manualmente.';
+                        ocrStatus.appendChild(fallbackInfo);
+                    }
 
                     if (data.valor_encontrado !== undefined && data.valor_encontrado !== null) {
                         console.log('💰 Valor encontrado pelo OCR:', data.valor_encontrado);
@@ -311,7 +324,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         manualDiv.style.marginTop = '10px';
                         manualDiv.style.fontStyle = 'italic';
                         ocrStatus.appendChild(manualDiv);
-                    } else if (!foundSomething && ocrStatusText === 'success') {
+                    } else if (!foundSomething && treatedAsSuccess.includes(ocrStatusText)) {
                         const noDataDiv = document.createElement('div');
                         noDataDiv.textContent =
                             '⚠️ Nenhum dado encontrado no recibo. Digite manualmente.';

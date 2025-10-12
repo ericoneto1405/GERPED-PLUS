@@ -769,7 +769,8 @@ class VisionOcrService:
                 'transaction_id': transaction_id,
                 'date': date,
                 'bank_info': bank_info,
-                'validacao_recebedor': validacao_recebedor  # NOVO campo
+                'validacao_recebedor': validacao_recebedor,  # NOVO campo
+                'backend': 'google_vision'
             }
             
         except OcrProcessingError as e:
@@ -778,7 +779,8 @@ class VisionOcrService:
                 'transaction_id': None,
                 'date': None,
                 'bank_info': {},
-                'error': str(e)
+                'error': str(e),
+                'backend': 'google_vision'
             }
         except Exception as e:
             return {
@@ -786,5 +788,6 @@ class VisionOcrService:
                 'transaction_id': None,
                 'date': None,
                 'bank_info': {},
-                'error': f'Erro inesperado no Google Vision: {str(e)}'
+                'error': f'Erro inesperado no Google Vision: {str(e)}',
+                'backend': 'google_vision'
             }

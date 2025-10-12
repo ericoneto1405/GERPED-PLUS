@@ -9,6 +9,7 @@ from typing import Dict
 from .config import FinanceiroConfig
 from .exceptions import OcrProcessingError
 from .vision_service import VisionOcrService
+from .local_ocr import LocalOcrFallback
 from .. import db
 from ..models import OcrQuota
 
@@ -116,21 +117,44 @@ class OcrService:
                 except Exception:
                     pass
 
-            # Verificar quota antes de processar (só conta em cache miss)
-            if not cls._check_quota():
-                return {
-                    'amount': None, 
+            use_local_only = FinanceiroConfig.use_local_ocr_only()
+
+            result = {}
+            if not use_local_only:
+                # Verificar quota antes de processar (só conta em cache miss)
+                if not cls._check_quota():
+                    return {
+                        'amount': None,
+                        'transaction_id': None,
+                        'date': None,
+                        'bank_info': {},
+                        'error': f'Limite mensal de OCR atingido ({FinanceiroConfig.get_ocr_monthly_limit()} chamadas). Tente novamente no próximo mês.',
+                        'backend': 'google_vision'
+                    }
+
+                # Usar APENAS Google Vision
+                result = VisionOcrService.process_receipt(file_path)
+            else:
+                result = {
+                    'amount': None,
                     'transaction_id': None,
                     'date': None,
                     'bank_info': {},
-                    'error': f'Limite mensal de OCR atingido ({FinanceiroConfig.get_ocr_monthly_limit()} chamadas). Tente novamente no próximo mês.'
+                    'error': 'OCR remoto desabilitado neste ambiente.',
+                    'backend': 'google_vision_disabled'
                 }
 
-            # Usar APENAS Google Vision
-            result = VisionOcrService.process_receipt(file_path)
+            if result.get('error'):
+                fallback_result = LocalOcrFallback.process(file_path)
+                if fallback_result:
+                    result = fallback_result
+
+            result['bank_info'] = result.get('bank_info') or {}
+            result.setdefault('fallback_used', False)
+            result.setdefault('backend', 'google_vision')
 
             # Gravar cache
-            if FinanceiroConfig.OCR_CACHE_ENABLED and sha256 and cache_path:
+            if FinanceiroConfig.OCR_CACHE_ENABLED and sha256 and cache_path and not result.get('error'):
                 try:
                     with open(cache_path, 'w', encoding='utf-8') as cf:
                         json.dump(result, cf, ensure_ascii=False)
@@ -138,7 +162,8 @@ class OcrService:
                     pass
 
             # Incrementar quota após processamento bem-sucedido
-            cls._increment_quota()
+            if not result.get('error') and result.get('fallback_used') is not True and not use_local_only:
+                cls._increment_quota()
 
             return result
             

@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, jsonify, session, current_app, send_from_directory, Response
 from . import db
-from .models import Cliente, Produto, Pedido, ItemPedido, Pagamento, Coleta, Usuario, Apuracao
+from .models import Cliente, Produto, Pedido, ItemPedido, Pagamento, Coleta, Usuario, Apuracao, StatusPedido
 import os
 from datetime import datetime, timedelta
 from sqlalchemy import func

@@ -336,10 +336,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
         });
     }
+    if (valorInput) {
+        valorInput.addEventListener('blur', () => {
+            const parsed = parseValor(valorInput.value);
+            if (parsed !== null) {
+                valorInput.value = parsed.toFixed(2);
+            }
+        });
+    }
 });
-    valorInput.addEventListener('blur', () => {
-        const parsed = parseValor(valorInput.value);
-        if (parsed !== null) {
-            valorInput.value = parsed.toFixed(2);
-        }
-    });

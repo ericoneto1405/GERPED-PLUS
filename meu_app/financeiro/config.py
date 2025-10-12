@@ -26,7 +26,10 @@ class FinanceiroConfig:
     USE_LOCAL_OCR_ONLY = os.getenv('FINANCEIRO_OCR_LOCAL_ONLY', 'False').lower() == 'true'
     
     # Configurações Google Vision
-    GOOGLE_VISION_CREDENTIALS_PATH = '/Users/ericobrandao/keys/gvision-credentials.json'
+    GOOGLE_VISION_CREDENTIALS_PATH = os.getenv(
+        'GOOGLE_VISION_CREDENTIALS_PATH',
+        '/Users/ericobrandao/keys/gvision-credentials.json'
+    )
     GOOGLE_VISION_DETECTION_TYPE = 'TEXT_DETECTION'  # ou 'DOCUMENT_TEXT_DETECTION'
     GOOGLE_VISION_INPUT_BUCKET = 'sap-ocr-input'
     GOOGLE_VISION_INPUT_PREFIX = 'financeiro/ocr/input'
@@ -138,7 +141,21 @@ class FinanceiroConfig:
         """Retorna o modo de detecção a usar para imagens"""
         value = os.getenv('GOOGLE_VISION_DETECTION_TYPE', cls.GOOGLE_VISION_DETECTION_TYPE)
         return value.upper() if value else 'TEXT_DETECTION'
-    
+
+    @classmethod
+    def get_google_api_key(cls) -> str | None:
+        """
+        Retorna a API key configurada via variável de ambiente.
+        Mantemos separada das credenciais de serviço para permitir setups simples
+        sem exigir que a chave seja versionada.
+        """
+        return os.getenv('GOOGLE_VISION_API_KEY') or os.getenv('GOOGLE_API_KEY')
+
+    @classmethod
+    def get_google_credentials_path(cls) -> str | None:
+        """Retorna caminho das credenciais de serviço, se configurado."""
+        return os.getenv('GOOGLE_APPLICATION_CREDENTIALS', cls.GOOGLE_VISION_CREDENTIALS_PATH)
+
     @classmethod
     def get_gcs_input_bucket(cls) -> str:
         """Bucket de entrada para PDFs"""

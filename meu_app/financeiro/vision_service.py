@@ -30,15 +30,25 @@ class VisionOcrService:
         """
         if cls._client is None:
             try:
-                credentials_path = FinanceiroConfig.GOOGLE_VISION_CREDENTIALS_PATH
-                if not credentials_path or not os.path.exists(credentials_path):
-                    raise OcrProcessingError("Credenciais do Google Vision não configuradas ou arquivo não encontrado")
-                
-                if not os.environ.get('GOOGLE_APPLICATION_CREDENTIALS'):
-                    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = credentials_path
-                
+                api_key = FinanceiroConfig.get_google_api_key()
+                credentials_path = FinanceiroConfig.get_google_credentials_path()
+
+                client_kwargs = {}
+
+                if api_key:
+                    # API Key habilitada: ideal para imagens; PDFs continuarão exigindo credenciais.
+                    client_kwargs["client_options"] = {"api_key": api_key}
+                elif credentials_path and os.path.exists(credentials_path):
+                    if not os.environ.get('GOOGLE_APPLICATION_CREDENTIALS'):
+                        os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = credentials_path
+                else:
+                    raise OcrProcessingError(
+                        "Credenciais do Google Vision não configuradas. "
+                        "Defina GOOGLE_VISION_API_KEY ou GOOGLE_VISION_CREDENTIALS_PATH."
+                    )
+
                 print("Inicializando cliente Google Vision...")
-                cls._client = vision.ImageAnnotatorClient()
+                cls._client = vision.ImageAnnotatorClient(**client_kwargs)
                 cls._initialized = True
                 print("Cliente Google Vision pronto.")
                 
@@ -53,13 +63,16 @@ class VisionOcrService:
         """Obtém cliente do Google Cloud Storage"""
         if cls._storage_client is None:
             try:
-                credentials_path = FinanceiroConfig.GOOGLE_VISION_CREDENTIALS_PATH
+                credentials_path = FinanceiroConfig.get_google_credentials_path()
                 if not credentials_path or not os.path.exists(credentials_path):
-                    raise OcrProcessingError("Credenciais do Google Vision não configuradas ou arquivo não encontrado")
-                
+                    raise OcrProcessingError(
+                        "Processamento de PDF requer credenciais de serviço válidas "
+                        "(GOOGLE_VISION_CREDENTIALS_PATH)."
+                    )
+
                 if not os.environ.get('GOOGLE_APPLICATION_CREDENTIALS'):
                     os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = credentials_path
-                
+
                 cls._storage_client = storage.Client()
             except Exception as e:
                 print(f"Erro ao inicializar Storage: {e}")

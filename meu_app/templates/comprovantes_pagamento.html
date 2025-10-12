@@ -67,41 +67,82 @@
 
     {% if clientes %}
         {% for cliente_data in clientes %}
-        <div class="card mb-4">
-            <div class="card-header">
-                <h4 class="mb-0">
-                    👤 {{ cliente_data.cliente.nome }}
-                    <span class="badge bg-primary ms-2">{{ cliente_data.comprovantes|length }} comprovante(s)</span>
-                </h4>
+        <div class="card mb-4 cliente-card">
+            <div class="card-header cliente-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0 cliente-nome">
+                        👤 {{ cliente_data.cliente.nome }}
+                    </h4>
+                    <span class="badge bg-light text-dark fs-6">{{ cliente_data.comprovantes|length }} comprovante(s)</span>
+                </div>
             </div>
-            <div class="card-body">
-                <div class="row">
-                    {% for comprovante in cliente_data.comprovantes %}
-                    <div class="col-md-6 col-lg-4 mb-3">
-                        <div class="card h-100">
-                            <div class="card-body">
-                                <h6 class="card-title">
-                                    💳 Pagamento - Pedido #{{ comprovante.pedido_id }}
-                                </h6>
-                                <p class="card-text">
-                                    <strong>Data:</strong> {{ comprovante.data_pagamento.strftime('%d/%m/%Y %H:%M') }}<br>
-                                    <strong>Valor:</strong> R$ {{ '%.2f' % comprovante.valor }}<br>
-                                    <strong>Método:</strong> {{ comprovante.metodo_pagamento }}<br>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0 comprovantes-table">
+                        <thead>
+                            <tr>
+                                <th width="12%">Pedido</th>
+                                <th width="18%">Data</th>
+                                <th width="18%">Valor</th>
+                                <th width="15%">Método</th>
+                                <th width="25%">ID Transação</th>
+                                <th width="12%" class="text-center">Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for comprovante in cliente_data.comprovantes %}
+                            <tr class="comprovante-row">
+                                <td>
+                                    <strong class="pedido-numero">#{{ comprovante.pedido_id }}</strong>
+                                </td>
+                                <td>
+                                    <span class="data-pagamento">
+                                        {{ comprovante.data_pagamento.strftime('%d/%m/%Y') }}
+                                    </span>
+                                    <br>
+                                    <small class="text-muted hora-pagamento">{{ comprovante.data_pagamento.strftime('%H:%M') }}</small>
+                                </td>
+                                <td>
+                                    <span class="valor-pagamento">R$ {{ '%.2f' % comprovante.valor }}</span>
+                                </td>
+                                <td>
+                                    <span class="badge metodo-badge 
+                                        {% if 'pix' in comprovante.metodo_pagamento|lower %}bg-success
+                                        {% elif 'dinheiro' in comprovante.metodo_pagamento|lower %}bg-info
+                                        {% elif 'cartão' in comprovante.metodo_pagamento|lower or 'cartao' in comprovante.metodo_pagamento|lower %}bg-warning text-dark
+                                        {% else %}bg-secondary
+                                        {% endif %}">
+                                        {{ comprovante.metodo_pagamento }}
+                                    </span>
+                                </td>
+                                <td>
                                     {% if comprovante.id_transacao %}
-                                        <strong>ID Transação:</strong> <code>{{ comprovante.id_transacao }}</code><br>
+                                        <code class="id-transacao">{{ comprovante.id_transacao }}</code>
+                                    {% else %}
+                                        <span class="text-muted">—</span>
                                     {% endif %}
-                                    {% if comprovante.observacoes %}
-                                        <strong>Observações:</strong> {{ comprovante.observacoes }}<br>
-                                    {% endif %}
-                                </p>
-                                <a href="{{ url_for('financeiro.ver_recibo', filename=comprovante.caminho_recibo) }}" 
-                                   class="btn btn-primary btn-sm" target="_blank">
-                                    📄 Ver Comprovante
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
+                                </td>
+                                <td class="text-center">
+                                    <a href="{{ url_for('financeiro.ver_recibo', filename=comprovante.caminho_recibo) }}" 
+                                       class="btn btn-sm btn-primary btn-ver-comprovante" 
+                                       target="_blank"
+                                       title="Ver comprovante">
+                                        📄 Ver
+                                    </a>
+                                </td>
+                            </tr>
+                            {% if comprovante.observacoes %}
+                            <tr class="observacoes-row">
+                                <td colspan="6" class="observacoes-cell">
+                                    <small class="text-muted">
+                                        <strong>Obs:</strong> {{ comprovante.observacoes }}
+                                    </small>
+                                </td>
+                            </tr>
+                            {% endif %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -115,34 +156,215 @@
 </div>
 
 <style>
-.badge {
-    font-size: 0.75rem;
-    padding: 0.25rem 0.5rem;
+/* Estilos do Card do Cliente */
+.cliente-card {
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
 }
 
-.bg-primary {
-    background-color: #007bff !important;
+.cliente-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.15);
 }
 
-.card {
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    border: 1px solid #e9ecef;
+.cliente-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 1.25rem 1.5rem;
+    border-bottom: none;
 }
 
-.card-header {
+.cliente-nome {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: white;
+}
+
+/* Estilos da Tabela */
+.comprovantes-table {
+    font-size: 0.95rem;
+    margin-bottom: 0;
+}
+
+.comprovantes-table thead {
     background-color: #f8f9fa;
-    border-bottom: 1px solid #e9ecef;
+    border-bottom: 2px solid #dee2e6;
 }
 
-.alert {
-    border-radius: 0.375rem;
+.comprovantes-table thead th {
+    font-weight: 600;
+    color: #495057;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    padding: 1rem;
+    border-bottom: 2px solid #dee2e6;
+    vertical-align: middle;
 }
 
-code {
+.comprovantes-table tbody td {
+    padding: 1rem;
+    vertical-align: middle;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.comprovante-row {
+    transition: background-color 0.15s ease;
+}
+
+.comprovante-row:hover {
     background-color: #f8f9fa;
-    padding: 0.125rem 0.25rem;
-    border-radius: 0.25rem;
+}
+
+/* Linha de Observações */
+.observacoes-row {
+    background-color: #fffbf0;
+    border-left: 3px solid #ffc107;
+}
+
+.observacoes-cell {
+    padding: 0.5rem 1rem !important;
+}
+
+/* Estilos dos Elementos */
+.pedido-numero {
+    color: #667eea;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.data-pagamento {
+    font-weight: 500;
+    color: #495057;
+}
+
+.hora-pagamento {
+    font-size: 0.85rem;
+}
+
+.valor-pagamento {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: #28a745;
+}
+
+.metodo-badge {
+    padding: 0.5rem 0.75rem;
     font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    border-radius: 6px;
+}
+
+.id-transacao {
+    background-color: #f8f9fa;
+    padding: 0.375rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    color: #495057;
+    border: 1px solid #dee2e6;
+    font-family: 'Courier New', monospace;
+    word-break: break-all;
+}
+
+.btn-ver-comprovante {
+    font-weight: 600;
+    padding: 0.375rem 0.75rem;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.btn-ver-comprovante:hover {
+    transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(0,123,255,0.3);
+}
+
+/* Alertas */
+.alert {
+    border-radius: 8px;
+}
+
+.alert-info {
+    background-color: #e7f3ff;
+    border-color: #b3d9ff;
+    color: #004085;
+}
+
+/* Badge no Header */
+.badge {
+    padding: 0.5rem 1rem;
+}
+
+.bg-light {
+    background-color: rgba(255,255,255,0.2) !important;
+    border: 1px solid rgba(255,255,255,0.3);
+}
+
+/* Responsividade */
+@media (max-width: 992px) {
+    .cliente-nome {
+        font-size: 1.25rem;
+    }
+    
+    .comprovantes-table {
+        font-size: 0.875rem;
+    }
+    
+    .comprovantes-table thead th,
+    .comprovantes-table tbody td {
+        padding: 0.75rem 0.5rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .cliente-nome {
+        font-size: 1.1rem;
+    }
+    
+    .comprovantes-table {
+        font-size: 0.8rem;
+    }
+    
+    .pedido-numero {
+        font-size: 1rem;
+    }
+    
+    .valor-pagamento {
+        font-size: 1rem;
+    }
+    
+    .metodo-badge {
+        font-size: 0.75rem;
+        padding: 0.375rem 0.5rem;
+    }
+    
+    .id-transacao {
+        font-size: 0.7rem;
+        padding: 0.25rem 0.375rem;
+    }
+    
+    .btn-ver-comprovante {
+        font-size: 0.8rem;
+        padding: 0.25rem 0.5rem;
+    }
+}
+
+/* Animação suave para cards */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.cliente-card {
+    animation: fadeIn 0.3s ease-out;
 }
 </style>
 {% endblock %}

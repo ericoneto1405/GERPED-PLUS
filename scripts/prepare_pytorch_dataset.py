@@ -29,6 +29,7 @@ import sys
 from pathlib import Path
 from typing import Any, Dict
 
+from meu_app.financeiro.local_ocr import LocalOcrFallback
 from meu_app.financeiro.vision_service import VisionOcrService
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
@@ -38,7 +39,8 @@ TRAINING_FILES_DIR = ROOT_DIR / "uploads" / "recibos_pagamento_treinamento"
 
 
 def extract_text(file_path: Path) -> Dict[str, Any]:
-    """Executa a extração de texto via Google Vision, retornando dados e eventuais erros."""
+    """Executa a extração de texto via Google Vision e, em caso de falha, tenta fallback local."""
+    vision_errors = []
     try:
         texto = VisionOcrService.extract_text(str(file_path))
         return {
@@ -46,12 +48,25 @@ def extract_text(file_path: Path) -> Dict[str, Any]:
             "ocr_backend": "google_vision",
             "ocr_error": None,
         }
-    except Exception as exc:  # noqa: BLE001 - precisamos retornar o erro ao chamador
-        return {
-            "texto_ocr": None,
-            "ocr_backend": "google_vision",
-            "ocr_error": str(exc),
-        }
+    except Exception as exc:  # noqa: BLE001 - precisamos registrar o erro
+        vision_errors.append(str(exc))
+
+    try:
+        texto_local = LocalOcrFallback._extract_text(str(file_path))  # type: ignore[attr-defined]
+        if texto_local:
+            return {
+                "texto_ocr": texto_local,
+                "ocr_backend": "local_fallback",
+                "ocr_error": "; ".join(vision_errors) if vision_errors else None,
+            }
+    except Exception as fallback_exc:  # noqa: BLE001
+        vision_errors.append(f"Fallback local falhou: {fallback_exc}")
+
+    return {
+        "texto_ocr": None,
+        "ocr_backend": "indisponivel",
+        "ocr_error": "; ".join(vision_errors) if vision_errors else "OCR indisponível",
+    }
 
 
 def build_record(row: Dict[str, str]) -> Dict[str, Any]:

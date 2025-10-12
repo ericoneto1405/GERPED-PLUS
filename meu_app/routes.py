@@ -203,28 +203,6 @@ def painel():
         else:
             percentual_margem = 0
 
-        # Alertas de coleta (pedidos pagos mas não coletados há mais de 7 dias)
-        data_limite = datetime.now() - timedelta(days=7)
-        alertas_coleta = []
-        
-        # Buscar pedidos pagos mas não coletados
-        pedidos_pagos_nao_coletados = db.session.query(Pedido).join(Pagamento, Pedido.id == Pagamento.pedido_id).filter(
-            Pedido.data <= data_limite
-        ).distinct().all()
-        
-        for pedido in pedidos_pagos_nao_coletados:
-            # Verificar se foi coletado
-            coletado = db.session.query(Coleta).filter_by(pedido_id=pedido.id).first()
-            if not coletado:
-                valor_pedido = sum(item.valor_total_venda for item in pedido.itens)
-                dias_pendente = (datetime.now() - pedido.data).days
-                alertas_coleta.append({
-                    'pedido_id': pedido.id,
-                    'cliente': pedido.cliente.nome if pedido.cliente else 'N/A',
-                    'valor': float(valor_pedido),
-                    'dias': dias_pendente
-                })
-
         total_clientes = Cliente.query.count()
         total_produtos = Produto.query.count()
 
@@ -344,7 +322,6 @@ def painel():
             total_verbas=total_verbas,
             margem_manobra=margem_manobra,
             percentual_margem=percentual_margem,
-            alertas_coleta=alertas_coleta,
             total_valor=faturamento_total,  # Para compatibilidade
             total_clientes=total_clientes,
             total_produtos=total_produtos,
@@ -370,7 +347,6 @@ def painel():
             total_verbas=0.0,
             margem_manobra=0.0,
             percentual_margem=0.0,
-            alertas_coleta=[],
             total_valor=0,
             total_clientes=0,
             total_produtos=0,

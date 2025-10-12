@@ -1,220 +1,453 @@
 {% extends "base.html" %}
 
-{% block title %}Detalhes da Atividade{% endblock %}
+{% block title %}Detalhes da Atividade #{{ atividade.id }}{% endblock %}
+
+{% block page_title %}Detalhes da Atividade{% endblock %}
 
 {% block content %}
-<div class="page-container">
-    <div class="page-header">
-        <h1>📋 Detalhes da Atividade</h1>
-        <p>Informações completas sobre esta atividade do sistema.</p>
+<div class="visualizar-atividade-page">
+    <!-- Breadcrumb -->
+    <div class="breadcrumb">
+        <a href="{{ url_for('main.painel') }}" class="breadcrumb-item">🏠 Painel</a>
+        <span class="breadcrumb-separator">›</span>
+        <a href="{{ url_for('log_atividades.listar_atividades') }}" class="breadcrumb-item">📋 Log de Atividades</a>
+        <span class="breadcrumb-separator">›</span>
+        <span class="breadcrumb-current">Atividade #{{ atividade.id }}</span>
     </div>
 
-    <div class="content-section">
-        <div class="activity-details">
-            <div class="activity-header">
-                <div class="activity-icon">
-                    <span class="icon-activity">🕐</span>
-                </div>
-                <div class="activity-title">
-                    <h2>{{ atividade.titulo }}</h2>
-                    <p class="activity-subtitle">{{ atividade.tipo_atividade }}</p>
+    <!-- Card Principal -->
+    <div class="card activity-detail-card">
+        <!-- Header da Atividade -->
+        <div class="activity-header">
+            <div class="activity-header-icon">
+                <span class="header-icon">{{ get_modulo_icon(atividade.modulo) }}</span>
+            </div>
+            <div class="activity-header-content">
+                <h1 class="activity-title">{{ atividade.titulo }}</h1>
+                <div class="activity-badges">
+                    <span class="badge badge-{{ get_tipo_class(atividade.tipo_atividade) }}">
+                        {{ atividade.tipo_atividade }}
+                    </span>
+                    <span class="badge badge-modulo">
+                        📦 {{ atividade.modulo }}
+                    </span>
                 </div>
             </div>
+        </div>
 
-            <div class="activity-info">
-                <div class="info-grid">
-                    <div class="info-item">
-                        <label>📁 Módulo:</label>
-                        <span>{{ atividade.modulo }}</span>
-                    </div>
-                    
-                    <div class="info-item">
-                        <label>👤 Usuário:</label>
-                        <span>{{ atividade.usuario.nome if atividade.usuario else 'N/A' }}</span>
-                    </div>
-                    
-                    <div class="info-item">
-                        <label>📅 Data:</label>
-                        <span>{{ atividade.data_criacao.strftime('%d/%m/%Y às %H:%M:%S') if atividade.data_criacao else 'N/A' }}</span>
-                    </div>
-                    
-                    <div class="info-item">
-                        <label>🆔 ID:</label>
-                        <span>#{{ atividade.id }}</span>
+        <!-- Grid de Informações -->
+        <div class="info-section">
+            <h3 class="section-title">📊 Informações Gerais</h3>
+            <div class="info-grid">
+                <div class="info-card">
+                    <div class="info-icon">🆔</div>
+                    <div class="info-content">
+                        <div class="info-label">ID da Atividade</div>
+                        <div class="info-value">#{{ atividade.id }}</div>
                     </div>
                 </div>
 
-                <div class="activity-description">
-                    <label>📝 Descrição:</label>
-                    <div class="description-content">
-                        {{ atividade.descricao }}
+                <div class="info-card">
+                    <div class="info-icon">👤</div>
+                    <div class="info-content">
+                        <div class="info-label">Usuário</div>
+                        <div class="info-value">{{ atividade.usuario.nome if atividade.usuario else 'Sistema' }}</div>
                     </div>
                 </div>
 
-                {% if atividade.dados_extras %}
-                <div class="activity-extras">
-                    <label>📊 Dados Extras:</label>
-                    <div class="extras-content">
-                        <pre>{{ atividade.dados_extras }}</pre>
+                <div class="info-card">
+                    <div class="info-icon">📅</div>
+                    <div class="info-content">
+                        <div class="info-label">Data e Hora</div>
+                        <div class="info-value">{{ atividade.data_hora.strftime('%d/%m/%Y %H:%M:%S') }}</div>
+                    </div>
+                </div>
+
+                {% if atividade.ip_address %}
+                <div class="info-card">
+                    <div class="info-icon">🌐</div>
+                    <div class="info-content">
+                        <div class="info-label">Endereço IP</div>
+                        <div class="info-value">{{ atividade.ip_address }}</div>
                     </div>
                 </div>
                 {% endif %}
             </div>
+        </div>
 
-            <div class="activity-actions">
-                <a href="{{ url_for('log_atividades.listar_atividades') }}" class="btn btn-secondary">⬅ Voltar ao Log</a>
-                <button onclick="window.print()" class="btn btn-primary">🖨️ Imprimir</button>
+        <!-- Descrição -->
+        <div class="description-section">
+            <h3 class="section-title">📝 Descrição Detalhada</h3>
+            <div class="description-box">
+                {{ atividade.descricao }}
             </div>
+        </div>
+
+        <!-- Dados Extras (se existir) -->
+        {% if atividade.dados_extras %}
+        <div class="extras-section">
+            <h3 class="section-title">📋 Dados Adicionais</h3>
+            <div class="extras-box">
+                <div class="extras-toolbar">
+                    <button class="btn-tool" onclick="copyExtras()" title="Copiar">📋 Copiar</button>
+                    <button class="btn-tool" onclick="formatJSON()" title="Formatar">🔄 Formatar JSON</button>
+                </div>
+                <pre id="extras-content" class="extras-content">{{ atividade.dados_extras }}</pre>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Timeline (se houver mais informações) -->
+        <div class="timeline-section">
+            <h3 class="section-title">⏱️ Linha do Tempo</h3>
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-marker timeline-marker-primary"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-time">{{ atividade.data_hora.strftime('%d/%m/%Y %H:%M:%S') }}</div>
+                        <div class="timeline-title">Atividade Registrada</div>
+                        <div class="timeline-desc">Esta atividade foi registrada no sistema</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ações -->
+        <div class="actions-section">
+            <a href="{{ url_for('log_atividades.listar_atividades') }}" class="btn btn-secondary">
+                ← Voltar ao Log
+            </a>
+            <button onclick="window.print()" class="btn btn-primary">
+                🖨️ Imprimir
+            </button>
+            <button onclick="exportarAtividade()" class="btn btn-success">
+                📥 Exportar JSON
+            </button>
         </div>
     </div>
 </div>
 
 <style>
-.activity-details {
-    background: #ffffff;
-    border-radius: 16px;
-    box-shadow: var(--shadow-neomorph);
-    padding: 2rem;
+/* Container Principal */
+.visualizar-atividade-page {
+    max-width: 1200px;
+    margin: 0 auto;
 }
 
-.activity-header {
+/* Breadcrumb */
+.breadcrumb {
     display: flex;
     align-items: center;
-    gap: 1.5rem;
-    margin-bottom: 2rem;
-    padding-bottom: 1.5rem;
-    border-bottom: 1px solid #e9ecef;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.875rem;
 }
 
-.activity-icon {
-    width: 60px;
-    height: 60px;
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    border-radius: 50%;
+.breadcrumb-item {
+    color: #667eea;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.breadcrumb-item:hover {
+    color: #764ba2;
+    text-decoration: underline;
+}
+
+.breadcrumb-separator {
+    color: #adb5bd;
+}
+
+.breadcrumb-current {
+    color: #495057;
+    font-weight: 600;
+}
+
+/* Card Principal */
+.activity-detail-card {
+    border: none;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+/* Header da Atividade */
+.activity-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 2rem;
+    padding-bottom: 2rem;
+    border-bottom: 2px solid #f0f0f0;
+    margin-bottom: 2rem;
+}
+
+.activity-header-icon {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
+    flex-shrink: 0;
 }
 
-.icon-activity {
-    font-size: 1.5rem;
-    color: white;
+.header-icon {
+    font-size: 2.5rem;
 }
 
-.activity-title h2 {
-    margin: 0 0 0.5rem 0;
-    color: var(--text-primary);
-    font-size: 1.5rem;
+.activity-header-content {
+    flex: 1;
 }
 
-.activity-subtitle {
-    margin: 0;
-    color: #667eea;
+.activity-title {
+    margin: 0 0 1rem 0;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #2c3e50;
+    line-height: 1.3;
+}
+
+.activity-badges {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.badge {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    border-radius: 24px;
+    font-size: 0.875rem;
     font-weight: 600;
-    font-size: 1rem;
 }
 
-.activity-info {
+.badge-create { background: #d4edda; color: #155724; }
+.badge-update { background: #fff3cd; color: #856404; }
+.badge-delete { background: #f8d7da; color: #721c24; }
+.badge-login { background: #d1ecf1; color: #0c5460; }
+.badge-default { background: #e2e3e5; color: #383d41; }
+.badge-modulo { background: #e7f3ff; color: #0056b3; }
+
+/* Seções */
+.info-section,
+.description-section,
+.extras-section,
+.timeline-section {
     margin-bottom: 2rem;
 }
 
+.section-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Grid de Informações */
 .info-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 1.5rem;
-    margin-bottom: 2rem;
 }
 
-.info-item {
+.info-card {
     display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 12px;
+    border: 1px solid #dee2e6;
+    transition: all 0.3s ease;
 }
 
-.info-item label {
-    font-weight: 600;
-    color: var(--text-primary);
-    font-size: 0.9rem;
+.info-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    border-color: #667eea;
 }
 
-.info-item span {
+.info-icon {
+    width: 48px;
+    height: 48px;
+    background: white;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    flex-shrink: 0;
+}
+
+.info-content {
+    flex: 1;
+}
+
+.info-label {
+    font-size: 0.75rem;
     color: #6c757d;
-    font-size: 1rem;
-    padding: 0.5rem;
-    background: #f8f9fa;
-    border-radius: 0.5rem;
-    border-left: 3px solid #667eea;
-}
-
-.activity-description,
-.activity-extras {
-    margin-bottom: 1.5rem;
-}
-
-.activity-description label,
-.activity-extras label {
-    display: block;
     font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: 0.75rem;
-    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.25rem;
 }
 
-.description-content {
+.info-value {
+    font-size: 1.125rem;
+    color: #2c3e50;
+    font-weight: 600;
+}
+
+/* Descrição */
+.description-box {
+    padding: 1.5rem;
     background: #f8f9fa;
-    padding: 1rem;
-    border-radius: 0.5rem;
-    border-left: 3px solid #667eea;
+    border-radius: 12px;
+    border-left: 4px solid #667eea;
     color: #495057;
-    line-height: 1.6;
+    line-height: 1.8;
+    font-size: 1rem;
     white-space: pre-wrap;
 }
 
+/* Dados Extras */
+.extras-box {
+    background: #1e1e1e;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid #dee2e6;
+}
+
+.extras-toolbar {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: #2d2d2d;
+    border-bottom: 1px solid #444;
+}
+
+.btn-tool {
+    padding: 0.375rem 0.75rem;
+    background: #444;
+    border: none;
+    border-radius: 6px;
+    color: white;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-tool:hover {
+    background: #555;
+}
+
 .extras-content {
-    background: #f8f9fa;
-    padding: 1rem;
-    border-radius: 0.5rem;
-    border-left: 3px solid #28a745;
+    padding: 1.5rem;
+    margin: 0;
+    color: #d4d4d4;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 0.875rem;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-wrap: break-word;
     overflow-x: auto;
 }
 
-.extras-content pre {
-    margin: 0;
-    color: #495057;
-    font-size: 0.85rem;
-    line-height: 1.4;
+/* Timeline */
+.timeline {
+    position: relative;
+    padding-left: 2rem;
 }
 
-.activity-actions {
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 0.5rem;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+}
+
+.timeline-item {
+    position: relative;
+    padding-bottom: 1.5rem;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -1.5rem;
+    top: 0.25rem;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 3px solid white;
+    box-shadow: 0 0 0 2px #667eea;
+}
+
+.timeline-marker-primary {
+    background: #667eea;
+}
+
+.timeline-content {
+    padding-left: 1rem;
+}
+
+.timeline-time {
+    font-size: 0.75rem;
+    color: #6c757d;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.timeline-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.25rem;
+}
+
+.timeline-desc {
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+/* Ações */
+.actions-section {
     display: flex;
     gap: 1rem;
-    justify-content: flex-start;
-    padding-top: 1.5rem;
-    border-top: 1px solid #e9ecef;
+    padding-top: 2rem;
+    border-top: 2px solid #f0f0f0;
+    flex-wrap: wrap;
 }
 
 .btn {
     padding: 0.75rem 1.5rem;
     border: none;
-    border-radius: 0.5rem;
-    text-decoration: none;
+    border-radius: 8px;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.3s ease;
+    text-decoration: none;
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
+    font-size: 0.875rem;
 }
 
 .btn-primary {
-    background: #667eea;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
 }
 
 .btn-primary:hover {
-    background: #5a6fd8;
-    transform: translateY(-1px);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
 }
 
 .btn-secondary {
@@ -224,21 +457,138 @@
 
 .btn-secondary:hover {
     background: #5a6268;
-    transform: translateY(-1px);
+    transform: translateY(-2px);
+}
+
+.btn-success {
+    background: #28a745;
+    color: white;
+}
+
+.btn-success:hover {
+    background: #218838;
+    transform: translateY(-2px);
 }
 
 /* Responsividade */
-
-/* Estilos para impressão */
-@media print {
-    .activity-actions {
-        display: none;
+@media (max-width: 768px) {
+    .activity-header {
+        flex-direction: column;
+        gap: 1rem;
     }
     
-    .activity-details {
+    .activity-title {
+        font-size: 1.5rem;
+    }
+    
+    .info-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .actions-section {
+        flex-direction: column;
+    }
+    
+    .actions-section .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* Estilos para Impressão */
+@media print {
+    .breadcrumb,
+    .actions-section,
+    .extras-toolbar {
+        display: none !important;
+    }
+    
+    .activity-detail-card {
         box-shadow: none;
         border: 1px solid #dee2e6;
     }
+    
+    .activity-header-icon {
+        box-shadow: none;
+    }
+    
+    .info-card {
+        break-inside: avoid;
+    }
 }
 </style>
+
+<script nonce="{{ nonce }}">
+function copyExtras() {
+    const content = document.getElementById('extras-content').textContent;
+    navigator.clipboard.writeText(content).then(() => {
+        alert('✅ Conteúdo copiado para a área de transferência!');
+    }).catch(err => {
+        console.error('Erro ao copiar:', err);
+        alert('❌ Erro ao copiar conteúdo');
+    });
+}
+
+function formatJSON() {
+    const content = document.getElementById('extras-content');
+    try {
+        const json = JSON.parse(content.textContent);
+        content.textContent = JSON.stringify(json, null, 2);
+        alert('✅ JSON formatado com sucesso!');
+    } catch (e) {
+        alert('⚠️ Este conteúdo não é um JSON válido');
+    }
+}
+
+function exportarAtividade() {
+    const atividade = {
+        id: {{ atividade.id }},
+        titulo: {{ atividade.titulo|tojson }},
+        tipo_atividade: {{ atividade.tipo_atividade|tojson }},
+        descricao: {{ atividade.descricao|tojson }},
+        modulo: {{ atividade.modulo|tojson }},
+        usuario: {{ (atividade.usuario.nome if atividade.usuario else 'Sistema')|tojson }},
+        data_hora: {{ atividade.data_hora.strftime('%d/%m/%Y %H:%M:%S')|tojson }},
+        {% if atividade.ip_address %}
+        ip_address: {{ atividade.ip_address|tojson }},
+        {% endif %}
+        {% if atividade.dados_extras %}
+        dados_extras: {{ atividade.dados_extras|tojson }}
+        {% endif %}
+    };
+    
+    const blob = new Blob([JSON.stringify(atividade, null, 2)], { type: 'application/json' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `atividade_${atividade.id}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+}
+</script>
+
 {% endblock %}
+
+{# Funções Helper #}
+{% macro get_modulo_icon(modulo) %}
+{% if modulo == 'Clientes' %}👥
+{% elif modulo == 'Produtos' %}📦
+{% elif modulo == 'Pedidos' %}📝
+{% elif modulo == 'Financeiro' %}💰
+{% elif modulo == 'Coletas' or modulo == 'Logística' %}🚚
+{% elif modulo == 'Usuários' %}👤
+{% elif modulo == 'Estoque' %}📊
+{% else %}📋
+{% endif %}
+{% endmacro %}
+
+{% macro get_tipo_class(tipo) %}
+{% if 'Criação' in tipo or 'Criou' in tipo or 'Cadastro' in tipo %}create
+{% elif 'Edição' in tipo or 'Editou' in tipo or 'Atualização' in tipo or 'Alteração' in tipo %}update
+{% elif 'Exclusão' in tipo or 'Excluiu' in tipo or 'Removeu' in tipo %}delete
+{% elif 'Login' in tipo or 'Logout' in tipo or 'Acesso' in tipo %}login
+{% else %}default
+{% endif %}
+{% endmacro %}

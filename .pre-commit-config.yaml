@@ -53,9 +53,17 @@ repos:
     rev: 1.7.9
     hooks:
       - id: bandit
-        name: Bandit - Análise de segurança
+        name: Bandit - Análise de segurança SAST
         args: ['-c', 'pyproject.toml']
         additional_dependencies: ['bandit[toml]']
+        exclude: ^(tests/|venv/|migrations/)
+  
+  - repo: https://github.com/Lucas-C/pre-commit-hooks-safety
+    rev: v1.3.3
+    hooks:
+      - id: python-safety-dependencies-check
+        name: Safety - CVE vulnerability check
+        files: requirements.txt
   
   # ===========================
   # TYPE CHECKING
@@ -118,6 +126,12 @@ repos:
         name: Detecta secrets e credenciais
         args: ['--baseline', '.secrets.baseline']
         exclude: package-lock.json
+  
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: detect-private-key
+        name: Detecta chaves privadas (*.pem, *.key)
 
 # Configurações globais
 default_language_version:

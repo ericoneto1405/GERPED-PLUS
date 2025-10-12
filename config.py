@@ -82,29 +82,29 @@ class DevelopmentConfig(BaseConfig):
     LOG_LEVEL = 'DEBUG'
     RATELIMIT_DEFAULT = "500 per hour"
     
-    # CSP mais permissivo para desenvolvimento (permite CDNs e scripts inline)
+    # CSP em desenvolvimento - usar nonces mesmo em dev para testar
     CSP_DIRECTIVES = {
         "default-src": ["'self'"],
         "script-src": [
-            "'self'", 
-            "'unsafe-inline'",  # Permite scripts inline em dev
+            "'self'",
+            "'strict-dynamic'",  # Com nonce
             "https://cdn.jsdelivr.net",
             "https://code.jquery.com",
             "https://cdnjs.cloudflare.com"
         ],
         "style-src": [
-            "'self'", 
-            "'unsafe-inline'",
+            "'self'",
+            "'unsafe-inline'",  # Mantém em dev por enquanto
             "https://cdn.jsdelivr.net",
             "https://fonts.googleapis.com"
         ],
         "img-src": ["'self'", "data:", "https:"],
         "font-src": ["'self'", "data:", "https://cdn.jsdelivr.net", "https://fonts.gstatic.com"],
-        "connect-src": ["'self'", "https://cdn.jsdelivr.net"],  # Permite source maps
+        "connect-src": ["'self'", "https://cdn.jsdelivr.net"],
     }
     
-    # Desabilitar nonce em desenvolvimento para permitir unsafe-inline funcionar
-    CSP_NONCE_SOURCES = []  # Vazio = sem nonce, unsafe-inline funciona
+    # Usar nonce em scripts (styles ainda com unsafe-inline em dev)
+    CSP_NONCE_SOURCES = ["script-src"]
 
 
 class TestingConfig(BaseConfig):
@@ -126,6 +126,16 @@ class ProductionConfig(BaseConfig):
     WTF_CSRF_SSL_STRICT = True
     LOG_LEVEL = 'INFO'
     
+    # Forçar HTTPS
+    FORCE_HTTPS = True
+    PREFERRED_URL_SCHEME = 'https'
+    
+    # HSTS (HTTP Strict Transport Security)
+    HSTS_ENABLED = True
+    HSTS_MAX_AGE = 31536000  # 1 ano
+    HSTS_INCLUDE_SUBDOMAINS = True
+    HSTS_PRELOAD = True
+    
     # Validação estrita em produção
     @classmethod
     def init_app(cls, app):
@@ -138,16 +148,36 @@ class ProductionConfig(BaseConfig):
     
     # Headers de segurança habilitados em produção
     SECURITY_HEADERS_ENABLED = True
+    
+    # CSP rigoroso - sem unsafe-inline
     CSP_DIRECTIVES = {
         'default-src': ["'self'"],
-        'script-src': ["'self'"],
-        'style-src': ["'self'", "'unsafe-inline'"],
-        'img-src': ["'self'", 'data:'],
+        'script-src': ["'self'", "'strict-dynamic'"],  # nonce será injetado automaticamente
+        'style-src': ["'self'"],  # nonce será injetado automaticamente  
+        'img-src': ["'self'", 'data:', 'https:'],
         'font-src': ["'self'", 'data:'],
         'connect-src': ["'self'"],
         'object-src': ["'none'"],
         'base-uri': ["'self'"],
         'frame-ancestors': ["'none'"],
+        'form-action': ["'self'"],
+        'upgrade-insecure-requests': [],
+        'block-all-mixed-content': [],
+    }
+    
+    # Aplicar nonce em scripts e styles
+    CSP_NONCE_SOURCES = ["script-src", "style-src"]
+    
+    # Headers de segurança adicionais
+    SECURITY_HEADERS = {
+        'X-Content-Type-Options': 'nosniff',
+        'X-Frame-Options': 'DENY',
+        'X-XSS-Protection': '1; mode=block',
+        'Referrer-Policy': 'strict-origin-when-cross-origin',
+        'Permissions-Policy': 'geolocation=(), microphone=(), camera=(), payment=(), usb=()',
+        'Cross-Origin-Opener-Policy': 'same-origin',
+        'Cross-Origin-Embedder-Policy': 'require-corp',
+        'Cross-Origin-Resource-Policy': 'same-origin',
     }
     
     # Cache Redis (FASE 8)

@@ -145,6 +145,28 @@ def initialize_extensions(app):
     # Segurança (CSRF, Limiter, Talisman)
     setup_security(app)
     
+    # Aplicar headers de segurança adicionais
+    @app.after_request
+    def apply_security_headers(response):
+        """Aplica headers de segurança adicionais configurados"""
+        if app.config.get('SECURITY_HEADERS'):
+            for header, value in app.config['SECURITY_HEADERS'].items():
+                response.headers[header] = value
+        
+        # Remover headers que expõem informações do servidor
+        response.headers.pop('Server', None)
+        response.headers.pop('X-Powered-By', None)
+        
+        # Cache-Control para rotas autenticadas
+        if request.endpoint and not request.endpoint.startswith('static'):
+            from flask_login import current_user
+            if hasattr(current_user, 'is_authenticated') and current_user.is_authenticated:
+                response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, private'
+                response.headers['Pragma'] = 'no-cache'
+                response.headers['Expires'] = '0'
+        
+        return response
+    
     # RQ (Redis Queue) para processamento assíncrono - Fase 7
     try:
         from .queue import init_queue

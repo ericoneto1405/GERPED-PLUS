@@ -119,21 +119,34 @@ def _configure_talisman(app) -> None:
     csp = app.config.get("CSP_DIRECTIVES") or DEFAULT_CSP
     nonce_directives = app.config.get("CSP_NONCE_SOURCES", ["script-src"])
 
-    force_https_default = not (app.debug or app.testing)
-    force_https = app.config.get("TALISMAN_FORCE_HTTPS", force_https_default)
-    strict_transport_security = app.config.get(
-        "TALISMAN_STRICT_TRANSPORT_SECURITY", force_https and not app.testing
-    )
+    # Configurações de HTTPS e HSTS
+    force_https = app.config.get("FORCE_HTTPS", False) if not (app.debug or app.testing) else False
+    hsts_enabled = app.config.get("HSTS_ENABLED", False) if not app.testing else False
+    hsts_max_age = app.config.get("HSTS_MAX_AGE", 31536000) if hsts_enabled else None
+    hsts_include_subdomains = app.config.get("HSTS_INCLUDE_SUBDOMAINS", True)
+    hsts_preload = app.config.get("HSTS_PRELOAD", True)
 
     _talisman = Talisman(
         app,
         content_security_policy=csp,
         content_security_policy_nonce_in=nonce_directives,
         frame_options="DENY",
-        referrer_policy="no-referrer",
+        referrer_policy="strict-origin-when-cross-origin",
         force_https=force_https,
-        strict_transport_security=strict_transport_security,
+        strict_transport_security=hsts_enabled,
+        strict_transport_security_max_age=hsts_max_age,
+        strict_transport_security_include_subdomains=hsts_include_subdomains if hsts_enabled else False,
+        strict_transport_security_preload=hsts_preload if hsts_enabled else False,
         session_cookie_secure=app.config.get("SESSION_COOKIE_SECURE", True),
+        session_cookie_http_only=True,
+        content_security_policy_report_uri=None,
+        feature_policy={
+            'geolocation': "'none'",
+            'microphone': "'none'",
+            'camera': "'none'",
+            'payment': "'none'",
+            'usb': "'none'",
+        }
     )
 
 

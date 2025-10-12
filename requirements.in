@@ -1,0 +1,75 @@
+# ==============================================================================
+# REQUIREMENTS.IN - Sistema SAP
+# ==============================================================================
+# 
+# Este arquivo define as dependências de alto nível.
+# Use pip-tools para gerar requirements.txt com versões fixadas e hashes:
+# 
+#   pip install pip-tools
+#   pip-compile --generate-hashes --output-file=requirements.txt requirements.in
+# 
+# ==============================================================================
+
+# Core Flask
+Flask==2.3.2
+Flask-SQLAlchemy==3.1.1
+Werkzeug==2.3.8
+
+# Utilitários
+ReportLab==4.4.3
+pandas==2.3.1
+openpyxl==3.1.2
+requests==2.32.4
+python-dotenv==1.0.1
+
+# Validação e Segurança de Dados
+validate-docbr==1.11.1
+bleach==6.2.0
+python-magic==0.4.27
+pydantic==2.9.2
+
+# Google Cloud Vision (OCR)
+google-cloud-vision==3.10.2
+google-cloud-storage==2.17.0
+
+# Segurança e Extensões
+Flask-WTF==1.2.2
+Flask-Caching==2.3.1
+Flask-Limiter==4.0.0
+Flask-Talisman==1.1.0
+redis==6.4.0
+gunicorn==23.0.0
+
+# Autenticação
+Flask-Login==0.6.3
+
+# Migrations
+Flask-Migrate==4.0.7
+alembic==1.13.1
+
+# Observabilidade e Métricas
+python-json-logger==2.0.7
+prometheus-client==0.20.0
+
+# Documentação OpenAPI
+flasgger==0.9.7.1
+flask-restful==0.3.10
+apispec==6.6.1
+marshmallow==3.22.0
+
+# Fila Assíncrona
+rq==1.15.1
+
+# Sessões Server-Side
+Flask-Session==0.8.0
+
+# 2FA (Two-Factor Authentication)
+pyotp==2.9.0
+qrcode==7.4.2
+
+# AWS (opcional)
+boto3==1.34.0
+
+# Validação de URLs (SSRF protection)
+validators==0.22.0
+

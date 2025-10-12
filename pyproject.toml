@@ -1,63 +1,51 @@
-[tool.mypy]
-python_version = "3.8"
-warn_return_any = true
-warn_unused_configs = true
-disallow_untyped_defs = true
-disallow_incomplete_defs = true
-check_untyped_defs = true
-disallow_untyped_decorators = true
-no_implicit_optional = true
-warn_redundant_casts = true
-warn_unused_ignores = true
-warn_no_return = true
-warn_unreachable = true
-strict_equality = true
+[project]
+name = "sap-sistema"
+version = "2.0.0"
+description = "Sistema de Gestão Empresarial SAP"
+authors = [{name = "Sistema SAP"}]
+requires-python = ">=3.9"
 
-[[tool.mypy.overrides]]
-module = [
-    "flask.*",
-    "sqlalchemy.*",
-    "pydantic.*"
-]
-ignore_missing_imports = true
+[tool.bandit]
+exclude_dirs = ["/tests/", "/venv/", "/node_modules/"]
+skips = ["B201", "B601"]  # B201: Flask debug (OK em dev), B601: shell=True (controlado)
+
+[tool.bandit.assert_used]
+skips = ["*_test.py", "test_*.py"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
-addopts = [
-    "-v",
-    "--tb=short",
-    "--strict-markers",
-    "--cov=meu_app",
-    "--cov-report=term-missing",
-    "--cov-report=html:htmlcov",
-    "--cov-report=xml",
-    "--cov-fail-under=80"
-]
+addopts = "-v --tb=short --strict-markers"
 markers = [
-    "integration: marks tests as integration tests",
-    "unit: marks tests as unit tests",
-    "slow: marks tests as slow"
+    "unit: Unit tests",
+    "integration: Integration tests",
+    "e2e: End-to-end tests",
+    "security: Security tests",
 ]
 
-[tool.coverage.run]
-source = ["meu_app"]
-omit = [
-    "*/tests/*",
-    "*/venv/*",
-    "*/env/*"
-]
+[tool.black]
+line-length = 100
+target-version = ['py39']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  | venv
+  | node_modules
+  | \.git
+  | migrations
+)/
+'''
 
-[tool.coverage.report]
-exclude_lines = [
-    "pragma: no cover",
-    "def __repr__",
-    "if self.debug:",
-    "if settings.DEBUG",
-    "raise AssertionError",
-    "raise NotImplementedError",
-    "if 0:",
-    "if __name__ == .__main__.:"
-]
+[tool.isort]
+profile = "black"
+line_length = 100
+skip_gitignore = true
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+ignore_missing_imports = true

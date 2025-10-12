@@ -155,7 +155,7 @@ class FileUploadValidator:
     @classmethod
     def generate_secure_filename(cls, original_filename: str, file_type: str) -> str:
         """
-        Gera um nome de arquivo seguro e único
+        Gera um nome de arquivo seguro, único e aleatório (anti path-traversal)
         
         Args:
             original_filename: Nome original do arquivo
@@ -164,36 +164,60 @@ class FileUploadValidator:
         Returns:
             str: Nome de arquivo seguro e único
         """
-        # Obter extensão do arquivo original
+        # Obter extensão do arquivo original (sanitizada)
         file_ext = os.path.splitext(original_filename)[1].lower()
         
-        # Gerar nome único
+        # Validar extensão (previne dupla extensão como .php.jpg)
+        allowed_exts = cls.ALLOWED_EXTENSIONS.get(file_type, set())
+        if file_ext not in allowed_exts:
+            file_ext = '.bin'  # Extensão segura padrão
+        
+        # Gerar nome completamente aleatório (UUID4)
         unique_id = str(uuid.uuid4())
         
-        # Criar nome seguro
-        secure_name = f"{file_type}_{unique_id}{file_ext}"
+        # Adicionar timestamp para evitar colisões
+        import time
+        timestamp = int(time.time())
+        
+        # Nome final: tipo_timestamp_uuid.ext
+        secure_name = f"{file_type}_{timestamp}_{unique_id}{file_ext}"
+        
+        # Garantir que não contém caracteres perigosos (path traversal)
+        secure_name = secure_name.replace('..', '').replace('/', '').replace('\\', '')
         
         return secure_name
     
     @classmethod
     def get_upload_directory(cls, file_type: str) -> str:
         """
-        Obtém o diretório de upload para o tipo de arquivo
+        Obtém o diretório de upload FORA DO WEBROOT
         
         Args:
             file_type: Tipo do arquivo
             
         Returns:
-            str: Caminho do diretório de upload
+            str: Caminho absoluto do diretório de upload
         """
-        # Diretório base de uploads (fora do diretório público)
-        base_upload_dir = os.path.join(current_app.root_path, '..', 'uploads')
+        # Base de uploads configurável (FORA do webroot em produção)
+        base_upload_dir = os.getenv('UPLOAD_BASE_DIR', 
+                                     os.path.join(current_app.root_path, '..', 'uploads'))
+        
+        # Garantir caminho absoluto
+        base_upload_dir = os.path.abspath(base_upload_dir)
+        
+        # Validar file_type (prevenir path traversal)
+        safe_file_type = file_type.replace('..', '').replace('/', '').replace('\\', '')
         
         # Diretório específico para o tipo de arquivo
-        type_dir = os.path.join(base_upload_dir, file_type)
+        type_dir = os.path.join(base_upload_dir, safe_file_type)
         
-        # Criar diretório se não existir
-        os.makedirs(type_dir, exist_ok=True)
+        # Verificar se está dentro do base_upload_dir (anti path-traversal)
+        type_dir_abs = os.path.abspath(type_dir)
+        if not type_dir_abs.startswith(base_upload_dir):
+            raise UploadSecurityError("Tentativa de path traversal detectada")
+        
+        # Criar diretório com permissões restritas
+        os.makedirs(type_dir, mode=0o750, exist_ok=True)
         
         return type_dir
     
@@ -361,3 +385,79 @@ def validate_document_upload(file) -> Tuple[bool, str, Optional[str]]:
         Tuple[bool, str, str]: (sucesso, mensagem, caminho_arquivo)
     """
     return FileUploadValidator.save_file(file, 'document')
+
+
+def serve_uploaded_file_securely(file_path: str, as_attachment: bool = True, download_name: str = None):
+    """
+    Serve arquivo de upload com headers de segurança apropriados
+    
+    Args:
+        file_path: Caminho absoluto do arquivo
+        as_attachment: Se True, força download; se False, tenta exibir inline
+        download_name: Nome do arquivo no download (se None, usa nome original)
+        
+    Returns:
+        Flask Response com arquivo e headers de segurança
+    """
+    from flask import send_file, abort
+    import mimetypes
+    
+    # Verificar se arquivo existe
+    if not os.path.exists(file_path):
+        current_app.logger.error(f"Arquivo não encontrado: {file_path}")
+        abort(404, "Arquivo não encontrado")
+    
+    # Verificar se está dentro do diretório de uploads (anti path-traversal)
+    base_upload_dir = os.getenv('UPLOAD_BASE_DIR', 
+                                 os.path.join(current_app.root_path, '..', 'uploads'))
+    base_upload_dir = os.path.abspath(base_upload_dir)
+    file_path_abs = os.path.abspath(file_path)
+    
+    if not file_path_abs.startswith(base_upload_dir):
+        current_app.logger.error(f"Tentativa de acesso fora do upload dir: {file_path}")
+        abort(403, "Acesso negado")
+    
+    # Determinar mimetype seguro
+    mimetype, _ = mimetypes.guess_type(file_path)
+    if not mimetype:
+        mimetype = 'application/octet-stream'
+    
+    # Forçar tipos seguros para evitar execução de código
+    dangerous_mimetypes = {
+        'text/html': 'text/plain',
+        'application/javascript': 'text/plain',
+        'application/x-javascript': 'text/plain',
+        'text/javascript': 'text/plain',
+    }
+    
+    if mimetype in dangerous_mimetypes:
+        current_app.logger.warning(f"Mimetype perigoso convertido: {mimetype} -> text/plain")
+        mimetype = dangerous_mimetypes[mimetype]
+    
+    # Nome do arquivo para download
+    if download_name is None:
+        download_name = os.path.basename(file_path)
+    
+    try:
+        response = send_file(
+            file_path,
+            mimetype=mimetype,
+            as_attachment=as_attachment,
+            download_name=download_name
+        )
+        
+        # Headers de segurança
+        response.headers['X-Content-Type-Options'] = 'nosniff'
+        response.headers['Content-Security-Policy'] = "default-src 'none'"
+        response.headers['X-Frame-Options'] = 'DENY'
+        
+        # Se attachment, adicionar Content-Disposition explícito
+        if as_attachment:
+            response.headers['Content-Disposition'] = f'attachment; filename="{download_name}"'
+        
+        current_app.logger.info(f"Arquivo servido com segurança: {file_path}")
+        return response
+        
+    except Exception as e:
+        current_app.logger.error(f"Erro ao servir arquivo: {str(e)}")
+        abort(500, "Erro ao servir arquivo")

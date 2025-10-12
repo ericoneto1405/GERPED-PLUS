@@ -15,10 +15,22 @@ def listar_atividades():
         page = request.args.get('page', 1, type=int)
         per_page = request.args.get('per_page', 20, type=int)
         
-        # Filtros
-        filtro_modulo = request.args.get('modulo')
-        data_inicio = request.args.get('data_inicio')
-        data_fim = request.args.get('data_fim')
+        # Filtro mes_ano
+        mes_ano = request.args.get('mes_ano', '')
+        
+        # Converter mes_ano para data_inicio e data_fim
+        data_inicio = None
+        data_fim = None
+        if mes_ano:
+            from datetime import datetime
+            import calendar
+            try:
+                ano, mes = map(int, mes_ano.split('-'))
+                data_inicio = f"{ano}-{mes:02d}-01"
+                ultimo_dia = calendar.monthrange(ano, mes)[1]
+                data_fim = f"{ano}-{mes:02d}-{ultimo_dia}"
+            except:
+                pass
         
         # Validar parâmetros
         if page < 1:
@@ -29,7 +41,7 @@ def listar_atividades():
         # Buscar atividades com paginação
         service = LogAtividadesService()
         resultado = service.listar_atividades(
-            filtro_modulo=filtro_modulo,
+            filtro_modulo=None,
             data_inicio=data_inicio,
             data_fim=data_fim,
             page=page,
@@ -45,9 +57,7 @@ def listar_atividades():
         return render_template('log_atividades.html', 
                              atividades=resultado['atividades'],
                              modulos=modulos,
-                             filtro_modulo=filtro_modulo,
-                             data_inicio=data_inicio or '',
-                             data_fim=data_fim or '',
+                             mes_ano=mes_ano,
                              page=resultado['page'],
                              per_page=resultado['per_page'],
                              total_registros=resultado['total_registros'],
@@ -58,9 +68,7 @@ def listar_atividades():
         return render_template('log_atividades.html', 
                              atividades=[],
                              modulos=[],
-                             filtro_modulo='',
-                             data_inicio='',
-                             data_fim='',
+                             mes_ano='',
                              page=1,
                              per_page=20,
                              total_registros=0,
@@ -71,9 +79,7 @@ def listar_atividades():
         return render_template('log_atividades.html', 
                              atividades=[],
                              modulos=[],
-                             filtro_modulo='',
-                             data_inicio='',
-                             data_fim='',
+                             mes_ano='',
                              page=1,
                              per_page=20,
                              total_registros=0,
@@ -147,15 +153,27 @@ def obter_estatisticas():
 def exportar_logs():
     """Exporta logs de atividades"""
     try:
-        # Parâmetros de filtro
-        filtro_modulo = request.args.get('modulo')
-        data_inicio = request.args.get('data_inicio')
-        data_fim = request.args.get('data_fim')
+        # Filtro mes_ano
+        mes_ano = request.args.get('mes_ano', '')
+        
+        # Converter mes_ano para data_inicio e data_fim
+        data_inicio = None
+        data_fim = None
+        if mes_ano:
+            from datetime import datetime
+            import calendar
+            try:
+                ano, mes = map(int, mes_ano.split('-'))
+                data_inicio = f"{ano}-{mes:02d}-01"
+                ultimo_dia = calendar.monthrange(ano, mes)[1]
+                data_fim = f"{ano}-{mes:02d}-{ultimo_dia}"
+            except:
+                pass
         
         # Buscar todas as atividades (sem paginação)
         service = LogAtividadesService()
         resultado = service.listar_atividades(
-            filtro_modulo=filtro_modulo,
+            filtro_modulo=None,
             data_inicio=data_inicio,
             data_fim=data_fim,
             page=1,
@@ -183,9 +201,7 @@ def exportar_logs():
             'dados': dados_exportacao,
             'total': len(dados_exportacao),
             'filtros': {
-                'modulo': filtro_modulo,
-                'data_inicio': data_inicio,
-                'data_fim': data_fim
+                'mes_ano': mes_ano
             }
         })
         

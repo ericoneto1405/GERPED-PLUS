@@ -16,13 +16,8 @@
         <form method="GET" action="{{ url_for('log_atividades.listar_atividades') }}" class="filters-form">
             <div class="filter-row">
                 <div class="form-group">
-                    <label for="data_inicio">📅 Data Início</label>
-                    <input type="date" name="data_inicio" id="data_inicio" class="form-control" value="{{ data_inicio }}">
-                </div>
-                
-                <div class="form-group">
-                    <label for="data_fim">📅 Data Fim</label>
-                    <input type="date" name="data_fim" id="data_fim" class="form-control" value="{{ data_fim }}">
+                    <label for="mes_ano">📅 Mês/Ano</label>
+                    <input type="month" name="mes_ano" id="mes_ano" class="form-control" value="{{ mes_ano }}">
                 </div>
                 
                 <div class="form-group">
@@ -114,7 +109,7 @@
                 </div>
                 <div class="pagination">
                     {% if page > 1 %}
-                    <a href="{{ url_for('log_atividades.listar_atividades', page=page-1, per_page=per_page, modulo=filtro_modulo, data_inicio=data_inicio, data_fim=data_fim) }}" class="pagination-btn">
+                    <a href="{{ url_for('log_atividades.listar_atividades', page=page-1, per_page=per_page, mes_ano=mes_ano) }}" class="pagination-btn">
                         ← Anterior
                     </a>
                     {% endif %}
@@ -123,7 +118,7 @@
                         {% if p == page %}
                             <span class="pagination-btn pagination-active">{{ p }}</span>
                         {% elif p == 1 or p == total_paginas or (p >= page - 2 and p <= page + 2) %}
-                            <a href="{{ url_for('log_atividades.listar_atividades', page=p, per_page=per_page, modulo=filtro_modulo, data_inicio=data_inicio, data_fim=data_fim) }}" class="pagination-btn">
+                            <a href="{{ url_for('log_atividades.listar_atividades', page=p, per_page=per_page, mes_ano=mes_ano) }}" class="pagination-btn">
                                 {{ p }}
                             </a>
                         {% elif p == page - 3 or p == page + 3 %}
@@ -132,7 +127,7 @@
                     {% endfor %}
                     
                     {% if page < total_paginas %}
-                    <a href="{{ url_for('log_atividades.listar_atividades', page=page+1, per_page=per_page, modulo=filtro_modulo, data_inicio=data_inicio, data_fim=data_fim) }}" class="pagination-btn">
+                    <a href="{{ url_for('log_atividades.listar_atividades', page=page+1, per_page=per_page, mes_ano=mes_ano) }}" class="pagination-btn">
                         Próxima →
                     </a>
                     {% endif %}
@@ -145,7 +140,7 @@
                 <div class="empty-icon">📝</div>
                 <h3>Nenhuma atividade encontrada</h3>
                 <p>Não há atividades registradas com os filtros aplicados.</p>
-                {% if filtro_modulo or data_inicio or data_fim %}
+                {% if mes_ano %}
                 <button class="btn btn-primary" onclick="limparFiltros()">🔄 Limpar Filtros</button>
                 {% endif %}
             </div>

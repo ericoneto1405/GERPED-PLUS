@@ -308,6 +308,10 @@ def painel():
             dados_evolucao['cpv_total'].append(cpv_dia)
             dados_evolucao['margem'].append(margem_dia)
 
+        # Calcular necessidade de compra
+        from .pedidos.services import PedidoService
+        necessidade_compra = PedidoService.calcular_necessidade_compra()
+
         current_app.logger.info(
             f"Painel acessado por usuário {session.get('usuario_nome', 'N/A')}"
         )
@@ -328,6 +332,7 @@ def painel():
             pedidos_recentes=pedidos_recentes,
             dados_grafico=dados_grafico,
             dados_evolucao=dados_evolucao,
+            necessidade_compra=necessidade_compra,
             mes=mes,
             ano=ano,
         )

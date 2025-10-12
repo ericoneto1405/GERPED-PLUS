@@ -51,9 +51,6 @@ def listar_pedidos():
         
         pedidos = PedidoService.listar_pedidos(filtro_status, data_inicio, data_fim, ordenar_por, direcao)
         
-        # Calcular necessidade de compra
-        necessidade_compra = PedidoService.calcular_necessidade_compra()
-        
         current_app.logger.info(f"Listagem de pedidos acessada por {session.get('usuario_nome', 'N/A')} - Ordenado por: {ordenar_por} ({direcao})")
         
         return render_template(
@@ -64,14 +61,13 @@ def listar_pedidos():
             data_fim=data_fim or '',
             mes_ano=mes_ano or '',
             current_sort=ordenar_por,
-            current_direction=direcao,
-            necessidade_compra=necessidade_compra
+            current_direction=direcao
         )
         
     except Exception as e:
         current_app.logger.error(f"Erro ao listar pedidos: {str(e)}")
         flash(f"Erro ao carregar pedidos: {str(e)}", 'error')
-        return render_template('listar_pedidos.html', pedidos=[], filtro='todos', necessidade_compra=[])
+        return render_template('listar_pedidos.html', pedidos=[], filtro='todos')
 
 @pedidos_bp.route('/novo', methods=['GET', 'POST'])
 @login_obrigatorio

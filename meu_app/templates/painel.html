@@ -194,7 +194,205 @@
     window.margemManobra = {{ margem_manobra }};
 </script>
 
+<!-- Tabela de Análise de Necessidade de Compra -->
+<div class="necessidade-compra-section" style="margin-top: 40px; margin-bottom: 30px;">
+    <div class="section-header">
+        <h3>📊 Análise de Necessidade de Compra</h3>
+        <p style="color: #6c757d; font-size: 0.9rem; margin-top: 5px;">
+            Baseado nos pedidos liberados pelo comercial
+        </p>
+    </div>
+    
+    {% if necessidade_compra %}
+    <table class="necessidade-table">
+        <thead>
+            <tr>
+                <th>PRODUTO</th>
+                <th>QTD PEDIDOS LIBERADOS</th>
+                <th>QTD ESTOQUE</th>
+                <th>SALDO</th>
+                <th>NECESSIDADE DE COMPRA</th>
+                <th>STATUS</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in necessidade_compra %}
+            <tr class="{% if item.status == 'CRÍTICO' %}row-critico{% elif item.status == 'ZERADO' %}row-zerado{% else %}row-ok{% endif %}">
+                <td style="text-align: left; font-weight: 600;">{{ item.produto_nome }}</td>
+                <td>{{ item.quantidade_pedida }}</td>
+                <td>{{ item.quantidade_estoque }}</td>
+                <td class="{% if item.saldo < 0 %}text-danger{% elif item.saldo > 0 %}text-success{% else %}text-warning{% endif %}">
+                    {{ item.saldo }}
+                </td>
+                <td class="necessidade-cell">
+                    {% if item.necessidade_compra > 0 %}
+                        <span class="badge-compra">{{ item.necessidade_compra }} un.</span>
+                    {% else %}
+                        <span style="color: #28a745;">—</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if item.status == 'CRÍTICO' %}
+                        <span class="badge-critico">🚨 CRÍTICO</span>
+                    {% elif item.status == 'ZERADO' %}
+                        <span class="badge-zerado">⚠️ ZERADO</span>
+                    {% else %}
+                        <span class="badge-ok">✅ SUFICIENTE</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <div class="legenda-necessidade" style="margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+        <strong>Legenda:</strong>
+        <ul style="margin: 10px 0 0 20px; padding: 0;">
+            <li><strong>Pedidos Liberados:</strong> Soma de todos os pedidos confirmados pelo comercial</li>
+            <li><strong>Saldo:</strong> Estoque atual - Pedidos Liberados</li>
+            <li><strong>Necessidade de Compra:</strong> Quantidade que precisa ser comprada (quando saldo é negativo)</li>
+        </ul>
+    </div>
+    {% else %}
+    <div style="padding: 30px; text-align: center; background: #f8f9fa; border-radius: 8px;">
+        <p style="color: #6c757d; margin: 0;">
+            ℹ️ Nenhum pedido liberado pelo comercial no momento.
+        </p>
+    </div>
+    {% endif %}
+</div>
 
-
+<style>
+    .necessidade-compra-section {
+        background: white;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    
+    .section-header h3 {
+        color: #2c3e50;
+        margin: 0 0 5px 0;
+        font-size: 1.5rem;
+    }
+    
+    .necessidade-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: #fff;
+        margin-top: 20px;
+    }
+    
+    .necessidade-table th {
+        background-color: #667eea;
+        color: white !important;
+        padding: 12px;
+        text-align: center;
+        font-weight: 600;
+        border: 1px solid #5a67d8;
+    }
+    
+    .necessidade-table td {
+        padding: 12px;
+        border: 1px solid #e9ecef;
+        text-align: center;
+    }
+    
+    .necessidade-table tbody tr {
+        transition: background-color 0.2s ease;
+    }
+    
+    .necessidade-table tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .row-critico {
+        background-color: #fff5f5 !important;
+    }
+    
+    .row-critico:hover {
+        background-color: #ffe5e5 !important;
+    }
+    
+    .row-zerado {
+        background-color: #fffbf0 !important;
+    }
+    
+    .row-zerado:hover {
+        background-color: #fff3d9 !important;
+    }
+    
+    .row-ok {
+        background-color: #f0fff4 !important;
+    }
+    
+    .row-ok:hover {
+        background-color: #e0ffe8 !important;
+    }
+    
+    .text-danger {
+        color: #dc3545;
+        font-weight: bold;
+    }
+    
+    .text-success {
+        color: #28a745;
+        font-weight: bold;
+    }
+    
+    .text-warning {
+        color: #ffc107;
+        font-weight: bold;
+    }
+    
+    .badge-compra {
+        background-color: #dc3545;
+        color: white;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+    
+    .badge-critico {
+        background-color: #dc3545;
+        color: white;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+    
+    .badge-zerado {
+        background-color: #ffc107;
+        color: #000;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+    
+    .badge-ok {
+        background-color: #28a745;
+        color: white;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+    
+    .necessidade-cell {
+        font-size: 1.1rem;
+    }
+    
+    .legenda-necessidade ul {
+        list-style: none;
+    }
+    
+    .legenda-necessidade li {
+        margin: 5px 0;
+        color: #495057;
+    }
+</style>
 
 {% endblock %}

@@ -35,9 +35,15 @@ class VisionOcrService:
 
                 client_kwargs = {}
 
+                # For environments blocked on SRV DNS lookups (common in on-prem firewalls),
+                # force gRPC to use the native resolver to avoid `_grpclb` queries.
+                os.environ.setdefault("GRPC_DNS_RESOLVER", "native")
+
+                client_kwargs.setdefault("client_options", {})
+
                 if api_key:
                     # API Key habilitada: ideal para imagens; PDFs continuarão exigindo credenciais.
-                    client_kwargs["client_options"] = {"api_key": api_key}
+                    client_kwargs["client_options"]["api_key"] = api_key
                 elif credentials_path and os.path.exists(credentials_path):
                     if not os.environ.get('GOOGLE_APPLICATION_CREDENTIALS'):
                         os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = credentials_path
@@ -46,6 +52,9 @@ class VisionOcrService:
                         "Credenciais do Google Vision não configuradas. "
                         "Defina GOOGLE_VISION_API_KEY ou GOOGLE_VISION_CREDENTIALS_PATH."
                     )
+
+                # Força transporte REST para evitar problemas de DNS com gRPC em ambientes restritos.
+                client_kwargs["transport"] = client_kwargs.get("transport", "rest")
 
                 print("Inicializando cliente Google Vision...")
                 cls._client = vision.ImageAnnotatorClient(**client_kwargs)

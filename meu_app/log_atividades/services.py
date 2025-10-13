@@ -141,7 +141,7 @@ class LogAtividadesService:
                         details={'field': 'data_fim', 'expected_format': 'YYYY-MM-DD'}
                     )
                 data_fim_dt = datetime.strptime(data_fim, "%Y-%m-%d") + timedelta(days=1) - timedelta(seconds=1)
-                query = query.filter(LogAtividade.data_atividade <= data_fim_dt)
+                query = query.filter(LogAtividade.data_hora <= data_fim_dt)
             
             # Validar datas (início deve ser menor que fim)
             if data_inicio and data_fim:
@@ -256,13 +256,13 @@ class LogAtividadesService:
             data_limite = datetime.now() - timedelta(days=dias)
             
             # Contar registros que serão removidos
-            quantidade = LogAtividade.query.filter(LogAtividade.data_atividade < data_limite).count()
+            quantidade = LogAtividade.query.filter(LogAtividade.data_hora < data_limite).count()
             
             if quantidade == 0:
                 return True, "Nenhum registro antigo encontrado para remoção", 0
             
             # Remover registros antigos
-            LogAtividade.query.filter(LogAtividade.data_atividade < data_limite).delete()
+            LogAtividade.query.filter(LogAtividade.data_hora < data_limite).delete()
             db.session.commit()
             
             current_app.logger.info(f"Logs antigos removidos: {quantidade} registros")
@@ -294,13 +294,13 @@ class LogAtividadesService:
             # Atividades dos últimos 7 dias
             data_7_dias = datetime.now() - timedelta(days=7)
             atividades_7_dias = LogAtividade.query.filter(
-                LogAtividade.data_atividade >= data_7_dias
+                LogAtividade.data_hora >= data_7_dias
             ).count()
             
             # Atividades dos últimos 30 dias
             data_30_dias = datetime.now() - timedelta(days=30)
             atividades_30_dias = LogAtividade.query.filter(
-                LogAtividade.data_atividade >= data_30_dias
+                LogAtividade.data_hora >= data_30_dias
             ).count()
             
             # Atividades por tipo
@@ -342,7 +342,7 @@ class LogAtividadesService:
         try:
             return LogAtividade.query.filter(
                 LogAtividade.usuario_id == usuario_id
-            ).order_by(LogAtividade.data_atividade.desc()).limit(limit).all()
+            ).order_by(LogAtividade.data_hora.desc()).limit(limit).all()
         except Exception as e:
             current_app.logger.error(f"Erro ao buscar atividades do usuário: {str(e)}")
             return []
@@ -362,7 +362,7 @@ class LogAtividadesService:
         try:
             return LogAtividade.query.filter(
                 LogAtividade.tipo_atividade == tipo_atividade
-            ).order_by(LogAtividade.data_atividade.desc()).limit(limit).all()
+            ).order_by(LogAtividade.data_hora.desc()).limit(limit).all()
         except Exception as e:
             current_app.logger.error(f"Erro ao buscar atividades por tipo: {str(e)}")
             return []
@@ -388,12 +388,12 @@ class LogAtividadesService:
                     query = query.filter(LogAtividade.modulo == filtros['modulo'])
                 if filtros.get('data_inicio'):
                     data_inicio = datetime.strptime(filtros['data_inicio'], "%Y-%m-%d")
-                    query = query.filter(LogAtividade.data_atividade >= data_inicio)
+                    query = query.filter(LogAtividade.data_hora >= data_inicio)
                 if filtros.get('data_fim'):
                     data_fim = datetime.strptime(filtros['data_fim'], "%Y-%m-%d") + timedelta(days=1)
-                    query = query.filter(LogAtividade.data_atividade < data_fim)
+                    query = query.filter(LogAtividade.data_hora < data_fim)
             
-            atividades = query.order_by(LogAtividade.data_atividade.desc()).all()
+            atividades = query.order_by(LogAtividade.data_hora.desc()).all()
             
             if formato == 'json':
                 dados = []
@@ -405,7 +405,7 @@ class LogAtividadesService:
                         'titulo': atividade.titulo,
                         'descricao': atividade.descricao,
                         'modulo': atividade.modulo,
-                        'data_atividade': atividade.data_atividade.isoformat(),
+                        'data_atividade': atividade.data_hora.isoformat(),
                         'ip_address': atividade.ip_address,
                         'dados_extras': json.loads(atividade.dados_extras) if atividade.dados_extras else None
                     })
@@ -433,7 +433,7 @@ class LogAtividadesService:
                         atividade.titulo,
                         atividade.descricao,
                         atividade.modulo,
-                        atividade.data_atividade.strftime('%Y-%m-%d %H:%M:%S'),
+                        atividade.data_hora.strftime('%Y-%m-%d %H:%M:%S'),
                         atividade.ip_address or '',
                         atividade.dados_extras or ''
                     ])

@@ -113,7 +113,7 @@
                         {% if item.status == 'Pendente' or item.status == 'Parcial' %}
                             <a href="{{ url_for('financeiro.registrar_pagamento', pedido_id=pedido.id) }}" class="btn btn-sm btn-success" title="Registrar Pagamento">💳</a>
                         {% endif %}
-                        <a href="{{ url_for('financeiro.editar_pagamento', pedido_id=pedido.id) }}" class="btn btn-sm btn-primary" title="Editar Pagamento">✏️</a>
+                        <a href="{{ url_for('financeiro.editar_pagamento', pedido_id=pedido.id) }}" class="btn btn-sm btn-primary" title="Editar Pagamento" target="_blank">✏️</a>
                     </td>
                 </tr>
                 <tr class="collapse" id="details-{{ pedido.id }}">

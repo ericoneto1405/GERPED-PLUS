@@ -83,15 +83,48 @@
     background-color: #fee2e2;
 }
 
+.coleta-items-table {
+    table-layout: fixed;
+}
+
 .coleta-items-table th,
 .coleta-items-table td {
-    text-align: center;
+    text-align: right;
     vertical-align: middle;
+    white-space: nowrap;
 }
 
 .coleta-items-table td:first-child,
 .coleta-items-table th:first-child {
     text-align: left;
+    white-space: normal;
+}
+
+.coleta-items-table td:last-child,
+.coleta-items-table th:last-child {
+    text-align: left;
+}
+
+.coleta-badge {
+    width: 100%;
+    display: inline-flex;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.coleta-items-table .col-produto {
+    width: 28%;
+}
+
+.coleta-items-table .col-total,
+.coleta-items-table .col-coletado,
+.coleta-items-table .col-pendente,
+.coleta-items-table .col-estoque {
+    width: 14%;
+}
+
+.coleta-items-table .col-entrada {
+    width: 16%;
 }
 </style>
 {% endblock %}
@@ -223,6 +256,14 @@
                                 
                                 <div class="table-responsive">
                                     <table class="table table-striped coleta-items-table">
+                                        <colgroup>
+                                            <col class="col-produto">
+                                            <col class="col-total">
+                                            <col class="col-coletado">
+                                            <col class="col-pendente">
+                                            <col class="col-estoque">
+                                            <col class="col-entrada">
+                                        </colgroup>
                                         <thead>
                                             <tr>
                                                 <th>Produto</th>

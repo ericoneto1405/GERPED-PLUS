@@ -7,8 +7,17 @@ from flask import current_app
 from sqlalchemy import func
 
 from meu_app.models import (
-    db, Pedido, Coleta, ItemColetado, ItemPedido, 
-    Usuario, Estoque, MovimentacaoEstoque, StatusColeta, StatusPedido
+    db,
+    Pedido,
+    Coleta,
+    ItemColetado,
+    ItemPedido,
+    Pagamento,
+    Usuario,
+    Estoque,
+    MovimentacaoEstoque,
+    StatusColeta,
+    StatusPedido,
 )
 
 
@@ -27,59 +36,113 @@ class ColetaService:
             List[Dict]: Lista de pedidos com informações de coleta
         """
         try:
-            # Buscar pedidos com eager loading otimizado
-            pedidos = Pedido.query.options(
-                db.joinedload(Pedido.cliente),
-                db.joinedload(Pedido.itens).joinedload(ItemPedido.produto),
-                db.joinedload(Pedido.pagamentos)
-            ).all()
-            
-            lista_pedidos = []
-            
-            for pedido in pedidos:
-                # Calcular totais financeiros
-                total_venda = sum(i.valor_total_venda for i in pedido.itens)
-                total_pago = sum(p.valor for p in pedido.pagamentos)
-                
-                # Calcular quantidades
-                total_itens_pedido = sum(item.quantidade for item in pedido.itens)
-                total_itens_coletados = 0
-                
-                for item in pedido.itens:
-                    total_coletado_item = db.session.query(
-                        func.coalesce(func.sum(ItemColetado.quantidade_coletada), 0)
-                    ).join(Coleta).filter(
-                        Coleta.pedido_id == pedido.id,
-                        ItemColetado.item_pedido_id == item.id
-                    ).scalar()
-                    total_itens_coletados += total_coletado_item
-                
-                # Determinar status de coleta
-                coletado_completo = total_itens_coletados >= total_itens_pedido
-                pagamento_aprovado = total_pago >= total_venda
-                
-                # Aplicar filtro
+            status_relevantes = [
+                StatusPedido.PAGAMENTO_APROVADO,
+                StatusPedido.COLETA_PARCIAL,
+                StatusPedido.COLETA_CONCLUIDA,
+            ]
+
+            itens_totais_sq = (
+                db.session.query(
+                    ItemPedido.pedido_id.label("pedido_id"),
+                    func.sum(ItemPedido.quantidade).label("total_itens"),
+                    func.sum(ItemPedido.valor_total_venda).label("total_venda"),
+                )
+                .group_by(ItemPedido.pedido_id)
+                .subquery()
+            )
+
+            itens_coletados_sq = (
+                db.session.query(
+                    ItemPedido.pedido_id.label("pedido_id"),
+                    func.sum(ItemColetado.quantidade_coletada).label("itens_coletados"),
+                )
+                .join(ItemColetado, ItemColetado.item_pedido_id == ItemPedido.id)
+                .group_by(ItemPedido.pedido_id)
+                .subquery()
+            )
+
+            pagamentos_sq = (
+                db.session.query(
+                    Pagamento.pedido_id.label("pedido_id"),
+                    func.sum(Pagamento.valor).label("total_pago"),
+                )
+                .group_by(Pagamento.pedido_id)
+                .subquery()
+            )
+
+            aggregated_rows = (
+                db.session.query(
+                    Pedido.id.label("pedido_id"),
+                    func.coalesce(itens_totais_sq.c.total_itens, 0).label("total_itens"),
+                    func.coalesce(itens_coletados_sq.c.itens_coletados, 0).label(
+                        "itens_coletados"
+                    ),
+                    func.coalesce(itens_totais_sq.c.total_venda, 0).label("total_venda"),
+                    func.coalesce(pagamentos_sq.c.total_pago, 0).label("total_pago"),
+                )
+                .outerjoin(
+                    itens_totais_sq, itens_totais_sq.c.pedido_id == Pedido.id
+                )
+                .outerjoin(
+                    itens_coletados_sq, itens_coletados_sq.c.pedido_id == Pedido.id
+                )
+                .outerjoin(pagamentos_sq, pagamentos_sq.c.pedido_id == Pedido.id)
+                .filter(Pedido.status.in_(status_relevantes))
+                .order_by(Pedido.data.asc())
+                .all()
+            )
+
+            if not aggregated_rows:
+                return []
+
+            pedido_ids = [row.pedido_id for row in aggregated_rows]
+            pedidos = (
+                Pedido.query.options(db.joinedload(Pedido.cliente))
+                .filter(Pedido.id.in_(pedido_ids))
+                .all()
+            )
+            pedido_map = {pedido.id: pedido for pedido in pedidos}
+
+            lista_pedidos: List[Dict] = []
+
+            for row in aggregated_rows:
+                pedido = pedido_map.get(row.pedido_id)
+                if not pedido:
+                    continue
+
+                total_itens = int(row.total_itens or 0)
+                itens_coletados = int(row.itens_coletados or 0)
+                total_venda = float(row.total_venda or 0)
+                total_pago = float(row.total_pago or 0)
+                itens_pendentes = max(total_itens - itens_coletados, 0)
+                coletado_completo = total_itens > 0 and itens_coletados >= total_itens
+                pagamento_aprovado = total_venda > 0 and total_pago >= total_venda
+
                 incluir_pedido = False
-                
                 if filtro == 'pendentes':
                     incluir_pedido = pagamento_aprovado and not coletado_completo
                 elif filtro == 'coletados':
                     incluir_pedido = coletado_completo
-                elif filtro == 'todos':
+                else:
                     incluir_pedido = True
-                
-                if incluir_pedido:
-                    lista_pedidos.append({
-                        'pedido': pedido,
-                        'total_itens': total_itens_pedido,
-                        'itens_coletados': total_itens_coletados,
-                        'itens_pendentes': total_itens_pedido - total_itens_coletados,
-                        'total_venda': total_venda,
-                        'total_pago': total_pago,
-                        'coletado_completo': coletado_completo,
-                        'pagamento_aprovado': pagamento_aprovado
-                    })
-            
+
+                if not incluir_pedido:
+                    continue
+
+                lista_pedidos.append(
+                    {
+                        "pedido": pedido,
+                        "total_itens": total_itens,
+                        "itens_coletados": itens_coletados,
+                        "itens_pendentes": itens_pendentes,
+                        "total_venda": total_venda,
+                        "total_pago": total_pago,
+                        "coletado_completo": coletado_completo,
+                        "pagamento_aprovado": pagamento_aprovado,
+                    }
+                )
+
             return lista_pedidos
             
         except Exception as e:

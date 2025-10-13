@@ -470,3 +470,48 @@ def editar_pagamento(pedido_id):
         current_app.logger.error(f"Erro ao carregar formulário de edição: {str(e)}")
         flash('Erro ao carregar dados do pagamento', 'error')
         return redirect(url_for('financeiro.listar_financeiro'))
+
+@financeiro_bp.route('/retornar-comercial/<int:pedido_id>', methods=['POST'])
+@login_obrigatorio
+@permissao_necessaria('acesso_financeiro')
+def retornar_para_comercial(pedido_id):
+    """Retorna um pedido para o comercial (apenas se não houver pagamentos)"""
+    from ..models import Pedido, Pagamento
+    from .. import db
+    
+    try:
+        pedido = Pedido.query.get(pedido_id)
+        if not pedido:
+            return jsonify({'success': False, 'message': 'Pedido não encontrado'}), 404
+        
+        # Verificar se há pagamentos
+        pagamentos = Pagamento.query.filter_by(pedido_id=pedido_id).count()
+        if pagamentos > 0:
+            return jsonify({
+                'success': False, 
+                'message': f'Este pedido possui {pagamentos} pagamento(s) registrado(s). Não é possível retorná-lo ao comercial.'
+            }), 400
+        
+        # Remover a confirmação comercial (retornar para pedidos)
+        pedido.confirmado_comercial = False
+        pedido.confirmado_por = None
+        pedido.data_confirmacao = None
+        
+        db.session.commit()
+        
+        current_app.logger.info(
+            f"Pedido #{pedido_id} retornado para comercial por {session.get('usuario_nome', 'N/A')}"
+        )
+        
+        return jsonify({
+            'success': True, 
+            'message': f'Pedido #{pedido_id} retornado com sucesso para o comercial!'
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Erro ao retornar pedido para comercial: {str(e)}")
+        return jsonify({
+            'success': False, 
+            'message': f'Erro ao processar requisição: {str(e)}'
+        }), 500

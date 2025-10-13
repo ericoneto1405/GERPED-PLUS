@@ -211,57 +211,56 @@
 {% block scripts %}
 {{ super() }}
 <script nonce="{{ nonce }}">
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Script financeiro carregado');
+        
+        // Event listener para links de edição
         document.querySelectorAll('[data-action="open-edit-payment"]').forEach((link) => {
             link.addEventListener('click', (event) => {
                 event.preventDefault();
                 window.open(link.href, '_blank', 'noopener');
             });
         });
-    });
-    
-    // Event delegation para botão retornar comercial (CSP-compliant)
-    document.addEventListener('DOMContentLoaded', function() {
-        console.log('Event listener para retornar-comercial carregado');
         
-        document.addEventListener('click', function(event) {
-            // Verificar se clicou no botão ou em seus filhos (emoji/texto)
-            const button = event.target.closest('[data-action="retornar-comercial"]');
-            if (!button) return;
-            
-            console.log('Botão retornar clicado!');
-            event.preventDefault();
-            const pedidoId = button.getAttribute('data-pedido-id');
-            console.log('Pedido ID:', pedidoId);
-            
-            if (confirm('Tem certeza que deseja retornar este pedido para o comercial? Esta ação só é permitida para pedidos sem pagamentos.')) {
-                console.log('Confirmado, enviando requisição...');
-                fetch(`/financeiro/retornar-comercial/${pedidoId}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    }
-                })
-                .then(response => {
-                    console.log('Resposta recebida:', response.status);
-                    return response.json();
-                })
-                .then(data => {
-                    console.log('Dados:', data);
-                    if (data.success) {
-                        alert(data.message);
-                        window.location.reload();
-                    } else {
-                        alert('Erro: ' + data.message);
-                    }
-                })
-                .catch(error => {
-                    console.error('Erro na requisição:', error);
-                    alert('Erro ao processar requisição: ' + error);
-                });
-            } else {
-                console.log('Ação cancelada pelo usuário');
-            }
+        // Event listener para botões de retornar comercial
+        const botoesRetornar = document.querySelectorAll('[data-action="retornar-comercial"]');
+        console.log('Botões retornar encontrados:', botoesRetornar.length);
+        
+        botoesRetornar.forEach(function(button) {
+            button.addEventListener('click', function(event) {
+                event.preventDefault();
+                const pedidoId = this.getAttribute('data-pedido-id');
+                console.log('Botão retornar clicado! Pedido ID:', pedidoId);
+                
+                if (confirm('Tem certeza que deseja retornar este pedido para o comercial? Esta ação só é permitida para pedidos sem pagamentos.')) {
+                    console.log('Confirmado, enviando requisição...');
+                    fetch(`/financeiro/retornar-comercial/${pedidoId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    })
+                    .then(response => {
+                        console.log('Resposta recebida:', response.status);
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('Dados:', data);
+                        if (data.success) {
+                            alert(data.message);
+                            window.location.reload();
+                        } else {
+                            alert('Erro: ' + data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Erro na requisição:', error);
+                        alert('Erro ao processar requisição: ' + error);
+                    });
+                } else {
+                    console.log('Ação cancelada pelo usuário');
+                }
+            });
         });
     });
 </script>

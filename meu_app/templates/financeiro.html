@@ -119,6 +119,11 @@
                            data-action="open-edit-payment"
                            target="_blank"
                            rel="noopener">✏️ Editar</a>
+                        {% if pago == 0 %}
+                            <button class="btn btn-sm btn-secondary" 
+                                    onclick="retornarParaComercial({{ pedido.id }})" 
+                                    title="Retornar para Comercial">⬅️ Retornar</button>
+                        {% endif %}
                     </td>
                 </tr>
                 <tr class="collapse" id="details-{{ pedido.id }}">
@@ -212,5 +217,28 @@
             });
         });
     });
+    
+    function retornarParaComercial(pedidoId) {
+        if (confirm('Tem certeza que deseja retornar este pedido para o comercial? Esta ação só é permitida para pedidos sem pagamentos.')) {
+            fetch(`/financeiro/retornar-comercial/${pedidoId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    window.location.reload();
+                } else {
+                    alert('Erro: ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('Erro ao processar requisição: ' + error);
+            });
+        }
+    }
 </script>
 {% endblock %}

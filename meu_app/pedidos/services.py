@@ -2,7 +2,18 @@
 Serviços para o módulo de pedidos
 Contém toda a lógica de negócio complexa separada das rotas
 """
-from ..models import db, Pedido, ItemPedido, Cliente, Produto, Coleta, ItemColetado, LogAtividade, Usuario
+from ..models import (
+    db,
+    Pedido,
+    ItemPedido,
+    Cliente,
+    Produto,
+    Coleta,
+    ItemColetado,
+    LogAtividade,
+    Usuario,
+    StatusPedido,
+)
 from flask import current_app, session
 from typing import Dict, List, Tuple, Optional
 from datetime import datetime, timedelta

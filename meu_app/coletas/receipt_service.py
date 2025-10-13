@@ -10,15 +10,13 @@ from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
 from reportlab.graphics.shapes import Drawing, Rect, Line
 from reportlab.graphics import renderPDF
-from datetime import datetime, timedelta
+from datetime import datetime
 import os
-import logging
 from flask import current_app
 
 
 class ReceiptService:
     """Serviço para geração de recibos de coleta"""
-    DEFAULT_RETENTION_DAYS = 30
     
     @staticmethod
     def gerar_recibo_pdf(coleta_data):
@@ -310,50 +308,9 @@ class ReceiptService:
             # Construir PDF
             doc.build(story)
 
-            ReceiptService._limpar_recibos_antigos(
-                receipts_dir,
-                current_app.config.get(
-                    'COLETA_RECIBO_RETENTION_DAYS',
-                    ReceiptService.DEFAULT_RETENTION_DAYS,
-                ),
-            )
-
             current_app.logger.info(f"Recibo PDF gerado: {filepath}")
             return filepath
             
         except Exception as e:
             current_app.logger.error(f"Erro ao gerar recibo PDF: {str(e)}")
             raise e
-
-    @staticmethod
-    def _limpar_recibos_antigos(recibos_dir: str, retention_days: int) -> None:
-        """Remove arquivos antigos do diretório de recibos."""
-        if retention_days is None or retention_days < 0:
-            return
-
-        limite = datetime.utcnow() - timedelta(days=retention_days)
-
-        try:
-            for arquivo in os.listdir(recibos_dir):
-                caminho = os.path.join(recibos_dir, arquivo)
-                if not os.path.isfile(caminho):
-                    continue
-
-                try:
-                    mtime = datetime.utcfromtimestamp(os.path.getmtime(caminho))
-                except OSError:
-                    continue
-
-                if mtime < limite:
-                    try:
-                        os.remove(caminho)
-                    except OSError as exc:
-                        logging.getLogger(__name__).warning(
-                            "Falha ao remover recibo antigo %s: %s", caminho, exc
-                        )
-        except Exception as exc:
-            logging.getLogger(__name__).warning(
-                "Erro ao processar limpeza de recibos em %s: %s",
-                recibos_dir,
-                exc,
-            )

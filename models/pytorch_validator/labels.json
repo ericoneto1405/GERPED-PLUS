@@ -1,0 +1,7 @@
+{
+  "label_to_idx": {
+    "invalido": 0,
+    "suspeito": 1,
+    "valido": 2
+  }
+}

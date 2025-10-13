@@ -460,53 +460,54 @@ class PedidoService:
         try:
             from sqlalchemy import func
             from ..models import Estoque
-            
-            # Buscar todos os pedidos confirmados pelo comercial
-            pedidos_liberados = db.session.query(
-                Produto.id,
-                Produto.nome,
-                Produto.preco_compra,
-                func.sum(ItemPedido.quantidade).label('quantidade_pedida')
-            ).join(
-                ItemPedido, ItemPedido.produto_id == Produto.id
-            ).join(
-                Pedido, Pedido.id == ItemPedido.pedido_id
-            ).filter(
-                Pedido.confirmado_comercial == True
-            ).group_by(
-                Produto.id, Produto.nome, Produto.preco_compra
-            ).all()
-            
-            resultado = []
-            
-            for produto_id, produto_nome, preco_compra, quantidade_pedida in pedidos_liberados:
-                # Buscar estoque atual
-                estoque = Estoque.query.filter_by(produto_id=produto_id).first()
+
+            pedidos_liberados = (
+                db.session.query(
+                    Produto.id.label('produto_id'),
+                    Produto.nome.label('produto_nome'),
+                    func.sum(ItemPedido.quantidade).label('quantidade_pedida'),
+                    func.sum(ItemPedido.valor_total_compra).label('valor_total_compra'),
+                )
+                .join(ItemPedido, ItemPedido.produto_id == Produto.id)
+                .join(Pedido, Pedido.id == ItemPedido.pedido_id)
+                .filter(Pedido.confirmado_comercial == True)
+                .group_by(Produto.id, Produto.nome)
+                .all()
+            )
+
+            resultado: List[Dict] = []
+
+            for row in pedidos_liberados:
+                quantidade_pedida = int(row.quantidade_pedida or 0)
+                if quantidade_pedida <= 0:
+                    continue
+
+                estoque = Estoque.query.filter_by(produto_id=row.produto_id).first()
                 quantidade_estoque = estoque.quantidade if estoque else 0
-                
-                # Calcular necessidade
-                saldo = quantidade_estoque - int(quantidade_pedida)
+
+                saldo = quantidade_estoque - quantidade_pedida
                 necessidade_compra = abs(saldo) if saldo < 0 else 0
-                
-                # Calcular valor total da necessidade
-                valor_compra = float(preco_compra or 0)
-                valor_total_necessidade = necessidade_compra * valor_compra
-                
+
+                valor_total_compra = float(row.valor_total_compra or 0)
+                valor_compra_unitario = (
+                    valor_total_compra / quantidade_pedida if quantidade_pedida > 0 else 0.0
+                )
+                valor_total_necessidade = necessidade_compra * valor_compra_unitario
+
                 resultado.append({
-                    'produto_id': produto_id,
-                    'produto_nome': produto_nome,
-                    'quantidade_pedida': int(quantidade_pedida),
+                    'produto_id': row.produto_id,
+                    'produto_nome': row.produto_nome,
+                    'quantidade_pedida': quantidade_pedida,
                     'quantidade_estoque': quantidade_estoque,
                     'saldo': saldo,
                     'necessidade_compra': necessidade_compra,
-                    'valor_compra': valor_compra,
+                    'valor_compra': valor_compra_unitario,
                     'valor_total_necessidade': valor_total_necessidade,
                     'status': 'CRÍTICO' if saldo < 0 else 'SUFICIENTE' if saldo > 0 else 'ZERADO'
                 })
-            
-            # Ordenar por necessidade de compra (críticos primeiro)
+
             resultado.sort(key=lambda x: (x['necessidade_compra'], x['produto_nome']), reverse=True)
-            
+
             return resultado
             
         except Exception as e:

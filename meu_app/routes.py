@@ -120,62 +120,88 @@ def painel():
         mes = int(mes)
         ano = int(ano)
 
-        # Calcular datas de início e fim do mês
+        # Calcular datas de início e fim (exclusivo) do mês
         data_inicio = datetime(ano, mes, 1)
         if mes == 12:
-            data_fim = datetime(ano + 1, 1, 1) - timedelta(days=1)
+            proximo_mes = datetime(ano + 1, 1, 1)
         else:
-            data_fim = datetime(ano, mes + 1, 1) - timedelta(days=1)
+            proximo_mes = datetime(ano, mes + 1, 1)
 
         # Estatísticas do painel
         total_pedidos = Pedido.query.filter(
             Pedido.data >= data_inicio,
-            Pedido.data <= data_fim
+            Pedido.data < proximo_mes
         ).count()
 
-        # Pedidos pagos (completamente pagos - liberados para coleta)
-        pedidos_pagos = Pedido.query.filter(
-            Pedido.data >= data_inicio,
-            Pedido.data <= data_fim,
-            Pedido.status.in_([
-                StatusPedido.PAGAMENTO_APROVADO,
-                StatusPedido.COLETA_PARCIAL,
-                StatusPedido.COLETA_CONCLUIDA
-            ])
-        ).count()
-
-        # Faturamento total (apenas pedidos completamente pagos)
-        faturamento_total = float(
-            db.session.query(func.coalesce(func.sum(ItemPedido.valor_total_venda), 0))
-            .join(Pedido, ItemPedido.pedido_id == Pedido.id)
+        # Pagamentos reconhecidos no período selecionado
+        pagamentos_periodo_raw = (
+            db.session.query(
+                Pagamento.pedido_id,
+                Pagamento.valor,
+                Pagamento.data_pagamento
+            )
+            .join(Pedido, Pagamento.pedido_id == Pedido.id)
             .filter(
-                Pedido.data >= data_inicio,
-                Pedido.data <= data_fim,
+                Pagamento.data_pagamento >= data_inicio,
+                Pagamento.data_pagamento < proximo_mes,
                 Pedido.status.in_([
                     StatusPedido.PAGAMENTO_APROVADO,
                     StatusPedido.COLETA_PARCIAL,
                     StatusPedido.COLETA_CONCLUIDA
                 ])
             )
-            .scalar()
-            or 0
+            .all()
         )
 
-        # CPV Total (custo dos produtos vendidos de pedidos completamente pagos)
-        cpv_total = float(
-            db.session.query(func.coalesce(func.sum(ItemPedido.valor_total_compra), 0))
-            .join(Pedido, ItemPedido.pedido_id == Pedido.id)
-            .filter(
-                Pedido.data >= data_inicio,
-                Pedido.data <= data_fim,
-                Pedido.status.in_([
-                    StatusPedido.PAGAMENTO_APROVADO,
-                    StatusPedido.COLETA_PARCIAL,
-                    StatusPedido.COLETA_CONCLUIDA
-                ])
+        pagamentos_periodo = [
+            {
+                'pedido_id': pagamento.pedido_id,
+                'valor': float(pagamento.valor or 0),
+                'data': pagamento.data_pagamento or data_inicio,
+            }
+            for pagamento in pagamentos_periodo_raw
+        ]
+
+        pagamentos_por_pedido = {}
+        for pagamento in pagamentos_periodo:
+            pagamentos_por_pedido[pagamento['pedido_id']] = pagamentos_por_pedido.get(
+                pagamento['pedido_id'], 0.0
+            ) + pagamento['valor']
+
+        pedido_ids_pagamento = list(pagamentos_por_pedido.keys())
+
+        pedido_totais = {}
+        pedido_ratios = {}
+        if pedido_ids_pagamento:
+            pedido_totais_rows = (
+                db.session.query(
+                    ItemPedido.pedido_id.label('pedido_id'),
+                    func.coalesce(func.sum(ItemPedido.valor_total_venda), 0).label('total_venda'),
+                    func.coalesce(func.sum(ItemPedido.valor_total_compra), 0).label('total_compra'),
+                )
+                .filter(ItemPedido.pedido_id.in_(pedido_ids_pagamento))
+                .group_by(ItemPedido.pedido_id)
+                .all()
             )
-            .scalar()
-            or 0
+
+            for row in pedido_totais_rows:
+                total_venda = float(row.total_venda or 0)
+                total_compra = float(row.total_compra or 0)
+                pedido_totais[row.pedido_id] = {
+                    'total_venda': total_venda,
+                    'total_compra': total_compra,
+                }
+                pedido_ratios[row.pedido_id] = (
+                    (total_compra / total_venda) if total_venda > 0 else 0.0
+                )
+
+        faturamento_total = sum(pagamentos_por_pedido.values())
+        pedidos_pagos = len(pagamentos_por_pedido)
+
+        # CPV proporcional aos pagamentos reconhecidos no período
+        cpv_total = sum(
+            pagamento['valor'] * pedido_ratios.get(pagamento['pedido_id'], 0.0)
+            for pagamento in pagamentos_periodo
         )
 
         # Verificar se existe apuração para o período
@@ -218,20 +244,21 @@ def painel():
         data_30_dias_atras = datetime.now() - timedelta(days=30)
         vendas_por_dia = (
             db.session.query(
-                func.date(Pedido.data).label('data'),
-                func.sum(ItemPedido.valor_total_venda).label('total')
+                func.date(Pagamento.data_pagamento).label('data'),
+                func.sum(Pagamento.valor).label('total')
             )
-            .join(ItemPedido, ItemPedido.pedido_id == Pedido.id)
+            .join(Pedido, Pagamento.pedido_id == Pedido.id)
             .filter(
-                Pedido.data >= data_30_dias_atras,
+                Pagamento.data_pagamento >= data_30_dias_atras,
+                Pagamento.data_pagamento <= datetime.now(),
                 Pedido.status.in_([
                     StatusPedido.PAGAMENTO_APROVADO,
                     StatusPedido.COLETA_PARCIAL,
                     StatusPedido.COLETA_CONCLUIDA
                 ])
             )
-            .group_by(func.date(Pedido.data))
-            .order_by(func.date(Pedido.data))
+            .group_by(func.date(Pagamento.data_pagamento))
+            .order_by(func.date(Pagamento.data_pagamento))
             .all()
         )
 
@@ -266,7 +293,13 @@ def painel():
             'cpv_total': [],
             'margem': []
         }
-        
+        pagamentos_por_dia = {}
+        for pagamento in pagamentos_periodo:
+            dia = pagamento['data'].date()
+            entry = pagamentos_por_dia.setdefault(dia, {'receita': 0.0, 'cpv': 0.0})
+            entry['receita'] += pagamento['valor']
+            entry['cpv'] += pagamento['valor'] * pedido_ratios.get(pagamento['pedido_id'], 0.0)
+
         # Gerar dados para cada dia do mês
         from calendar import monthrange
         _, ultimo_dia = monthrange(ano, mes)
@@ -274,25 +307,8 @@ def painel():
         for dia in range(1, ultimo_dia + 1):
             data_dia = datetime(ano, mes, dia)
             
-            # Receita do dia (apenas pedidos pagos)
-            receita_dia = float(
-                db.session.query(func.coalesce(func.sum(ItemPedido.valor_total_venda), 0))
-                .join(Pedido, ItemPedido.pedido_id == Pedido.id)
-                .join(Pagamento, Pedido.id == Pagamento.pedido_id)
-                .filter(func.date(Pedido.data) == data_dia.date())
-                .scalar()
-                or 0
-            )
-            
-            # CPV do dia (apenas pedidos pagos)
-            cpv_dia = float(
-                db.session.query(func.coalesce(func.sum(ItemPedido.valor_total_compra), 0))
-                .join(Pedido, ItemPedido.pedido_id == Pedido.id)
-                .join(Pagamento, Pedido.id == Pagamento.pedido_id)
-                .filter(func.date(Pedido.data) == data_dia.date())
-                .scalar()
-                or 0
-            )
+            receita_dia = pagamentos_por_dia.get(data_dia.date(), {}).get('receita', 0.0)
+            cpv_dia = pagamentos_por_dia.get(data_dia.date(), {}).get('cpv', 0.0)
             
             # Verbas do dia (proporcional se houver apuração)
             verbas_dia = 0.0

@@ -113,7 +113,12 @@
                         {% if item.status == 'Pendente' or item.status == 'Parcial' %}
                             <a href="{{ url_for('financeiro.registrar_pagamento', pedido_id=pedido.id) }}" class="btn btn-sm btn-success" title="Registrar Pagamento">💳</a>
                         {% endif %}
-                        <a href="{{ url_for('financeiro.editar_pagamento', pedido_id=pedido.id) }}" class="btn btn-sm btn-primary" title="Editar Pagamento" target="_blank">✏️</a>
+                        <a href="{{ url_for('financeiro.editar_pagamento', pedido_id=pedido.id) }}"
+                           class="btn btn-sm btn-primary"
+                           title="Editar Pagamento"
+                           data-action="open-edit-payment"
+                           target="_blank"
+                           rel="noopener">✏️ Editar</a>
                     </td>
                 </tr>
                 <tr class="collapse" id="details-{{ pedido.id }}">
@@ -194,4 +199,18 @@
     background-color: #6c757d !important;
 }
 </style>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script nonce="{{ nonce }}">
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('[data-action="open-edit-payment"]').forEach((link) => {
+            link.addEventListener('click', (event) => {
+                event.preventDefault();
+                window.open(link.href, '_blank', 'noopener');
+            });
+        });
+    });
+</script>
 {% endblock %}

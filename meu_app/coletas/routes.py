@@ -15,6 +15,8 @@ from .services.coleta_service import ColetaService
 from .receipt_service import ReceiptService
 import os
 from ..clientes.services import ClienteService
+from meu_app.exceptions import ConfigurationError, FileProcessingError
+from meu_app.queue import get_job_status
 
 CPF_REGEX = re.compile(r'^\d{11}$')
 NAME_REGEX = re.compile(r"^[A-Za-zÀ-ÖØ-öø-ÿ][A-Za-zÀ-ÖØ-öø-ÿ' -]*$")
@@ -225,15 +227,29 @@ def processar_coleta(pedido_id):
                         'itens_coleta': itens_recibo
                     }
                     
-                    pdf_path = ReceiptService.gerar_recibo_pdf(coleta_data)
+                    try:
+                        job_id = ReceiptService.enfileirar_recibo_pdf(coleta_data)
+                        if job_id:
+                            flash(f'{mensagem} Recibo em processamento. O download será liberado em instantes.', 'info')
+                            return redirect(url_for('coletas.status_recibo', job_id=job_id, pedido_id=pedido_id))
+                        
+                        pdf_path = ReceiptService.gerar_recibo_pdf(coleta_data)
+                        
+                        flash(f'{mensagem} Recibo gerado com sucesso!', 'success')
+                        return send_file(pdf_path, as_attachment=True, download_name=f'recibo_coleta_{pedido_id}.pdf')
                     
-                    flash(f'{mensagem} Recibo gerado com sucesso!', 'success')
-                    return send_file(pdf_path, as_attachment=True, download_name=f'recibo_coleta_{pedido_id}.pdf')
-                    
-                except Exception as e:
-                    current_app.logger.error(f"Erro ao gerar recibo: {str(e)}")
-                    flash(f'{mensagem} (Erro ao gerar recibo)', 'warning')
-                    return redirect(url_for('coletas.index'))
+                    except ConfigurationError as e:
+                        current_app.logger.error("Dependência ausente para geração de recibo", exc_info=e)
+                        flash('Dependência para geração de recibos não encontrada. Contate o administrador.', 'error')
+                        return redirect(url_for('coletas.index'))
+                    except FileProcessingError as e:
+                        current_app.logger.error("Erro ao processar geração de recibo", exc_info=e)
+                        flash(f'{mensagem} (Erro ao gerar recibo)', 'warning')
+                        return redirect(url_for('coletas.index'))
+                    except Exception as e:
+                        current_app.logger.error(f"Erro inesperado ao gerar recibo: {str(e)}", exc_info=e)
+                        flash(f'{mensagem} (Erro ao gerar recibo)', 'warning')
+                        return redirect(url_for('coletas.index'))
             else:
                 flash(mensagem, 'error')
                 return redirect(url_for('coletas.processar_coleta', pedido_id=pedido_id))
@@ -258,6 +274,54 @@ def processar_coleta(pedido_id):
             current_app.logger.error(f"Erro ao buscar detalhes do pedido: {str(e)}")
             flash('Erro ao carregar detalhes do pedido', 'error')
             return redirect(url_for('coletas.index'))
+
+@coletas_bp.route('/recibos/status/<job_id>')
+@login_obrigatorio
+@requires_logistica
+@permissao_necessaria('acesso_logistica')
+def status_recibo(job_id):
+    """Acompanha o status de geração do recibo e libera download quando concluído."""
+    status_info = get_job_status(job_id)
+    
+    if status_info.get('status') == 'unavailable':
+        flash('Fila de processamento indisponível no momento. Tente novamente mais tarde.', 'warning')
+        return redirect(url_for('coletas.index'))
+    
+    if status_info.get('status') == 'error':
+        flash(status_info.get('message', 'Erro ao consultar status do recibo.'), 'error')
+        return redirect(url_for('coletas.index'))
+    
+    if status_info.get('status') == 'finished':
+        result = status_info.get('result') or {}
+        pdf_path = result.get('pdf_path')
+        if pdf_path and os.path.exists(pdf_path):
+            download_name = os.path.basename(pdf_path)
+            return send_file(pdf_path, as_attachment=True, download_name=download_name)
+        
+        current_app.logger.error(
+            "Recibo finalizado, mas arquivo não encontrado",
+            extra={"job_id": job_id, "pdf_path": pdf_path},
+        )
+        flash('Recibo finalizado, mas o arquivo não foi localizado no servidor.', 'error')
+        return redirect(url_for('coletas.index'))
+    
+    if status_info.get('status') == 'failed':
+        error_message = status_info.get('error') or 'Erro ao gerar recibo.'
+        flash(error_message, 'error')
+        return redirect(url_for('coletas.index'))
+    
+    try:
+        progress = int(status_info.get('progress', 0))
+    except (TypeError, ValueError):
+        progress = 0
+    stage = status_info.get('stage', 'Processo iniciado')
+    
+    return render_template(
+        'coletas/recibo_processando.html',
+        job_id=job_id,
+        progress=progress,
+        stage=stage,
+    )
 
 
 @coletas_bp.route('/detalhes/<int:pedido_id>')

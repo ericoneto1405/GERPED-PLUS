@@ -2,36 +2,62 @@
 Serviço para geração de recibo de coleta em PDF
 Modelo EXATO baseado na interface mostrada
 """
-from reportlab.lib.pagesizes import A4
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.units import cm
-from reportlab.lib import colors
-from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
-from reportlab.graphics.shapes import Drawing, Rect, Line
-from reportlab.graphics import renderPDF
 from datetime import datetime
 import os
+from typing import Dict, Optional
+
 from flask import current_app
+
+from meu_app.exceptions import ConfigurationError, FileProcessingError
+
+try:
+    from reportlab.lib.pagesizes import A4
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import cm
+    from reportlab.lib import colors
+    from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
+    from reportlab.graphics.shapes import Drawing, Rect, Line
+    from reportlab.graphics import renderPDF
+
+    REPORTLAB_AVAILABLE = True
+    REPORTLAB_IMPORT_ERROR: Optional[ImportError] = None
+except ImportError as import_error:  # pragma: no cover - ambiente sem reportlab
+    REPORTLAB_AVAILABLE = False
+    REPORTLAB_IMPORT_ERROR = import_error
 
 
 class ReceiptService:
     """Serviço para geração de recibos de coleta"""
     
     @staticmethod
-    def gerar_recibo_pdf(coleta_data):
+    def gerar_recibo_pdf(coleta_data: Dict, output_dir: Optional[str] = None) -> str:
         """
         Gera um recibo PDF EXATO como o modelo mostrado
         
         Args:
             coleta_data: Dicionário com dados da coleta
+            output_dir: Diretório opcional para salvar o PDF (default: instance/recibos)
             
         Returns:
             str: Caminho do arquivo PDF gerado
         """
+        if not REPORTLAB_AVAILABLE:
+            erro = REPORTLAB_IMPORT_ERROR or ImportError("Biblioteca reportlab indisponível")
+            current_app.logger.error(
+                "Dependência ReportLab ausente ao gerar recibo de coleta",
+                exc_info=erro,
+            )
+            raise ConfigurationError(
+                message="Biblioteca ReportLab não está instalada. Configure dependência antes de gerar recibos.",
+                details={"missing_dependency": "reportlab", "original_error": str(erro)},
+            )
+        
+        receipts_dir = output_dir or os.path.join(current_app.instance_path, 'recibos')
+        filepath = None
+        
         try:
             # Criar diretório de recibos se não existir
-            receipts_dir = os.path.join(current_app.instance_path, 'recibos')
             os.makedirs(receipts_dir, exist_ok=True)
             
             # Nome do arquivo
@@ -308,9 +334,56 @@ class ReceiptService:
             # Construir PDF
             doc.build(story)
 
-            current_app.logger.info(f"Recibo PDF gerado: {filepath}")
+            current_app.logger.info(
+                "Recibo de coleta gerado com sucesso",
+                extra={
+                    "pedido_id": coleta_data.get("pedido_id"),
+                    "arquivo": filepath,
+                    "quantidade_itens": len(coleta_data.get("itens_coleta", [])),
+                },
+            )
             return filepath
             
         except Exception as e:
-            current_app.logger.error(f"Erro ao gerar recibo PDF: {str(e)}")
-            raise e
+            details = {
+                "pedido_id": coleta_data.get("pedido_id"),
+                "arquivo": filepath,
+                "diretorio": receipts_dir,
+                "error": str(e),
+            }
+            current_app.logger.error(
+                "Erro ao gerar recibo de coleta",
+                exc_info=e,
+                extra=details,
+            )
+            raise FileProcessingError(
+                message="Falha ao gerar recibo de coleta em PDF",
+                details=details,
+            ) from e
+
+    @staticmethod
+    def enfileirar_recibo_pdf(coleta_data: Dict) -> Optional[str]:
+        """
+        Tenta enfileirar a geração do recibo em background.
+        
+        Returns:
+            Optional[str]: ID do job enfileirado ou None caso não seja possível.
+        """
+        try:
+            from meu_app.queue import enqueue_pdf_job
+        except ImportError as exc:  # pragma: no cover - cenário inesperado
+            current_app.logger.error(
+                "Erro ao importar fila para geração de recibo",
+                exc_info=exc,
+            )
+            return None
+        
+        try:
+            return enqueue_pdf_job(coleta_data)
+        except Exception as exc:  # pragma: no cover - execução depende do ambiente
+            current_app.logger.warning(
+                "Falha ao enfileirar geração assíncrona de recibo, utilizando fallback síncrono",
+                exc_info=exc,
+                extra={"pedido_id": coleta_data.get("pedido_id")},
+            )
+            return None

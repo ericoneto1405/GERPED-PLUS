@@ -10,13 +10,14 @@ from flask import current_app
 # Redis connection (singleton)
 redis_conn = None
 ocr_queue = None
+pdf_queue = None
 
 
 def init_queue(app):
     """
     Inicializa a conexão Redis e a fila RQ
     """
-    global redis_conn, ocr_queue
+    global redis_conn, ocr_queue, pdf_queue
     
     redis_url = app.config.get('REDIS_URL', 'redis://localhost:6379/0')
     
@@ -26,20 +27,28 @@ def init_queue(app):
         
         # Criar fila para OCR (com timeout de 5 minutos)
         ocr_queue = Queue('ocr', connection=redis_conn, default_timeout=300)
+        pdf_queue = Queue('pdf', connection=redis_conn, default_timeout=600)
         
         app.logger.info(f"✅ RQ inicializado: {redis_url}")
         app.logger.info(f"✅ Fila 'ocr' criada com sucesso")
+        app.logger.info("✅ Fila 'pdf' criada com sucesso")
         
     except Exception as e:
         app.logger.warning(f"⚠️ Redis não disponível: {e}")
         app.logger.warning("⚠️ Processamento OCR será SÍNCRONO")
         redis_conn = None
         ocr_queue = None
+        pdf_queue = None
 
 
 def get_queue():
     """Retorna a fila de OCR (ou None se Redis indisponível)"""
     return ocr_queue
+
+
+def get_pdf_queue():
+    """Retorna a fila de geração de PDF (ou None se indisponível)"""
+    return pdf_queue
 
 
 def get_redis():
@@ -84,6 +93,47 @@ def enqueue_ocr_job(file_path: str, pedido_id: int, pagamento_id: int = None):
         return None
 
 
+def enqueue_pdf_job(coleta_data: dict):
+    """
+    Enfileira um job para geração assíncrona de recibo PDF
+    
+    Args:
+        coleta_data: Dados necessários para gerar o recibo
+    
+    Returns:
+        str | None: ID do job ou None se não foi possível enfileirar
+    """
+    if pdf_queue is None:
+        current_app.logger.warning("⚠️ Fila de PDF indisponível, geração será síncrona")
+        return None
+    
+    try:
+        from .tasks import generate_receipt_task
+        
+        job = pdf_queue.enqueue(
+            generate_receipt_task,
+            coleta_data,
+            job_timeout=600,
+            result_ttl=86400,
+            failure_ttl=86400,
+        )
+        current_app.logger.info(
+            "✅ Job de recibo enfileirado",
+            extra={
+                "job_id": job.id,
+                "pedido_id": coleta_data.get("pedido_id"),
+            },
+        )
+        return job.id
+    except Exception as e:
+        current_app.logger.error(
+            "❌ Erro ao enfileirar geração de recibo",
+            exc_info=e,
+            extra={"pedido_id": coleta_data.get("pedido_id")},
+        )
+        return None
+
+
 def get_job_status(job_id: str):
     """
     Retorna o status de um job
@@ -91,7 +141,7 @@ def get_job_status(job_id: str):
     Returns:
         dict com status, progress, result ou error
     """
-    if redis_conn is None or ocr_queue is None:
+    if redis_conn is None:
         return {
             'status': 'unavailable',
             'message': 'Fila não disponível'
@@ -111,12 +161,23 @@ def get_job_status(job_id: str):
         }
         
         # Status: queued, started, finished, failed
+        meta = job.meta or {}
+
         if job.is_finished:
             response['result'] = job.result
+            response['stage'] = meta.get('stage', 'Concluído')
         elif job.is_failed:
             response['error'] = str(job.exc_info)
+            response['stage'] = meta.get('stage', 'Falha')
         elif job.is_started:
-            response['progress'] = job.meta.get('progress', 0)
+            response['progress'] = meta.get('progress', 0)
+            response['stage'] = meta.get('stage', 'Processando')
+        else:
+            response['progress'] = meta.get('progress', 0)
+            response['stage'] = meta.get('stage', 'Na fila')
+        
+        if meta.get('error') and 'error' not in response:
+            response['error'] = meta.get('error')
         
         return response
         

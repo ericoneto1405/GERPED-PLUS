@@ -121,7 +121,8 @@
                            rel="noopener">✏️ Editar</a>
                         {% if pago == 0 %}
                             <button class="btn btn-sm btn-secondary" 
-                                    onclick="retornarParaComercial({{ pedido.id }})" 
+                                    data-action="retornar-comercial"
+                                    data-pedido-id="{{ pedido.id }}"
                                     title="Retornar para Comercial">⬅️ Retornar</button>
                         {% endif %}
                     </td>
@@ -218,7 +219,14 @@
         });
     });
     
-    function retornarParaComercial(pedidoId) {
+    // Event delegation para botão retornar comercial (CSP-compliant)
+    document.addEventListener('click', function(event) {
+        const button = event.target.closest('[data-action="retornar-comercial"]');
+        if (!button) return;
+        
+        event.preventDefault();
+        const pedidoId = button.getAttribute('data-pedido-id');
+        
         if (confirm('Tem certeza que deseja retornar este pedido para o comercial? Esta ação só é permitida para pedidos sem pagamentos.')) {
             fetch(`/financeiro/retornar-comercial/${pedidoId}`, {
                 method: 'POST',
@@ -239,6 +247,6 @@
                 alert('Erro ao processar requisição: ' + error);
             });
         }
-    }
+    });
 </script>
 {% endblock %}

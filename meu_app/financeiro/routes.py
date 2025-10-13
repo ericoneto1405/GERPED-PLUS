@@ -356,6 +356,35 @@ def editar_pagamento(pedido_id):
                 flash('Pagamento não encontrado', 'error')
                 return redirect(url_for('financeiro.listar_financeiro'))
             
+            acao = request.form.get('acao', 'editar')
+
+            if acao == 'excluir':
+                # Remover comprovante se existir
+                if pagamento.caminho_recibo:
+                    try:
+                        recibo_path = os.path.join(
+                            FinanceiroConfig.get_upload_directory('recibos'),
+                            pagamento.caminho_recibo
+                        )
+                        if os.path.exists(recibo_path):
+                            os.remove(recibo_path)
+                    except Exception as exc:
+                        current_app.logger.warning(
+                            "Falha ao remover recibo durante exclusão do pagamento %s: %s",
+                            pagamento.id,
+                            exc,
+                        )
+
+                db.session.delete(pagamento)
+                db.session.commit()
+                current_app.logger.info(
+                    "Pagamento #%s excluído por %s",
+                    pagamento.id,
+                    session.get('usuario_nome', 'N/A'),
+                )
+                flash('Pagamento excluído com sucesso!', 'success')
+                return redirect(url_for('financeiro.listar_financeiro'))
+
             # Atualizar dados do pagamento
             valor = request.form.get('valor')
             forma_pagamento = request.form.get('metodo_pagamento')

@@ -168,6 +168,7 @@
     <form method="POST" id="form-editar" enctype="multipart/form-data" style="display: none;">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="hidden" name="pagamento_id" id="pagamento_id">
+        <input type="hidden" name="acao" id="acao" value="editar">
         
         <div class="form-group">
             <label for="valor">Valor a Pagar:</label>
@@ -197,8 +198,11 @@
             </small>
         </div>
 
-        <button type="submit">💾 Salvar Alterações</button>
-        <button type="button" data-action="cancelar-edicao" style="background-color: #6c757d; margin-left: 10px;">❌ Cancelar</button>
+        <div class="form-actions" style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <button type="submit" data-action="salvar-edicao" class="btn-salvar">💾 Salvar Alterações</button>
+            <button type="button" data-action="excluir-pagamento" class="btn-excluir" style="background-color: #dc3545;">🗑️ Excluir Pagamento</button>
+            <button type="button" data-action="cancelar-edicao" style="background-color: #6c757d;">❌ Cancelar</button>
+        </div>
     </form>
     {% else %}
     <div class="info-box">
@@ -220,7 +224,9 @@
             const campoObservacoes = document.getElementById('observacoes');
             const currentRecibo = document.getElementById('current-recibo');
             const linkRecibo = document.getElementById('link-recibo');
-            const cancelarButton = document.querySelector('[data-action=\"cancelar-edicao\"]');
+            const cancelarButton = document.querySelector('[data-action="cancelar-edicao"]');
+            const excluirButton = document.querySelector('[data-action="excluir-pagamento"]');
+            const acaoInput = document.getElementById('acao');
 
             function limparSelecao() {
                 document.querySelectorAll('.pagamento-item.selected').forEach(item => item.classList.remove('selected'));
@@ -236,6 +242,7 @@
                 campoValor.value = element.dataset.valor;
                 campoMetodo.value = element.dataset.metodo;
                 campoObservacoes.value = element.dataset.observacoes || '';
+                acaoInput.value = 'editar';
 
                 if (element.dataset.recibo) {
                     linkRecibo.href = "{{ url_for('financeiro.ver_recibo', filename='') }}" + element.dataset.recibo;
@@ -260,12 +267,30 @@
                 formEditar.reset();
                 formEditar.style.display = 'none';
                 currentRecibo.style.display = 'none';
+                acaoInput.value = 'editar';
+            });
+
+            excluirButton?.addEventListener('click', () => {
+                if (!pagamentoSelecionado) {
+                    alert('Selecione um pagamento para excluir.');
+                    return;
+                }
+                const confirmacao = confirm('Tem certeza que deseja excluir este pagamento? Esta ação não pode ser desfeita.');
+                if (!confirmacao) {
+                    return;
+                }
+                acaoInput.value = 'excluir';
+                formEditar.requestSubmit();
             });
 
             formEditar?.addEventListener('submit', (event) => {
                 if (!pagamentoSelecionado) {
                     event.preventDefault();
                     alert('Por favor, selecione um pagamento para editar.');
+                    return;
+                }
+                if (acaoInput.value === 'editar') {
+                    acaoInput.value = 'editar';
                 }
             });
         });

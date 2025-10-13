@@ -14,6 +14,7 @@ coletas_bp = Blueprint('coletas', __name__, url_prefix='/coletas')
 from .services.coleta_service import ColetaService
 from .receipt_service import ReceiptService
 import os
+from ..clientes.services import ClienteService
 
 CPF_REGEX = re.compile(r'^\d{11}$')
 NAME_REGEX = re.compile(r"^[A-Za-zÀ-ÖØ-öø-ÿ][A-Za-zÀ-ÖØ-öø-ÿ' -]*$")
@@ -96,6 +97,9 @@ def processar_coleta(pedido_id):
             if not detalhes:
                 flash('Pedido não encontrado ou não disponível para coleta', 'error')
                 return redirect(url_for('coletas.dashboard'))
+
+            cliente_service = ClienteService()
+            retirantes_autorizados = cliente_service.listar_retirantes_autorizados(detalhes['cliente'].id)
             
             # Extrair dados do formulário
             nome_retirada = request.form.get('nome_retirada', '').strip()
@@ -193,6 +197,10 @@ def processar_coleta(pedido_id):
                 cpf_conferente=cpf_conferente
             )
             
+            autorizados_ativos = {r.cpf for r in retirantes_autorizados if r.ativo}
+            if documento_retirada not in autorizados_ativos:
+                flash('⚠️ Retirante informado não está na lista autorizada. Confirme com o cliente antes de liberar.', 'warning')
+
             if sucesso:
                 # CORREÇÃO: Usar detalhes coletados ANTES da mudança de status
                 try:
@@ -243,7 +251,9 @@ def processar_coleta(pedido_id):
                 flash('Pedido não encontrado ou não disponível para coleta', 'error')
                 return redirect(url_for('coletas.index'))
             
-            return render_template('coletas/processar_coleta.html', detalhes=detalhes)
+            cliente_service = ClienteService()
+            retirantes_autorizados = cliente_service.listar_retirantes_autorizados(detalhes['cliente'].id)
+            return render_template('coletas/processar_coleta.html', detalhes=detalhes, retirantes_autorizados=retirantes_autorizados)
         except Exception as e:
             current_app.logger.error(f"Erro ao buscar detalhes do pedido: {str(e)}")
             flash('Erro ao carregar detalhes do pedido', 'error')

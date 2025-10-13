@@ -33,7 +33,7 @@
                 <div class="card-icon">📤</div>
                 <h3>Importar Produtos</h3>
                 <p>Upload de planilha em lote</p>
-                <button class="btn-upload" onclick="document.getElementById('fileInput').click()">Selecionar Arquivo</button>
+                <button class="btn-upload" data-action="trigger-file-input" data-target="fileInput">Selecionar Arquivo</button>
                 <a href="{{ url_for('produtos.download_modelo_produtos') }}" class="btn-link">⬇️ Baixar Modelo</a>
             </div>
         </div>
@@ -75,7 +75,7 @@
                                         </svg>
                                     </a>
                                     <a href="{{ url_for('produtos.excluir_produto', id=produto.id) }}" class="icon-btn icon-delete" 
-                                       onclick="return confirm('Tem certeza que deseja excluir este produto?')" title="Excluir produto">
+                                       data-action="excluir-produto" data-confirm="Tem certeza que deseja excluir este produto?" title="Excluir produto">
                                         <svg class="icon-svg" viewBox="0 0 24 24">
                                             <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
                                         </svg>
@@ -99,14 +99,14 @@
                 <div class="card-icon">✏️</div>
                 <h3>Preço Manual</h3>
                 <p>Definir preço médio individual</p>
-                <button class="btn-manual" onclick="abrirModalPrecoManual()">Editar Preço</button>
+                <button class="btn-manual" data-action="abrir-modal-preco">Editar Preço</button>
             </div>
             
             <div class="action-card">
                 <div class="card-icon">📊</div>
                 <h3>Importar Preços</h3>
                 <p>Upload de planilha de preços em lote</p>
-                <button class="btn-upload-preco" onclick="document.getElementById('fileInputPreco').click()">Selecionar Arquivo</button>
+                <button class="btn-upload-preco" data-action="trigger-file-input" data-target="fileInputPreco">Selecionar Arquivo</button>
                 <a href="{{ url_for('produtos.download_modelo_precos') }}" class="btn-link">⬇️ Baixar Modelo</a>
             </div>
         </div>
@@ -142,22 +142,22 @@
 </div>
 
 <!-- Input files ocultos -->
-<input type="file" id="fileInput" accept=".xlsx" style="display: none;" onchange="uploadPlanilha(this)">
-<input type="file" id="fileInputPreco" accept=".xlsx" style="display: none;" onchange="uploadPrecos(this)">
+<input type="file" id="fileInput" accept=".xlsx" style="display: none;">
+<input type="file" id="fileInputPreco" accept=".xlsx" style="display: none;">
 
 <!-- Modal de Erro -->
 <div id="errorModal" class="modal" style="display: none;">
     <div class="modal-content">
         <div class="modal-header">
             <h3>❌ Produto Já Cadastrado</h3>
-            <span class="close" onclick="closeModal()">&times;</span>
+            <span class="close" data-action="close-modal-duplicados">&times;</span>
         </div>
         <div class="modal-body">
             <p><strong>VERIFIQUE:</strong></p>
             <div id="produtosDuplicados"></div>
         </div>
         <div class="modal-footer">
-            <button onclick="closeModal()" class="btn-ok">OK</button>
+            <button data-action="close-modal-duplicados" class="btn-ok">OK</button>
         </div>
     </div>
 </div>
@@ -167,7 +167,7 @@
     <div class="modal-content">
         <div class="modal-header">
             <h3>💰 Definir Preço Médio Manual</h3>
-            <span class="close" onclick="fecharModalPrecoManual()">&times;</span>
+            <span class="close" data-action="fechar-modal-preco">&times;</span>
         </div>
         <div class="modal-body">
             <form id="formPrecoManual">
@@ -187,8 +187,8 @@
             </form>
         </div>
         <div class="modal-footer">
-            <button onclick="fecharModalPrecoManual()" class="btn-secondary">Cancelar</button>
-            <button onclick="salvarPrecoManual()" class="btn-primary">Salvar Preço</button>
+            <button data-action="fechar-modal-preco" class="btn-secondary">Cancelar</button>
+            <button data-action="salvar-preco-manual" class="btn-primary">Salvar Preço</button>
         </div>
     </div>
 </div>
@@ -618,6 +618,63 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById(targetTab).classList.add('active');
         });
     });
+    
+    // Event Listeners CSP-compliant
+    
+    // 1. Botões de trigger file input
+    document.querySelectorAll('[data-action="trigger-file-input"]').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const targetId = this.getAttribute('data-target');
+            const fileInput = document.getElementById(targetId);
+            if (fileInput) fileInput.click();
+        });
+    });
+    
+    // 2. File inputs onchange
+    const fileInput = document.getElementById('fileInput');
+    if (fileInput) {
+        fileInput.addEventListener('change', function() {
+            uploadPlanilha(this);
+        });
+    }
+    
+    const fileInputPreco = document.getElementById('fileInputPreco');
+    if (fileInputPreco) {
+        fileInputPreco.addEventListener('change', function() {
+            uploadPrecos(this);
+        });
+    }
+    
+    // 3. Link excluir com confirmação
+    document.querySelectorAll('[data-action="excluir-produto"]').forEach(link => {
+        link.addEventListener('click', function(e) {
+            const confirmMsg = this.getAttribute('data-confirm');
+            if (!confirm(confirmMsg)) {
+                e.preventDefault();
+            }
+        });
+    });
+    
+    // 4. Botão abrir modal preço
+    const btnModalPreco = document.querySelector('[data-action="abrir-modal-preco"]');
+    if (btnModalPreco) {
+        btnModalPreco.addEventListener('click', abrirModalPrecoManual);
+    }
+    
+    // 5. Fechar modal duplicados
+    document.querySelectorAll('[data-action="close-modal-duplicados"]').forEach(el => {
+        el.addEventListener('click', closeModal);
+    });
+    
+    // 6. Modal preço manual
+    document.querySelectorAll('[data-action="fechar-modal-preco"]').forEach(el => {
+        el.addEventListener('click', fecharModalPrecoManual);
+    });
+    
+    const btnSalvarPreco = document.querySelector('[data-action="salvar-preco-manual"]');
+    if (btnSalvarPreco) {
+        btnSalvarPreco.addEventListener('click', salvarPrecoManual);
+    }
 });
 
 function uploadPlanilha(input) {

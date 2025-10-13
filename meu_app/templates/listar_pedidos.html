@@ -14,7 +14,7 @@
 <form method="get" style="margin-bottom: 20px; display: flex; align-items: flex-end; gap: 15px; flex-wrap: wrap;">
     <div>
         <label>Status:</label><br>
-        <select name="filtro" onchange="this.form.submit()">
+        <select name="filtro" id="filtroStatus">
             <option value="todos" {% if filtro == 'todos' %}selected{% endif %}>Todos</option>
             <option value="aguardando comercial" {% if filtro == 'aguardando comercial' %}selected{% endif %}>Aguardando Comercial</option>
             <option value="liberado p/ financeiro" {% if filtro == 'liberado p/ financeiro' %}selected{% endif %}>Liberado P/ Financeiro</option>
@@ -431,26 +431,25 @@
             </td>
             <td>
                 <a href="{{ url_for('pedidos.visualizar_pedido', id=item.pedido.id, origem='pedidos', filtro=filtro, data_inicio=data_inicio, data_fim=data_fim, sort=current_sort, direction=current_direction) }}"
-                   class="botao-ver"
-                   onclick="console.log('Botão VER clicado para pedido {{ item.pedido.id }}')">
+                   class="botao-ver">
                     👁️ Ver
                 </a>
             </td>
             <td>
                 <div class="action-icons">
                     {% if not item.pedido.confirmado_comercial %}
-                    <button onclick="abrirModalConfirmarComercial({{ item.pedido.id }})" class="icon-btn icon-confirm" title="Confirmar pedido (Comercial)">
+                    <button data-action="confirmar" data-pedido-id="{{ item.pedido.id }}" class="icon-btn icon-confirm" title="Confirmar pedido (Comercial)">
                         <svg class="icon-svg" viewBox="0 0 24 24">
                             <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
                         </svg>
                     </button>
                     {% endif %}
-                    <button onclick="abrirModalEditar({{ item.pedido.id }})" class="icon-btn icon-edit" title="Editar pedido">
+                    <button data-action="editar" data-pedido-id="{{ item.pedido.id }}" class="icon-btn icon-edit" title="Editar pedido">
                         <svg class="icon-svg" viewBox="0 0 24 24">
                             <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
                         </svg>
                     </button>
-                    <button onclick="abrirModalExcluir({{ item.pedido.id }})" class="icon-btn icon-delete" title="Excluir pedido">
+                    <button data-action="excluir" data-pedido-id="{{ item.pedido.id }}" class="icon-btn icon-delete" title="Excluir pedido">
                         <svg class="icon-svg" viewBox="0 0 24 24">
                             <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
                         </svg>
@@ -469,7 +468,7 @@
     <div class="modal-content">
         <div class="modal-header">
             <h3 class="modal-title" id="modalTitle">🔐 Confirmação de Senha</h3>
-            <span class="close" onclick="fecharModal()">&times;</span>
+            <span class="close" id="btnFecharModal">&times;</span>
         </div>
         <div class="modal-body">
             <p class="modal-message" id="modalMessage">
@@ -489,8 +488,8 @@
             </div>
         </div>
         <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" onclick="fecharModal()">Cancelar</button>
-            <button type="button" class="btn btn-primary" id="btnConfirmar" onclick="confirmarAcao()">Confirmar</button>
+            <button type="button" class="btn btn-secondary" id="btnCancelar">Cancelar</button>
+            <button type="button" class="btn btn-primary" id="btnConfirmar">Confirmar</button>
         </div>
     </div>
 </div>
@@ -738,6 +737,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const mesAnoInput = document.getElementById('mes_ano');
     const dataInicioInput = document.getElementById('data_inicio');
     const dataFimInput = document.getElementById('data_fim');
+    const filtroStatus = document.getElementById('filtroStatus');
+    
+    // Event listener para filtro de status
+    if (filtroStatus) {
+        filtroStatus.addEventListener('change', function() {
+            this.form.submit();
+        });
+    }
 
     // Se um mês/ano já estiver selecionado, desabilita os campos de data
     if (mesAnoInput.value) {
@@ -761,6 +768,45 @@ document.addEventListener('DOMContentLoaded', function() {
 
     dataInicioInput.addEventListener('input', limparMesAno);
     dataFimInput.addEventListener('input', limparMesAno);
+    
+    // Event listeners para os botões de ação (CSP-compliant)
+    document.querySelectorAll('[data-action="confirmar"]').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const pedidoId = parseInt(this.dataset.pedidoId);
+            abrirModalConfirmarComercial(pedidoId);
+        });
+    });
+    
+    document.querySelectorAll('[data-action="editar"]').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const pedidoId = parseInt(this.dataset.pedidoId);
+            abrirModalEditar(pedidoId);
+        });
+    });
+    
+    document.querySelectorAll('[data-action="excluir"]').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const pedidoId = parseInt(this.dataset.pedidoId);
+            abrirModalExcluir(pedidoId);
+        });
+    });
+    
+    // Event listeners para botões do modal
+    const btnFecharModal = document.getElementById('btnFecharModal');
+    const btnCancelar = document.getElementById('btnCancelar');
+    const btnConfirmar = document.getElementById('btnConfirmar');
+    
+    if (btnFecharModal) {
+        btnFecharModal.addEventListener('click', fecharModal);
+    }
+    
+    if (btnCancelar) {
+        btnCancelar.addEventListener('click', fecharModal);
+    }
+    
+    if (btnConfirmar) {
+        btnConfirmar.addEventListener('click', confirmarAcao);
+    }
 });
 </script>
 {% endblock %}

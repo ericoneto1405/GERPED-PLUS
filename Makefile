@@ -32,6 +32,11 @@ help:
 	@echo ""
 	@echo "$(GREEN)Desenvolvimento:$(NC)"
 	@echo "  make dev              - Inicia servidor de desenvolvimento"
+	@echo "  make server-start     - Inicia servidor (com gerenciamento)"
+	@echo "  make server-stop      - Para servidor"
+	@echo "  make server-restart   - Reinicia servidor"
+	@echo "  make server-status    - Status do servidor"
+	@echo "  make server-logs      - Mostra logs em tempo real"
 	@echo "  make install          - Instala dependências"
 	@echo "  make migrate          - Executa migrations"
 	@echo "  make run-worker       - Inicia worker assíncrono (Celery/RQ)"
@@ -60,7 +65,22 @@ help:
 
 dev:
 	@echo "$(GREEN)🚀 Iniciando servidor de desenvolvimento...$(NC)"
-	$(PYTHON) run.py
+	@bash scripts/manage_server.sh start
+
+server-start:
+	@bash scripts/manage_server.sh start
+
+server-stop:
+	@bash scripts/manage_server.sh stop
+
+server-restart:
+	@bash scripts/manage_server.sh restart
+
+server-status:
+	@bash scripts/manage_server.sh status
+
+server-logs:
+	@bash scripts/manage_server.sh logs
 
 run-worker:
 	@echo "$(GREEN)🔄 Iniciando worker RQ (Fase 7)...$(NC)"

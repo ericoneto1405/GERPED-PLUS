@@ -143,7 +143,12 @@
         <h3>📋 Selecione um pagamento para editar:</h3>
         <div id="pagamentos-list">
             {% for pagamento in pagamentos %}
-            <div class="pagamento-item" onclick="selecionarPagamento({{ pagamento.id }}, {{ pagamento.valor }}, '{{ pagamento.metodo_pagamento }}', '{{ pagamento.observacoes or '' }}', '{{ pagamento.caminho_recibo or '' }}')">
+            <div class="pagamento-item"
+                 data-pagamento-id="{{ pagamento.id }}"
+                 data-valor="{{ '%.2f' % pagamento.valor }}"
+                 data-metodo="{{ pagamento.metodo_pagamento|e }}"
+                 data-observacoes="{{ (pagamento.observacoes or '')|e }}"
+                 data-recibo="{{ (pagamento.caminho_recibo or '')|e }}">
                 <strong>Pagamento #{{ pagamento.id }}</strong>
                 <span class="badge">{{ pagamento.data_pagamento.strftime('%d/%m/%Y %H:%M') }}</span>
                 <br>
@@ -193,7 +198,7 @@
         </div>
 
         <button type="submit">💾 Salvar Alterações</button>
-        <button type="button" onclick="cancelarEdicao()" style="background-color: #6c757d; margin-left: 10px;">❌ Cancelar</button>
+        <button type="button" data-action="cancelar-edicao" style="background-color: #6c757d; margin-left: 10px;">❌ Cancelar</button>
     </form>
     {% else %}
     <div class="info-box">
@@ -204,63 +209,67 @@
 
     <a href="{{ url_for('financeiro.listar_financeiro') }}" class="voltar">⬅ Voltar ao Financeiro</a>
 
-    <script>
-        let pagamentoSelecionado = null;
-
-        function selecionarPagamento(id, valor, metodo, observacoes, recibo) {
-            // Remover seleção anterior
-            document.querySelectorAll('.pagamento-item').forEach(item => {
-                item.classList.remove('selected');
-            });
-
-            // Selecionar item atual
-            event.currentTarget.classList.add('selected');
-            pagamentoSelecionado = id;
-
-            // Preencher formulário
-            document.getElementById('pagamento_id').value = id;
-            document.getElementById('valor').value = valor;
-            document.getElementById('metodo_pagamento').value = metodo;
-            document.getElementById('observacoes').value = observacoes;
-
-            // Mostrar/ocultar link do recibo atual
+    <script nonce="{{ nonce }}">
+        document.addEventListener('DOMContentLoaded', () => {
+            let pagamentoSelecionado = null;
+            const formEditar = document.getElementById('form-editar');
+            const pagamentosList = document.getElementById('pagamentos-list');
+            const campoPagamentoId = document.getElementById('pagamento_id');
+            const campoValor = document.getElementById('valor');
+            const campoMetodo = document.getElementById('metodo_pagamento');
+            const campoObservacoes = document.getElementById('observacoes');
             const currentRecibo = document.getElementById('current-recibo');
             const linkRecibo = document.getElementById('link-recibo');
-            if (recibo) {
-                linkRecibo.href = "{{ url_for('financeiro.ver_recibo', filename='') }}" + recibo;
-                currentRecibo.style.display = 'block';
-            } else {
-                currentRecibo.style.display = 'none';
+            const cancelarButton = document.querySelector('[data-action=\"cancelar-edicao\"]');
+
+            function limparSelecao() {
+                document.querySelectorAll('.pagamento-item.selected').forEach(item => item.classList.remove('selected'));
+                pagamentoSelecionado = null;
             }
 
-            // Mostrar formulário
-            document.getElementById('form-editar').style.display = 'block';
-            
-            // Scroll suave até o formulário
-            document.getElementById('form-editar').scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
+            function selecionarPagamento(element) {
+                limparSelecao();
+                element.classList.add('selected');
+                pagamentoSelecionado = Number(element.dataset.pagamentoId);
 
-        function cancelarEdicao() {
-            // Limpar seleção
-            document.querySelectorAll('.pagamento-item').forEach(item => {
-                item.classList.remove('selected');
+                campoPagamentoId.value = element.dataset.pagamentoId;
+                campoValor.value = element.dataset.valor;
+                campoMetodo.value = element.dataset.metodo;
+                campoObservacoes.value = element.dataset.observacoes || '';
+
+                if (element.dataset.recibo) {
+                    linkRecibo.href = "{{ url_for('financeiro.ver_recibo', filename='') }}" + element.dataset.recibo;
+                    currentRecibo.style.display = 'block';
+                } else {
+                    currentRecibo.style.display = 'none';
+                }
+
+                formEditar.style.display = 'block';
+                formEditar.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+
+            pagamentosList?.addEventListener('click', (event) => {
+                const item = event.target.closest('.pagamento-item');
+                if (item) {
+                    selecionarPagamento(item);
+                }
             });
-            pagamentoSelecionado = null;
 
-            // Limpar e ocultar formulário
-            document.getElementById('form-editar').reset();
-            document.getElementById('form-editar').style.display = 'none';
-        }
+            cancelarButton?.addEventListener('click', () => {
+                limparSelecao();
+                formEditar.reset();
+                formEditar.style.display = 'none';
+                currentRecibo.style.display = 'none';
+            });
 
-        // Validação antes de submeter
-        document.getElementById('form-editar').addEventListener('submit', function(e) {
-            if (!pagamentoSelecionado) {
-                e.preventDefault();
-                alert('Por favor, selecione um pagamento para editar.');
-            }
+            formEditar?.addEventListener('submit', (event) => {
+                if (!pagamentoSelecionado) {
+                    event.preventDefault();
+                    alert('Por favor, selecione um pagamento para editar.');
+                }
+            });
         });
     </script>
 
 </body>
 </html>
-

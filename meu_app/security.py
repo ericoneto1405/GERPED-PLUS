@@ -154,6 +154,9 @@ def _register_nonce_context_processor(app) -> None:
     """Disponibiliza o nonce para todos os templates."""
 
     def _get_nonce() -> str:
+        generator = current_app.jinja_env.globals.get("csp_nonce")
+        if callable(generator):
+            return generator()
         talisman_nonce = getattr(request, "csp_nonce", None)
         if talisman_nonce:
             return talisman_nonce

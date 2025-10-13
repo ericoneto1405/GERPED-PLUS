@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Editar Pagamento</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f1f4f9;
+            padding: 40px;
+        }
+
+        h1 {
+            color: #2c3e50;
+        }
+
+        form {
+            background-color: #fff;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            max-width: 600px;
+        }
+
+        label {
+            display: block;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+
+        input[type="number"],
+        input[type="text"],
+        select {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #2c3e50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #1a252f;
+        }
+
+        .voltar {
+            display: inline-block;
+            margin-top: 20px;
+            text-decoration: none;
+            color: #2c3e50;
+            font-weight: bold;
+        }
+
+        .voltar:hover {
+            color: #000;
+        }
+
+        ul {
+            background: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 30px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+
+        li {
+            padding: 5px 0;
+        }
+
+        .info-box {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+
+        .pagamento-item {
+            padding: 12px;
+            margin: 8px 0;
+            background: #f8f9fa;
+            border-radius: 5px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .pagamento-item:hover {
+            background: #e9ecef;
+            border-color: #007bff;
+        }
+
+        .pagamento-item.selected {
+            background: #cfe2ff;
+            border-color: #0d6efd;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            background: #6c757d;
+            color: white;
+            border-radius: 4px;
+            font-size: 0.85em;
+            margin-left: 8px;
+        }
+
+        .current-recibo {
+            margin-top: 10px;
+            padding: 10px;
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            border-radius: 4px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>✏️ Editar Pagamento - Pedido #{{ pedido.id }}</h1>
+    
+    <div class="info-box">
+        <p><strong>Cliente:</strong> {{ pedido.cliente.nome }}</p>
+        <p><strong>Total do Pedido:</strong> R$ {{ '%.2f' % total }}</p>
+        <p><strong>Total já Pago:</strong> R$ {{ '%.2f' % pago }}</p>
+        <p><strong>Saldo Restante:</strong> <span style="color: #e67e22; font-weight: bold;">R$ {{ '%.2f' % (saldo if saldo > 0 else 0) }}</span></p>
+    </div>
+
+    {% if pagamentos %}
+    <div class="info-box">
+        <h3>📋 Selecione um pagamento para editar:</h3>
+        <div id="pagamentos-list">
+            {% for pagamento in pagamentos %}
+            <div class="pagamento-item" onclick="selecionarPagamento({{ pagamento.id }}, {{ pagamento.valor }}, '{{ pagamento.metodo_pagamento }}', '{{ pagamento.observacoes or '' }}', '{{ pagamento.caminho_recibo or '' }}')">
+                <strong>Pagamento #{{ pagamento.id }}</strong>
+                <span class="badge">{{ pagamento.data_pagamento.strftime('%d/%m/%Y %H:%M') }}</span>
+                <br>
+                <span>Valor: R$ {{ '%.2f' % pagamento.valor }}</span> | 
+                <span>Método: {{ pagamento.metodo_pagamento }}</span>
+                {% if pagamento.observacoes %}
+                <br><small>Obs: {{ pagamento.observacoes }}</small>
+                {% endif %}
+                {% if pagamento.caminho_recibo %}
+                <br><small>📎 Comprovante anexado</small>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <form method="POST" id="form-editar" enctype="multipart/form-data" style="display: none;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="pagamento_id" id="pagamento_id">
+        
+        <div class="form-group">
+            <label for="valor">Valor a Pagar:</label>
+            <input type="text" id="valor" name="valor" inputmode="decimal" step="0.01" required>
+        </div>
+
+        <div class="form-group">
+            <label for="metodo_pagamento">Método de Pagamento:</label>
+            <input type="text" id="metodo_pagamento" name="metodo_pagamento" placeholder="ex: Pix, Dinheiro, Cartão" required>
+        </div>
+
+        <div class="form-group">
+            <label for="observacoes">Observações (opcional):</label>
+            <input type="text" id="observacoes" name="observacoes" placeholder="Observações sobre o pagamento">
+        </div>
+
+        <div id="current-recibo" class="current-recibo" style="display: none;">
+            <strong>📎 Comprovante atual:</strong>
+            <a id="link-recibo" href="#" target="_blank">Ver comprovante</a>
+        </div>
+
+        <div class="form-group">
+            <label for="recibo">📄 Novo Recibo de Pagamento (opcional):</label>
+            <input type="file" id="recibo" name="recibo">
+            <small class="form-text text-muted">
+                💡 Deixe em branco para manter o comprovante atual
+            </small>
+        </div>
+
+        <button type="submit">💾 Salvar Alterações</button>
+        <button type="button" onclick="cancelarEdicao()" style="background-color: #6c757d; margin-left: 10px;">❌ Cancelar</button>
+    </form>
+    {% else %}
+    <div class="info-box">
+        <p style="color: #dc3545; font-weight: bold;">⚠️ Este pedido não possui pagamentos registrados.</p>
+        <p>Use a opção "Registrar Pagamento" para adicionar um novo pagamento.</p>
+    </div>
+    {% endif %}
+
+    <a href="{{ url_for('financeiro.listar_financeiro') }}" class="voltar">⬅ Voltar ao Financeiro</a>
+
+    <script>
+        let pagamentoSelecionado = null;
+
+        function selecionarPagamento(id, valor, metodo, observacoes, recibo) {
+            // Remover seleção anterior
+            document.querySelectorAll('.pagamento-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+
+            // Selecionar item atual
+            event.currentTarget.classList.add('selected');
+            pagamentoSelecionado = id;
+
+            // Preencher formulário
+            document.getElementById('pagamento_id').value = id;
+            document.getElementById('valor').value = valor;
+            document.getElementById('metodo_pagamento').value = metodo;
+            document.getElementById('observacoes').value = observacoes;
+
+            // Mostrar/ocultar link do recibo atual
+            const currentRecibo = document.getElementById('current-recibo');
+            const linkRecibo = document.getElementById('link-recibo');
+            if (recibo) {
+                linkRecibo.href = "{{ url_for('financeiro.ver_recibo', filename='') }}" + recibo;
+                currentRecibo.style.display = 'block';
+            } else {
+                currentRecibo.style.display = 'none';
+            }
+
+            // Mostrar formulário
+            document.getElementById('form-editar').style.display = 'block';
+            
+            // Scroll suave até o formulário
+            document.getElementById('form-editar').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function cancelarEdicao() {
+            // Limpar seleção
+            document.querySelectorAll('.pagamento-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            pagamentoSelecionado = null;
+
+            // Limpar e ocultar formulário
+            document.getElementById('form-editar').reset();
+            document.getElementById('form-editar').style.display = 'none';
+        }
+
+        // Validação antes de submeter
+        document.getElementById('form-editar').addEventListener('submit', function(e) {
+            if (!pagamentoSelecionado) {
+                e.preventDefault();
+                alert('Por favor, selecione um pagamento para editar.');
+            }
+        });
+    </script>
+
+</body>
+</html>
+

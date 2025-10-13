@@ -792,7 +792,8 @@ class VisionOcrService:
                 'date': date,
                 'bank_info': bank_info,
                 'validacao_recebedor': validacao_recebedor,  # NOVO campo
-                'backend': 'google_vision'
+                'backend': 'google_vision',
+                'raw_text': text,
             }
             
         except OcrProcessingError as e:

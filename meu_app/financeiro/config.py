@@ -19,6 +19,7 @@ class FinanceiroConfig:
     OCR_CACHE_DIR = 'uploads/temp_recibos/.ocr_cache'
     OCR_OPERATION_TIMEOUT = 120
     OCR_MAX_PDF_SIZE = 10 * 1024 * 1024  # 10MB
+    PAYMENT_VALIDATOR_DIR = 'models/pytorch_validator'
     
     # Configurações de quota OCR
     OCR_ENFORCE_LIMIT = True

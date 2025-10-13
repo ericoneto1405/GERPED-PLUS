@@ -121,21 +121,40 @@
                         <div class="p-3 bg-light">
                             <h5>Histórico de Pagamentos do Pedido #{{ pedido.id }}</h5>
                             {% if pedido.pagamentos %}
-                                <ul>
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Data/Hora</th>
+                                            <th>Valor</th>
+                                            <th>Método</th>
+                                            <th>ID Transação</th>
+                                            <th>Comprovante</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
                                     {% for pagamento in pedido.pagamentos %}
-                                        <li>
-                                            {{ pagamento.data_pagamento.strftime('%d/%m/%Y %H:%M') }} - 
-                                            <strong>R$ {{ '%.2f' % pagamento.valor }}</strong> - 
-                                            <em>{{ pagamento.metodo_pagamento }}</em>
-                                            {% if pagamento.caminho_recibo %}
-                                                <a href="{{ url_for('financeiro.ver_recibo', filename=pagamento.caminho_recibo) }}" class="btn btn-sm btn-outline-primary ms-2" target="_blank">Ver Comprovante</a>
-                                            {% endif %}
-                                            {% if pagamento.id_transacao %}
-                                                <span class="badge bg-dark ms-2">ID: {{ pagamento.id_transacao }}</span>
-                                            {% endif %}
-                                        </li>
+                                        <tr>
+                                            <td>{{ pagamento.data_pagamento.strftime('%d/%m/%Y %H:%M') }}</td>
+                                            <td><strong>R$ {{ '%.2f' % pagamento.valor }}</strong></td>
+                                            <td><em>{{ pagamento.metodo_pagamento }}</em></td>
+                                            <td>
+                                                {% if pagamento.id_transacao %}
+                                                    <span class="badge bg-dark">{{ pagamento.id_transacao }}</span>
+                                                {% else %}
+                                                    <span class="text-muted">-</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if pagamento.caminho_recibo %}
+                                                    <a href="{{ url_for('financeiro.ver_recibo', filename=pagamento.caminho_recibo) }}" class="btn btn-sm btn-outline-primary" target="_blank" title="Ver Comprovante">📄</a>
+                                                {% else %}
+                                                    <span class="text-muted">-</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
                                     {% endfor %}
-                                </ul>
+                                    </tbody>
+                                </table>
                             {% else %}
                                 <p>Nenhum pagamento registrado para este pedido.</p>
                             {% endif %}

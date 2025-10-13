@@ -55,6 +55,7 @@ class LocalOcrFallback:
             'error': None,
             'fallback_used': True,
             'backend': 'local_fallback',
+            'raw_text': text,
         }
 
     @classmethod

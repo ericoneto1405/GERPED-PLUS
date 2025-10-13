@@ -9,6 +9,7 @@ from app.auth.rbac import requires_financeiro
 from ..upload_security import FileUploadValidator
 from .ocr_service import OcrService
 from .config import FinanceiroConfig
+from .pytorch_validator import PaymentValidatorService
 from .exceptions import (
     FinanceiroValidationError, 
     PagamentoDuplicadoError, 
@@ -245,7 +246,8 @@ def processar_recibo_ocr():
                 'validacao_recebedor': ocr_results.get('validacao_recebedor'),  # NOVO
                 'ocr_backend': ocr_results.get('backend', 'google_vision'),
                 'fallback_used': ocr_results.get('fallback_used', False),
-                'ocr_status': 'success'  # Indicar que OCR funcionou
+                'ocr_status': 'success',  # Indicar que OCR funcionou
+                'ocr_texto': ocr_results.get('raw_text'),
             }
 
             # Ajustar mensagem/status conforme backend
@@ -266,6 +268,15 @@ def processar_recibo_ocr():
                 response_data['ocr_message'] = 'OCR indisponível - digite os dados manualmente'
             else:
                 response_data['ocr_message'] = 'Dados extraídos automaticamente!'
+
+            # Integração PyTorch (classificador)
+            ml_result = PaymentValidatorService.evaluate_text(ocr_results.get('raw_text'))
+            response_data['ml_backend'] = ml_result.get('backend')
+            response_data['ml_status'] = ml_result.get('label')
+            response_data['ml_confidence'] = ml_result.get('confidence')
+            response_data['ml_scores'] = ml_result.get('scores')
+            if ml_result.get('error'):
+                response_data['ml_error'] = ml_result.get('error')
                 
         except Exception as ocr_error:
             # Se OCR falhar completamente, retornar resposta vazia mas não erro
@@ -279,8 +290,16 @@ def processar_recibo_ocr():
                 'conta_recebedor': None,
                 'chave_pix_recebedor': None,
                 'ocr_status': 'failed',
-                'ocr_message': 'OCR temporariamente indisponível - digite os dados manualmente'
+                'ocr_message': 'OCR temporariamente indisponível - digite os dados manualmente',
+                'ocr_texto': None,
             }
+            ml_result = PaymentValidatorService.evaluate_text(None)
+            response_data['ml_backend'] = ml_result.get('backend')
+            response_data['ml_status'] = ml_result.get('label')
+            response_data['ml_confidence'] = ml_result.get('confidence')
+            response_data['ml_scores'] = ml_result.get('scores')
+            if ml_result.get('error'):
+                response_data['ml_error'] = ml_result.get('error')
 
         return jsonify(response_data)
 
@@ -316,3 +335,109 @@ def listar_comprovantes():
         return render_template('comprovantes_pagamento.html', 
                              clientes=[], 
                              total_comprovantes=0)
+
+@financeiro_bp.route('/editar-pagamento/<int:pedido_id>', methods=['GET', 'POST'])
+@login_obrigatorio
+@permissao_necessaria('acesso_financeiro')
+def editar_pagamento(pedido_id):
+    """Edita um pagamento existente"""
+    from ..models import Pedido, Pagamento
+    from .. import db
+    
+    if request.method == 'POST':
+        try:
+            pagamento_id = request.form.get('pagamento_id')
+            if not pagamento_id:
+                flash('Selecione um pagamento para editar', 'error')
+                return redirect(url_for('financeiro.editar_pagamento', pedido_id=pedido_id))
+            
+            pagamento = Pagamento.query.get(int(pagamento_id))
+            if not pagamento or pagamento.pedido_id != pedido_id:
+                flash('Pagamento não encontrado', 'error')
+                return redirect(url_for('financeiro.listar_financeiro'))
+            
+            # Atualizar dados do pagamento
+            valor = request.form.get('valor')
+            forma_pagamento = request.form.get('metodo_pagamento')
+            observacoes = request.form.get('observacoes', '')
+            
+            try:
+                valor = float(valor)
+                if valor <= 0:
+                    raise ValueError("Valor deve ser maior que zero")
+            except (ValueError, TypeError) as e:
+                flash(f'Valor inválido: {str(e)}', 'error')
+                return redirect(url_for('financeiro.editar_pagamento', pedido_id=pedido_id))
+            
+            # Atualizar pagamento
+            pagamento.valor = valor
+            pagamento.metodo_pagamento = forma_pagamento
+            pagamento.observacoes = observacoes
+            
+            # Processar upload de novo recibo se fornecido
+            recibo = request.files.get('recibo')
+            if recibo and recibo.filename:
+                is_valid, error_msg, metadata = FileUploadValidator.validate_file(recibo, 'document')
+                if not is_valid:
+                    is_valid, error_msg, metadata = FileUploadValidator.validate_file(recibo, 'image')
+                
+                if not is_valid:
+                    flash(f"Erro no upload do recibo: {error_msg}", 'error')
+                    return redirect(url_for('financeiro.editar_pagamento', pedido_id=pedido_id))
+                
+                # Remover recibo antigo se existir
+                if pagamento.caminho_recibo:
+                    old_path = os.path.join(FinanceiroConfig.get_upload_directory('recibos'), pagamento.caminho_recibo)
+                    if os.path.exists(old_path):
+                        os.remove(old_path)
+                
+                # Salvar novo recibo
+                secure_name = FileUploadValidator.generate_secure_filename(recibo.filename, 'recibo_pagamento')
+                upload_dir = FinanceiroConfig.get_upload_directory('recibos')
+                file_path = os.path.join(upload_dir, secure_name)
+                
+                file_bytes = recibo.read()
+                recibo.seek(0)
+                import hashlib
+                sha256 = hashlib.sha256(file_bytes).hexdigest()
+                tamanho = len(file_bytes)
+                
+                recibo.save(file_path)
+                pagamento.caminho_recibo = secure_name
+                pagamento.recibo_mime = metadata.get('mime_type') if metadata else None
+                pagamento.recibo_tamanho = tamanho
+                pagamento.recibo_sha256 = sha256
+            
+            db.session.commit()
+            flash('Pagamento atualizado com sucesso!', 'success')
+            current_app.logger.info(f"Pagamento #{pagamento.id} editado por {session.get('usuario_nome', 'N/A')}")
+            return redirect(url_for('financeiro.listar_financeiro'))
+            
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Erro ao editar pagamento: {str(e)}")
+            flash(f'Erro ao editar pagamento: {str(e)}', 'error')
+            return redirect(url_for('financeiro.editar_pagamento', pedido_id=pedido_id))
+    
+    # GET: Mostrar formulário
+    try:
+        pedido = Pedido.query.get(pedido_id)
+        if not pedido:
+            flash('Pedido não encontrado', 'error')
+            return redirect(url_for('financeiro.listar_financeiro'))
+        
+        # Buscar pagamentos do pedido
+        pagamentos = Pagamento.query.filter_by(pedido_id=pedido_id).all()
+        
+        totais = pedido.calcular_totais()
+        
+        return render_template('editar_pagamento.html',
+                             pedido=pedido,
+                             pagamentos=pagamentos,
+                             total=totais['total_pedido'],
+                             pago=totais['total_pago'],
+                             saldo=totais['saldo'])
+    except Exception as e:
+        current_app.logger.error(f"Erro ao carregar formulário de edição: {str(e)}")
+        flash('Erro ao carregar dados do pagamento', 'error')
+        return redirect(url_for('financeiro.listar_financeiro'))

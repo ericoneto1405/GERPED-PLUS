@@ -57,3 +57,6 @@ marshmallow==3.22.0
 
 # Fila Assíncrona (FASE 7)
 rq==1.15.1
+
+# Machine Learning
+torch==2.1.2

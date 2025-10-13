@@ -14,6 +14,12 @@ class Cliente(db.Model):
     cpf_cnpj = db.Column(db.String(20))
     data_cadastro = db.Column(db.DateTime, default=datetime.utcnow)
     telefone = db.Column(db.String(20))
+    retirantes_autorizados = db.relationship(
+        'ClienteRetiranteAutorizado',
+        backref='cliente',
+        lazy='dynamic',
+        cascade='all, delete-orphan'
+    )
 
 class Produto(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -136,6 +142,28 @@ class Pagamento(db.Model):
     ocr_json = db.Column(db.Text, nullable=True)
     ocr_confidence = db.Column(db.Numeric(5, 2), nullable=True)
     pedido = db.relationship('Pedido', backref=db.backref('pagamentos', lazy=True))
+
+
+class ClienteRetiranteAutorizado(db.Model):
+    __tablename__ = 'cliente_retirante_autorizado'
+
+    id = db.Column(db.Integer, primary_key=True)
+    cliente_id = db.Column(db.Integer, db.ForeignKey('cliente.id'), nullable=False, index=True)
+    nome = db.Column(db.String(120), nullable=False)
+    cpf = db.Column(db.String(11), nullable=False)
+    observacoes = db.Column(db.String(255))
+    ativo = db.Column(db.Boolean, default=True, nullable=False)
+    criado_em = db.Column(db.DateTime, default=datetime.utcnow)
+    atualizado_em = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    __table_args__ = (
+        db.UniqueConstraint('cliente_id', 'cpf', name='uq_cliente_retirante_cpf'),
+    )
+
+    def cpf_formatado(self) -> str:
+        if not self.cpf or len(self.cpf) != 11:
+            return self.cpf or ''
+        return f"{self.cpf[:3]}.{self.cpf[3:6]}.{self.cpf[6:9]}-{self.cpf[9:]}"
 
 # NOVOS MODELOS DE COLETA
 class Coleta(db.Model):

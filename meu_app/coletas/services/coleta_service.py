@@ -19,6 +19,7 @@ from meu_app.models import (
     StatusColeta,
     StatusPedido,
 )
+from meu_app.exceptions import EstoqueError
 
 
 class ColetaService:
@@ -363,26 +364,56 @@ class ColetaService:
         """
         try:
             # Buscar item do pedido com lock
-            item_pedido = db.session.query(ItemPedido).options(
-                db.joinedload(ItemPedido.produto)
-            ).filter(ItemPedido.id == item_pedido_id).with_for_update().first()
+            item_pedido = (
+                db.session.query(ItemPedido)
+                .options(db.joinedload(ItemPedido.produto))
+                .filter(ItemPedido.id == item_pedido_id)
+                .with_for_update()
+                .first()
+            )
             
             if not item_pedido:
-                return
+                raise EstoqueError(
+                    message="Item do pedido não encontrado para movimentação de estoque",
+                    details={"item_pedido_id": item_pedido_id},
+                )
+            
+            if quantidade <= 0:
+                raise EstoqueError(
+                    message="Quantidade inválida para movimentação de estoque",
+                    details={"quantidade": quantidade, "item_pedido_id": item_pedido_id},
+                )
             
             produto_id = item_pedido.produto_id
             
             # Buscar estoque atual com lock
-            estoque = db.session.query(Estoque).filter_by(
-                produto_id=produto_id
-            ).with_for_update().first()
+            estoque = (
+                db.session.query(Estoque)
+                .filter_by(produto_id=produto_id)
+                .with_for_update()
+                .first()
+            )
             
             if not estoque:
-                return
+                raise EstoqueError(
+                    message="Estoque inexistente para o produto da movimentação",
+                    details={"produto_id": produto_id, "item_pedido_id": item_pedido_id},
+                )
             
             # Calcular novas quantidades
             quantidade_anterior = estoque.quantidade
             quantidade_atual = quantidade_anterior - quantidade
+            
+            if quantidade_atual < 0:
+                raise EstoqueError(
+                    message="Movimentação resultaria em estoque negativo",
+                    details={
+                        "produto_id": produto_id,
+                        "item_pedido_id": item_pedido_id,
+                        "quantidade_disponivel": quantidade_anterior,
+                        "quantidade_solicitada": quantidade,
+                    },
+                )
             
             # Criar movimentação
             movimentacao = MovimentacaoEstoque(
@@ -403,8 +434,18 @@ class ColetaService:
             
             current_app.logger.info(f"Movimentação de estoque registrada: {item_pedido.produto.nome} - Saída: {quantidade}")
             
+        except EstoqueError as erro:
+            detalhes = getattr(erro, "details", {}) or {}
+            current_app.logger.warning(
+                f"Erro de estoque ao registrar movimentação: {erro.message} | Detalhes: {detalhes}"
+            )
+            raise
         except Exception as e:
             current_app.logger.error(f"Erro ao registrar movimentação de estoque: {str(e)}")
+            raise EstoqueError(
+                message="Erro inesperado ao registrar movimentação de estoque",
+                details={"item_pedido_id": item_pedido_id, "error": str(e)},
+            )
 
     @staticmethod
     def buscar_historico_coletas(pedido_id: int) -> Optional[Dict]:

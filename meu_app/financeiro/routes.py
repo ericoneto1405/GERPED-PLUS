@@ -499,13 +499,17 @@ def retornar_para_comercial(pedido_id):
         
         db.session.commit()
         
+        # Invalidar cache da sessão SQLAlchemy
+        db.session.expire_all()
+        
         current_app.logger.info(
-            f"Pedido #{pedido_id} retornado para comercial por {session.get('usuario_nome', 'N/A')}"
+            f"Pedido #{pedido_id} retornado para comercial por {session.get('usuario_nome', 'N/A')}. "
+            f"Confirmado comercial: {pedido.confirmado_comercial}"
         )
         
         return jsonify({
             'success': True, 
-            'message': f'Pedido #{pedido_id} retornado com sucesso para o comercial!'
+            'message': f'Pedido #{pedido_id} retornado com sucesso! Ele agora está disponível no módulo Pedidos.'
         })
         
     except Exception as e:

@@ -234,10 +234,16 @@
                 
                 if (confirm('Tem certeza que deseja retornar este pedido para o comercial? Esta ação só é permitida para pedidos sem pagamentos.')) {
                     console.log('Confirmado, enviando requisição...');
+                    
+                    // Obter token CSRF
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || window.CSRF_TOKEN;
+                    console.log('CSRF Token:', csrfToken ? 'Presente' : 'AUSENTE');
+                    
                     fetch(`/financeiro/retornar-comercial/${pedidoId}`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
+                            'X-CSRFToken': csrfToken
                         }
                     })
                     .then(response => {

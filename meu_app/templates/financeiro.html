@@ -119,12 +119,13 @@
                            data-action="open-edit-payment"
                            target="_blank"
                            rel="noopener">✏️ Editar</a>
-                        {% if pago == 0 %}
+                        {% if pago == 0 or pago == 0.0 %}
                             <button class="btn btn-sm btn-secondary" 
                                     data-action="retornar-comercial"
                                     data-pedido-id="{{ pedido.id }}"
-                                    title="Retornar para Comercial">⬅️ Retornar</button>
+                                    title="Retornar para Comercial (Pedido sem pagamentos)">⬅️ Retornar</button>
                         {% endif %}
+                        <!-- Debug: pago={{ pago }}, tipo={{ pago.__class__.__name__ }} -->
                     </td>
                 </tr>
                 <tr class="collapse" id="details-{{ pedido.id }}">
@@ -220,33 +221,48 @@
     });
     
     // Event delegation para botão retornar comercial (CSP-compliant)
-    document.addEventListener('click', function(event) {
-        const button = event.target.closest('[data-action="retornar-comercial"]');
-        if (!button) return;
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Event listener para retornar-comercial carregado');
         
-        event.preventDefault();
-        const pedidoId = button.getAttribute('data-pedido-id');
-        
-        if (confirm('Tem certeza que deseja retornar este pedido para o comercial? Esta ação só é permitida para pedidos sem pagamentos.')) {
-            fetch(`/financeiro/retornar-comercial/${pedidoId}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert(data.message);
-                    window.location.reload();
-                } else {
-                    alert('Erro: ' + data.message);
-                }
-            })
-            .catch(error => {
-                alert('Erro ao processar requisição: ' + error);
-            });
-        }
+        document.addEventListener('click', function(event) {
+            // Verificar se clicou no botão ou em seus filhos (emoji/texto)
+            const button = event.target.closest('[data-action="retornar-comercial"]');
+            if (!button) return;
+            
+            console.log('Botão retornar clicado!');
+            event.preventDefault();
+            const pedidoId = button.getAttribute('data-pedido-id');
+            console.log('Pedido ID:', pedidoId);
+            
+            if (confirm('Tem certeza que deseja retornar este pedido para o comercial? Esta ação só é permitida para pedidos sem pagamentos.')) {
+                console.log('Confirmado, enviando requisição...');
+                fetch(`/financeiro/retornar-comercial/${pedidoId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => {
+                    console.log('Resposta recebida:', response.status);
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Dados:', data);
+                    if (data.success) {
+                        alert(data.message);
+                        window.location.reload();
+                    } else {
+                        alert('Erro: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro na requisição:', error);
+                    alert('Erro ao processar requisição: ' + error);
+                });
+            } else {
+                console.log('Ação cancelada pelo usuário');
+            }
+        });
     });
 </script>
 {% endblock %}

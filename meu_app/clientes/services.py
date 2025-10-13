@@ -12,16 +12,26 @@ from ..models import db, Cliente
 from flask import current_app
 from typing import Dict, List, Tuple, Optional
 from pydantic import ValidationError
-from .repositories import ClienteRepository
-from .schemas import ClienteCreateSchema, ClienteUpdateSchema
+from .repositories import ClienteRepository, RetiranteAutorizadoRepository
+from .schemas import (
+    ClienteCreateSchema,
+    ClienteUpdateSchema,
+    RetiranteCreateSchema,
+)
+from ..models import ClienteRetiranteAutorizado
 
 
 class ClienteService:
     """Serviço para operações relacionadas a clientes"""
     
-    def __init__(self, repository: Optional[ClienteRepository] = None):
+    def __init__(
+        self,
+        repository: Optional[ClienteRepository] = None,
+        retirante_repository: Optional[RetiranteAutorizadoRepository] = None,
+    ):
         """Inicializa o serviço com seu repository"""
         self.repository = repository or ClienteRepository()
+        self.retirante_repository = retirante_repository or RetiranteAutorizadoRepository()
 
     @staticmethod
     def _format_validation_errors(error: ValidationError) -> str:
@@ -295,3 +305,113 @@ class ClienteService:
             current_app.logger.error(f"Erro ao registrar atividade: {e}")
             # Não falhar se a atividade não puder ser registrada
             pass
+
+    # ------------------------------------------------------------------
+    # Retirantes autorizados
+    # ------------------------------------------------------------------
+
+    def listar_retirantes_autorizados(self, cliente_id: int) -> List[ClienteRetiranteAutorizado]:
+        try:
+            return self.retirante_repository.listar_por_cliente(cliente_id)
+        except Exception as e:
+            current_app.logger.error(f"Erro ao listar retirantes autorizados: {e}")
+            return []
+
+    def adicionar_retirante_autorizado(
+        self,
+        cliente_id: int,
+        nome: str,
+        cpf: str,
+        observacoes: Optional[str] = None,
+    ) -> Tuple[bool, str]:
+        try:
+            cliente = self.repository.buscar_por_id(cliente_id)
+            if not cliente:
+                return False, 'Cliente não encontrado'
+
+            try:
+                payload = RetiranteCreateSchema(nome=nome, cpf=cpf, observacoes=observacoes)
+            except ValidationError as exc:
+                mensagem = self._format_validation_errors(exc)
+                return False, f'Erro de validação: {mensagem}'
+
+            dados = payload.model_dump()
+
+            existente = self.retirante_repository.model.query.filter_by(
+                cliente_id=cliente_id,
+                cpf=dados['cpf'],
+            ).first()
+            if existente:
+                if not existente.ativo:
+                    existente.ativo = True
+                    existente.nome = dados['nome']
+                    existente.observacoes = dados.get('observacoes')
+                    self.retirante_repository.atualizar(existente)
+                    return True, 'Retirante reativado com sucesso!'
+                return False, 'Este CPF já consta como autorizado para o cliente.'
+
+            novo = ClienteRetiranteAutorizado(
+                cliente_id=cliente_id,
+                nome=dados['nome'],
+                cpf=dados['cpf'],
+                observacoes=dados.get('observacoes'),
+            )
+            self.retirante_repository.criar(novo)
+
+            self._registrar_atividade(
+                'criacao',
+                'Retirante autorizado cadastrado',
+                f"Retirante '{dados['nome']}' cadastrado para o cliente {cliente.nome}",
+                'clientes',
+                {'cliente_id': cliente_id, 'retirante_id': novo.id},
+            )
+
+            return True, 'Retirante autorizado cadastrado com sucesso.'
+        except Exception as e:
+            current_app.logger.error(f"Erro ao adicionar retirante autorizado: {e}")
+            return False, f'Erro ao adicionar retirante autorizado: {e}'
+
+    def alterar_status_retirante(
+        self, cliente_id: int, retirante_id: int, ativo: bool
+    ) -> Tuple[bool, str]:
+        try:
+            retirante = self.retirante_repository.buscar_por_id(retirante_id)
+            if not retirante or retirante.cliente_id != cliente_id:
+                return False, 'Retirante autorizado não encontrado.'
+
+            retirante.ativo = ativo
+            self.retirante_repository.atualizar(retirante)
+
+            self._registrar_atividade(
+                'edicao',
+                'Retirante autorizado atualizado',
+                f"Retirante '{retirante.nome}' marcado como {'ativo' if ativo else 'inativo'}.",
+                'clientes',
+                {'cliente_id': cliente_id, 'retirante_id': retirante_id, 'ativo': ativo},
+            )
+
+            return True, 'Status atualizado com sucesso.'
+        except Exception as e:
+            current_app.logger.error(f"Erro ao alterar status do retirante autorizado: {e}")
+            return False, f'Erro ao atualizar status: {e}'
+
+    def remover_retirante_autorizado(self, cliente_id: int, retirante_id: int) -> Tuple[bool, str]:
+        try:
+            retirante = self.retirante_repository.buscar_por_id(retirante_id)
+            if not retirante or retirante.cliente_id != cliente_id:
+                return False, 'Retirante autorizado não encontrado.'
+
+            self.retirante_repository.excluir(retirante)
+
+            self._registrar_atividade(
+                'exclusao',
+                'Retirante autorizado removido',
+                f"Retirante '{retirante.nome}' removido do cliente.",
+                'clientes',
+                {'cliente_id': cliente_id, 'retirante_id': retirante_id},
+            )
+
+            return True, 'Retirante removido com sucesso.'
+        except Exception as e:
+            current_app.logger.error(f"Erro ao remover retirante autorizado: {e}")
+            return False, f'Erro ao remover retirante autorizado: {e}'

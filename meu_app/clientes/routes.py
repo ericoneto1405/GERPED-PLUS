@@ -139,3 +139,47 @@ def excluir_cliente(id):
     else:
         # Redirecionar com a mensagem de erro como parâmetro de consulta
         return redirect(url_for('clientes.listar_clientes', error=mensagem))
+
+
+@clientes_bp.route('/<int:id>/retirantes', methods=['GET', 'POST'])
+@login_obrigatorio
+@permissao_necessaria('acesso_clientes')
+def gerenciar_retirantes(id):
+    service = ClienteService()
+    cliente = service.buscar_cliente_por_id(id)
+    if not cliente:
+        flash('Cliente não encontrado.', 'error')
+        return redirect(url_for('clientes.listar_clientes'))
+
+    if request.method == 'POST':
+        nome = request.form.get('nome', '').strip()
+        cpf = request.form.get('cpf', '').strip()
+        observacoes = request.form.get('observacoes', '').strip()
+        sucesso, mensagem = service.adicionar_retirante_autorizado(id, nome, cpf, observacoes)
+        flash(mensagem, 'success' if sucesso else 'error')
+        return redirect(url_for('clientes.gerenciar_retirantes', id=id))
+
+    retirantes = service.listar_retirantes_autorizados(id)
+    return render_template('clientes_retirantes.html', cliente=cliente, retirantes=retirantes)
+
+
+@clientes_bp.route('/<int:cliente_id>/retirantes/<int:retirante_id>/toggle', methods=['POST'])
+@login_obrigatorio
+@permissao_necessaria('acesso_clientes')
+def toggle_retirante(cliente_id, retirante_id):
+    ativo_val = request.form.get('ativo', '1')
+    ativo = ativo_val == '1'
+    service = ClienteService()
+    sucesso, mensagem = service.alterar_status_retirante(cliente_id, retirante_id, ativo)
+    flash(mensagem, 'success' if sucesso else 'error')
+    return redirect(url_for('clientes.gerenciar_retirantes', id=cliente_id))
+
+
+@clientes_bp.route('/<int:cliente_id>/retirantes/<int:retirante_id>/excluir', methods=['POST'])
+@login_obrigatorio
+@permissao_necessaria('acesso_clientes')
+def excluir_retirante(cliente_id, retirante_id):
+    service = ClienteService()
+    sucesso, mensagem = service.remover_retirante_autorizado(cliente_id, retirante_id)
+    flash(mensagem, 'success' if sucesso else 'error')
+    return redirect(url_for('clientes.gerenciar_retirantes', id=cliente_id))

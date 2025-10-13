@@ -170,3 +170,39 @@ class ClienteListResponseSchema(BaseModel):
     total: int
     
     model_config = ConfigDict(from_attributes=True)
+
+
+class RetiranteCreateSchema(BaseModel):
+    """Schema para criação de retirante autorizado"""
+
+    nome: str = Field(..., min_length=3, max_length=120)
+    cpf: str = Field(..., min_length=11, max_length=14)
+    observacoes: Optional[str] = Field(None, max_length=255)
+
+    @field_validator('nome')
+    def validar_nome(cls, v: str) -> str:
+        if not v or not v.strip():
+            raise ValueError('Nome é obrigatório')
+        return ' '.join(v.split())
+
+    @field_validator('cpf', mode='before')
+    def validar_cpf(cls, v: str) -> str:
+        if not v:
+            raise ValueError('CPF é obrigatório')
+        cpf_limpo = re.sub(r'\D', '', str(v))
+        if len(cpf_limpo) != 11:
+            raise ValueError('CPF deve conter 11 dígitos')
+        return cpf_limpo
+
+    @field_validator('observacoes')
+    def validar_obs(cls, v: Optional[str]) -> Optional[str]:
+        if v:
+            valor = v.strip()
+            return valor if valor else None
+        return None
+
+
+class RetiranteStatusSchema(BaseModel):
+    """Schema simples para alteração de status de retirante"""
+
+    ativo: bool = Field(...)

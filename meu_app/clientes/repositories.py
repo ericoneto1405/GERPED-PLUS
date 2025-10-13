@@ -7,7 +7,7 @@ separando a lógica de acesso ao banco de dados da lógica de negócio.
 
 from typing import List, Optional
 from sqlalchemy.exc import SQLAlchemyError
-from ..models import db, Cliente
+from ..models import db, Cliente, ClienteRetiranteAutorizado
 
 
 class ClienteRepository:
@@ -32,6 +32,68 @@ class ClienteRepository:
     def model(self):
         """Retorna o modelo associado"""
         return self._model or Cliente
+
+
+class RetiranteAutorizadoRepository:
+    """Repository para retirantes autorizados de um cliente."""
+
+    def __init__(self, session=None, model=None):
+        self._session = session
+        self._model = model or ClienteRetiranteAutorizado
+
+    @property
+    def session(self):
+        return self._session or db.session
+
+    @property
+    def model(self):
+        return self._model
+
+    def listar_por_cliente(self, cliente_id: int) -> List[ClienteRetiranteAutorizado]:
+        try:
+            return (
+                self.model.query.filter_by(cliente_id=cliente_id)
+                .order_by(self.model.nome)
+                .all()
+            )
+        except SQLAlchemyError as e:
+            print(f"Erro ao listar retirantes autorizados: {e}")
+            return []
+
+    def buscar_por_id(self, retirante_id: int) -> Optional[ClienteRetiranteAutorizado]:
+        try:
+            return self.model.query.get(retirante_id)
+        except SQLAlchemyError as e:
+            print(f"Erro ao buscar retirante autorizado: {e}")
+            return None
+
+    def criar(self, retirante: ClienteRetiranteAutorizado) -> ClienteRetiranteAutorizado:
+        try:
+            self.session.add(retirante)
+            self.session.commit()
+            return retirante
+        except SQLAlchemyError as e:
+            self.session.rollback()
+            print(f"Erro ao criar retirante autorizado: {e}")
+            raise
+
+    def atualizar(self, retirante: ClienteRetiranteAutorizado) -> ClienteRetiranteAutorizado:
+        try:
+            self.session.commit()
+            return retirante
+        except SQLAlchemyError as e:
+            self.session.rollback()
+            print(f"Erro ao atualizar retirante autorizado: {e}")
+            raise
+
+    def excluir(self, retirante: ClienteRetiranteAutorizado) -> None:
+        try:
+            self.session.delete(retirante)
+            self.session.commit()
+        except SQLAlchemyError as e:
+            self.session.rollback()
+            print(f"Erro ao excluir retirante autorizado: {e}")
+            raise
     
     def buscar_por_id(self, cliente_id: int) -> Optional[Cliente]:
         """

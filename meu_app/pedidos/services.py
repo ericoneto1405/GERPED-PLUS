@@ -465,6 +465,7 @@ class PedidoService:
             pedidos_liberados = db.session.query(
                 Produto.id,
                 Produto.nome,
+                Produto.preco_compra,
                 func.sum(ItemPedido.quantidade).label('quantidade_pedida')
             ).join(
                 ItemPedido, ItemPedido.produto_id == Produto.id
@@ -473,12 +474,12 @@ class PedidoService:
             ).filter(
                 Pedido.confirmado_comercial == True
             ).group_by(
-                Produto.id, Produto.nome
+                Produto.id, Produto.nome, Produto.preco_compra
             ).all()
             
             resultado = []
             
-            for produto_id, produto_nome, quantidade_pedida in pedidos_liberados:
+            for produto_id, produto_nome, preco_compra, quantidade_pedida in pedidos_liberados:
                 # Buscar estoque atual
                 estoque = Estoque.query.filter_by(produto_id=produto_id).first()
                 quantidade_estoque = estoque.quantidade if estoque else 0
@@ -487,6 +488,10 @@ class PedidoService:
                 saldo = quantidade_estoque - int(quantidade_pedida)
                 necessidade_compra = abs(saldo) if saldo < 0 else 0
                 
+                # Calcular valor total da necessidade
+                valor_compra = float(preco_compra or 0)
+                valor_total_necessidade = necessidade_compra * valor_compra
+                
                 resultado.append({
                     'produto_id': produto_id,
                     'produto_nome': produto_nome,
@@ -494,6 +499,8 @@ class PedidoService:
                     'quantidade_estoque': quantidade_estoque,
                     'saldo': saldo,
                     'necessidade_compra': necessidade_compra,
+                    'valor_compra': valor_compra,
+                    'valor_total_necessidade': valor_total_necessidade,
                     'status': 'CRÍTICO' if saldo < 0 else 'SUFICIENTE' if saldo > 0 else 'ZERADO'
                 })
             

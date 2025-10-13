@@ -15,15 +15,30 @@
     </div>
     
     {% if necessidade_compra %}
+    <!-- Resumo Total -->
+    {% set total_valor_necessidade = necessidade_compra | sum(attribute='valor_total_necessidade') %}
+    {% if total_valor_necessidade > 0 %}
+    <div class="alert alert-warning" style="margin-bottom: 20px; padding: 15px; border-left: 5px solid #dc3545;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <strong style="font-size: 1.1rem;">💰 Total de Investimento Necessário:</strong>
+            <span style="font-size: 1.4rem; font-weight: bold; color: #dc3545;">
+                {{ "R$ {:,.2f}".format(total_valor_necessidade).replace(',', 'X').replace('.', ',').replace('X', '.') }}
+            </span>
+        </div>
+    </div>
+    {% endif %}
+    
     <div class="table-responsive">
         <table class="necessidade-table">
             <thead>
                 <tr>
                     <th>PRODUTO</th>
-                    <th>QTD PEDIDOS LIBERADOS</th>
-                    <th>QTD ESTOQUE</th>
+                    <th>PEDIDOS<br>LIBERADOS</th>
+                    <th>ESTOQUE</th>
                     <th>SALDO</th>
-                    <th>NECESSIDADE DE COMPRA</th>
+                    <th>NECESSIDADE<br>DE COMPRA</th>
+                    <th>VALOR<br>UNITÁRIO</th>
+                    <th>VALOR<br>TOTAL</th>
                     <th>STATUS</th>
                 </tr>
             </thead>
@@ -39,6 +54,18 @@
                     <td class="necessidade-cell">
                         {% if item.necessidade_compra > 0 %}
                             <span class="badge-compra">{{ item.necessidade_compra }} un.</span>
+                        {% else %}
+                            <span style="color: #28a745;">—</span>
+                        {% endif %}
+                    </td>
+                    <td style="text-align: right;">
+                        {{ "R$ {:,.2f}".format(item.valor_compra).replace(',', 'X').replace('.', ',').replace('X', '.') }}
+                    </td>
+                    <td style="text-align: right; font-weight: bold;">
+                        {% if item.valor_total_necessidade > 0 %}
+                            <span style="color: #dc3545;">
+                                {{ "R$ {:,.2f}".format(item.valor_total_necessidade).replace(',', 'X').replace('.', ',').replace('X', '.') }}
+                            </span>
                         {% else %}
                             <span style="color: #28a745;">—</span>
                         {% endif %}
@@ -64,6 +91,7 @@
             <li><strong>Pedidos Liberados:</strong> Soma de todos os pedidos confirmados pelo comercial</li>
             <li><strong>Saldo:</strong> Estoque atual - Pedidos Liberados</li>
             <li><strong>Necessidade de Compra:</strong> Quantidade que precisa ser comprada (quando saldo é negativo)</li>
+            <li><strong>Valor Total:</strong> Necessidade de Compra × Valor Unitário de Compra</li>
         </ul>
     </div>
     {% else %}

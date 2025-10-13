@@ -763,22 +763,32 @@ document.addEventListener('DOMContentLoaded', function() {
     dataFimInput.addEventListener('input', limparMesAno);
     
     // Event listeners para os botões de ação (CSP-compliant)
-    document.querySelectorAll('[data-action="confirmar"]').forEach(btn => {
+    const botoesConfirmar = document.querySelectorAll('[data-action="confirmar"]');
+    console.log('Botões confirmar encontrados:', botoesConfirmar.length);
+    botoesConfirmar.forEach(btn => {
         btn.addEventListener('click', function() {
+            console.log('Botão confirmar clicado');
             const pedidoId = parseInt(this.dataset.pedidoId);
+            console.log('Pedido ID:', pedidoId);
             abrirModalConfirmarComercial(pedidoId);
         });
     });
     
-    document.querySelectorAll('[data-action="editar"]').forEach(btn => {
+    const botoesEditar = document.querySelectorAll('[data-action="editar"]');
+    console.log('Botões editar encontrados:', botoesEditar.length);
+    botoesEditar.forEach(btn => {
         btn.addEventListener('click', function() {
+            console.log('Botão editar clicado');
             const pedidoId = parseInt(this.dataset.pedidoId);
             abrirModalEditar(pedidoId);
         });
     });
     
-    document.querySelectorAll('[data-action="excluir"]').forEach(btn => {
+    const botoesExcluir = document.querySelectorAll('[data-action="excluir"]');
+    console.log('Botões excluir encontrados:', botoesExcluir.length);
+    botoesExcluir.forEach(btn => {
         btn.addEventListener('click', function() {
+            console.log('Botão excluir clicado');
             const pedidoId = parseInt(this.dataset.pedidoId);
             abrirModalExcluir(pedidoId);
         });

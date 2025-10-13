@@ -46,6 +46,42 @@
     color: #6b7280;
     font-size: 0.9rem;
 }
+
+.coleta-items-table thead th {
+    background-color: #1f2937;
+    color: #ffffff;
+    border-color: #111827;
+}
+
+.coleta-badge {
+    display: inline-block;
+    min-width: 2.4rem;
+    padding: 0.45rem 0.75rem;
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #111827;
+}
+
+.coleta-badge-primary {
+    background-color: #dbeafe;
+}
+
+.coleta-badge-success {
+    background-color: #dcfce7;
+}
+
+.coleta-badge-warning {
+    background-color: #fef3c7;
+}
+
+.coleta-badge-info {
+    background-color: #e0f2fe;
+}
+
+.coleta-badge-danger {
+    background-color: #fee2e2;
+}
 </style>
 {% endblock %}
 
@@ -175,8 +211,8 @@
                                 </h4>
                                 
                                 <div class="table-responsive">
-                                    <table class="table table-striped">
-                                        <thead class="table-dark">
+                                    <table class="table table-striped coleta-items-table">
+                                        <thead>
                                             <tr>
                                                 <th>Produto</th>
                                                 <th>Quantidade Total</th>
@@ -194,17 +230,17 @@
                                                     <strong>{{ item.produto.nome }}</strong>
                                                 </td>
                                                 <td>
-                                                    <span class="badge bg-primary">{{ item.quantidade }}</span>
+                                                    <span class="coleta-badge coleta-badge-primary">{{ item.quantidade }}</span>
                                                 </td>
                                                 <td>
-                                                    <span class="badge bg-success">{{ item.quantidade_coletada }}</span>
+                                                    <span class="coleta-badge coleta-badge-success">{{ item.quantidade_coletada }}</span>
                                                 </td>
                                                 <td>
-                                                    <span class="badge bg-warning">{{ item.quantidade_pendente }}</span>
+                                                    <span class="coleta-badge coleta-badge-warning">{{ item.quantidade_pendente }}</span>
                                                 </td>
                                                 <td>
-                                                    <span class="badge 
-                                                        {% if item.estoque_disponivel > 0 %}bg-info{% else %}bg-danger{% endif %}">
+                                                    <span class="coleta-badge 
+                                                        {% if item.estoque_disponivel > 0 %}coleta-badge-info{% else %}coleta-badge-danger{% endif %}">
                                                         {{ item.estoque_disponivel }}
                                                     </span>
                                                 </td>

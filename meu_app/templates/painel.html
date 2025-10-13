@@ -10,7 +10,7 @@
     <div class="section-header">
         <h3>📊 Análise de Necessidade de Compra</h3>
         <p style="color: #6c757d; font-size: 0.9rem; margin-top: 5px;">
-            Baseado nos pedidos liberados pelo comercial
+            Baseado nos pedidos com pagamento aprovado e em processo de coleta
         </p>
     </div>
     
@@ -88,7 +88,7 @@
     <div class="legenda-necessidade" style="margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
         <strong>Legenda:</strong>
         <ul style="margin: 10px 0 0 20px; padding: 0;">
-            <li><strong>Pedidos Liberados:</strong> Soma de todos os pedidos confirmados pelo comercial</li>
+            <li><strong>Pedidos Liberados:</strong> Soma de todos os pedidos com pagamento aprovado</li>
             <li><strong>Saldo:</strong> Estoque atual - Pedidos Liberados</li>
             <li><strong>Necessidade de Compra:</strong> Quantidade que precisa ser comprada (quando saldo é negativo)</li>
             <li><strong>Valor Total:</strong> Necessidade de Compra × Valor Unitário de Compra</li>
@@ -97,7 +97,7 @@
     {% else %}
     <div style="padding: 30px; text-align: center; background: #f8f9fa; border-radius: 8px;">
         <p style="color: #6c757d; margin: 0;">
-            ℹ️ Nenhum pedido liberado pelo comercial no momento.
+            ℹ️ Nenhum pedido com pagamento aprovado no momento.
         </p>
     </div>
     {% endif %}

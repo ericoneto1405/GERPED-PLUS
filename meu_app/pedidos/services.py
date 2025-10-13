@@ -452,7 +452,7 @@ class PedidoService:
     @staticmethod
     def calcular_necessidade_compra() -> List[Dict]:
         """
-        Calcula a necessidade de compra baseada nos pedidos liberados pelo comercial
+        Calcula a necessidade de compra baseada nos pedidos pagos e em coleta
         
         Returns:
             List[Dict]: Lista com produtos e necessidade de compra
@@ -470,7 +470,13 @@ class PedidoService:
                 )
                 .join(ItemPedido, ItemPedido.produto_id == Produto.id)
                 .join(Pedido, Pedido.id == ItemPedido.pedido_id)
-                .filter(Pedido.confirmado_comercial == True)
+                .filter(
+                    Pedido.status.in_([
+                        StatusPedido.PAGAMENTO_APROVADO,
+                        StatusPedido.COLETA_PARCIAL,
+                        StatusPedido.COLETA_CONCLUIDA
+                    ])
+                )
                 .group_by(Produto.id, Produto.nome)
                 .all()
             )

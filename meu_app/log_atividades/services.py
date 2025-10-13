@@ -130,7 +130,7 @@ class LogAtividadesService:
                         details={'field': 'data_inicio', 'expected_format': 'YYYY-MM-DD'}
                     )
                 data_inicio_dt = datetime.strptime(data_inicio, "%Y-%m-%d")
-                query = query.filter(LogAtividade.data_atividade >= data_inicio_dt)
+                query = query.filter(LogAtividade.data_hora >= data_inicio_dt)
             
             # Validação e filtro de data de fim
             if data_fim:

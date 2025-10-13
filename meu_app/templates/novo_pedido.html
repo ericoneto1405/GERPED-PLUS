@@ -44,7 +44,7 @@
                 
                 // Criar HTML do produto com select simples
                 const produtoHTML = `
-                    <div class="d-flex gap-2 mb-2 align-items-center" data-item-index="${itemIndex}">
+                    <div class="d-flex gap-2 mb-2 align-items-center" data-item-index="${itemIndex}" data-item-row>
                         <div class="flex-grow-1">
                             <select name="produto_id" class="form-control" required>
                                 <option value="">Selecione um produto...</option>
@@ -56,7 +56,7 @@
                         <div style="width: 150px;">
                             <input type="text" name="preco_venda" class="form-control currency-input" placeholder="Preço Venda" data-currency="true" required>
                         </div>
-                        <button type="button" class="btn btn-danger btn-sm" onclick="this.parentElement.remove()">🗑️</button>
+                        <button type="button" class="btn btn-danger btn-sm" data-action="remove-item">🗑️</button>
                     </div>
                 `;
                 
@@ -187,7 +187,7 @@
         <hr class="mt-4">
 
         <div class="text-end">
-            <button type="button" class="btn btn-primary btn-lg" onclick="confirmarPedido()">💾 Salvar Pedido</button>
+            <button type="button" class="btn btn-primary btn-lg" data-action="submit-pedido">💾 Salvar Pedido</button>
         </div>
     </form>
 </div>
@@ -199,8 +199,8 @@
         <div class="card-body">
             <div id="resumoPedido" class="mb-3"></div>
             <div class="d-flex justify-content-end gap-2">
-                <button onclick="fecharModal()" class="btn btn-secondary">❌ Cancelar</button>
-                <button onclick="iniciarEnvioPedido()" class="btn btn-success">✔️ Confirmar</button>
+                <button type="button" class="btn btn-secondary" data-action="cancel-confirmation">❌ Cancelar</button>
+                <button type="button" class="btn btn-success" data-action="confirm-submit">✔️ Confirmar</button>
             </div>
         </div>
     </div>
@@ -219,24 +219,39 @@
 
 {% block scripts %}
 <script nonce="{{ nonce }}">
-    // Função adicionarItem já está definida inline antes do botão
-
-    $(document).ready(function() {
+    document.addEventListener('DOMContentLoaded', () => {
         try {
-            console.log('🚀 DOM carregado, inicializando...');
-            
-            // Verificar se as funções estão disponíveis
-            if (typeof adicionarItem === 'function') {
-                console.log('✅ Função adicionarItem disponível');
-            } else {
-                console.error('❌ Função adicionarItem não encontrada');
+            const itemsContainer = document.getElementById('itens');
+            const addItemButton = document.querySelector('[data-action="add-item"]');
+            const submitButton = document.querySelector('[data-action="submit-pedido"]');
+            const cancelConfirmationButton = document.querySelector('[data-action="cancel-confirmation"]');
+            const confirmSubmitButton = document.querySelector('[data-action="confirm-submit"]');
+
+            if (addItemButton && typeof adicionarItem === 'function') {
+                addItemButton.addEventListener('click', adicionarItem);
             }
-            
+
+            itemsContainer?.addEventListener('click', (event) => {
+                const removeButton = event.target.closest('[data-action="remove-item"]');
+                if (removeButton) {
+                    removeButton.closest('[data-item-index], [data-item-row]')?.remove();
+                }
+            });
+
+            if (submitButton && typeof window.confirmarPedido === 'function') {
+                submitButton.addEventListener('click', window.confirmarPedido);
+            }
+
+            if (cancelConfirmationButton && typeof window.fecharModal === 'function') {
+                cancelConfirmationButton.addEventListener('click', window.fecharModal);
+            }
+
+            if (confirmSubmitButton && typeof window.iniciarEnvioPedido === 'function') {
+                confirmSubmitButton.addEventListener('click', window.iniciarEnvioPedido);
+            }
         } catch (error) {
-            console.error('Erro na inicialização do formulário:', error);
+            console.error('Erro na inicialização do formulário de pedido:', error);
         }
     });
-
-    // Funções confirmarPedido, fecharModal e iniciarEnvioPedido já estão definidas inline antes do botão
 </script>
 {% endblock %}

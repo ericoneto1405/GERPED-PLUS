@@ -95,7 +95,7 @@
         {% else %}
             <a class="botao-imprimir" href="{{ url_for('pedidos.listar_pedidos', **retorno_params) }}">⬅ Voltar para Pedidos</a>
         {% endif %}
-        <a class="botao-imprimir" href="#" onclick="window.print()">🖨️ Imprimir Pedido</a>
+        <a class="botao-imprimir" href="#" data-action="print-pedido">🖨️ Imprimir Pedido</a>
     </div>
 </div>
 
@@ -155,4 +155,17 @@
     <div class="assinatura">
         <p>Assinatura do Cliente</p>
     </div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script nonce="{{ nonce }}">
+    document.addEventListener('DOMContentLoaded', () => {
+        const printButton = document.querySelector('[data-action="print-pedido"]');
+        printButton?.addEventListener('click', (event) => {
+            event.preventDefault();
+            window.print();
+        });
+    });
+</script>
 {% endblock %}

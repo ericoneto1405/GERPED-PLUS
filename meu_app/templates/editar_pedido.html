@@ -34,7 +34,7 @@
         <h5>📦 Itens do Pedido</h5>
         <div id="items" class="mb-3">
             {% for item in pedido.itens %}
-            <div class="d-flex gap-2 mb-2 align-items-center">
+            <div class="d-flex gap-2 mb-2 align-items-center" data-item-row>
                 <div class="flex-grow-1">
                     <select name="produto_id[]" class="form-control select2-ajax" required>
                         <option value="{{ item.produto.id }}" selected>{{ item.produto.nome }} {% if item.produto.codigo_interno %}({{ item.produto.codigo_interno }}){% endif %}</option>
@@ -46,11 +46,11 @@
                 <div style="width: 150px;">
                     <input type="text" name="preco_venda" class="form-control currency-input" placeholder="Preço Venda" value="{{ item.preco_venda|string|replace(',', '.') }}" required>
                 </div>
-                <button type="button" class="btn btn-danger btn-sm" onclick="this.parentElement.remove()">🗑️</button>
+                <button type="button" class="btn btn-danger btn-sm" data-action="remove-item">🗑️</button>
             </div>
             {% endfor %}
         </div>
-        <button type="button" onclick="addItem()" class="btn btn-info btn-sm">➕ Adicionar Item</button>
+        <button type="button" class="btn btn-info btn-sm" data-action="add-item">➕ Adicionar Item</button>
 
         <hr class="mt-4">
 
@@ -103,6 +103,7 @@
             }
             const itemBox = document.createElement('div');
             itemBox.className = 'd-flex gap-2 mb-2 align-items-center';
+            itemBox.setAttribute('data-item-row', '');
             
             itemBox.innerHTML = `
                 <div class="flex-grow-1">
@@ -114,7 +115,7 @@
                 <div style="width: 150px;">
                     <input type="text" name="preco_venda" class="form-control currency-input" placeholder="Preço Venda" required>
                 </div>
-                <button type="button" class="btn btn-danger btn-sm" onclick="removeItem(this)">🗑️</button>
+                <button type="button" class="btn btn-danger btn-sm" data-action="remove-item">🗑️</button>
             `;
             
             container.appendChild(itemBox);
@@ -129,6 +130,22 @@
             alert('Ocorreu um erro ao adicionar o produto. Verifique o console para detalhes.');
         }
     }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const addItemButton = document.querySelector('[data-action="add-item"]');
+        const itemsContainer = document.getElementById('items');
+
+        if (addItemButton) {
+            addItemButton.addEventListener('click', addItem);
+        }
+
+        itemsContainer?.addEventListener('click', (event) => {
+            const removeBtn = event.target.closest('[data-action="remove-item"]');
+            if (removeBtn) {
+                removeBtn.closest('[data-item-row]')?.remove();
+            }
+        });
+    });
 
     $(document).ready(function() {
         try {
@@ -148,9 +165,5 @@
             console.error('Erro na inicialização do formulário de edição:', error);
         }
     });
-
-    function removeItem(button) {
-        button.parentElement.remove();
-    }
 </script>
 {% endblock %}

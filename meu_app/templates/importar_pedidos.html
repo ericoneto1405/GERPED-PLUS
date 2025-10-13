@@ -148,7 +148,7 @@ LUCIANO VIEIRA SILVA DE ARAUJO,LUCIANO MOURA,BUDWEISER LATA 350ML,280,37.00,16/0
                 </div>
                 <div class="file-info" id="fileInfo" style="display: none;">
                     <span id="fileName"></span>
-                    <button type="button" class="btn-remove" onclick="removeFile()">✕</button>
+                    <button type="button" class="btn-remove" data-action="remove-file">✕</button>
                 </div>
             </div>
 
@@ -594,6 +594,7 @@ LUCIANO VIEIRA SILVA DE ARAUJO,LUCIANO MOURA,BUDWEISER LATA 350ML,280,37.00,16/0
     const uploadText = document.querySelector('.upload-text');
     const fileInfo = document.getElementById('fileInfo');
     const fileName = document.getElementById('fileName');
+    const removeFileButton = document.querySelector('[data-action="remove-file"]');
 
     fileInput.addEventListener('change', function(e) {
         if (this.files && this.files[0]) {
@@ -640,6 +641,8 @@ LUCIANO VIEIRA SILVA DE ARAUJO,LUCIANO MOURA,BUDWEISER LATA 350ML,280,37.00,16/0
             document.getElementById('loadingOverlay').style.display = 'flex';
         }
     });
+
+    removeFileButton?.addEventListener('click', removeFile);
 </script>
 
 <a href="{{ url_for('pedidos.listar_pedidos') }}" class="botao">⬅ Voltar aos Pedidos</a>

@@ -10,7 +10,7 @@
     <div class="section-header">
         <h3>📊 Análise de Necessidade de Compra</h3>
         <p style="color: #6c757d; font-size: 0.9rem; margin-top: 5px;">
-            Baseado nos pedidos com pagamento aprovado e em processo de coleta
+            Baseado nos pedidos liberados pelo Financeiro
         </p>
     </div>
     
@@ -18,10 +18,10 @@
     <!-- Resumo Total -->
     {% set total_valor_necessidade = necessidade_compra | sum(attribute='valor_total_necessidade') %}
     {% if total_valor_necessidade > 0 %}
-    <div class="alert alert-warning" style="margin-bottom: 20px; padding: 15px; border-left: 5px solid #dc3545;">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <strong style="font-size: 1.1rem;">💰 Total de Investimento Necessário:</strong>
-            <span style="font-size: 1.4rem; font-weight: bold; color: #dc3545;">
+    <div class="alert alert-warning" style="margin-bottom: 20px; padding: 12px 16px; border-left: 4px solid #dc3545;">
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 0.95rem;">
+            <strong>💰 Necessidade Total de Compra Valor:</strong>
+            <span style="font-weight: 600; color: #dc3545;">
                 {{ "R$ {:,.2f}".format(total_valor_necessidade).replace(',', 'X').replace('.', ',').replace('X', '.') }}
             </span>
         </div>
@@ -85,15 +85,6 @@
         </table>
     </div>
     
-    <div class="legenda-necessidade" style="margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
-        <strong>Legenda:</strong>
-        <ul style="margin: 10px 0 0 20px; padding: 0;">
-            <li><strong>Pedidos Liberados:</strong> Soma de todos os pedidos com pagamento aprovado</li>
-            <li><strong>Saldo:</strong> Estoque atual - Pedidos Liberados</li>
-            <li><strong>Necessidade de Compra:</strong> Quantidade que precisa ser comprada (quando saldo é negativo)</li>
-            <li><strong>Valor Total:</strong> Necessidade de Compra × Valor Unitário de Compra</li>
-        </ul>
-    </div>
     {% else %}
     <div style="padding: 30px; text-align: center; background: #f8f9fa; border-radius: 8px;">
         <p style="color: #6c757d; margin: 0;">

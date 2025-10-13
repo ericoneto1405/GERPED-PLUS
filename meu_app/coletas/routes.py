@@ -16,7 +16,7 @@ from .receipt_service import ReceiptService
 import os
 
 CPF_REGEX = re.compile(r'^\d{11}$')
-NAME_REGEX = re.compile(r"^[A-Za-zÀ-ÖØ-öø-ÿ][A-Za-zÀ-ÖØ-öø-ÿ'\\- ]+$")
+NAME_REGEX = re.compile(r"^[A-Za-zÀ-ÖØ-öø-ÿ][A-Za-zÀ-ÖØ-öø-ÿ' -]*$")
 
 
 def _normalizar_cpf(valor: str) -> str | None:

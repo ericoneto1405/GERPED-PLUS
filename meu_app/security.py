@@ -154,6 +154,9 @@ def _register_nonce_context_processor(app) -> None:
     """Disponibiliza o nonce para todos os templates."""
 
     def _get_nonce() -> str:
+        talisman_nonce = getattr(g, "csp_nonce", None)
+        if talisman_nonce:
+            return talisman_nonce
         if not hasattr(g, "_csp_nonce"):
             g._csp_nonce = secrets.token_urlsafe(16)  # type: ignore[attr-defined]
         return g._csp_nonce  # type: ignore[attr-defined]

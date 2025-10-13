@@ -5,45 +5,6 @@
 {% block page_title %}Dashboard{% endblock %}
 
 {% block content %}
-<!-- Filtros -->
-<div class="card mb-4">
-    <form method="GET" class="filter-form">
-        <div class="d-flex gap-3 align-items-end">
-            <div class="form-group">
-                <label for="mes">Mês</label>
-                <select name="mes" id="mes" class="form-control">
-                    <option value="1" {% if mes == 1 %}selected{% endif %}>Janeiro</option>
-                    <option value="2" {% if mes == 2 %}selected{% endif %}>Fevereiro</option>
-                    <option value="3" {% if mes == 3 %}selected{% endif %}>Março</option>
-                    <option value="4" {% if mes == 4 %}selected{% endif %}>Abril</option>
-                    <option value="5" {% if mes == 5 %}selected{% endif %}>Maio</option>
-                    <option value="6" {% if mes == 6 %}selected{% endif %}>Junho</option>
-                    <option value="7" {% if mes == 7 %}selected{% endif %}>Julho</option>
-                    <option value="8" {% if mes == 8 %}selected{% endif %}>Agosto</option>
-                    <option value="9" {% if mes == 9 %}selected{% endif %}>Setembro</option>
-                    <option value="10" {% if mes == 10 %}selected{% endif %}>Outubro</option>
-                    <option value="11" {% if mes == 11 %}selected{% endif %}>Novembro</option>
-                    <option value="12" {% if mes == 12 %}selected{% endif %}>Dezembro</option>
-                </select>
-            </div>
-            
-            <div class="form-group">
-                <label for="ano">Ano</label>
-                <select name="ano" id="ano" class="form-control">
-                    {% for a in range(2020, 2101) %}
-                        <option value="{{ a }}" {% if ano == a %}selected{% endif %}>{{ a }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            
-            <div class="form-group">
-                <label>&nbsp;</label> <!-- Label vazio para alinhar o botão -->
-                <button type="submit" class="btn btn-primary">Filtrar</button>
-            </div>
-        </div>
-    </form>
-</div>
-
 <!-- Tabela de Análise de Necessidade de Compra -->
 <div class="necessidade-compra-section mb-4">
     <div class="section-header">
@@ -112,6 +73,45 @@
         </p>
     </div>
     {% endif %}
+</div>
+
+<!-- Filtros -->
+<div class="card mb-4">
+    <form method="GET" class="filter-form">
+        <div class="d-flex gap-3 align-items-end">
+            <div class="form-group">
+                <label for="mes">Mês</label>
+                <select name="mes" id="mes" class="form-control">
+                    <option value="1" {% if mes == 1 %}selected{% endif %}>Janeiro</option>
+                    <option value="2" {% if mes == 2 %}selected{% endif %}>Fevereiro</option>
+                    <option value="3" {% if mes == 3 %}selected{% endif %}>Março</option>
+                    <option value="4" {% if mes == 4 %}selected{% endif %}>Abril</option>
+                    <option value="5" {% if mes == 5 %}selected{% endif %}>Maio</option>
+                    <option value="6" {% if mes == 6 %}selected{% endif %}>Junho</option>
+                    <option value="7" {% if mes == 7 %}selected{% endif %}>Julho</option>
+                    <option value="8" {% if mes == 8 %}selected{% endif %}>Agosto</option>
+                    <option value="9" {% if mes == 9 %}selected{% endif %}>Setembro</option>
+                    <option value="10" {% if mes == 10 %}selected{% endif %}>Outubro</option>
+                    <option value="11" {% if mes == 11 %}selected{% endif %}>Novembro</option>
+                    <option value="12" {% if mes == 12 %}selected{% endif %}>Dezembro</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="ano">Ano</label>
+                <select name="ano" id="ano" class="form-control">
+                    {% for a in range(2020, 2101) %}
+                        <option value="{{ a }}" {% if ano == a %}selected{% endif %}>{{ a }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>&nbsp;</label> <!-- Label vazio para alinhar o botão -->
+                <button type="submit" class="btn btn-primary">Filtrar</button>
+            </div>
+        </div>
+    </form>
 </div>
 
 <style>

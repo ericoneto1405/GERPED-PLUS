@@ -214,19 +214,17 @@ def confirmar_edicao_pedido(id):
                     current_app.logger.error(f"Erro ao converter preço: {pv}")
                     continue
         
-        # Usar o serviço para atualizar o pedido
-        sucesso, mensagem = PedidoService.atualizar_pedido(id, cliente_id, itens_data)
+        # Usar o serviço para editar o pedido
+        sucesso, mensagem, pedido = PedidoService.editar_pedido(id, cliente_id, itens_data)
         
         if sucesso:
-            flash(mensagem, 'success')
+            return jsonify({'success': True, 'message': mensagem})
         else:
-            flash(mensagem, 'error')
+            return jsonify({'success': False, 'message': mensagem}), 400
             
     except Exception as e:
         current_app.logger.error(f"Erro ao confirmar edição do pedido: {str(e)}")
-        flash('Erro ao salvar alterações', 'error')
-    
-    return redirect(url_for('pedidos.listar_pedidos'))
+        return jsonify({'success': False, 'message': f'Erro ao salvar alterações: {str(e)}'}), 500
 
 @pedidos_bp.route('/confirmar_comercial/<int:id>', methods=['POST'])
 @login_obrigatorio

@@ -46,7 +46,7 @@
     </div>
 </form>
 
-<style>
+<style nonce="{{ nonce }}">
     .page-header {
         display: flex;
         justify-content: space-between;
@@ -642,13 +642,6 @@ window.onclick = function(event) {
     }
 }
 
-// Permitir confirmação com Enter
-document.getElementById('senhaAdmin').addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') {
-        confirmarAcao();
-    }
-});
-
 // ===== FUNCIONALIDADE DE ORDENAÇÃO =====
 // Variáveis de controle de ordenação
 let currentSort = '{{ current_sort }}';
@@ -806,6 +799,17 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (btnConfirmar) {
         btnConfirmar.addEventListener('click', confirmarAcao);
+    }
+    
+    // Permitir confirmação com Enter no campo senha
+    const senhaAdmin = document.getElementById('senhaAdmin');
+    if (senhaAdmin) {
+        senhaAdmin.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                confirmarAcao();
+            }
+        });
     }
 });
 </script>

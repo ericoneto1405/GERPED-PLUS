@@ -592,7 +592,13 @@ function confirmarAcao() {
         
         if (data.success) {
             if (acaoAtual === 'editar') {
-                window.location.href = data.redirect_url;
+                fecharModal();
+                if (typeof notificationSystem !== 'undefined') {
+                    notificationSystem.success('Pedido editado', data.message || 'Pedido editado com sucesso!', 4000);
+                }
+                setTimeout(() => {
+                    window.location.reload();
+                }, 500);
             } else if (acaoAtual === 'excluir') {
                 fecharModal();
                 const linha = document.getElementById(`linha-pedido-${pedidoId}`);

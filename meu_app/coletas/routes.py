@@ -8,11 +8,42 @@ from app.auth.rbac import requires_logistica
 import json
 import traceback
 from datetime import datetime
+import re
 
 coletas_bp = Blueprint('coletas', __name__, url_prefix='/coletas')
 from .services.coleta_service import ColetaService
 from .receipt_service import ReceiptService
 import os
+
+CPF_REGEX = re.compile(r'^\d{11}$')
+NAME_REGEX = re.compile(r"^[A-Za-zÀ-ÖØ-öø-ÿ][A-Za-zÀ-ÖØ-öø-ÿ'\\- ]+$")
+
+
+def _normalizar_cpf(valor: str) -> str | None:
+    """Remove caracteres não numéricos e valida tamanho."""
+    if not valor:
+        return None
+    apenas_digitos = re.sub(r'\D', '', valor)
+    if CPF_REGEX.match(apenas_digitos):
+        return apenas_digitos
+    return None
+
+
+def _formatar_cpf(cpf: str) -> str:
+    """Formata CPF no padrão XXX.XXX.XXX-XX."""
+    if not cpf or len(cpf) != 11:
+        return cpf or ''
+    return f'{cpf[:3]}.{cpf[3:6]}.{cpf[6:9]}-{cpf[9:]}'
+
+
+def _nome_valido(nome: str) -> bool:
+    """Valida nome simples (pelo menos duas letras, apenas letras/espacos)."""
+    if not nome:
+        return False
+    nome_limpo = nome.strip()
+    if len(nome_limpo) < 3:
+        return False
+    return NAME_REGEX.match(nome_limpo) is not None
 
 
 @coletas_bp.route('/')
@@ -68,22 +99,83 @@ def processar_coleta(pedido_id):
             
             # Extrair dados do formulário
             nome_retirada = request.form.get('nome_retirada', '').strip()
-            documento_retirada = request.form.get('documento_retirada', '').strip()
+            documento_retirada_raw = request.form.get('documento_retirada', '').strip()
             nome_conferente = request.form.get('nome_conferente', '').strip()
-            cpf_conferente = request.form.get('cpf_conferente', '').strip()
+            cpf_conferente_raw = request.form.get('cpf_conferente', '').strip()
             observacoes = request.form.get('observacoes', '').strip()
+
+            if not _nome_valido(nome_retirada):
+                flash('Informe o nome completo de quem está retirando (somente letras).', 'error')
+                return redirect(url_for('coletas.processar_coleta', pedido_id=pedido_id))
+
+            if not _nome_valido(nome_conferente):
+                flash('Informe o nome completo do conferente (somente letras).', 'error')
+                return redirect(url_for('coletas.processar_coleta', pedido_id=pedido_id))
+
+            nome_retirada = ' '.join(nome_retirada.split())
+            nome_conferente = ' '.join(nome_conferente.split())
+
+            documento_retirada = _normalizar_cpf(documento_retirada_raw)
+            if not documento_retirada:
+                flash('CPF da pessoa que retira é inválido.', 'error')
+                return redirect(url_for('coletas.processar_coleta', pedido_id=pedido_id))
+
+            cpf_conferente = _normalizar_cpf(cpf_conferente_raw)
+            if not cpf_conferente:
+                flash('CPF do conferente é inválido.', 'error')
+                return redirect(url_for('coletas.processar_coleta', pedido_id=pedido_id))
+
+            limites_quantidade = {}
+            for item in detalhes['itens']:
+                estoque_disp = getattr(item, 'estoque_disponivel', 0) or 0
+                pendente = getattr(item, 'quantidade_pendente', 0) or 0
+                max_permitido = max(0, min(pendente, estoque_disp))
+                limites_quantidade[item.id] = max_permitido
             
             # Extrair itens da coleta
             itens_coleta = []
             for key, value in request.form.items():
-                if key.startswith('quantidade_') and value:
-                    item_id = int(key.replace('quantidade_', ''))
-                    quantidade = int(value)
-                    if quantidade > 0:
-                        itens_coleta.append({
-                            'item_id': item_id,
-                            'quantidade': quantidade
-                        })
+                if not key.startswith('quantidade_'):
+                    continue
+
+                item_id_str = key.split('quantidade_', 1)[-1]
+                try:
+                    item_id = int(item_id_str)
+                except ValueError:
+                    flash('Identificador de item inválido na requisição.', 'error')
+                    return redirect(url_for('coletas.processar_coleta', pedido_id=pedido_id))
+
+                raw_valor = (value or '').strip()
+                if raw_valor == '':
+                    continue
+
+                try:
+                    quantidade = int(raw_valor)
+                except ValueError:
+                    flash('Informe apenas números inteiros para a quantidade de cada item.', 'error')
+                    return redirect(url_for('coletas.processar_coleta', pedido_id=pedido_id))
+
+                if quantidade < 0:
+                    flash('Quantidade não pode ser negativa.', 'error')
+                    return redirect(url_for('coletas.processar_coleta', pedido_id=pedido_id))
+
+                limite = limites_quantidade.get(item_id)
+                if limite is None:
+                    flash('Item informado não corresponde ao pedido selecionado.', 'error')
+                    return redirect(url_for('coletas.processar_coleta', pedido_id=pedido_id))
+
+                if limite == 0:
+                    continue
+
+                if quantidade > limite:
+                    flash('Quantidade solicitada excede o limite permitido para um dos itens.', 'error')
+                    return redirect(url_for('coletas.processar_coleta', pedido_id=pedido_id))
+
+                if quantidade > 0:
+                    itens_coleta.append({
+                        'item_id': item_id,
+                        'quantidade': quantidade
+                    })
             
             if not itens_coleta:
                 flash('Selecione pelo menos um item para coleta!', 'error')
@@ -119,9 +211,9 @@ def processar_coleta(pedido_id):
                         'data_coleta': coleta.data_coleta if hasattr(coleta, 'data_coleta') else None,
                         'status': coleta.status.value if hasattr(coleta, 'status') else 'PROCESSADA',
                         'nome_retirada': nome_retirada,
-                        'documento_retirada': documento_retirada,
+                        'documento_retirada': _formatar_cpf(documento_retirada),
                         'nome_conferente': nome_conferente,
-                        'cpf_conferente': cpf_conferente,
+                        'cpf_conferente': _formatar_cpf(cpf_conferente),
                         'itens_coleta': itens_recibo
                     }
                     

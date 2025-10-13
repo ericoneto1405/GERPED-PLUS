@@ -250,6 +250,12 @@ def processar_coleta(pedido_id):
                         current_app.logger.error(f"Erro inesperado ao gerar recibo: {str(e)}", exc_info=e)
                         flash(f'{mensagem} (Erro ao gerar recibo)', 'warning')
                         return redirect(url_for('coletas.index'))
+                
+                except Exception as e:
+                    current_app.logger.error(f"Erro ao preparar dados do recibo: {str(e)}", exc_info=e)
+                    flash(f'{mensagem} (Erro ao preparar recibo)', 'warning')
+                    return redirect(url_for('coletas.index'))
+            
             else:
                 flash(mensagem, 'error')
                 return redirect(url_for('coletas.processar_coleta', pedido_id=pedido_id))

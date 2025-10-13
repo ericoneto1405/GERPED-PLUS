@@ -47,8 +47,11 @@ if __name__ == "__main__":
     PORT = 5004
     HOST = "127.0.0.1"
     
-    # Verifica se a porta está disponível
-    if not check_port_available(PORT):
+    # Verifica se a porta está disponível (apenas no processo principal)
+    # O processo filho do reloader não precisa fazer essa verificação
+    is_reloader_process = os.environ.get('WERKZEUG_RUN_MAIN') == 'true'
+    
+    if not is_reloader_process and not check_port_available(PORT):
         print(f"\n❌ ERRO: Porta {PORT} já está em uso!\n")
         
         pids = get_pid_using_port(PORT)
@@ -70,23 +73,24 @@ if __name__ == "__main__":
         print()
         sys.exit(1)
     
-    # Salva PID em arquivo
-    pid_file = '.flask.pid'
-    try:
-        with open(pid_file, 'w') as f:
-            f.write(str(os.getpid()))
-    except Exception as e:
-        print(f"⚠️  Aviso: Não foi possível salvar PID: {e}")
+    # Salva PID em arquivo (apenas no processo principal)
+    if not is_reloader_process:
+        pid_file = '.flask.pid'
+        try:
+            with open(pid_file, 'w') as f:
+                f.write(str(os.getpid()))
+        except Exception as e:
+            print(f"⚠️  Aviso: Não foi possível salvar PID: {e}")
+        
+        print(f"\n🚀 Iniciando servidor Flask...")
+        print(f"   Host: {HOST}")
+        print(f"   Porta: {PORT}")
+        print(f"   URL: http://{HOST}:{PORT}")
+        print(f"   PID: {os.getpid()}\n")
     
     # Evitar problemas com multiprocessing/semaphore em macOS
     import multiprocessing
     multiprocessing.set_start_method('fork', force=True)
-    
-    print(f"\n🚀 Iniciando servidor Flask...")
-    print(f"   Host: {HOST}")
-    print(f"   Porta: {PORT}")
-    print(f"   URL: http://{HOST}:{PORT}")
-    print(f"   PID: {os.getpid()}\n")
     
     try:
         app.run(

@@ -3,15 +3,12 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 usuarios_bp = Blueprint('usuarios', __name__, url_prefix='/usuarios')
 from .services import UsuarioService
 from functools import wraps
-from ..decorators import login_obrigatorio, permissao_necessaria, admin_necessario
 from app.auth.rbac import requires_admin
 
 # Decoradores movidos para meu_app/decorators.py
 
 @usuarios_bp.route('/', methods=['GET', 'POST'])
-@login_obrigatorio
 @requires_admin
-@admin_necessario
 def listar_usuarios():
     """Lista e cria usuários"""
     if request.method == 'POST':
@@ -48,8 +45,7 @@ def listar_usuarios():
     return render_template('usuarios.html', usuarios=usuarios)
 
 @usuarios_bp.route('/alterar_senha/<int:id>', methods=['POST'])
-@login_obrigatorio
-@admin_necessario
+@requires_admin
 def alterar_senha_usuario(id):
     """Altera a senha de um usuário"""
     senha_atual = request.form.get('senha_atual')
@@ -68,8 +64,7 @@ def alterar_senha_usuario(id):
     return redirect(url_for('usuarios.listar_usuarios'))
 
 @usuarios_bp.route('/editar/<int:id>', methods=['POST'])
-@login_obrigatorio
-@admin_necessario
+@requires_admin
 def editar_usuario(id):
     """Edita um usuário"""
     nome = request.form.get('nome')
@@ -95,8 +90,7 @@ def editar_usuario(id):
     return redirect(url_for('usuarios.listar_usuarios'))
 
 @usuarios_bp.route('/redefinir_senha/<int:id>', methods=['POST'])
-@login_obrigatorio
-@admin_necessario
+@requires_admin
 def redefinir_senha_usuario(id):
     """Redefine a senha de um usuário (apenas para admins)"""
     nova_senha = request.form.get('nova_senha')
@@ -114,8 +108,7 @@ def redefinir_senha_usuario(id):
     return redirect(url_for('usuarios.listar_usuarios'))
 
 @usuarios_bp.route('/excluir/<int:id>', methods=['POST'])
-@login_obrigatorio
-@admin_necessario
+@requires_admin
 def excluir_usuario(id):
     """Exclui um usuário"""
     # Usar o serviço para excluir o usuário

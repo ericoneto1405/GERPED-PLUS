@@ -96,11 +96,11 @@
                     <div class="action-buttons">
                         <!-- Botão Editar -->
                         <button onclick="abrirModalEditarUsuario({{ usuario.id }}, {{ usuario.nome|tojson }}, {{ usuario.tipo|tojson }}, {
-                            'acesso_clientes': {{ usuario.acesso_clientes|lower }},
-                            'acesso_produtos': {{ usuario.acesso_produtos|lower }},
-                            'acesso_pedidos': {{ usuario.acesso_pedidos|lower }},
-                            'acesso_financeiro': {{ usuario.acesso_financeiro|lower }},
-                            'acesso_logistica': {{ usuario.acesso_logistica|lower }}
+                            'acesso_clientes': {{ usuario.acesso_clientes|tojson|safe }},
+                            'acesso_produtos': {{ usuario.acesso_produtos|tojson|safe }},
+                            'acesso_pedidos': {{ usuario.acesso_pedidos|tojson|safe }},
+                            'acesso_financeiro': {{ usuario.acesso_financeiro|tojson|safe }},
+                            'acesso_logistica': {{ usuario.acesso_logistica|tojson|safe }}
                         }})" class="btn btn-primary btn-sm">✏️ Editar</button>
                         
                         <!-- Botão Alterar Senha -->

@@ -95,26 +95,37 @@
                 <td>
                     <div class="action-buttons">
                         <!-- Botão Editar -->
-                        <button onclick="abrirModalEditarUsuario({{ usuario.id }}, {{ usuario.nome|tojson }}, {{ usuario.tipo|tojson }}, {
-                            'acesso_clientes': {{ usuario.acesso_clientes|tojson|safe }},
-                            'acesso_produtos': {{ usuario.acesso_produtos|tojson|safe }},
-                            'acesso_pedidos': {{ usuario.acesso_pedidos|tojson|safe }},
-                            'acesso_financeiro': {{ usuario.acesso_financeiro|tojson|safe }},
-                            'acesso_logistica': {{ usuario.acesso_logistica|tojson|safe }}
-                        }})" class="btn btn-primary btn-sm">✏️ Editar</button>
+                        <button class="btn btn-primary btn-sm btn-editar-usuario" 
+                                data-id="{{ usuario.id }}" 
+                                data-nome="{{ usuario.nome }}" 
+                                data-tipo="{{ usuario.tipo }}"
+                                data-acesso-clientes="{{ usuario.acesso_clientes|tojson|safe }}"
+                                data-acesso-produtos="{{ usuario.acesso_produtos|tojson|safe }}"
+                                data-acesso-pedidos="{{ usuario.acesso_pedidos|tojson|safe }}"
+                                data-acesso-financeiro="{{ usuario.acesso_financeiro|tojson|safe }}"
+                                data-acesso-logistica="{{ usuario.acesso_logistica|tojson|safe }}">
+                            ✏️ Editar
+                        </button>
                         
                         <!-- Botão Alterar Senha -->
-                        <button onclick="abrirModalAlterarSenha({{ usuario.id }}, {{ usuario.nome|tojson }})" class="btn btn-warning btn-sm">🔑 Senha</button>
+                        <button class="btn btn-warning btn-sm btn-alterar-senha" 
+                                data-id="{{ usuario.id }}" 
+                                data-nome="{{ usuario.nome }}">
+                            🔑 Senha
+                        </button>
                         
                         <!-- Botão Redefinir Senha (apenas para admins) -->
                         {% if session.usuario_tipo == 'admin' %}
-                        <button onclick="abrirModalRedefinirSenha({{ usuario.id }}, {{ usuario.nome|tojson }})" class="btn btn-info btn-sm">🔄 Redefinir</button>
+                        <button class="btn btn-info btn-sm btn-redefinir-senha" 
+                                data-id="{{ usuario.id }}" 
+                                data-nome="{{ usuario.nome }}">
+                            🔄 Redefinir
+                        </button>
                         {% endif %}
                         
                         <!-- Botão Excluir -->
                         {% if usuario.nome != 'admin' %}
-                            <form method="POST" action="{{ url_for('usuarios.excluir_usuario', id=usuario.id) }}" style="display:inline;" 
-                                  onsubmit="return confirm('Tem certeza que deseja excluir este usuário?')">
+                            <form method="POST" action="{{ url_for('usuarios.excluir_usuario', id=usuario.id) }}" style="display:inline;" class="form-excluir-usuario">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="btn btn-danger btn-sm">🗑️ Excluir</button>
                             </form>
@@ -138,7 +149,7 @@
     <div class="modal-content">
         <div class="modal-header">
             <h3 class="modal-title">✏️ Editar Usuário</h3>
-            <span class="close" onclick="fecharModal('modalEditarUsuario')">&times;</span>
+            <span class="close">&times;</span>
         </div>
         <form id="formEditarUsuario" method="POST">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -183,7 +194,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="fecharModal('modalEditarUsuario')">Cancelar</button>
+                <button type="button" class="btn btn-secondary btn-cancelar-modal" data-modal="modalEditarUsuario">Cancelar</button>
                 <button type="submit" class="btn btn-primary">Salvar Alterações</button>
             </div>
         </form>
@@ -195,7 +206,7 @@
     <div class="modal-content">
         <div class="modal-header">
             <h3 class="modal-title">🔑 Alterar Senha</h3>
-            <span class="close" onclick="fecharModal('modalAlterarSenha')">&times;</span>
+            <span class="close">&times;</span>
         </div>
         <form id="formAlterarSenha" method="POST">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -217,7 +228,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="fecharModal('modalAlterarSenha')">Cancelar</button>
+                <button type="button" class="btn btn-secondary btn-cancelar-modal" data-modal="modalAlterarSenha">Cancelar</button>
                 <button type="submit" class="btn btn-warning">Alterar Senha</button>
             </div>
         </form>
@@ -229,7 +240,7 @@
     <div class="modal-content">
         <div class="modal-header">
             <h3 class="modal-title">🔄 Redefinir Senha</h3>
-            <span class="close" onclick="fecharModal('modalRedefinirSenha')">&times;</span>
+            <span class="close">&times;</span>
         </div>
         <form id="formRedefinirSenha" method="POST">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -251,7 +262,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="fecharModal('modalRedefinirSenha')">Cancelar</button>
+                <button type="button" class="btn btn-secondary btn-cancelar-modal" data-modal="modalRedefinirSenha">Cancelar</button>
                 <button type="submit" class="btn btn-info">Redefinir Senha</button>
             </div>
         </form>
@@ -382,62 +393,127 @@
 </style>
 
 <script nonce="{{ nonce }}">
-let usuarioIdAtual = null;
+document.addEventListener('DOMContentLoaded', function() {
+    let usuarioIdAtual = null;
 
-function abrirModalEditarUsuario(id, nome, tipo, acessos) {
-    usuarioIdAtual = id;
-    
-    document.getElementById('editNome').value = nome;
-    document.getElementById('editTipo').value = tipo;
-    
-    document.getElementById('editAcessoClientes').checked = acessos.acesso_clientes;
-    document.getElementById('editAcessoProdutos').checked = acessos.acesso_produtos;
-    document.getElementById('editAcessoPedidos').checked = acessos.acesso_pedidos;
-    document.getElementById('editAcessoFinanceiro').checked = acessos.acesso_financeiro;
-    document.getElementById('editAcessoLogistica').checked = acessos.acesso_logistica;
-    
-    document.getElementById('formEditarUsuario').action = `/usuarios/editar/${id}`;
-    document.getElementById('modalEditarUsuario').style.display = 'block';
-}
-
-function abrirModalAlterarSenha(id, nome) {
-    usuarioIdAtual = id;
-    
-    document.getElementById('formAlterarSenha').action = `/usuarios/alterar_senha/${id}`;
-    document.getElementById('modalAlterarSenha').style.display = 'block';
-    
-    // Limpar campos
-    document.getElementById('senhaAtual').value = '';
-    document.getElementById('novaSenha').value = '';
-    document.getElementById('confirmarSenha').value = '';
-}
-
-function abrirModalRedefinirSenha(id, nome) {
-    usuarioIdAtual = id;
-    
-    document.getElementById('formRedefinirSenha').action = `/usuarios/redefinir_senha/${id}`;
-    document.getElementById('modalRedefinirSenha').style.display = 'block';
-    
-    // Limpar campos
-    document.getElementById('senhaAdmin').value = '';
-    document.getElementById('novaSenhaRedefinir').value = '';
-}
-
-function fecharModal(modalId) {
-    document.getElementById(modalId).style.display = 'none';
-    usuarioIdAtual = null;
-}
-
-// Fechar modal ao clicar fora dele
-window.onclick = function(event) {
-    const modals = ['modalEditarUsuario', 'modalAlterarSenha', 'modalRedefinirSenha'];
-    modals.forEach(modalId => {
-        const modal = document.getElementById(modalId);
-        if (event.target === modal) {
-            fecharModal(modalId);
-        }
+    // Event listeners para botões Editar
+    document.querySelectorAll('.btn-editar-usuario').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            const id = this.dataset.id;
+            const nome = this.dataset.nome;
+            const tipo = this.dataset.tipo;
+            const acessos = {
+                acesso_clientes: this.dataset.acessoClientes === 'true',
+                acesso_produtos: this.dataset.acessoProdutos === 'true',
+                acesso_pedidos: this.dataset.acessoPedidos === 'true',
+                acesso_financeiro: this.dataset.acessoFinanceiro === 'true',
+                acesso_logistica: this.dataset.acessoLogistica === 'true'
+            };
+            abrirModalEditarUsuario(id, nome, tipo, acessos);
+        });
     });
-}
+
+    // Event listeners para botões Alterar Senha
+    document.querySelectorAll('.btn-alterar-senha').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            const id = this.dataset.id;
+            const nome = this.dataset.nome;
+            abrirModalAlterarSenha(id, nome);
+        });
+    });
+
+    // Event listeners para botões Redefinir Senha
+    document.querySelectorAll('.btn-redefinir-senha').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            const id = this.dataset.id;
+            const nome = this.dataset.nome;
+            abrirModalRedefinirSenha(id, nome);
+        });
+    });
+
+    // Event listeners para formulários de exclusão
+    document.querySelectorAll('.form-excluir-usuario').forEach(function(form) {
+        form.addEventListener('submit', function(e) {
+            if (!confirm('Tem certeza que deseja excluir este usuário?')) {
+                e.preventDefault();
+            }
+        });
+    });
+
+    // Event listeners para botões de fechar modais (X)
+    document.querySelectorAll('.close').forEach(function(closeBtn) {
+        closeBtn.addEventListener('click', function() {
+            const modal = this.closest('.modal');
+            if (modal) {
+                fecharModal(modal.id);
+            }
+        });
+    });
+
+    // Event listeners para botões de cancelar modais
+    document.querySelectorAll('.btn-cancelar-modal').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            const modalId = this.dataset.modal;
+            fecharModal(modalId);
+        });
+    });
+
+    // Funções auxiliares
+    function abrirModalEditarUsuario(id, nome, tipo, acessos) {
+        usuarioIdAtual = id;
+        
+        document.getElementById('editNome').value = nome;
+        document.getElementById('editTipo').value = tipo;
+        
+        document.getElementById('editAcessoClientes').checked = acessos.acesso_clientes;
+        document.getElementById('editAcessoProdutos').checked = acessos.acesso_produtos;
+        document.getElementById('editAcessoPedidos').checked = acessos.acesso_pedidos;
+        document.getElementById('editAcessoFinanceiro').checked = acessos.acesso_financeiro;
+        document.getElementById('editAcessoLogistica').checked = acessos.acesso_logistica;
+        
+        document.getElementById('formEditarUsuario').action = `/usuarios/editar/${id}`;
+        document.getElementById('modalEditarUsuario').style.display = 'block';
+    }
+
+    function abrirModalAlterarSenha(id, nome) {
+        usuarioIdAtual = id;
+        
+        document.getElementById('formAlterarSenha').action = `/usuarios/alterar_senha/${id}`;
+        document.getElementById('modalAlterarSenha').style.display = 'block';
+        
+        // Limpar campos
+        document.getElementById('senhaAtual').value = '';
+        document.getElementById('novaSenha').value = '';
+        document.getElementById('confirmarSenha').value = '';
+    }
+
+    function abrirModalRedefinirSenha(id, nome) {
+        usuarioIdAtual = id;
+        
+        document.getElementById('formRedefinirSenha').action = `/usuarios/redefinir_senha/${id}`;
+        document.getElementById('modalRedefinirSenha').style.display = 'block';
+        
+        // Limpar campos
+        document.getElementById('senhaAdmin').value = '';
+        document.getElementById('novaSenhaRedefinir').value = '';
+    }
+
+    function fecharModal(modalId) {
+        document.getElementById(modalId).style.display = 'none';
+        usuarioIdAtual = null;
+    }
+
+    // Fechar modal ao clicar fora dele
+    window.addEventListener('click', function(event) {
+        const modals = ['modalEditarUsuario', 'modalAlterarSenha', 'modalRedefinirSenha'];
+        modals.forEach(function(modalId) {
+            const modal = document.getElementById(modalId);
+            if (event.target === modal) {
+                fecharModal(modalId);
+            }
+        });
+    });
+});
 </script>
 
 {% endblock %}

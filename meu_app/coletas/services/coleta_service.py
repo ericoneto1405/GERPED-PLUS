@@ -4,7 +4,7 @@ Implementa a sugestão CLI #2: Refatoração para unificar funcionalidades
 """
 from typing import Dict, List, Tuple, Optional
 from flask import current_app
-from sqlalchemy import func
+from sqlalchemy import func, case, and_
 
 from meu_app.models import (
     db,
@@ -72,75 +72,80 @@ class ColetaService:
                 .subquery()
             )
 
-            aggregated_rows = (
+            total_itens_col = func.coalesce(itens_totais_sq.c.total_itens, 0)
+            itens_coletados_col = func.coalesce(itens_coletados_sq.c.itens_coletados, 0)
+            total_venda_col = func.coalesce(itens_totais_sq.c.total_venda, 0)
+            total_pago_col = func.coalesce(pagamentos_sq.c.total_pago, 0)
+
+            coletado_completo_expr = case(
+                (and_(total_itens_col > 0, itens_coletados_col >= total_itens_col), True),
+                else_=False,
+            )
+            pagamento_aprovado_expr = case(
+                (and_(total_venda_col > 0, total_pago_col >= total_venda_col), True),
+                else_=False,
+            )
+
+            max_registros = current_app.config.get("COLETAS_LISTA_MAX_REGISTROS", 200)
+
+            pedidos_query = (
                 db.session.query(
-                    Pedido.id.label("pedido_id"),
-                    func.coalesce(itens_totais_sq.c.total_itens, 0).label("total_itens"),
-                    func.coalesce(itens_coletados_sq.c.itens_coletados, 0).label(
-                        "itens_coletados"
-                    ),
-                    func.coalesce(itens_totais_sq.c.total_venda, 0).label("total_venda"),
-                    func.coalesce(pagamentos_sq.c.total_pago, 0).label("total_pago"),
+                    Pedido,
+                    total_itens_col.label("total_itens"),
+                    itens_coletados_col.label("itens_coletados"),
+                    total_venda_col.label("total_venda"),
+                    total_pago_col.label("total_pago"),
+                    coletado_completo_expr.label("coletado_completo"),
+                    pagamento_aprovado_expr.label("pagamento_aprovado"),
                 )
-                .outerjoin(
-                    itens_totais_sq, itens_totais_sq.c.pedido_id == Pedido.id
-                )
-                .outerjoin(
-                    itens_coletados_sq, itens_coletados_sq.c.pedido_id == Pedido.id
-                )
+                .outerjoin(itens_totais_sq, itens_totais_sq.c.pedido_id == Pedido.id)
+                .outerjoin(itens_coletados_sq, itens_coletados_sq.c.pedido_id == Pedido.id)
                 .outerjoin(pagamentos_sq, pagamentos_sq.c.pedido_id == Pedido.id)
                 .filter(Pedido.status.in_(status_relevantes))
+                .options(db.selectinload(Pedido.cliente))
                 .order_by(Pedido.data.asc())
-                .all()
+                .limit(max_registros)
             )
 
-            if not aggregated_rows:
+            if filtro == 'pendentes':
+                pedidos_query = pedidos_query.filter(
+                    pagamento_aprovado_expr.is_(True),
+                    coletado_completo_expr.is_(False),
+                )
+            elif filtro == 'coletados':
+                pedidos_query = pedidos_query.filter(coletado_completo_expr.is_(True))
+
+            resultados = pedidos_query.all()
+
+            if not resultados:
                 return []
 
-            pedido_ids = [row.pedido_id for row in aggregated_rows]
-            pedidos = (
-                Pedido.query.options(db.joinedload(Pedido.cliente))
-                .filter(Pedido.id.in_(pedido_ids))
-                .all()
-            )
-            pedido_map = {pedido.id: pedido for pedido in pedidos}
-
             lista_pedidos: List[Dict] = []
-
-            for row in aggregated_rows:
-                pedido = pedido_map.get(row.pedido_id)
-                if not pedido:
-                    continue
-
-                total_itens = int(row.total_itens or 0)
-                itens_coletados = int(row.itens_coletados or 0)
-                total_venda = float(row.total_venda or 0)
-                total_pago = float(row.total_pago or 0)
-                itens_pendentes = max(total_itens - itens_coletados, 0)
-                coletado_completo = total_itens > 0 and itens_coletados >= total_itens
-                pagamento_aprovado = total_venda > 0 and total_pago >= total_venda
-
-                incluir_pedido = False
-                if filtro == 'pendentes':
-                    incluir_pedido = pagamento_aprovado and not coletado_completo
-                elif filtro == 'coletados':
-                    incluir_pedido = coletado_completo
-                else:
-                    incluir_pedido = True
-
-                if not incluir_pedido:
-                    continue
+            for (
+                pedido,
+                total_itens,
+                itens_coletados,
+                total_venda,
+                total_pago,
+                coletado_completo,
+                pagamento_aprovado,
+            ) in resultados:
+                total_itens_int = int(total_itens or 0)
+                itens_coletados_int = int(itens_coletados or 0)
+                total_venda_float = float(total_venda or 0)
+                total_pago_float = float(total_pago or 0)
+                itens_pendentes = max(total_itens_int - itens_coletados_int, 0)
 
                 lista_pedidos.append(
                     {
                         "pedido": pedido,
-                        "total_itens": total_itens,
-                        "itens_coletados": itens_coletados,
+                        "total_itens": total_itens_int,
+                        "itens_coletados": itens_coletados_int,
                         "itens_pendentes": itens_pendentes,
-                        "total_venda": total_venda,
-                        "total_pago": total_pago,
-                        "coletado_completo": coletado_completo,
-                        "pagamento_aprovado": pagamento_aprovado,
+                        "total_venda": total_venda_float,
+                        "total_pago": total_pago_float,
+                        "coletado_completo": bool(coletado_completo),
+                        "pagamento_aprovado": bool(pagamento_aprovado),
                     }
                 )
 

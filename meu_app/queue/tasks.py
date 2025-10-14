@@ -145,3 +145,45 @@ def generate_receipt_task(coleta_data: Dict) -> Dict:
             'error': error_msg,
             'pedido_id': coleta_data.get('pedido_id'),
         }
+
+
+def cleanup_receipts_task(ttl_hours: Optional[int] = None) -> Dict:
+    """
+    Remove recibos expirados conforme TTL configurado.
+    """
+    from rq import get_current_job
+
+    job = get_current_job()
+
+    try:
+        if job:
+            job.meta['progress'] = 5
+            job.meta['stage'] = 'Iniciando limpeza de recibos'
+            job.save_meta()
+
+        app = _get_app()
+
+        with app.app_context():
+            from meu_app.coletas.receipt_service import ReceiptService
+
+            removidos = ReceiptService.limpar_recibos_antigos(ttl_hours=ttl_hours)
+
+            if job:
+                job.meta['progress'] = 100
+                job.meta['stage'] = 'Limpeza concluída'
+                job.save_meta()
+
+            return {
+                'success': True,
+                'removidos': removidos,
+            }
+
+    except Exception as exc:  # pragma: no cover
+        error_msg = f"Erro ao limpar recibos expirados: {exc}"
+        if job:
+            job.meta['error'] = error_msg
+            job.save_meta()
+        return {
+            'success': False,
+            'error': error_msg,
+        }

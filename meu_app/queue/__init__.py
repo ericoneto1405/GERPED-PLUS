@@ -106,6 +106,36 @@ def enqueue_pdf_job(coleta_data: dict):
     if pdf_queue is None:
         current_app.logger.warning("⚠️ Fila de PDF indisponível, geração será síncrona")
         return None
+
+
+def enqueue_receipt_cleanup_job(ttl_hours: int | None = None):
+    """
+    Enfileira uma tarefa para remover recibos expirados.
+    """
+    if pdf_queue is None:
+        return None
+
+    try:
+        from .tasks import cleanup_receipts_task
+
+        job = pdf_queue.enqueue(
+            cleanup_receipts_task,
+            ttl_hours,
+            job_timeout=300,
+            result_ttl=3600,
+            failure_ttl=3600,
+        )
+        current_app.logger.debug(
+            "Job de limpeza de recibos enfileirado",
+            extra={"job_id": job.id, "ttl_horas": ttl_hours},
+        )
+        return job.id
+    except Exception as exc:  # pragma: no cover
+        current_app.logger.debug(
+            "Falha ao enfileirar job de limpeza de recibos",
+            exc_info=exc,
+        )
+        return None
     
     try:
         from .tasks import generate_receipt_task

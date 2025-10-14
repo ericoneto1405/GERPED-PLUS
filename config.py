@@ -72,6 +72,8 @@ class BaseConfig:
     # RQ (Redis Queue) - Fase 7
     REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
     RQ_ASYNC_ENABLED = os.getenv('RQ_ASYNC_ENABLED', 'True').lower() == 'true'
+    COLETAS_LISTA_MAX_REGISTROS = int(os.getenv('COLETAS_LISTA_MAX_REGISTROS', '200'))
+    COLETAS_RECIBO_TTL_HORAS = int(os.getenv('COLETAS_RECIBO_TTL_HORAS', '24'))
 
     # Go-live / Rollout control
     ROLLOUT_INTERNAL_ONLY_ENABLED = os.getenv('ROLLOUT_INTERNAL_ONLY_ENABLED', 'True').lower() == 'true'

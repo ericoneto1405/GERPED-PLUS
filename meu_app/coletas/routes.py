@@ -9,6 +9,7 @@ import json
 import traceback
 from datetime import datetime
 import re
+from typing import Optional
 
 coletas_bp = Blueprint('coletas', __name__, url_prefix='/coletas')
 from .services.coleta_service import ColetaService
@@ -27,7 +28,7 @@ def _normalizar_cpf(valor: str) -> str | None:
     if not valor:
         return None
     apenas_digitos = re.sub(r'\D', '', valor)
-    if CPF_REGEX.match(apenas_digitos):
+    if CPF_REGEX.match(apenas_digitos) and _cpf_valido(apenas_digitos):
         return apenas_digitos
     return None
 
@@ -37,6 +38,44 @@ def _formatar_cpf(cpf: str) -> str:
     if not cpf or len(cpf) != 11:
         return cpf or ''
     return f'{cpf[:3]}.{cpf[3:6]}.{cpf[6:9]}-{cpf[9:]}'
+
+
+def _mascarar_cpf(cpf: str) -> str:
+    """Masca CPF para logs, mostrando apenas início e fim."""
+    if not cpf:
+        return '***'
+    digits = re.sub(r'\D', '', cpf)
+    if len(digits) != 11:
+        return f'***{digits[-2:]}' if len(digits) >= 2 else '***'
+    return f'{digits[:3]}.***.***-{digits[-2:]}'
+
+
+def _cpf_valido(cpf: str) -> bool:
+    """Valida dígitos verificadores de um CPF."""
+    if not cpf or len(cpf) != 11 or cpf == cpf[0] * 11:
+        return False
+    for tamanho in (9, 10):
+        soma = sum(int(cpf[indice]) * ((tamanho + 1) - indice) for indice in range(tamanho))
+        digito = (soma * 10) % 11
+        if digito == 10:
+            digito = 0
+        if digito != int(cpf[tamanho]):
+            return False
+    return True
+
+
+def _parse_quantidade(raw_valor: str) -> Optional[int]:
+    """Converte entrada bruta de quantidade em inteiro válido."""
+    valor = (raw_valor or '').strip()
+    if valor == '':
+        return None
+    try:
+        quantidade = int(valor)
+    except ValueError as exc:
+        raise ValueError('Informe apenas números inteiros para a quantidade de cada item.') from exc
+    if quantidade < 0:
+        raise ValueError('Quantidade não pode ser negativa.')
+    return quantidade
 
 
 def _nome_valido(nome: str) -> bool:
@@ -140,48 +179,48 @@ def processar_coleta(pedido_id):
             
             # Extrair itens da coleta
             itens_coleta = []
-            for key, value in request.form.items():
-                if not key.startswith('quantidade_'):
-                    continue
+            try:
+                for key, value in request.form.items():
+                    if not key.startswith('quantidade_'):
+                        continue
 
-                item_id_str = key.split('quantidade_', 1)[-1]
-                try:
-                    item_id = int(item_id_str)
-                except ValueError:
-                    flash('Identificador de item inválido na requisição.', 'error')
-                    return redirect(url_for('coletas.processar_coleta', pedido_id=pedido_id))
+                    item_id_str = key.split('quantidade_', 1)[-1]
+                    try:
+                        item_id = int(item_id_str)
+                    except ValueError as exc:
+                        raise ValueError('Identificador de item inválido na requisição.') from exc
 
-                raw_valor = (value or '').strip()
-                if raw_valor == '':
-                    continue
+                    limite = limites_quantidade.get(item_id)
+                    if limite is None:
+                        raise ValueError('Item informado não corresponde ao pedido selecionado.')
 
-                try:
-                    quantidade = int(raw_valor)
-                except ValueError:
-                    flash('Informe apenas números inteiros para a quantidade de cada item.', 'error')
-                    return redirect(url_for('coletas.processar_coleta', pedido_id=pedido_id))
+                    quantidade = _parse_quantidade(value)
+                    if quantidade is None:
+                        continue
 
-                if quantidade < 0:
-                    flash('Quantidade não pode ser negativa.', 'error')
-                    return redirect(url_for('coletas.processar_coleta', pedido_id=pedido_id))
+                    if limite == 0:
+                        continue
 
-                limite = limites_quantidade.get(item_id)
-                if limite is None:
-                    flash('Item informado não corresponde ao pedido selecionado.', 'error')
-                    return redirect(url_for('coletas.processar_coleta', pedido_id=pedido_id))
+                    if quantidade > limite:
+                        raise ValueError('Quantidade solicitada excede o limite permitido para um dos itens.')
 
-                if limite == 0:
-                    continue
-
-                if quantidade > limite:
-                    flash('Quantidade solicitada excede o limite permitido para um dos itens.', 'error')
-                    return redirect(url_for('coletas.processar_coleta', pedido_id=pedido_id))
-
-                if quantidade > 0:
                     itens_coleta.append({
                         'item_id': item_id,
                         'quantidade': quantidade
                     })
+            except ValueError as value_error:
+                current_app.logger.warning(
+                    "Quantidade inválida durante processamento de coleta",
+                    extra={
+                        "pedido_id": pedido_id,
+                        "erro": str(value_error),
+                        "responsavel": session.get('usuario_nome', 'N/A'),
+                        "documento_mascarado": _mascarar_cpf(documento_retirada),
+                        "conferente_mascarado": _mascarar_cpf(cpf_conferente),
+                    },
+                )
+                flash(str(value_error), 'error')
+                return redirect(url_for('coletas.processar_coleta', pedido_id=pedido_id))
             
             if not itens_coleta:
                 flash('Selecione pelo menos um item para coleta!', 'error')
@@ -201,6 +240,13 @@ def processar_coleta(pedido_id):
             
             autorizados_ativos = {r.cpf for r in retirantes_autorizados if r.ativo}
             if documento_retirada not in autorizados_ativos:
+                current_app.logger.warning(
+                    "Tentativa de retirada por CPF não autorizado",
+                    extra={
+                        "pedido_id": pedido_id,
+                        "documento_mascarado": _mascarar_cpf(documento_retirada),
+                    },
+                )
                 flash('⚠️ Retirante informado não está na lista autorizada. Confirme com o cliente antes de liberar.', 'warning')
 
             if sucesso:

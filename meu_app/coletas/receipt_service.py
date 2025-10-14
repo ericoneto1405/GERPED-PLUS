@@ -2,8 +2,9 @@
 Serviço para geração de recibo de coleta em PDF
 Modelo EXATO baseado na interface mostrada
 """
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
+from pathlib import Path
 from typing import Dict, Optional
 
 from flask import current_app
@@ -58,6 +59,7 @@ class ReceiptService:
         try:
             # Criar diretório de recibos se não existir
             os.makedirs(receipts_dir, exist_ok=True)
+            ReceiptService.limpar_recibos_antigos(receipts_dir)
             
             # Nome do arquivo
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
@@ -378,11 +380,76 @@ class ReceiptService:
             return None
         
         try:
-            return enqueue_pdf_job(coleta_data)
+            job_id = enqueue_pdf_job(coleta_data)
+            if job_id:
+                ReceiptService.agendar_limpeza_recibos()
+            return job_id
         except Exception as exc:  # pragma: no cover - execução depende do ambiente
             current_app.logger.warning(
                 "Falha ao enfileirar geração assíncrona de recibo, utilizando fallback síncrono",
                 exc_info=exc,
                 extra={"pedido_id": coleta_data.get("pedido_id")},
+            )
+            return None
+
+    @staticmethod
+    def limpar_recibos_antigos(output_dir: Optional[str] = None, ttl_hours: Optional[int] = None) -> int:
+        """
+        Remove recibos antigos com base na configuração de TTL.
+        
+        Returns:
+            int: quantidade de arquivos removidos
+        """
+        ttl = ttl_hours or current_app.config.get("COLETAS_RECIBO_TTL_HORAS", 24)
+        if ttl <= 0:
+            return 0
+
+        diretorio = Path(output_dir or os.path.join(current_app.instance_path, 'recibos'))
+        if not diretorio.exists():
+            return 0
+
+        limite_temporal = datetime.utcnow() - timedelta(hours=ttl)
+        removidos = 0
+
+        for arquivo in diretorio.glob("recibo_coleta_*.pdf"):
+            try:
+                mod_time = datetime.utcfromtimestamp(arquivo.stat().st_mtime)
+                if mod_time < limite_temporal:
+                    arquivo.unlink()
+                    removidos += 1
+            except FileNotFoundError:
+                continue
+            except Exception as exc:  # pragma: no cover - comportamento defensivo
+                current_app.logger.warning(
+                    "Falha ao remover recibo expirado",
+                    exc_info=exc,
+                    extra={"arquivo": str(arquivo)},
+                )
+
+        if removidos:
+            current_app.logger.info(
+                "Recibos de coleta expirados removidos",
+                extra={"removidos": removidos, "diretorio": str(diretorio)},
+            )
+
+        return removidos
+
+    @staticmethod
+    def agendar_limpeza_recibos(ttl_hours: Optional[int] = None) -> Optional[str]:
+        """
+        Enfileira uma tarefa para limpar recibos expirados.
+        """
+        try:
+            from meu_app.queue import enqueue_receipt_cleanup_job
+        except ImportError as exc:  # pragma: no cover
+            current_app.logger.debug("Fila indisponível para limpeza de recibos.", exc_info=exc)
+            return None
+
+        try:
+            return enqueue_receipt_cleanup_job(ttl_hours=ttl_hours)
+        except Exception as exc:  # pragma: no cover
+            current_app.logger.debug(
+                "Não foi possível agendar limpeza de recibos expirados",
+                exc_info=exc,
             )
             return None

@@ -19,7 +19,7 @@ from meu_app.models import (
     StatusColeta,
     StatusPedido,
 )
-from meu_app.exceptions import EstoqueError
+from meu_app.exceptions import EstoqueError, ConfigurationError
 
 
 class ColetaService:
@@ -109,11 +109,11 @@ class ColetaService:
 
             if filtro == 'pendentes':
                 pedidos_query = pedidos_query.filter(
-                    pagamento_aprovado_expr.is_(True),
-                    coletado_completo_expr.is_(False),
+                    pagamento_aprovado_expr == True,  # noqa: E712
+                    coletado_completo_expr == False,  # noqa: E712
                 )
             elif filtro == 'coletados':
-                pedidos_query = pedidos_query.filter(coletado_completo_expr.is_(True))
+                pedidos_query = pedidos_query.filter(coletado_completo_expr == True)  # noqa: E712
 
             resultados = pedidos_query.all()
 
@@ -368,6 +368,25 @@ class ColetaService:
             responsavel: Nome do responsável
         """
         try:
+            bind = db.session.get_bind()
+            dialect = getattr(bind, "dialect", None)
+            supports_for_update = bool(getattr(dialect, "supports_for_update", False))
+            enforce_lock = not current_app.debug and not current_app.config.get("TESTING", False)
+            if not supports_for_update:
+                detalhes_lock = {
+                    "dialeto": getattr(dialect, "name", "desconhecido") if dialect else "desconhecido",
+                    "feature": "supports_for_update",
+                }
+                if enforce_lock:
+                    raise ConfigurationError(
+                        message="Banco de dados configurado não suporta SELECT ... FOR UPDATE para controle de estoque",
+                        details=detalhes_lock,
+                    )
+                current_app.logger.warning(
+                    "Banco atual não suporta bloqueio pessimista; usando fallback otimista",
+                    extra=detalhes_lock,
+                )
+            
             # Buscar item do pedido com lock
             item_pedido = (
                 db.session.query(ItemPedido)

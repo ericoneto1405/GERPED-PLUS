@@ -78,12 +78,12 @@ class ColetaService:
             total_pago_col = func.coalesce(pagamentos_sq.c.total_pago, 0)
 
             coletado_completo_expr = case(
-                (and_(total_itens_col > 0, itens_coletados_col >= total_itens_col), True),
-                else_=False,
+                (and_(total_itens_col > 0, itens_coletados_col >= total_itens_col), 1),
+                else_=0,
             )
             pagamento_aprovado_expr = case(
-                (and_(total_venda_col > 0, total_pago_col >= total_venda_col), True),
-                else_=False,
+                (and_(total_venda_col > 0, total_pago_col >= total_venda_col), 1),
+                else_=0,
             )
 
             max_registros = current_app.config.get("COLETAS_LISTA_MAX_REGISTROS", 200)
@@ -109,11 +109,11 @@ class ColetaService:
 
             if filtro == 'pendentes':
                 pedidos_query = pedidos_query.filter(
-                    pagamento_aprovado_expr.is_(True),
-                    coletado_completo_expr.is_(False),
+                    pagamento_aprovado_expr == 1,
+                    coletado_completo_expr == 0,
                 )
             elif filtro == 'coletados':
-                pedidos_query = pedidos_query.filter(coletado_completo_expr.is_(True))
+                pedidos_query = pedidos_query.filter(coletado_completo_expr == 1)
 
             resultados = pedidos_query.all()
 

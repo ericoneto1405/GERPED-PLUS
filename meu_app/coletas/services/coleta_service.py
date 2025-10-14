@@ -109,11 +109,11 @@ class ColetaService:
 
             if filtro == 'pendentes':
                 pedidos_query = pedidos_query.filter(
-                    pagamento_aprovado_expr == True,  # noqa: E712
-                    coletado_completo_expr == False,  # noqa: E712
+                    pagamento_aprovado_expr.is_(True),
+                    coletado_completo_expr.is_(False),
                 )
             elif filtro == 'coletados':
-                pedidos_query = pedidos_query.filter(coletado_completo_expr == True)  # noqa: E712
+                pedidos_query = pedidos_query.filter(coletado_completo_expr.is_(True))
 
             resultados = pedidos_query.all()
 

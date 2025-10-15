@@ -267,6 +267,13 @@
         backdrop-filter: blur(5px);
     }
 
+    .modal.open {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+    }
+
     .modal-content {
         background-color: #fefefe;
         margin: 15% auto;
@@ -276,6 +283,10 @@
         max-width: 400px;
         box-shadow: 0 10px 30px rgba(0,0,0,0.3);
         animation: modalSlideIn 0.3s ease;
+    }
+
+    .modal.open .modal-content {
+        margin: 0;
     }
 
     @keyframes modalSlideIn {
@@ -960,6 +971,45 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    const botaoImportarPedido = document.getElementById('btn-importar-pedido');
+    const modalImportarPedido = document.getElementById('modalImportarPedido');
+    const btnFecharImportarPedido = document.getElementById('btnFecharImportarPedido');
+
+    if (!botaoImportarPedido || !modalImportarPedido) {
+        return;
+    }
+
+    const abrirModalImportarPedido = function(event) {
+        event.preventDefault();
+        modalImportarPedido.classList.add('open');
+        modalImportarPedido.setAttribute('aria-hidden', 'false');
+    };
+
+    const fecharModalImportarPedido = function() {
+        modalImportarPedido.classList.remove('open');
+        modalImportarPedido.setAttribute('aria-hidden', 'true');
+    };
+
+    botaoImportarPedido.addEventListener('click', abrirModalImportarPedido);
+
+    if (btnFecharImportarPedido) {
+        btnFecharImportarPedido.addEventListener('click', fecharModalImportarPedido);
+    }
+
+    modalImportarPedido.addEventListener('click', function(event) {
+        if (event.target === modalImportarPedido) {
+            fecharModalImportarPedido();
+        }
+    });
+
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape' && modalImportarPedido.classList.contains('open')) {
+            fecharModalImportarPedido();
+        }
+    });
 });
 </script>
 {% endblock %}

@@ -285,11 +285,11 @@ class LogAtividadesService:
         try:
             total_atividades = LogAtividade.query.count()
             
-            # Atividades por módulo
-            modulos_stats = db.session.query(
-                LogAtividade.modulo,
-                func.count(LogAtividade.id).label('count')
-            ).group_by(LogAtividade.modulo).order_by(func.count(LogAtividade.id).desc()).all()
+            # Atividades de hoje
+            hoje_inicio = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+            atividades_hoje = LogAtividade.query.filter(
+                LogAtividade.data_hora >= hoje_inicio
+            ).count()
             
             # Atividades dos últimos 7 dias
             data_7_dias = datetime.now() - timedelta(days=7)
@@ -303,16 +303,43 @@ class LogAtividadesService:
                 LogAtividade.data_hora >= data_30_dias
             ).count()
             
+            # Usuários ativos (com pelo menos 1 atividade nos últimos 30 dias)
+            usuarios_ativos = db.session.query(
+                func.count(func.distinct(LogAtividade.usuario_id))
+            ).filter(
+                LogAtividade.data_hora >= data_30_dias,
+                LogAtividade.usuario_id.isnot(None)
+            ).scalar() or 0
+            
+            # Atividades por módulo
+            modulos_stats = db.session.query(
+                LogAtividade.modulo,
+                func.count(LogAtividade.id).label('count')
+            ).group_by(LogAtividade.modulo).order_by(func.count(LogAtividade.id).desc()).all()
+            
             # Atividades por tipo
             tipos_stats = db.session.query(
                 LogAtividade.tipo_atividade,
                 func.count(LogAtividade.id).label('count')
             ).group_by(LogAtividade.tipo_atividade).order_by(func.count(LogAtividade.id).desc()).all()
             
+            # Hora pico (última semana)
+            hora_pico = db.session.query(
+                func.strftime('%H', LogAtividade.data_hora).label('hora'),
+                func.count(LogAtividade.id).label('count')
+            ).filter(
+                LogAtividade.data_hora >= data_7_dias
+            ).group_by('hora').order_by(func.count(LogAtividade.id).desc()).first()
+            
+            hora_pico_str = f"{hora_pico[0]}h" if hora_pico else "N/A"
+            
             return {
                 'total_atividades': total_atividades,
+                'atividades_hoje': atividades_hoje,
                 'atividades_7_dias': atividades_7_dias,
                 'atividades_30_dias': atividades_30_dias,
+                'usuarios_ativos': usuarios_ativos,
+                'hora_pico': hora_pico_str,
                 'modulos_stats': {modulo: count for modulo, count in modulos_stats},
                 'tipos_stats': {tipo: count for tipo, count in tipos_stats}
             }
@@ -321,8 +348,11 @@ class LogAtividadesService:
             current_app.logger.error(f"Erro ao obter estatísticas: {str(e)}")
             return {
                 'total_atividades': 0,
+                'atividades_hoje': 0,
                 'atividades_7_dias': 0,
                 'atividades_30_dias': 0,
+                'usuarios_ativos': 0,
+                'hora_pico': 'N/A',
                 'modulos_stats': {},
                 'tipos_stats': {}
             }

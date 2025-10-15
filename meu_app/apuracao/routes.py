@@ -162,18 +162,20 @@ def salvar_previsao():
         verba_time_ambev = request.form.get('verba_time_ambev', 0, type=float)
         verba_outras_receitas = request.form.get('verba_outras_receitas', 0, type=float)
         
-        # Calcular totais
-        total_verbas = verba_scann + verba_plano_negocios + verba_time_ambev + verba_outras_receitas
+        # Calcular dados do período para preencher campos obrigatórios
+        dados_periodo = ApuracaoService.calcular_dados_periodo(mes, ano)
         
         # Criar apuração (previsão = definitivo False)
         nova_apuracao = Apuracao(
             mes=mes,
             ano=ano,
+            usuario_id=session.get('usuario_id'),
+            receita_total=dados_periodo.get('receita_calculada', 0.0),
+            custo_produtos=dados_periodo.get('cpv_calculado', 0.0),
             verba_scann=verba_scann,
             verba_plano_negocios=verba_plano_negocios,
             verba_time_ambev=verba_time_ambev,
             verba_outras_receitas=verba_outras_receitas,
-            total_verbas=total_verbas,
             outros_custos=0,  # Previsões não têm custos
             definitivo=False  # Previsão é sempre rascunho
         )

@@ -3,3 +3,21 @@
 [main]	INFO	cli include tests: None
 [main]	INFO	cli exclude tests: None
 [main]	INFO	running on Python 3.13.2
+[manager]	WARNING	Test in comment: _lines is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: is is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: a is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: dict is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: of is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: line is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: number is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: set is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: of is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: tests is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: to is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: ignore is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: tkelsey is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: catching is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: expected is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: exception is not a test name or id, ignoring
+[tester]	WARNING	nosec encountered (B108), but no failed test on line 62
+[manager]	WARNING	Test in comment: c is not a test name or id, ignoring

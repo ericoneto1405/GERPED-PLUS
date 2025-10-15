@@ -825,12 +825,15 @@ function fecharModalPrecoManual() {
 
 function salvarPrecoManual() {
     const produtoId = document.getElementById('produtoSelect').value;
-    const precoMedio = document.getElementById('precoMedio').value;
+    const precoMedioFormatado = document.getElementById('precoMedio').value;
     
     if (!produtoId) {
         alert('Por favor, selecione um produto.');
         return;
     }
+    
+    // Converter valor formatado para número
+    const precoMedio = parseCurrencyBRL(precoMedioFormatado);
     
     if (!precoMedio || precoMedio <= 0) {
         alert('Por favor, insira um preço válido.');

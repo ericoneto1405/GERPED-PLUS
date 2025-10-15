@@ -108,10 +108,12 @@ class ColetaService:
             )
 
             if filtro == 'pendentes':
+                current_app.logger.debug(f"Aplicando filtro pendentes. Total antes do filtro: {pedidos_query.count()}")
                 pedidos_query = pedidos_query.filter(
-                    pagamento_aprovado_expr == 1,
                     coletado_completo_expr == 0,
+                    total_itens_col > 0,  # Garantir que tem itens para coletar
                 )
+                current_app.logger.debug(f"Total após filtro pendentes: {pedidos_query.count()}")
             elif filtro == 'coletados':
                 pedidos_query = pedidos_query.filter(coletado_completo_expr == 1)
 

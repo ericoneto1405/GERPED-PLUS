@@ -2,12 +2,9 @@
 Rotas consolidadas do módulo de coletas
 Integra funcionalidades do módulo logística
 """
-from flask import Blueprint, render_template, current_app, flash, request, redirect, url_for, session, send_file, jsonify
-from ..decorators import login_obrigatorio, permissao_necessaria
+from flask import Blueprint, render_template, current_app, flash, request, redirect, url_for, session, send_file
+from ..decorators import login_obrigatorio
 from app.auth.rbac import requires_logistica
-import json
-import traceback
-from datetime import datetime
 import re
 from typing import Optional
 
@@ -91,7 +88,6 @@ def _nome_valido(nome: str) -> bool:
 @coletas_bp.route('/')
 @login_obrigatorio
 @requires_logistica
-@permissao_necessaria('acesso_logistica')
 def index():
     """Lista pedidos para coleta - interface simples e direta"""
     try:
@@ -109,7 +105,7 @@ def index():
 
 @coletas_bp.route('/dashboard')
 @login_obrigatorio
-@permissao_necessaria('acesso_logistica')
+@requires_logistica
 def dashboard():
     """Dashboard com filtros (funcionalidade do logística)"""
     try:
@@ -128,7 +124,7 @@ def dashboard():
 
 @coletas_bp.route('/processar/<int:pedido_id>', methods=['GET', 'POST'])
 @login_obrigatorio
-@permissao_necessaria('acesso_logistica')
+@requires_logistica
 def processar_coleta(pedido_id):
     """Processa uma coleta (funcionalidade original)"""
     if request.method == 'POST':
@@ -330,7 +326,6 @@ def processar_coleta(pedido_id):
 @coletas_bp.route('/recibos/status/<job_id>')
 @login_obrigatorio
 @requires_logistica
-@permissao_necessaria('acesso_logistica')
 def status_recibo(job_id):
     """Acompanha o status de geração do recibo e libera download quando concluído."""
     status_info = get_job_status(job_id)
@@ -378,7 +373,7 @@ def status_recibo(job_id):
 
 @coletas_bp.route('/detalhes/<int:pedido_id>')
 @login_obrigatorio
-@permissao_necessaria('acesso_logistica')
+@requires_logistica
 def detalhes_pedido(pedido_id):
     """Detalhes do pedido (funcionalidade do logística)"""
     try:
@@ -396,7 +391,7 @@ def detalhes_pedido(pedido_id):
 
 @coletas_bp.route('/historico/<int:pedido_id>')
 @login_obrigatorio
-@permissao_necessaria('acesso_logistica')
+@requires_logistica
 def historico_coletas(pedido_id):
     """Histórico de coletas de um pedido"""
     try:
@@ -414,7 +409,7 @@ def historico_coletas(pedido_id):
 
 @coletas_bp.route('/coletados')
 @login_obrigatorio
-@permissao_necessaria('acesso_logistica')
+@requires_logistica
 def pedidos_coletados():
     """Lista pedidos coletados (funcionalidade do logística)"""
     try:
@@ -429,7 +424,7 @@ def pedidos_coletados():
 # Rota de compatibilidade com logística
 @coletas_bp.route('/coletar/<int:pedido_id>', methods=['GET', 'POST'])
 @login_obrigatorio
-@permissao_necessaria('acesso_logistica')
+@requires_logistica
 def coletar(pedido_id):
     """Rota de compatibilidade - redireciona para processar_coleta"""
     if request.method == 'POST':

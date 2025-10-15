@@ -3,6 +3,10 @@
 
 {% block title %}Processar Coleta - Pedido {{ detalhes.pedido.id }}{% endblock %}
 
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/imask@6.4.3/dist/imask.min.js" nonce="{{ nonce }}"></script>
+{% endblock %}
+
 {% block extra_css %}
 <style>
 .btn-loading {
@@ -342,6 +346,69 @@
     </div>
 </div>
 
-<!-- JavaScript removido - formulário será enviado diretamente sem interceptação -->
+<script nonce="{{ nonce }}">
+document.addEventListener('DOMContentLoaded', function() {
+    // Aplicar máscaras de CPF
+    const cpfMask = {
+        mask: '000.000.000-00'
+    };
+    
+    const docRetirada = document.getElementById('documento_retirada');
+    const cpfConferente = document.getElementById('cpf_conferente');
+    
+    if (docRetirada && typeof IMask !== 'undefined') {
+        IMask(docRetirada, cpfMask);
+    }
+    if (cpfConferente && typeof IMask !== 'undefined') {
+        IMask(cpfConferente, cpfMask);
+    }
+    
+    // Proteção contra duplo-clique
+    const form = document.getElementById('formColeta');
+    const btnProcessar = document.getElementById('btnProcessar');
+    
+    if (form && btnProcessar) {
+        form.addEventListener('submit', function(e) {
+            // Prevenir múltiplos submits
+            if (btnProcessar.disabled) {
+                e.preventDefault();
+                return false;
+            }
+            
+            // Desabilitar botão
+            btnProcessar.disabled = true;
+            
+            // Atualizar visual
+            const btnText = btnProcessar.querySelector('.btn-text');
+            const btnLoading = btnProcessar.querySelector('.btn-loading');
+            
+            if (btnText) btnText.style.display = 'none';
+            if (btnLoading) btnLoading.style.display = 'inline';
+            
+            // Validar que pelo menos um item foi selecionado
+            const inputs = document.querySelectorAll('.quantidade-input');
+            let algumaSelecionada = false;
+            
+            inputs.forEach(function(input) {
+                if (input.value && parseInt(input.value) > 0) {
+                    algumaSelecionada = true;
+                }
+            });
+            
+            if (!algumaSelecionada) {
+                e.preventDefault();
+                alert('Selecione pelo menos um item para coleta!');
+                
+                // Re-habilitar botão
+                btnProcessar.disabled = false;
+                if (btnText) btnText.style.display = 'inline';
+                if (btnLoading) btnLoading.style.display = 'none';
+                
+                return false;
+            }
+        });
+    }
+});
+</script>
 
 {% endblock %}

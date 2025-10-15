@@ -1,4 +1,4 @@
-from flask import render_template, request, redirect, url_for, flash, current_app, session
+from flask import render_template, request, redirect, url_for, flash, current_app, session, jsonify
 from flask import Blueprint
 from .services import ApuracaoService
 from meu_app.cache import cached_with_invalidation, invalidate_cache
@@ -7,13 +7,12 @@ apuracao_bp = Blueprint('apuracao', __name__, url_prefix='/apuracao')
 from functools import wraps
 from datetime import datetime
 from ..models import Apuracao, db
-from ..decorators import login_obrigatorio, permissao_necessaria
+from ..decorators import login_obrigatorio
 from app.auth.rbac import requires_financeiro
 
 @apuracao_bp.route('/', methods=['GET'])
 @login_obrigatorio
 @requires_financeiro
-@permissao_necessaria('acesso_financeiro')
 @cached_with_invalidation(
     timeout=600,  # 10 minutos
     key_prefix='apuracao_lista',
@@ -132,8 +131,78 @@ def excluir_apuracao(id):
 
 
 
+@apuracao_bp.route('/salvar', methods=['POST'])
+@login_obrigatorio
+@requires_financeiro
+def salvar_previsao():
+    """Salva nova previsão de verbas (rascunho)"""
+    try:
+        mes = request.form.get('mes', type=int)
+        ano = request.form.get('ano', type=int)
+        tipo = request.form.get('tipo', '')
+        
+        if tipo != 'previsao':
+            return jsonify({'success': False, 'message': 'Tipo inválido'}), 400
+        
+        # Validar mês e ano
+        if not mes or not ano or mes < 1 or mes > 12:
+            return jsonify({'success': False, 'message': 'Mês ou ano inválido'}), 400
+        
+        # Verificar se já existe apuração para este período
+        existente = Apuracao.query.filter_by(mes=mes, ano=ano).first()
+        if existente:
+            return jsonify({
+                'success': False,
+                'message': f'Já existe uma apuração para {mes}/{ano}. Edite a existente.'
+            }), 400
+        
+        # Extrair verbas
+        verba_scann = request.form.get('verba_scann', 0, type=float)
+        verba_plano_negocios = request.form.get('verba_plano_negocios', 0, type=float)
+        verba_time_ambev = request.form.get('verba_time_ambev', 0, type=float)
+        verba_outras_receitas = request.form.get('verba_outras_receitas', 0, type=float)
+        
+        # Calcular totais
+        total_verbas = verba_scann + verba_plano_negocios + verba_time_ambev + verba_outras_receitas
+        
+        # Criar apuração (previsão = definitivo False)
+        nova_apuracao = Apuracao(
+            mes=mes,
+            ano=ano,
+            verba_scann=verba_scann,
+            verba_plano_negocios=verba_plano_negocios,
+            verba_time_ambev=verba_time_ambev,
+            verba_outras_receitas=verba_outras_receitas,
+            total_verbas=total_verbas,
+            outros_custos=0,  # Previsões não têm custos
+            definitivo=False  # Previsão é sempre rascunho
+        )
+        
+        db.session.add(nova_apuracao)
+        db.session.commit()
+        
+        invalidate_cache('apuracao_lista')
+        
+        current_app.logger.info(f"Previsão criada (ID: {nova_apuracao.id}) por {session.get('usuario_nome', 'N/A')}")
+        
+        return jsonify({
+            'success': True,
+            'message': 'Previsão criada com sucesso!',
+            'id': nova_apuracao.id
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Erro ao salvar previsão: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': f'Erro ao salvar: {str(e)}'
+        }), 500
+
+
 @apuracao_bp.route('/editar/<int:id>', methods=['GET', 'POST'])
 @login_obrigatorio
+@requires_financeiro
 def editar_apuracao(id):
     """Edita uma apuração existente"""
     try:

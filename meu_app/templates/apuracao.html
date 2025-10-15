@@ -62,7 +62,7 @@
                 <div class="card-icon">➕</div>
                 <h3>Nova Previsão</h3>
                 <p>Criar nova previsão de verbas para o período</p>
-                <button class="btn-primary" onclick="criarNovaPrevisao()">Criar Previsão</button>
+                <button class="btn-primary" data-action="criar-nova-previsao">Criar Previsão</button>
             </div>
             
 
@@ -110,7 +110,7 @@
                                             </svg>
                                         </a>
                                         <a href="{{ url_for('apuracao.excluir_apuracao', id=apuracao.id) }}" class="icon-btn icon-delete" 
-                                           onclick="return confirm('Tem certeza que deseja excluir esta previsão?')" title="Excluir previsão">
+                                           data-action="excluir-previsao" title="Excluir previsão">
                                             <svg class="icon-svg" viewBox="0 0 24 24">
                                                 <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
                                             </svg>
@@ -128,35 +128,6 @@
         </div>
         
         <!-- Formulário de Nova Previsão (inicialmente oculto) -->
-        
-
-                    <!-- Summary Boxes para Previsão -->
-                    <div class="summary-grid">
-                        <div class="summary-box summary-receitas-adicionais">
-                            <div class="summary-icon">📈</div>
-                            <div class="summary-content">
-                                <div class="summary-label">Total Verbas</div>
-                                <div class="summary-value" id="previsao-total-verbas">R$ 0,00</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="form-actions">
-                        <button type="button" class="btn-cancel" onclick="cancelarPrevisao()">
-                            <span class="icon-cancel">❌</span>
-                            Cancelar
-                        </button>
-                        <button type="button" class="btn-save" onclick="salvarPrevisao()">
-                            <span class="icon-save">💾</span>
-                            Salvar Previsão
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-    
-    
         <div class="previsao-form-container" id="previsao-form-container" style="display: none;">
             <div class="calculation-card previsao-card">
                 <h3>Nova Previsão de Verbas para {{ ["", "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", 
@@ -178,28 +149,54 @@
                     <div class="input-grid">
                         <div class="input-group">
                             <label for="previsao_verba_scann">SCANN</label>
-                            <input type="number" id="previsao_verba_scann" name="verba_scann" step="0.01" min="0" value="0" required placeholder="0,00" onchange="calcularTotaisPrevisao()">
+                            <input type="number" id="previsao_verba_scann" name="verba_scann" step="0.01" min="0" value="0" required placeholder="0,00" data-calc="previsao">
                             <div class="input-help">Verba prevista para SCANN</div>
                         </div>
                         
                         <div class="input-group">
                             <label for="previsao_verba_plano_negocios">Plano de Negócios</label>
-                            <input type="number" id="previsao_verba_plano_negocios" name="verba_plano_negocios" step="0.01" min="0" value="0" required placeholder="0,00" onchange="calcularTotaisPrevisao()">
+                            <input type="number" id="previsao_verba_plano_negocios" name="verba_plano_negocios" step="0.01" min="0" value="0" required placeholder="0,00" data-calc="previsao">
                             <div class="input-help">Verba prevista para Plano de Negócios</div>
                         </div>
                         
                         <div class="input-group">
                             <label for="previsao_verba_time_ambev">TIME AMBEV</label>
-                            <input type="number" id="previsao_verba_time_ambev" name="verba_time_ambev" step="0.01" min="0" value="0" required placeholder="0,00" onchange="calcularTotaisPrevisao()">
+                            <input type="number" id="previsao_verba_time_ambev" name="verba_time_ambev" step="0.01" min="0" value="0" required placeholder="0,00" data-calc="previsao">
                             <div class="input-help">Verba prevista para TIME AMBEV</div>
                         </div>
                         
                         <div class="input-group">
                             <label for="previsao_verba_outras_receitas">Outras Receitas</label>
-                            <input type="number" id="previsao_verba_outras_receitas" name="verba_outras_receitas" step="0.01" min="0" value="0" required placeholder="0,00" onchange="calcularTotaisPrevisao()">
+                            <input type="number" id="previsao_verba_outras_receitas" name="verba_outras_receitas" step="0.01" min="0" value="0" required placeholder="0,00" data-calc="previsao">
                             <div class="input-help">Outras verbas previstas</div>
                         </div>
                     </div>
+                    
+                    <!-- Summary Boxes para Previsão -->
+                    <div class="summary-grid">
+                        <div class="summary-box summary-receitas-adicionais">
+                            <div class="summary-icon">📈</div>
+                            <div class="summary-content">
+                                <div class="summary-label">Total Verbas</div>
+                                <div class="summary-value" id="previsao-total-verbas">R$ 0,00</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn-cancel" data-action="cancelar-previsao">
+                            <span class="icon-cancel">❌</span>
+                            Cancelar
+                        </button>
+                        <button type="button" class="btn-save" data-action="salvar-previsao">
+                            <span class="icon-save">💾</span>
+                            Salvar Previsão
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
     <!-- Aba Apuração Definitiva -->
     <div class="tab-content" id="outro-apuracao">
         <div class="action-cards">
@@ -207,7 +204,7 @@
                 <div class="card-icon">💰</div>
                 <h3>Nova Apuração Definitiva</h3>
                 <p>Criar nova apuração definitiva para o período</p>
-                <button class="btn-primary" onclick="criarNovaApuracaoDefinitiva()">Criar Apuração Definitiva</button>
+                <button class="btn-primary" data-action="criar-apuracao-definitiva">Criar Apuração Definitiva</button>
             </div>
             
             <div class="action-card">
@@ -312,44 +309,16 @@
                 </div>
 
                 <div class="form-actions">
-                    <button type="button" class="btn-save" onclick="salvarApuração()">
+                    <button type="button" class="btn-save" data-action="salvar-apuracao">
                         <span class="icon-save">💾</span>
                         Salvar
                     </button>
-                    <button type="button" class="btn-save-definitivo" onclick="salvarDefinitivo()">
+                    <button type="button" class="btn-save-definitivo" data-action="salvar-definitivo">
                         <span class="icon-save">🔒</span>
                         Salvar Definitivo
                     </button>
                 </div>
             </form>
-        </div>
-        
-        <!-- Formulário de Nova Previsão (inicialmente oculto) -->
-        
-
-                    <!-- Summary Boxes para Previsão -->
-                    <div class="summary-grid">
-                        <div class="summary-box summary-receitas-adicionais">
-                            <div class="summary-icon">📈</div>
-                            <div class="summary-content">
-                                <div class="summary-label">Total Verbas</div>
-                                <div class="summary-value" id="previsao-total-verbas">R$ 0,00</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="form-actions">
-                        <button type="button" class="btn-cancel" onclick="cancelarPrevisao()">
-                            <span class="icon-cancel">❌</span>
-                            Cancelar
-                        </button>
-                        <button type="button" class="btn-save" onclick="salvarPrevisao()">
-                            <span class="icon-save">💾</span>
-                            Salvar Previsão
-                        </button>
-                    </div>
-                </form>
-            </div>
         </div>
     </div>
 </div>
@@ -362,7 +331,7 @@
     <div class="modal-content">
         <div class="modal-header">
             <h3 class="modal-title" id="modalTitle">🔐 Confirmação de Senha</h3>
-            <span class="close" onclick="fecharModal()">&times;</span>
+            <span class="close" data-action="fechar-modal">&times;</span>
         </div>
         <div class="modal-body">
             <p class="modal-message" id="modalMessage">
@@ -382,36 +351,8 @@
             </div>
         </div>
         <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" onclick="fecharModal()">Cancelar</button>
-            <button type="button" class="btn btn-primary" id="btnConfirmar" onclick="confirmarAcao()">Confirmar</button>
-        </div>
-        
-        <!-- Formulário de Nova Previsão (inicialmente oculto) -->
-        
-
-                    <!-- Summary Boxes para Previsão -->
-                    <div class="summary-grid">
-                        <div class="summary-box summary-receitas-adicionais">
-                            <div class="summary-icon">📈</div>
-                            <div class="summary-content">
-                                <div class="summary-label">Total Verbas</div>
-                                <div class="summary-value" id="previsao-total-verbas">R$ 0,00</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="form-actions">
-                        <button type="button" class="btn-cancel" onclick="cancelarPrevisao()">
-                            <span class="icon-cancel">❌</span>
-                            Cancelar
-                        </button>
-                        <button type="button" class="btn-save" onclick="salvarPrevisao()">
-                            <span class="icon-save">💾</span>
-                            Salvar Previsão
-                        </button>
-                    </div>
-                </form>
-            </div>
+            <button type="button" class="btn btn-secondary" data-action="fechar-modal">Cancelar</button>
+            <button type="button" class="btn btn-primary" id="btnConfirmar" data-action="confirmar-acao">Confirmar</button>
         </div>
     </div>
 </div>
@@ -1052,6 +993,63 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById(targetTab).classList.add('active');
         });
     });
+    
+    // Event listeners para botões (CSP compliant)
+    const btnCriarPrevisao = document.querySelector('[data-action="criar-nova-previsao"]');
+    if (btnCriarPrevisao) {
+        btnCriarPrevisao.addEventListener('click', criarNovaPrevisao);
+    }
+    
+    const btnCriarApuracao = document.querySelector('[data-action="criar-apuracao-definitiva"]');
+    if (btnCriarApuracao) {
+        btnCriarApuracao.addEventListener('click', criarNovaApuracaoDefinitiva);
+    }
+    
+    const btnsCancelar = document.querySelectorAll('[data-action="cancelar-previsao"]');
+    btnsCancelar.forEach(btn => {
+        btn.addEventListener('click', cancelarPrevisao);
+    });
+    
+    const btnsSalvarPrevisao = document.querySelectorAll('[data-action="salvar-previsao"]');
+    btnsSalvarPrevisao.forEach(btn => {
+        btn.addEventListener('click', salvarPrevisao);
+    });
+    
+    const btnSalvarApuracao = document.querySelector('[data-action="salvar-apuracao"]');
+    if (btnSalvarApuracao) {
+        btnSalvarApuracao.addEventListener('click', salvarApuração);
+    }
+    
+    const btnSalvarDefinitivo = document.querySelector('[data-action="salvar-definitivo"]');
+    if (btnSalvarDefinitivo) {
+        btnSalvarDefinitivo.addEventListener('click', salvarDefinitivo);
+    }
+    
+    // Event listeners para inputs com cálculo automático
+    const inputsPrevisao = document.querySelectorAll('[data-calc="previsao"]');
+    inputsPrevisao.forEach(input => {
+        input.addEventListener('input', calcularTotaisPrevisao);
+    });
+    
+    // Event listeners do modal
+    const closeModalBtns = document.querySelectorAll('[data-action="fechar-modal"]');
+    closeModalBtns.forEach(btn => {
+        btn.addEventListener('click', fecharModal);
+    });
+    
+    const btnConfirmar = document.querySelector('[data-action="confirmar-acao"]');
+    if (btnConfirmar) {
+        btnConfirmar.addEventListener('click', confirmarAcao);
+    }
+    
+    // Event listener confirm exclusão
+    document.querySelectorAll('[data-action="excluir-previsao"]').forEach(link => {
+        link.addEventListener('click', function(e) {
+            if (!confirm('Tem certeza que deseja excluir esta previsão?')) {
+                e.preventDefault();
+            }
+        });
+    });
 });
 
 // Funções para as novas abas
@@ -1545,17 +1543,22 @@ function confirmarAcao() {
 }
 
 // Fechar modal ao clicar fora dele
-window.onclick = function(event) {
+window.addEventListener('click', function(event) {
     const modal = document.getElementById('modalSenha');
     if (event.target === modal) {
         fecharModal();
     }
-}
+});
 
 // Permitir confirmação com Enter
-document.getElementById('senhaAdmin').addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') {
-        confirmarAcao();
+document.addEventListener('DOMContentLoaded', function() {
+    const senhaInput = document.getElementById('senhaAdmin');
+    if (senhaInput) {
+        senhaInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                confirmarAcao();
+            }
+        });
     }
 });
 </script>

@@ -84,18 +84,23 @@ def registrar_pagamento(pedido_id):
 
         # Lógica de upload do recibo
         if recibo and recibo.filename:
+            file_type = None
             # Tenta validar como documento ou imagem
             is_valid, error_msg, metadata = FileUploadValidator.validate_file(recibo, 'document')
-            if not is_valid:
+            if is_valid:
+                file_type = 'document'
+            else:
                 # Se falhar, tenta como imagem
                 is_valid, error_msg, metadata = FileUploadValidator.validate_file(recibo, 'image')
+                if is_valid:
+                    file_type = 'image'
 
-            if not is_valid:
+            if not is_valid or not file_type:
                 flash(f"Erro no upload do recibo: {error_msg}", 'error')
                 return redirect(url_for('financeiro.registrar_pagamento', pedido_id=pedido_id))
 
             # Gera nome seguro e salva usando configuração centralizada
-            secure_name = FileUploadValidator.generate_secure_filename(recibo.filename, 'recibo_pagamento')
+            secure_name = FileUploadValidator.generate_secure_filename(recibo.filename, file_type)
             upload_dir = FinanceiroConfig.get_upload_directory('recibos')
             file_path = os.path.join(upload_dir, secure_name)
             
@@ -406,11 +411,16 @@ def editar_pagamento(pedido_id):
             # Processar upload de novo recibo se fornecido
             recibo = request.files.get('recibo')
             if recibo and recibo.filename:
+                file_type = None
                 is_valid, error_msg, metadata = FileUploadValidator.validate_file(recibo, 'document')
-                if not is_valid:
+                if is_valid:
+                    file_type = 'document'
+                else:
                     is_valid, error_msg, metadata = FileUploadValidator.validate_file(recibo, 'image')
-                
-                if not is_valid:
+                    if is_valid:
+                        file_type = 'image'
+
+                if not is_valid or not file_type:
                     flash(f"Erro no upload do recibo: {error_msg}", 'error')
                     return redirect(url_for('financeiro.editar_pagamento', pedido_id=pedido_id))
                 
@@ -421,7 +431,7 @@ def editar_pagamento(pedido_id):
                         os.remove(old_path)
                 
                 # Salvar novo recibo
-                secure_name = FileUploadValidator.generate_secure_filename(recibo.filename, 'recibo_pagamento')
+                secure_name = FileUploadValidator.generate_secure_filename(recibo.filename, file_type)
                 upload_dir = FinanceiroConfig.get_upload_directory('recibos')
                 file_path = os.path.join(upload_dir, secure_name)
                 

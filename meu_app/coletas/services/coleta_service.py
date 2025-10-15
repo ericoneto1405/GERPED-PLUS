@@ -107,21 +107,15 @@ class ColetaService:
                 .limit(max_registros)
             )
 
-            if filtro == 'pendentes':
-                current_app.logger.debug(f"Aplicando filtro pendentes. Total antes do filtro: {pedidos_query.count()}")
-                pedidos_query = pedidos_query.filter(
-                    coletado_completo_expr == 0,
-                    total_itens_col > 0,  # Garantir que tem itens para coletar
-                )
-                current_app.logger.debug(f"Total após filtro pendentes: {pedidos_query.count()}")
-            elif filtro == 'coletados':
-                pedidos_query = pedidos_query.filter(coletado_completo_expr == 1)
-
+            # Executar query SEM filtros adicionais
             resultados = pedidos_query.all()
 
             if not resultados:
                 return []
 
+            current_app.logger.debug(f"Filtro '{filtro}': {len(resultados)} pedidos retornados da query SQL")
+
+            # Aplicar filtro em Python (mais confiável que filtros SQL com expressões case)
             lista_pedidos: List[Dict] = []
             for (
                 pedido,
@@ -137,6 +131,34 @@ class ColetaService:
                 total_venda_float = float(total_venda or 0)
                 total_pago_float = float(total_pago or 0)
                 itens_pendentes = max(total_itens_int - itens_coletados_int, 0)
+                
+                # Calcular coletado_completo em Python (mais confiável)
+                is_coletado_completo = (total_itens_int > 0 and itens_coletados_int >= total_itens_int)
+                
+                # Log detalhado em modo debug
+                if current_app.debug:
+                    current_app.logger.debug(
+                        f"Pedido #{pedido.id}: total={total_itens_int}, "
+                        f"coletados={itens_coletados_int}, "
+                        f"completo={is_coletado_completo}, "
+                        f"filtro={filtro}"
+                    )
+                
+                # APLICAR FILTRO EM PYTHON
+                if filtro == 'pendentes':
+                    # Pular se não tem itens
+                    if total_itens_int == 0:
+                        current_app.logger.debug(f"Pedido #{pedido.id} pulado: sem itens")
+                        continue
+                    # Pular se já está completamente coletado
+                    if is_coletado_completo:
+                        current_app.logger.debug(f"Pedido #{pedido.id} pulado: já coletado")
+                        continue
+                elif filtro == 'coletados':
+                    # Incluir apenas se está completamente coletado
+                    if not is_coletado_completo:
+                        continue
+                # Se filtro == 'todos', não pular nenhum
 
                 lista_pedidos.append(
                     {
@@ -146,10 +168,12 @@ class ColetaService:
                         "itens_pendentes": itens_pendentes,
                         "total_venda": total_venda_float,
                         "total_pago": total_pago_float,
-                        "coletado_completo": bool(coletado_completo),
+                        "coletado_completo": is_coletado_completo,
                         "pagamento_aprovado": bool(pagamento_aprovado),
                     }
                 )
+
+            current_app.logger.debug(f"Filtro '{filtro}': {len(lista_pedidos)} pedidos após filtragem Python")
 
             return lista_pedidos
             

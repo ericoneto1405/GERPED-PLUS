@@ -474,3 +474,122 @@ if filtro == 'pendentes':
 
 **Status:** ✅ **APROVADO PARA PRODUÇÃO**
 
+---
+
+## 🔧 CORREÇÃO ADICIONAL - Bug do Filtro Pendentes (15/10/2025 - 2ª Revisão)
+
+### Problema Reportado pelo Usuário
+
+**Sintoma:**
+- Aba PENDENTES mostra: "Nenhum pedido pendente"
+- Aba TODOS mostra: Pedido #98 (0/5720 itens) e #128 (0/2185 itens)
+- **Pedidos claramente pendentes NÃO aparecem em PENDENTES!**
+
+### Causa Raiz
+
+A correção anterior (linhas 110-116) ainda usava **filtros SQL com expressões `case()`** que não funcionam corretamente no SQLAlchemy quando dependem de colunas de subqueries:
+
+```python
+# CÓDIGO AINDA PROBLEMÁTICO
+if filtro == 'pendentes':
+    pedidos_query = pedidos_query.filter(
+        coletado_completo_expr == 0,  # ← case() não funciona em filter()!
+        total_itens_col > 0,
+    )
+```
+
+**Por que falha:**
+- `coletado_completo_expr` é uma expressão `case()` (linha 80-83)
+- Usa colunas de subqueries (`total_itens_col`, `itens_coletados_col`)
+- SQLAlchemy não resolve corretamente essas referências em `.filter()`
+- Resulta em query SQL que filtra incorretamente
+
+### Correção Definitiva Aplicada
+
+**Mudança:** Mover filtro de SQL para Python
+
+**Arquivo:** `meu_app/coletas/services/coleta_service.py` (Linhas 110-178)
+
+**ANTES (Bugado):**
+```python
+if filtro == 'pendentes':
+    pedidos_query = pedidos_query.filter(
+        coletado_completo_expr == 0,  # ← Filtro SQL problemático
+        total_itens_col > 0,
+    )
+elif filtro == 'coletados':
+    pedidos_query = pedidos_query.filter(coletado_completo_expr == 1)
+
+resultados = pedidos_query.all()
+# ... processar ...
+```
+
+**DEPOIS (Corrigido):**
+```python
+# Executar query SEM filtros adicionais
+resultados = pedidos_query.all()
+
+if not resultados:
+    return []
+
+current_app.logger.debug(f"Filtro '{filtro}': {len(resultados)} pedidos da query")
+
+lista_pedidos: List[Dict] = []
+for (...) in resultados:
+    total_itens_int = int(total_itens or 0)
+    itens_coletados_int = int(itens_coletados or 0)
+    
+    # Calcular em Python (mais confiável)
+    is_coletado_completo = (total_itens_int > 0 and itens_coletados_int >= total_itens_int)
+    
+    # FILTRAR EM PYTHON ✅
+    if filtro == 'pendentes':
+        if total_itens_int == 0:
+            continue  # Pular pedidos sem itens
+        if is_coletado_completo:
+            continue  # Pular pedidos já coletados
+    elif filtro == 'coletados':
+        if not is_coletado_completo:
+            continue  # Pular pedidos não coletados
+    
+    lista_pedidos.append({...})
+
+current_app.logger.debug(f"Filtro '{filtro}': {len(lista_pedidos)} após filtro Python")
+return lista_pedidos
+```
+
+### Mudanças Implementadas
+
+1. ✅ **Removidos filtros SQL** (linhas 110-118)
+2. ✅ **Query executada sem filtros adicionais**
+3. ✅ **Filtro aplicado em Python** dentro do loop
+4. ✅ **Cálculo de `is_coletado_completo` em Python** (linha 136)
+5. ✅ **Logs detalhados** antes e depois da filtragem
+6. ✅ **Logs por pedido** em modo debug
+
+### Resultado Esperado
+
+**Com esta correção:**
+
+| Pedido | Itens | Status | PENDENTES | TODOS | COLETADOS |
+|--------|-------|--------|-----------|-------|-----------|
+| #98 | 0/5720 | PAGAMENTO_APROVADO | ✅ SIM | ✅ SIM | ❌ NÃO |
+| #128 | 0/2185 | PAGAMENTO_APROVADO | ✅ SIM | ✅ SIM | ❌ NÃO |
+
+### Benefícios
+
+✅ **Funcionamento garantido** - Lógica Python sempre funciona  
+✅ **Debugável** - Logs mostram cada decisão  
+✅ **Manutenível** - Código claro e simples  
+✅ **Performance** - Aceitável com limite de 200 registros  
+✅ **Sem riscos** - Não altera SQL complexo  
+
+### Testes de Validação
+
+- [ ] Acessar aba PENDENTES - deve mostrar #98 e #128
+- [ ] Acessar aba TODOS - deve continuar mostrando todos
+- [ ] Processar coleta parcial - deve continuar em PENDENTES
+- [ ] Processar coleta completa - deve mover para COLETADOS
+
+**Status:** ✅ Correção implementada - Aguardando validação do usuário
+

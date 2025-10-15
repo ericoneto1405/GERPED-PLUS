@@ -6,99 +6,218 @@
 
 {% block content %}
 <div class="log-atividades-page">
-    <!-- Filtros -->
-    <div class="card filters-card">
+    <!-- Dashboard de Estatísticas -->
+    <div class="stats-dashboard">
+        <div class="stat-card">
+            <div class="stat-icon">📊</div>
+            <div class="stat-content">
+                <div class="stat-label">Total de Atividades</div>
+                <div class="stat-value">{{ stats.get('total_atividades', 0)|default(0) }}</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">🔄</div>
+            <div class="stat-content">
+                <div class="stat-label">Últimos 7 Dias</div>
+                <div class="stat-value">{{ stats.get('atividades_7_dias', 0)|default(0) }}</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">📅</div>
+            <div class="stat-content">
+                <div class="stat-label">Últimos 30 Dias</div>
+                <div class="stat-value">{{ stats.get('atividades_30_dias', 0)|default(0) }}</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">👥</div>
+            <div class="stat-content">
+                <div class="stat-label">Usuários Ativos</div>
+                <div class="stat-value">{{ usuarios|length }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros Avançados -->
+    <div class="filters-card">
         <div class="filters-header">
             <h3>🔎 Filtros de Pesquisa</h3>
-            <button class="btn btn-sm btn-secondary" onclick="limparFiltros()">🔄 Limpar Filtros</button>
+            <div class="filters-actions">
+                <button class="btn-filter btn-clear" data-action="limpar-filtros">🔄 Limpar</button>
+                <button class="btn-filter btn-export" data-action="exportar-logs">📥 Exportar</button>
+            </div>
         </div>
         
-        <form method="GET" action="{{ url_for('log_atividades.listar_atividades') }}" class="filters-form">
+        <form method="GET" action="{{ url_for('log_atividades.listar_atividades') }}" class="filters-form" id="filtrosForm">
+            <!-- Linha 1: Busca e Período -->
+            <div class="filter-row">
+                <div class="form-group filter-busca">
+                    <label for="busca">🔍 Buscar</label>
+                    <input type="text" name="busca" id="busca" class="form-control" 
+                           placeholder="Pesquisar em descrição e título..." 
+                           value="{{ filtros.get('busca', '') }}">
+                </div>
+                <div class="form-group">
+                    <label for="mes_ano">📅 Período (Mês/Ano)</label>
+                    <input type="month" name="mes_ano" id="mes_ano" class="form-control" 
+                           value="{{ filtros.get('mes_ano', '') }}">
+                </div>
+            </div>
+            
+            <!-- Linha 2: Filtros Específicos -->
             <div class="filter-row">
                 <div class="form-group">
-                    <label for="mes_ano">📅 Mês/Ano</label>
-                    <input type="month" name="mes_ano" id="mes_ano" class="form-control" value="{{ mes_ano }}">
+                    <label for="usuario_id">👤 Usuário</label>
+                    <select name="usuario_id" id="usuario_id" class="form-control">
+                        <option value="">Todos os usuários</option>
+                        {% for usuario in usuarios %}
+                        <option value="{{ usuario.id }}" 
+                                {% if filtros.get('usuario_id') == usuario.id %}selected{% endif %}>
+                            {{ usuario.nome }}
+                        </option>
+                        {% endfor %}
+                    </select>
                 </div>
                 
                 <div class="form-group">
-                    <label for="per_page">📊 Por Página</label>
+                    <label for="modulo">📦 Módulo</label>
+                    <select name="modulo" id="modulo" class="form-control">
+                        <option value="">Todos os módulos</option>
+                        {% for modulo in modulos %}
+                        <option value="{{ modulo }}" 
+                                {% if filtros.get('modulo') == modulo %}selected{% endif %}>
+                            {{ modulo }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="tipo">🏷️ Tipo de Ação</label>
+                    <select name="tipo" id="tipo" class="form-control">
+                        <option value="">Todos os tipos</option>
+                        <option value="criação" {% if filtros.get('tipo') == 'criação' %}selected{% endif %}>Criação</option>
+                        <option value="edição" {% if filtros.get('tipo') == 'edição' %}selected{% endif %}>Edição</option>
+                        <option value="exclusão" {% if filtros.get('tipo') == 'exclusão' %}selected{% endif %}>Exclusão</option>
+                        <option value="login" {% if filtros.get('tipo') == 'login' %}selected{% endif %}>Login/Acesso</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="per_page">📊 Registros/Página</label>
                     <select name="per_page" id="per_page" class="form-control">
                         <option value="20" {% if per_page == 20 %}selected{% endif %}>20</option>
                         <option value="50" {% if per_page == 50 %}selected{% endif %}>50</option>
                         <option value="100" {% if per_page == 100 %}selected{% endif %}>100</option>
+                        <option value="200" {% if per_page == 200 %}selected{% endif %}>200</option>
                     </select>
                 </div>
             </div>
             
-            <div class="filter-actions">
-                <button type="submit" class="btn btn-primary">🔍 Filtrar</button>
-                <button type="button" class="btn btn-success" onclick="exportarLogs()">📥 Exportar</button>
+            <div class="filter-submit">
+                <button type="submit" class="btn-primary">🔍 Aplicar Filtros</button>
             </div>
         </form>
     </div>
 
-    <!-- Lista de Atividades -->
-    <div class="card activities-card">
+    <!-- Tabela de Atividades -->
+    <div class="activities-card">
         {% if atividades %}
-            <div class="activities-list">
-                {% for atividade in atividades %}
-                <div class="activity-item {% if loop.index % 2 == 0 %}activity-even{% endif %}" data-activity-id="{{ atividade.id }}">
-                    <div class="activity-header">
-                        <div class="activity-title-section">
-                            <span class="activity-icon">{{ get_modulo_icon(atividade.modulo) }}</span>
-                            <div class="activity-title-content">
-                                <h4 class="activity-title">{{ atividade.titulo }}</h4>
-                                <span class="activity-badge activity-badge-{{ get_tipo_class(atividade.tipo_atividade) }}">
-                                    {{ atividade.tipo_atividade }}
+            <div class="table-wrapper">
+                <table class="activities-table">
+                    <thead>
+                        <tr>
+                            <th class="col-icon"></th>
+                            <th class="col-datetime">Data/Hora</th>
+                            <th class="col-user">Usuário</th>
+                            <th class="col-description">Descrição</th>
+                            <th class="col-module">Módulo</th>
+                            <th class="col-expand"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for atividade in atividades %}
+                        <tr class="activity-row" data-activity-id="{{ atividade.id }}">
+                            <td class="col-icon">
+                                <span class="activity-type-icon {{ get_tipo_class(atividade.tipo_atividade) }}">
+                                    {{ get_tipo_icon(atividade.tipo_atividade) }}
                                 </span>
-                            </div>
-                        </div>
-                        <div class="activity-meta">
-                            <span class="activity-time">
-                                <span class="time-icon">🕐</span>
-                                {{ atividade.data_hora.strftime('%d/%m/%Y %H:%M:%S') }}
-                            </span>
-                        </div>
-                    </div>
-                    
-                    <div class="activity-body">
-                        <p class="activity-description">{{ atividade.descricao }}</p>
-                        
-                        <div class="activity-details">
-                            <div class="detail-item">
-                                <span class="detail-icon">👤</span>
-                                <span class="detail-label">Usuário:</span>
-                                <span class="detail-value">{{ atividade.usuario.nome if atividade.usuario else 'Sistema' }}</span>
-                            </div>
-                            
-                            <div class="detail-item">
-                                <span class="detail-icon">📦</span>
-                                <span class="detail-label">Módulo:</span>
-                                <span class="detail-value">{{ atividade.modulo }}</span>
-                            </div>
-                            
-                            {% if atividade.ip_address %}
-                            <div class="detail-item">
-                                <span class="detail-icon">🌐</span>
-                                <span class="detail-label">IP:</span>
-                                <span class="detail-value">{{ atividade.ip_address }}</span>
-                            </div>
-                            {% endif %}
-                            
-                            {% if atividade.dados_extras %}
-                            <div class="detail-item detail-extras">
-                                <span class="detail-icon">📋</span>
-                                <span class="detail-label">Dados Extras:</span>
-                                <button class="btn-link" onclick="toggleExtras({{ atividade.id }})">Ver detalhes</button>
-                            </div>
-                            <div id="extras-{{ atividade.id }}" class="extras-content" style="display: none;">
-                                <pre>{{ atividade.dados_extras }}</pre>
-                            </div>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-                {% endfor %}
+                            </td>
+                            <td class="col-datetime">
+                                <div class="datetime-info">
+                                    <span class="date">{{ atividade.data_hora.strftime('%d/%m/%Y') }}</span>
+                                    <span class="time">{{ atividade.data_hora.strftime('%H:%M:%S') }}</span>
+                                </div>
+                            </td>
+                            <td class="col-user">
+                                <div class="user-info">
+                                    <span class="user-icon">👤</span>
+                                    <span class="user-name">{{ atividade.usuario.nome if atividade.usuario else 'Sistema' }}</span>
+                                </div>
+                            </td>
+                            <td class="col-description">
+                                <div class="description-content">
+                                    <strong>{{ atividade.titulo }}</strong>
+                                    <p>{{ atividade.descricao|truncate(100) }}</p>
+                                </div>
+                            </td>
+                            <td class="col-module">
+                                <span class="module-badge module-{{ atividade.modulo|lower|replace(' ', '-') }}">
+                                    {{ get_modulo_icon(atividade.modulo) }} {{ atividade.modulo }}
+                                </span>
+                            </td>
+                            <td class="col-expand">
+                                {% if atividade.dados_extras or atividade.ip_address %}
+                                <button class="btn-expand" data-action="toggle-details" data-id="{{ atividade.id }}">
+                                    <span class="icon-expand">▼</span>
+                                </button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <!-- Linha de Detalhes Expansível -->
+                        {% if atividade.dados_extras or atividade.ip_address %}
+                        <tr class="details-row" id="details-{{ atividade.id }}" style="display: none;">
+                            <td colspan="6">
+                                <div class="details-content">
+                                    <div class="details-grid">
+                                        <div class="detail-item">
+                                            <span class="detail-label">🆔 ID:</span>
+                                            <span class="detail-value">#{{ atividade.id }}</span>
+                                        </div>
+                                        <div class="detail-item">
+                                            <span class="detail-label">📦 Módulo:</span>
+                                            <span class="detail-value">{{ atividade.modulo }}</span>
+                                        </div>
+                                        <div class="detail-item">
+                                            <span class="detail-label">🏷️ Tipo:</span>
+                                            <span class="detail-value">{{ atividade.tipo_atividade }}</span>
+                                        </div>
+                                        {% if atividade.ip_address %}
+                                        <div class="detail-item">
+                                            <span class="detail-label">🌐 IP:</span>
+                                            <span class="detail-value">{{ atividade.ip_address }}</span>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    {% if atividade.dados_extras %}
+                                    <div class="extras-section">
+                                        <div class="extras-header">
+                                            <span class="extras-label">📋 Dados Adicionais:</span>
+                                            <button class="btn-copy" data-action="copy-extras" data-content="{{ atividade.dados_extras|tojson|safe }}">
+                                                📋 Copiar
+                                            </button>
+                                        </div>
+                                        <pre class="extras-code">{{ atividade.dados_extras }}</pre>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endif %}
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
             
             <!-- Paginação -->
@@ -109,7 +228,7 @@
                 </div>
                 <div class="pagination">
                     {% if page > 1 %}
-                    <a href="{{ url_for('log_atividades.listar_atividades', page=page-1, per_page=per_page, mes_ano=mes_ano) }}" class="pagination-btn">
+                    <a href="{{ url_for('log_atividades.listar_atividades', page=page-1, per_page=per_page, mes_ano=filtros.get('mes_ano', ''), usuario_id=filtros.get('usuario_id', ''), modulo=filtros.get('modulo', ''), tipo=filtros.get('tipo', ''), busca=filtros.get('busca', '')) }}" class="pagination-btn">
                         ← Anterior
                     </a>
                     {% endif %}
@@ -118,7 +237,7 @@
                         {% if p == page %}
                             <span class="pagination-btn pagination-active">{{ p }}</span>
                         {% elif p == 1 or p == total_paginas or (p >= page - 2 and p <= page + 2) %}
-                            <a href="{{ url_for('log_atividades.listar_atividades', page=p, per_page=per_page, mes_ano=mes_ano) }}" class="pagination-btn">
+                            <a href="{{ url_for('log_atividades.listar_atividades', page=p, per_page=per_page, mes_ano=filtros.get('mes_ano', ''), usuario_id=filtros.get('usuario_id', ''), modulo=filtros.get('modulo', ''), tipo=filtros.get('tipo', ''), busca=filtros.get('busca', '')) }}" class="pagination-btn">
                                 {{ p }}
                             </a>
                         {% elif p == page - 3 or p == page + 3 %}
@@ -127,7 +246,7 @@
                     {% endfor %}
                     
                     {% if page < total_paginas %}
-                    <a href="{{ url_for('log_atividades.listar_atividades', page=page+1, per_page=per_page, mes_ano=mes_ano) }}" class="pagination-btn">
+                    <a href="{{ url_for('log_atividades.listar_atividades', page=page+1, per_page=per_page, mes_ano=filtros.get('mes_ano', ''), usuario_id=filtros.get('usuario_id', ''), modulo=filtros.get('modulo', ''), tipo=filtros.get('tipo', ''), busca=filtros.get('busca', '')) }}" class="pagination-btn">
                         Próxima →
                     </a>
                     {% endif %}
@@ -140,9 +259,7 @@
                 <div class="empty-icon">📝</div>
                 <h3>Nenhuma atividade encontrada</h3>
                 <p>Não há atividades registradas com os filtros aplicados.</p>
-                {% if mes_ano %}
-                <button class="btn btn-primary" onclick="limparFiltros()">🔄 Limpar Filtros</button>
-                {% endif %}
+                <button class="btn-primary" data-action="limpar-filtros">🔄 Limpar Filtros</button>
             </div>
         {% endif %}
     </div>
@@ -152,13 +269,71 @@
 /* Container Principal */
 .log-atividades-page {
     padding: 0;
+    max-width: 100%;
+}
+
+/* Dashboard de Estatísticas */
+.stats-dashboard {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.stat-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 12px;
+    padding: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+}
+
+.stat-icon {
+    font-size: 2.5rem;
+    width: 60px;
+    height: 60px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.stat-content {
+    color: white;
+    flex: 1;
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    opacity: 0.9;
+    margin-bottom: 0.25rem;
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: 700;
 }
 
 /* Card de Filtros */
 .filters-card {
-    margin-bottom: 2rem;
-    border: none;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
 }
 
 .filters-header {
@@ -173,14 +348,47 @@
 .filters-header h3 {
     margin: 0;
     color: #2c3e50;
-    font-size: 1.25rem;
+    font-size: 1.125rem;
     font-weight: 600;
+}
+
+.filters-actions {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.btn-filter {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-clear {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-clear:hover {
+    background: #5a6268;
+}
+
+.btn-export {
+    background: #28a745;
+    color: white;
+}
+
+.btn-export:hover {
+    background: #218838;
 }
 
 .filters-form {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 1rem;
 }
 
 .filter-row {
@@ -189,149 +397,274 @@
     gap: 1rem;
 }
 
-.filter-actions {
-    display: flex;
-    gap: 1rem;
-    justify-content: flex-end;
+.filter-busca {
+    grid-column: span 2;
 }
 
-/* Card de Atividades */
-.activities-card {
-    border: none;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-}
-
-.activities-list {
+.form-group {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
 }
 
-/* Item de Atividade */
-.activity-item {
-    border: 1px solid #e9ecef;
+.form-group label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.form-control {
+    padding: 0.625rem 0.875rem;
+    border: 1.5px solid #dee2e6;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+    background: white;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.filter-submit {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 0.5rem;
+}
+
+.btn-primary {
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.25);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(102, 126, 234, 0.35);
+}
+
+/* Tabela de Atividades */
+.activities-card {
+    background: white;
     border-radius: 12px;
     padding: 1.5rem;
-    transition: all 0.3s ease;
-    background: white;
-    position: relative;
-    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
 }
 
-.activity-item::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 4px;
-    height: 100%;
-    background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+.table-wrapper {
+    overflow-x: auto;
 }
 
-.activity-item:hover {
-    transform: translateX(4px);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-    border-color: #667eea;
+.activities-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
 }
 
-.activity-even {
+.activities-table thead {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+.activities-table thead th {
+    padding: 0.875rem;
+    text-align: left;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #495057;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.activities-table thead th:first-child {
+    border-radius: 8px 0 0 0;
+}
+
+.activities-table thead th:last-child {
+    border-radius: 0 8px 0 0;
+}
+
+.col-icon { width: 50px; text-align: center; }
+.col-datetime { width: 120px; }
+.col-user { width: 150px; }
+.col-description { min-width: 300px; }
+.col-module { width: 140px; }
+.col-expand { width: 50px; text-align: center; }
+
+/* Linhas da Tabela */
+.activity-row {
+    transition: all 0.2s ease;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.activity-row:hover {
     background: #f8f9fa;
 }
 
-.activity-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 1rem;
-    flex-wrap: wrap;
-    gap: 1rem;
+.activity-row td {
+    padding: 0.875rem;
+    vertical-align: middle;
 }
 
-.activity-title-section {
-    display: flex;
-    align-items: flex-start;
-    gap: 1rem;
-    flex: 1;
-}
-
-.activity-icon {
-    font-size: 2rem;
-    width: 50px;
-    height: 50px;
-    display: flex;
+/* Ícones de Tipo */
+.activity-type-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-    border-radius: 12px;
-    flex-shrink: 0;
+    font-size: 1rem;
+    font-weight: bold;
 }
 
-.activity-title-content {
-    flex: 1;
+.activity-type-icon.create {
+    background: #d4edda;
+    color: #155724;
 }
 
-.activity-title {
-    margin: 0 0 0.5rem 0;
-    font-size: 1.125rem;
+.activity-type-icon.update {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.activity-type-icon.delete {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.activity-type-icon.login {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+.activity-type-icon.default {
+    background: #e2e3e5;
+    color: #383d41;
+}
+
+/* Data/Hora */
+.datetime-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+}
+
+.datetime-info .date {
+    font-size: 0.875rem;
     font-weight: 600;
     color: #2c3e50;
+}
+
+.datetime-info .time {
+    font-size: 0.75rem;
+    color: #6c757d;
+}
+
+/* Usuário */
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.user-icon {
+    font-size: 1.25rem;
+}
+
+.user-name {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #2c3e50;
+}
+
+/* Descrição */
+.description-content strong {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.25rem;
+}
+
+.description-content p {
+    font-size: 0.8125rem;
+    color: #6c757d;
+    margin: 0;
     line-height: 1.4;
 }
 
-.activity-badge {
+/* Badge de Módulo */
+.module-badge {
     display: inline-block;
-    padding: 0.25rem 0.75rem;
+    padding: 0.375rem 0.75rem;
     border-radius: 20px;
     font-size: 0.75rem;
     font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.activity-badge-create { background: #d4edda; color: #155724; }
-.activity-badge-update { background: #fff3cd; color: #856404; }
-.activity-badge-delete { background: #f8d7da; color: #721c24; }
-.activity-badge-login { background: #d1ecf1; color: #0c5460; }
-.activity-badge-default { background: #e2e3e5; color: #383d41; }
-
-.activity-meta {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.activity-time {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.875rem;
-    color: #6c757d;
-    font-weight: 500;
     white-space: nowrap;
 }
 
-.time-icon {
-    font-size: 1rem;
-}
+.module-clientes { background: #e7f3ff; color: #0056b3; }
+.module-produtos { background: #fff4e6; color: #d35400; }
+.module-pedidos { background: #f0e6ff; color: #6a1b9a; }
+.module-financeiro { background: #e8f5e9; color: #2e7d32; }
+.module-coletas, .module-logística { background: #ffeef0; color: #c62828; }
+.module-usuários { background: #fff9c4; color: #f57f17; }
+.module-estoque { background: #e1f5fe; color: #0277bd; }
+.module-sistema { background: #f3e5f5; color: #7b1fa2; }
 
-.activity-body {
-    margin-top: 1rem;
-}
-
-.activity-description {
-    color: #495057;
-    line-height: 1.6;
-    margin-bottom: 1rem;
-}
-
-.activity-details {
+/* Botão Expandir */
+.btn-expand {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: #f8f9fa;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
     display: flex;
-    flex-wrap: wrap;
-    gap: 1.5rem;
-    padding: 1rem;
-    background: rgba(102, 126, 234, 0.05);
-    border-radius: 8px;
-    border-left: 3px solid #667eea;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-expand:hover {
+    background: #e9ecef;
+    transform: scale(1.1);
+}
+
+.btn-expand .icon-expand {
+    font-size: 0.875rem;
+    transition: transform 0.3s ease;
+}
+
+.btn-expand.expanded .icon-expand {
+    transform: rotate(180deg);
+}
+
+/* Linha de Detalhes */
+.details-row {
+    background: #f8f9fa;
+}
+
+.details-content {
+    padding: 1.5rem;
+}
+
+.details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
 }
 
 .detail-item {
@@ -341,60 +674,65 @@
     font-size: 0.875rem;
 }
 
-.detail-icon {
-    font-size: 1rem;
-}
-
 .detail-label {
-    color: #6c757d;
-    font-weight: 500;
+    font-weight: 600;
+    color: #495057;
 }
 
 .detail-value {
     color: #2c3e50;
+}
+
+/* Extras Section */
+.extras-section {
+    margin-top: 1rem;
+    border-top: 1px solid #dee2e6;
+    padding-top: 1rem;
+}
+
+.extras-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.extras-label {
     font-weight: 600;
-}
-
-.detail-extras {
-    width: 100%;
-}
-
-.btn-link {
-    background: none;
-    border: none;
-    color: #667eea;
-    text-decoration: underline;
-    cursor: pointer;
-    padding: 0;
     font-size: 0.875rem;
-    font-weight: 500;
-}
-
-.btn-link:hover {
-    color: #764ba2;
-}
-
-.extras-content {
-    width: 100%;
-    margin-top: 0.5rem;
-    padding: 1rem;
-    background: white;
-    border-radius: 6px;
-    border: 1px solid #dee2e6;
-}
-
-.extras-content pre {
-    margin: 0;
-    white-space: pre-wrap;
-    word-wrap: break-word;
-    font-family: 'Courier New', monospace;
-    font-size: 0.8rem;
     color: #495057;
+}
+
+.btn-copy {
+    padding: 0.375rem 0.75rem;
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-copy:hover {
+    background: #5568d3;
+}
+
+.extras-code {
+    background: #1e1e1e;
+    color: #d4d4d4;
+    padding: 1rem;
+    border-radius: 6px;
+    font-family: 'Monaco', 'Menlo', monospace;
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    overflow-x: auto;
+    margin: 0;
 }
 
 /* Paginação */
 .pagination-container {
-    margin-top: 2rem;
+    margin-top: 1.5rem;
     padding-top: 1.5rem;
     border-top: 2px solid #f0f0f0;
     display: flex;
@@ -418,14 +756,14 @@
 }
 
 .pagination-btn {
-    padding: 0.5rem 1rem;
+    padding: 0.5rem 0.875rem;
     border: 1px solid #dee2e6;
     border-radius: 6px;
     color: #495057;
     text-decoration: none;
     font-size: 0.875rem;
     font-weight: 500;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
     background: white;
 }
 
@@ -433,7 +771,7 @@
     background: #667eea;
     color: white;
     border-color: #667eea;
-    transform: translateY(-2px);
+    transform: translateY(-1px);
 }
 
 .pagination-active {
@@ -448,7 +786,7 @@
     padding: 0.5rem;
 }
 
-/* Estado Vazio */
+/* Empty State */
 .empty-state {
     text-align: center;
     padding: 4rem 2rem;
@@ -475,98 +813,135 @@
 
 /* Responsividade */
 @media (max-width: 768px) {
+    .stats-dashboard {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
     .filter-row {
         grid-template-columns: 1fr;
     }
     
-    .filters-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 1rem;
+    .filter-busca {
+        grid-column: span 1;
     }
     
-    .filter-actions {
-        width: 100%;
-        flex-direction: column;
+    .activities-table {
+        font-size: 0.8125rem;
     }
     
-    .filter-actions .btn {
-        width: 100%;
-    }
-    
-    .activity-header {
-        flex-direction: column;
-    }
-    
-    .activity-meta {
-        width: 100%;
-    }
-    
-    .activity-details {
-        flex-direction: column;
-        gap: 0.75rem;
+    .col-datetime,
+    .col-user {
+        display: none;
     }
     
     .pagination-container {
         flex-direction: column;
         text-align: center;
     }
-    
-    .pagination {
-        justify-content: center;
-    }
 }
 </style>
 
 <script nonce="{{ nonce }}">
-function toggleExtras(id) {
-    const extras = document.getElementById('extras-' + id);
-    if (extras.style.display === 'none') {
-        extras.style.display = 'block';
-    } else {
-        extras.style.display = 'none';
-    }
-}
-
-function limparFiltros() {
-    window.location.href = '{{ url_for("log_atividades.listar_atividades") }}';
-}
-
-function exportarLogs() {
-    const params = new URLSearchParams(window.location.search);
-    const exportUrl = '{{ url_for("log_atividades.exportar_logs") }}?' + params.toString();
-    
-    fetch(exportUrl)
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Criar CSV
-                let csv = 'ID,Usuário,Tipo,Título,Descrição,Módulo,Data\n';
-                data.dados.forEach(item => {
-                    csv += `${item.id},"${item.usuario}","${item.tipo_atividade}","${item.titulo}","${item.descricao}","${item.modulo}","${item.data_criacao}"\n`;
-                });
-                
-                // Download
-                const blob = new Blob([csv], { type: 'text/csv' });
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `log_atividades_${new Date().toISOString().split('T')[0]}.csv`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                window.URL.revokeObjectURL(url);
-                
-                alert('✅ Logs exportados com sucesso!');
+document.addEventListener('DOMContentLoaded', function() {
+    // Expandir/Colapsar Detalhes
+    document.querySelectorAll('[data-action="toggle-details"]').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            const id = this.dataset.id;
+            const detailsRow = document.getElementById('details-' + id);
+            const icon = this.querySelector('.icon-expand');
+            
+            if (detailsRow.style.display === 'none') {
+                detailsRow.style.display = 'table-row';
+                this.classList.add('expanded');
             } else {
-                alert('❌ Erro ao exportar logs: ' + data.error);
+                detailsRow.style.display = 'none';
+                this.classList.remove('expanded');
             }
-        })
-        .catch(error => {
-            console.error('Erro:', error);
-            alert('❌ Erro ao exportar logs');
         });
-}
+    });
+    
+    // Limpar Filtros
+    document.querySelectorAll('[data-action="limpar-filtros"]').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            window.location.href = '{{ url_for("log_atividades.listar_atividades") }}';
+        });
+    });
+    
+    // Copiar Extras
+    document.querySelectorAll('[data-action="copy-extras"]').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            const content = this.dataset.content;
+            navigator.clipboard.writeText(content).then(function() {
+                alert('✅ Conteúdo copiado!');
+            }).catch(function(err) {
+                console.error('Erro ao copiar:', err);
+                alert('❌ Erro ao copiar conteúdo');
+            });
+        });
+    });
+    
+    // Exportar Logs
+    document.querySelectorAll('[data-action="exportar-logs"]').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            const params = new URLSearchParams(window.location.search);
+            const exportUrl = '{{ url_for("log_atividades.exportar_logs") }}?' + params.toString();
+            
+            fetch(exportUrl)
+                .then(function(response) { return response.json(); })
+                .then(function(data) {
+                    if (data.success) {
+                        // Criar CSV
+                        let csv = 'ID,Usuário,Tipo,Título,Descrição,Módulo,Data\n';
+                        data.dados.forEach(function(item) {
+                            csv += item.id + ',"' + item.usuario + '","' + item.tipo_atividade + '","' + 
+                                   item.titulo + '","' + item.descricao + '","' + item.modulo + '","' + 
+                                   item.data_criacao + '"\n';
+                        });
+                        
+                        // Download
+                        const blob = new Blob([csv], { type: 'text/csv' });
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = 'log_atividades_' + new Date().toISOString().split('T')[0] + '.csv';
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        window.URL.revokeObjectURL(url);
+                        
+                        alert('✅ Logs exportados com sucesso!');
+                    } else {
+                        alert('❌ Erro ao exportar logs: ' + data.error);
+                    }
+                })
+                .catch(function(error) {
+                    console.error('Erro:', error);
+                    alert('❌ Erro ao exportar logs');
+                });
+        });
+    });
+    
+    // Atalhos de teclado
+    document.addEventListener('keydown', function(e) {
+        // F: Focar no campo de busca
+        if (e.key === 'f' && !e.ctrlKey && !e.metaKey) {
+            const searchInput = document.getElementById('busca');
+            if (searchInput && document.activeElement !== searchInput) {
+                e.preventDefault();
+                searchInput.focus();
+            }
+        }
+        
+        // E: Exportar
+        if (e.key === 'e' && !e.ctrlKey && !e.metaKey) {
+            const btnExport = document.querySelector('[data-action="exportar-logs"]');
+            if (btnExport && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'SELECT') {
+                e.preventDefault();
+                btnExport.click();
+            }
+        }
+    });
+});
 </script>
 
 {% endblock %}
@@ -590,5 +965,14 @@ function exportarLogs() {
 {% elif 'Exclusão' in tipo or 'Excluiu' in tipo or 'Removeu' in tipo %}delete
 {% elif 'Login' in tipo or 'Logout' in tipo or 'Acesso' in tipo %}login
 {% else %}default
+{% endif %}
+{% endmacro %}
+
+{% macro get_tipo_icon(tipo) %}
+{% if 'Criação' in tipo or 'Criou' in tipo or 'Cadastro' in tipo %}+
+{% elif 'Edição' in tipo or 'Editou' in tipo or 'Atualização' in tipo or 'Alteração' in tipo %}✏
+{% elif 'Exclusão' in tipo or 'Excluiu' in tipo or 'Removeu' in tipo %}🗑
+{% elif 'Login' in tipo or 'Logout' in tipo or 'Acesso' in tipo %}🔐
+{% else %}•
 {% endif %}
 {% endmacro %}

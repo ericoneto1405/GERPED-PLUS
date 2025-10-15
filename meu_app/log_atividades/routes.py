@@ -9,13 +9,17 @@ from ..decorators import login_obrigatorio, admin_necessario
 @login_obrigatorio
 @admin_necessario
 def listar_atividades():
-    """Lista atividades do sistema com paginação e filtros"""
+    """Lista atividades do sistema com paginação e filtros avançados"""
     try:
         # Parâmetros de paginação
         page = request.args.get('page', 1, type=int)
-        per_page = request.args.get('per_page', 20, type=int)
+        per_page = request.args.get('per_page', 50, type=int)  # Padrão aumentado para 50
         
-        # Filtro mes_ano
+        # Novos filtros
+        filtro_usuario_id = request.args.get('usuario_id', type=int)
+        filtro_modulo = request.args.get('modulo', '')
+        filtro_tipo = request.args.get('tipo', '')
+        filtro_busca = request.args.get('busca', '')
         mes_ano = request.args.get('mes_ano', '')
         
         # Converter mes_ano para data_inicio e data_fim
@@ -35,32 +39,56 @@ def listar_atividades():
         # Validar parâmetros
         if page < 1:
             page = 1
-        if per_page not in [20, 50, 100]:
-            per_page = 20
+        if per_page not in [20, 50, 100, 200]:
+            per_page = 50
         
         # Buscar atividades com paginação
         service = LogAtividadesService()
         resultado = service.listar_atividades(
-            filtro_modulo=None,
+            filtro_modulo=filtro_modulo if filtro_modulo else None,
             data_inicio=data_inicio,
             data_fim=data_fim,
             page=page,
             per_page=per_page
         )
         
-        # Listar módulos disponíveis para filtro
-        service = LogAtividadesService()
+        # Aplicar filtros adicionais (backend)
+        atividades = resultado['atividades']
+        if filtro_usuario_id:
+            atividades = [a for a in atividades if a.usuario_id == filtro_usuario_id]
+        if filtro_tipo:
+            atividades = [a for a in atividades if filtro_tipo.lower() in a.tipo_atividade.lower()]
+        if filtro_busca:
+            busca_lower = filtro_busca.lower()
+            atividades = [a for a in atividades if 
+                         busca_lower in a.descricao.lower() or 
+                         busca_lower in a.titulo.lower()]
+        
+        # Obter estatísticas
+        stats = service.obter_estatisticas()
+        
+        # Listar recursos para filtros
         modulos = service.listar_modulos()
+        from ..models import Usuario
+        usuarios = Usuario.query.order_by(Usuario.nome).all()
         
         current_app.logger.info(f"Log de atividades acessado por {session.get('usuario_nome', 'N/A')}")
         
         return render_template('log_atividades.html', 
-                             atividades=resultado['atividades'],
+                             atividades=atividades,
                              modulos=modulos,
-                             mes_ano=mes_ano,
+                             usuarios=usuarios,
+                             stats=stats,
+                             filtros={
+                                 'mes_ano': mes_ano,
+                                 'usuario_id': filtro_usuario_id,
+                                 'modulo': filtro_modulo,
+                                 'tipo': filtro_tipo,
+                                 'busca': filtro_busca
+                             },
                              page=resultado['page'],
                              per_page=resultado['per_page'],
-                             total_registros=resultado['total_registros'],
+                             total_registros=len(atividades),
                              total_paginas=resultado['total_paginas'])
                              
     except ValueError as e:
@@ -68,9 +96,11 @@ def listar_atividades():
         return render_template('log_atividades.html', 
                              atividades=[],
                              modulos=[],
-                             mes_ano='',
+                             usuarios=[],
+                             stats={},
+                             filtros={},
                              page=1,
-                             per_page=20,
+                             per_page=50,
                              total_registros=0,
                              total_paginas=0)
     except Exception as e:
@@ -79,9 +109,11 @@ def listar_atividades():
         return render_template('log_atividades.html', 
                              atividades=[],
                              modulos=[],
-                             mes_ano='',
+                             usuarios=[],
+                             stats={},
+                             filtros={},
                              page=1,
-                             per_page=20,
+                             per_page=50,
                              total_registros=0,
                              total_paginas=0)
 

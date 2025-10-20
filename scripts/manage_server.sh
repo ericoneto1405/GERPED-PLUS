@@ -18,7 +18,7 @@
 PORT=5004
 PID_FILE=".flask.pid"
 LOG_FILE="instance/logs/server.log"
-PYTHON_CMD="python3"
+PYTHON_CMD="venv/bin/python3"
 RUN_SCRIPT="run.py"
 
 # Cores

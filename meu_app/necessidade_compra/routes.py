@@ -3,7 +3,7 @@ Routes para o módulo de Necessidade de Compra
 """
 
 from flask import render_template, request, jsonify, send_file
-from flask_login import login_required
+from ..decorators import login_obrigatorio, permissao_necessaria
 from . import necessidade_compra_bp
 from .services import NecessidadeCompraService
 from io import BytesIO
@@ -11,14 +11,16 @@ from datetime import datetime
 
 
 @necessidade_compra_bp.route('/')
-@login_required
+@login_obrigatorio
+@permissao_necessaria('acesso_produtos')
 def dashboard():
     """Página principal de análise de necessidade de compra"""
     return render_template('necessidade_compra/dashboard.html')
 
 
 @necessidade_compra_bp.route('/api/analisar', methods=['GET'])
-@login_required
+@login_obrigatorio
+@permissao_necessaria('acesso_produtos')
 def analisar_necessidades():
     """
     API: Analisa necessidade de compra para todos os produtos
@@ -80,7 +82,8 @@ def analisar_necessidades():
 
 
 @necessidade_compra_bp.route('/api/exportar', methods=['POST'])
-@login_required
+@login_obrigatorio
+@permissao_necessaria('acesso_produtos')
 def exportar_lista():
     """
     API: Exporta lista de compras em formato texto
@@ -135,7 +138,8 @@ def exportar_lista():
 
 
 @necessidade_compra_bp.route('/api/resumo', methods=['GET'])
-@login_required
+@login_obrigatorio
+@permissao_necessaria('acesso_produtos')
 def obter_resumo():
     """
     API: Obtém apenas o resumo da análise (mais rápido)

@@ -14,11 +14,16 @@
 # Autor: Sistema SAP
 # ==================================================================
 
+set -euo pipefail
+
 # Configurações
 PORT=5004
 PID_FILE=".flask.pid"
+PID_FILE="/tmp/flask_server.pid" # Usar /tmp para evitar poluir o projeto
 LOG_FILE="instance/logs/server.log"
 PYTHON_CMD="venv/bin/python3"
+# Usar o python3 do ambiente virtual, se disponível, ou do PATH
+PYTHON_CMD="${VIRTUAL_ENV:-.}/bin/python3"
 RUN_SCRIPT="run.py"
 
 # Cores
@@ -27,6 +32,12 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
+
+# Garante que o arquivo PID seja removido ao sair
+trap 'rm -f "$PID_FILE"' EXIT
+
+# Verifica dependências
+command -v lsof >/dev/null 2>&1 || { echo -e "${RED}❌ Comando 'lsof' não encontrado. Por favor, instale-o.${NC}"; exit 1; }
 
 # Funções auxiliares
 print_info() {
@@ -48,6 +59,7 @@ print_error() {
 # Verifica se a porta está em uso
 check_port() {
     lsof -ti:$PORT 2>/dev/null
+    lsof -ti TCP:"$PORT" 2>/dev/null || true
 }
 
 # Verifica se o servidor está rodando
@@ -93,6 +105,7 @@ start_server() {
     print_info "Iniciando servidor Flask na porta $PORT..."
     nohup $PYTHON_CMD $RUN_SCRIPT > "$LOG_FILE" 2>&1 &
     SERVER_PID=$!
+    nohup "$PYTHON_CMD" "$RUN_SCRIPT" > "$LOG_FILE" 2>&1 & SERVER_PID=$!
     
     # Salva o PID
     echo "$SERVER_PID" > "$PID_FILE"
@@ -108,6 +121,7 @@ start_server() {
         print_info "Logs: $LOG_FILE"
         print_info "URL: http://127.0.0.1:$PORT"
         echo ""
+        echo
         print_info "Use 'make server-logs' para ver os logs em tempo real"
         print_info "Use 'make server-stop' para parar o servidor"
     else
@@ -127,12 +141,14 @@ stop_server() {
         PID=$(cat "$PID_FILE")
         if ps -p "$PID" > /dev/null 2>&1; then
             kill -15 "$PID" 2>/dev/null || true
+            kill -15 "$PID" || true # Envia sinal de término gracioso
             sleep 2
             
             # Se ainda estiver rodando, força
             if ps -p "$PID" > /dev/null 2>&1; then
                 print_warning "Processo não respondeu ao SIGTERM, forçando..."
                 kill -9 "$PID" 2>/dev/null || true
+                kill -9 "$PID" || true
             fi
         fi
         rm -f "$PID_FILE"
@@ -143,6 +159,7 @@ stop_server() {
     if [ -n "$PORT_PIDS" ]; then
         print_info "Encerrando processos residuais na porta $PORT..."
         echo "$PORT_PIDS" | xargs kill -9 2>/dev/null || true
+        kill -9 $PORT_PIDS || true
         sleep 1
     fi
     
@@ -166,18 +183,22 @@ restart_server() {
 # Mostra status do servidor
 show_status() {
     echo ""
+    echo
     print_info "====== Status do Servidor Flask ======"
     echo ""
+    echo
     
     if is_running; then
         PID=$(cat "$PID_FILE")
         print_success "Servidor está RODANDO"
         echo ""
+        echo
         echo "  PID: $PID"
         echo "  Porta: $PORT"
         echo "  URL: http://127.0.0.1:$PORT"
         echo "  Log: $LOG_FILE"
         echo ""
+        echo
         
         # Mostra informações do processo
         print_info "Informações do Processo:"
@@ -187,6 +208,7 @@ show_status() {
         # Verifica se está respondendo
         if command -v curl > /dev/null 2>&1; then
             HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:$PORT/ 2>/dev/null || echo "000")
+            HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "http://127.0.0.1:$PORT/" || echo "000")
             if [ "$HTTP_STATUS" != "000" ]; then
                 print_success "Servidor está respondendo (HTTP $HTTP_STATUS)"
             else
@@ -196,6 +218,7 @@ show_status() {
     else
         print_warning "Servidor está PARADO"
         echo ""
+        echo
         
         # Verifica se há processos residuais na porta
         PORT_PIDS=$(check_port)
@@ -205,11 +228,14 @@ show_status() {
                 ps -p "$pid" -o pid,cmd | tail -n +2 | awk '{print "  "$0}'
             done
             echo ""
+            echo
             print_info "Use './manage_server.sh stop' para limpar"
         fi
     fi
     
     echo ""
+
+    echo
 }
 
 # Mostra logs em tempo real
@@ -221,6 +247,7 @@ show_logs() {
     
     print_info "Mostrando logs (Ctrl+C para sair)..."
     echo ""
+    echo
     tail -f "$LOG_FILE"
 }
 
@@ -244,6 +271,7 @@ case "${1:-}" in
     *)
         echo "Uso: $0 {start|stop|restart|status|logs}"
         echo ""
+        echo
         echo "Comandos:"
         echo "  start    - Inicia o servidor Flask"
         echo "  stop     - Para o servidor Flask"

@@ -1,0 +1,686 @@
+{% extends "base.html" %}
+
+{% block title %}Análise de Necessidade de Compra - Sistema SAP{% endblock %}
+
+{% block extra_css %}
+<style>
+    .necessidade-compra-container {
+        padding: 2rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+    }
+
+    .header-section {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    .header-section h1 {
+        color: #667eea;
+        margin: 0 0 1rem 0;
+        font-size: 2rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .controls-section {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    .control-group {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        align-items: end;
+    }
+
+    .form-field {
+        flex: 1;
+        min-width: 200px;
+    }
+
+    .form-field label {
+        display: block;
+        margin-bottom: 0.5rem;
+        color: #555;
+        font-weight: 500;
+    }
+
+    .form-field input,
+    .form-field select {
+        width: 100%;
+        padding: 0.75rem;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: all 0.3s;
+    }
+
+    .form-field input:focus,
+    .form-field select:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .checkbox-field {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 0;
+    }
+
+    .checkbox-field input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+    }
+
+    .btn-analisar {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-analisar:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-analisar:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .resumo-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .resumo-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        transition: all 0.3s;
+    }
+
+    .resumo-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    }
+
+    .resumo-card .icon {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .resumo-card .label {
+        color: #888;
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .resumo-card .value {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #333;
+    }
+
+    .resumo-card.critico .icon { color: #ef4444; }
+    .resumo-card.alerta .icon { color: #f59e0b; }
+    .resumo-card.total .icon { color: #667eea; }
+    .resumo-card.valor .icon { color: #10b981; }
+
+    .resultados-section {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    .resultados-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .resultados-header h2 {
+        margin: 0;
+        color: #333;
+    }
+
+    .btn-exportar {
+        background: #10b981;
+        color: white;
+        border: none;
+        padding: 0.6rem 1.5rem;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-exportar:hover {
+        background: #059669;
+        transform: translateY(-2px);
+    }
+
+    .filtros-rapidos {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .filtro-btn {
+        padding: 0.5rem 1rem;
+        border: 2px solid #e0e0e0;
+        background: white;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s;
+        font-size: 0.9rem;
+    }
+
+    .filtro-btn:hover {
+        border-color: #667eea;
+        background: #f3f4f6;
+    }
+
+    .filtro-btn.active {
+        border-color: #667eea;
+        background: #667eea;
+        color: white;
+    }
+
+    .tabela-analise {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1rem;
+    }
+
+    .tabela-analise thead {
+        background: #f8f9fa;
+    }
+
+    .tabela-analise th {
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+        color: #555;
+        border-bottom: 2px solid #e0e0e0;
+    }
+
+    .tabela-analise td {
+        padding: 1rem;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .tabela-analise tbody tr {
+        transition: all 0.2s;
+    }
+
+    .tabela-analise tbody tr:hover {
+        background: #f8f9fa;
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        padding: 0.3rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    .status-badge.critico {
+        background: #fee2e2;
+        color: #dc2626;
+    }
+
+    .status-badge.alerta {
+        background: #fef3c7;
+        color: #d97706;
+    }
+
+    .status-badge.normal {
+        background: #d1fae5;
+        color: #059669;
+    }
+
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.7);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+    }
+
+    .loading-overlay.active {
+        display: flex;
+    }
+
+    .loading-spinner {
+        background: white;
+        padding: 2rem;
+        border-radius: 15px;
+        text-align: center;
+    }
+
+    .spinner {
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #667eea;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 1rem;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: #999;
+    }
+
+    .empty-state .icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+    }
+
+    @media (max-width: 768px) {
+        .necessidade-compra-container {
+            padding: 1rem;
+        }
+
+        .control-group {
+            flex-direction: column;
+        }
+
+        .form-field {
+            width: 100%;
+        }
+
+        .resumo-cards {
+            grid-template-columns: 1fr;
+        }
+
+        .tabela-analise {
+            font-size: 0.9rem;
+        }
+
+        .tabela-analise th,
+        .tabela-analise td {
+            padding: 0.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="necessidade-compra-container">
+    <!-- Header -->
+    <div class="header-section">
+        <h1>
+            <span>📊</span>
+            Análise de Necessidade de Compra
+        </h1>
+        <p style="color: #666; margin: 0;">
+            Analise o estoque e pedidos pendentes para identificar necessidades de compra
+        </p>
+    </div>
+
+    <!-- Controles -->
+    <div class="controls-section">
+        <div class="control-group">
+            <div class="form-field">
+                <label for="margemSeguranca">
+                    Margem de Segurança (%)
+                </label>
+                <input 
+                    type="number" 
+                    id="margemSeguranca" 
+                    value="20" 
+                    min="0" 
+                    max="100"
+                    placeholder="Ex: 20"
+                />
+            </div>
+
+            <div class="form-field">
+                <label class="checkbox-field">
+                    <input 
+                        type="checkbox" 
+                        id="considerarHistorico" 
+                        checked
+                    />
+                    <span>Considerar histórico de vendas</span>
+                </label>
+            </div>
+
+            <button class="btn-analisar" id="btnAnalisar">
+                <span>🔍</span>
+                Analisar Necessidades
+            </button>
+        </div>
+    </div>
+
+    <!-- Cards de Resumo -->
+    <div class="resumo-cards" id="resumoCards" style="display: none;">
+        <div class="resumo-card total">
+            <div class="icon">📦</div>
+            <div class="label">Total de Produtos</div>
+            <div class="value" id="totalProdutos">0</div>
+        </div>
+
+        <div class="resumo-card critico">
+            <div class="icon">🔴</div>
+            <div class="label">Produtos Críticos</div>
+            <div class="value" id="produtosCriticos">0</div>
+        </div>
+
+        <div class="resumo-card alerta">
+            <div class="icon">🟡</div>
+            <div class="label">Produtos em Alerta</div>
+            <div class="value" id="produtosAlerta">0</div>
+        </div>
+
+        <div class="resumo-card valor">
+            <div class="icon">💰</div>
+            <div class="label">Valor Total Necessário</div>
+            <div class="value" id="valorTotal">R$ 0,00</div>
+        </div>
+    </div>
+
+    <!-- Resultados -->
+    <div class="resultados-section" id="resultadosSection" style="display: none;">
+        <div class="resultados-header">
+            <h2>📋 Resultados da Análise</h2>
+            <button class="btn-exportar" id="btnExportar">
+                <span>📥</span>
+                Exportar Lista
+            </button>
+        </div>
+
+        <!-- Filtros Rápidos -->
+        <div class="filtros-rapidos">
+            <button class="filtro-btn active" data-filtro="todos">
+                Todos
+            </button>
+            <button class="filtro-btn" data-filtro="critico">
+                🔴 Críticos
+            </button>
+            <button class="filtro-btn" data-filtro="alerta">
+                🟡 Alertas
+            </button>
+            <button class="filtro-btn" data-filtro="normal">
+                🟢 Normais
+            </button>
+        </div>
+
+        <!-- Tabela de Resultados -->
+        <div style="overflow-x: auto;">
+            <table class="tabela-analise">
+                <thead>
+                    <tr>
+                        <th>Status</th>
+                        <th>Produto</th>
+                        <th>Estoque Atual</th>
+                        <th>Pedidos Pendentes</th>
+                        <th>Quantidade Necessária</th>
+                        <th>Sugestão de Compra</th>
+                        <th>Preço Médio</th>
+                        <th>Valor Total</th>
+                    </tr>
+                </thead>
+                <tbody id="tabelaResultados">
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Estado vazio -->
+        <div class="empty-state" id="emptyState" style="display: none;">
+            <div class="icon">📦</div>
+            <p>Nenhum produto encontrado com os filtros selecionados</p>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+            <p><strong>Analisando necessidades...</strong></p>
+            <p style="color: #666; font-size: 0.9rem;">Por favor, aguarde</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let analisesData = [];
+let filtroAtual = 'todos';
+
+// Inicialização
+document.addEventListener('DOMContentLoaded', function() {
+    // Event Listeners
+    document.getElementById('btnAnalisar').addEventListener('click', analisarNecessidades);
+    document.getElementById('btnExportar').addEventListener('click', exportarLista);
+    
+    // Filtros rápidos
+    document.querySelectorAll('.filtro-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.filtro-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            filtroAtual = this.dataset.filtro;
+            aplicarFiltro();
+        });
+    });
+});
+
+// Função principal de análise
+async function analisarNecessidades() {
+    const btn = document.getElementById('btnAnalisar');
+    const loading = document.getElementById('loadingOverlay');
+    
+    try {
+        // Obter parâmetros
+        const margem = document.getElementById('margemSeguranca').value;
+        const historico = document.getElementById('considerarHistorico').checked;
+        
+        // Validar margem
+        if (margem < 0 || margem > 100) {
+            alert('Margem de segurança deve estar entre 0 e 100%');
+            return;
+        }
+        
+        // Mostrar loading
+        btn.disabled = true;
+        loading.classList.add('active');
+        
+        // Fazer requisição
+        const params = new URLSearchParams({
+            margem_seguranca: margem,
+            considerar_historico: historico
+        });
+        
+        const response = await fetch(`/necessidade-compra/api/analisar?${params}`);
+        const data = await response.json();
+        
+        if (!data.success) {
+            throw new Error(data.message || 'Erro ao analisar');
+        }
+        
+        // Armazenar dados
+        analisesData = data.analises;
+        
+        // Atualizar interface
+        atualizarResumo(data.resumo);
+        atualizarTabela(data.analises);
+        
+        // Mostrar seções
+        document.getElementById('resumoCards').style.display = 'grid';
+        document.getElementById('resultadosSection').style.display = 'block';
+        
+    } catch (error) {
+        console.error('Erro:', error);
+        alert('Erro ao analisar necessidades: ' + error.message);
+    } finally {
+        btn.disabled = false;
+        loading.classList.remove('active');
+    }
+}
+
+// Atualizar cards de resumo
+function atualizarResumo(resumo) {
+    document.getElementById('totalProdutos').textContent = resumo.total_produtos;
+    document.getElementById('produtosCriticos').textContent = resumo.produtos_criticos;
+    document.getElementById('produtosAlerta').textContent = resumo.produtos_alerta;
+    document.getElementById('valorTotal').textContent = formatarMoeda(resumo.valor_total_necessario);
+}
+
+// Atualizar tabela de resultados
+function atualizarTabela(analises) {
+    const tbody = document.getElementById('tabelaResultados');
+    const emptyState = document.getElementById('emptyState');
+    
+    // Filtrar análises
+    let analisesFiltradas = analises;
+    if (filtroAtual !== 'todos') {
+        analisesFiltradas = analises.filter(a => a.status === filtroAtual);
+    }
+    
+    // Verificar se há resultados
+    if (analisesFiltradas.length === 0) {
+        tbody.innerHTML = '';
+        emptyState.style.display = 'block';
+        return;
+    }
+    
+    emptyState.style.display = 'none';
+    
+    // Gerar linhas
+    tbody.innerHTML = analisesFiltradas.map(analise => `
+        <tr data-status="${analise.status}">
+            <td>
+                <span class="status-badge ${analise.status}">
+                    ${getStatusIcon(analise.status)} ${getStatusLabel(analise.status)}
+                </span>
+            </td>
+            <td><strong>${analise.produto_nome}</strong></td>
+            <td>${analise.estoque_atual}</td>
+            <td>${analise.quantidade_pedidos_pendentes}</td>
+            <td>${analise.quantidade_necessaria}</td>
+            <td><strong>${analise.sugestao_compra}</strong></td>
+            <td>${formatarMoeda(analise.preco_medio_compra)}</td>
+            <td><strong>${formatarMoeda(analise.valor_total_sugerido)}</strong></td>
+        </tr>
+    `).join('');
+}
+
+// Aplicar filtro
+function aplicarFiltro() {
+    atualizarTabela(analisesData);
+}
+
+// Exportar lista de compras
+async function exportarLista() {
+    try {
+        const response = await fetch('/necessidade-compra/api/exportar', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                analises: analisesData,
+                apenas_necessarios: true
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error('Erro ao exportar');
+        }
+        
+        // Download do arquivo
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `necessidade_compra_${new Date().getTime()}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+    } catch (error) {
+        console.error('Erro:', error);
+        alert('Erro ao exportar lista: ' + error.message);
+    }
+}
+
+// Funções auxiliares
+function getStatusIcon(status) {
+    const icons = {
+        'critico': '🔴',
+        'alerta': '🟡',
+        'normal': '🟢'
+    };
+    return icons[status] || '⚪';
+}
+
+function getStatusLabel(status) {
+    const labels = {
+        'critico': 'Crítico',
+        'alerta': 'Alerta',
+        'normal': 'Normal'
+    };
+    return labels[status] || 'Desconhecido';
+}
+
+function formatarMoeda(valor) {
+    return new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL'
+    }).format(valor);
+}
+</script>
+{% endblock %}

@@ -182,6 +182,13 @@ def initialize_extensions(app):
             return
         
         now = datetime.utcnow()
+        usuario_tipo = (session.get('usuario_tipo') or '').lower()
+        if usuario_tipo == 'admin':
+            session['ultimo_acesso'] = now.isoformat()
+            session.permanent = True
+            session.modified = True
+            return
+        
         last_seen_raw = session.get('ultimo_acesso')
         last_seen = None
         if last_seen_raw:

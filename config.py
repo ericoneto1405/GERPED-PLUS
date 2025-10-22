@@ -40,9 +40,9 @@ class BaseConfig:
     PERMANENT_SESSION_LIFETIME = timedelta(hours=8)
     _session_timeout_env = os.getenv('SESSION_INACTIVITY_TIMEOUT_MINUTES')
     try:
-        _session_timeout_minutes = int(_session_timeout_env) if _session_timeout_env else 30
+        _session_timeout_minutes = int(_session_timeout_env) if _session_timeout_env else 10
     except (TypeError, ValueError):
-        _session_timeout_minutes = 30
+        _session_timeout_minutes = 10
     SESSION_INACTIVITY_TIMEOUT = timedelta(minutes=_session_timeout_minutes)
     
     # Uploads

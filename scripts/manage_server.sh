@@ -21,7 +21,7 @@ PORT=5004
 PID_FILE="/tmp/flask_server.pid" # Usar /tmp para evitar poluir o projeto
 LOG_FILE="instance/logs/server.log"
 # Usar o python3 do ambiente virtual, se disponível, ou do PATH
-PYTHON_CMD="${VIRTUAL_ENV:-.}/bin/python3"
+PYTHON_CMD="${VIRTUAL_ENV:-./venv}/bin/python3"
 RUN_SCRIPT="run.py"
 
 # Cores

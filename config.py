@@ -38,6 +38,12 @@ class BaseConfig:
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = "Lax"
     PERMANENT_SESSION_LIFETIME = timedelta(hours=8)
+    _session_timeout_env = os.getenv('SESSION_INACTIVITY_TIMEOUT_MINUTES')
+    try:
+        _session_timeout_minutes = int(_session_timeout_env) if _session_timeout_env else 30
+    except (TypeError, ValueError):
+        _session_timeout_minutes = 30
+    SESSION_INACTIVITY_TIMEOUT = timedelta(minutes=_session_timeout_minutes)
     
     # Uploads
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB

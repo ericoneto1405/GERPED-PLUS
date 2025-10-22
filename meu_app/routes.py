@@ -67,6 +67,10 @@ def favicon():
     methods=['POST']
 )
 def login():
+    mensagem_expirou = None
+    if request.method == 'GET' and request.args.get('session_expired'):
+        mensagem_expirou = 'Sua sessão expirou por inatividade. Faça login novamente.'
+    
     if request.method == 'POST':
         nome = request.form['usuario']
         senha = request.form['senha']
@@ -80,12 +84,15 @@ def login():
             session['acesso_pedidos'] = usuario.acesso_pedidos
             session['acesso_financeiro'] = usuario.acesso_financeiro
             session['acesso_logistica'] = usuario.acesso_logistica
+            session['ultimo_acesso'] = datetime.utcnow().isoformat()
+            session.permanent = True
+            session.modified = True
             current_app.logger.info(f"Login bem-sucedido: {nome} (IP: {request.remote_addr})")
             return redirect(url_for('main.painel'))
         else:
             current_app.logger.warning(f"Tentativa de login falhou: {nome} (IP: {request.remote_addr})")
             return render_template('login.html', erro="Usuário ou senha inválidos.")
-    return render_template('login.html')
+    return render_template('login.html', erro=mensagem_expirou)
 
 @bp.route('/api/pedido/<int:pedido_id>')
 @login_obrigatorio

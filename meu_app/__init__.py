@@ -15,7 +15,7 @@ from datetime import datetime
 from logging.handlers import RotatingFileHandler
 
 from dotenv import load_dotenv
-from flask import Flask, jsonify, request, render_template
+from flask import Flask, jsonify, request, render_template, session, redirect, url_for
 from flask_caching import Cache as FlaskCache
 from flask_login import LoginManager
 from flask_migrate import Migrate
@@ -166,6 +166,51 @@ def initialize_extensions(app):
                 response.headers['Expires'] = '0'
         
         return response
+    
+    @app.before_request
+    def enforce_session_inactivity_timeout():
+        """Encerra sessão após período configurado de inatividade."""
+        timeout = app.config.get('SESSION_INACTIVITY_TIMEOUT')
+        if not timeout:
+            return
+        
+        # Ignorar rotas públicas ou estáticas
+        if request.endpoint in (None, 'static') or (request.endpoint and request.endpoint.endswith('.static')):
+            return
+        
+        if 'usuario_id' not in session:
+            return
+        
+        now = datetime.utcnow()
+        last_seen_raw = session.get('ultimo_acesso')
+        last_seen = None
+        if last_seen_raw:
+            try:
+                last_seen = datetime.fromisoformat(last_seen_raw)
+            except ValueError:
+                app.logger.warning("Valor inválido em session['ultimo_acesso']; resetando controle de inatividade.")
+        
+        if last_seen and now - last_seen > timeout:
+            from flask_login import logout_user  # Import lazy para evitar ciclos
+            app.logger.info("Sessão expirada por inatividade para usuário_id=%s", session.get('usuario_id'))
+            logout_user()
+            session.clear()
+            
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or \
+               request.path.startswith('/api/') or \
+               request.headers.get('Accept') == 'application/json':
+                return jsonify({
+                    'error': True,
+                    'message': 'Sessão expirada por inatividade. Faça login novamente.',
+                    'type': 'SessionExpired',
+                    'timestamp': now.isoformat()
+                }), 401
+            
+            return redirect(url_for('main.login', session_expired=1))
+        
+        session['ultimo_acesso'] = now.isoformat()
+        session.permanent = True
+        session.modified = True
     
     # RQ (Redis Queue) para processamento assíncrono - Fase 7
     try:

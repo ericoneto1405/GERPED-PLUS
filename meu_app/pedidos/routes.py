@@ -437,20 +437,158 @@ def importar_pedidos():
 @login_obrigatorio
 @permissao_necessaria('acesso_pedidos')
 def download_exemplo():
-    """Baixa arquivo de exemplo para importação"""
+    """Baixa arquivo de exemplo para importação - formato Excel com melhor UX"""
     from flask import send_file
-    import os
-    
-    arquivo_exemplo = os.path.join(current_app.root_path, '..', 'docs', 'EXEMPLO_IMPORTACAO_PEDIDOS.csv')
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+    from openpyxl.utils import get_column_letter
+    import io
     
     try:
-        return send_file(
-            arquivo_exemplo,
-            as_attachment=True,
-            download_name='exemplo_importacao_pedidos.csv',
-            mimetype='text/csv'
+        # Criar workbook
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Exemplo Importação"
+        
+        # Estilos
+        header_font = Font(bold=True, color="FFFFFF")
+        header_fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
+        header_alignment = Alignment(horizontal="center", vertical="center")
+        
+        info_font = Font(italic=True, color="666666")
+        info_fill = PatternFill(start_color="F2F2F2", end_color="F2F2F2", fill_type="solid")
+        
+        border = Border(
+            left=Side(style='thin'),
+            right=Side(style='thin'),
+            top=Side(style='thin'),
+            bottom=Side(style='thin')
         )
+        
+        # Linha 1: Título
+        ws['A1'] = "📋 EXEMPLO DE IMPORTAÇÃO DE PEDIDOS"
+        ws['A1'].font = Font(bold=True, size=14, color="366092")
+        ws.merge_cells('A1:F1')
+        
+        # Linha 2: Instruções
+        ws['A2'] = "Instruções: Preencha os dados abaixo e salve como CSV para importar"
+        ws['A2'].font = info_font
+        ws.merge_cells('A2:F2')
+        
+        # Linha 3: Vazia
+        ws['A3'] = ""
+        
+        # Linha 4: Cabeçalho das colunas
+        headers = [
+            "Cliente Nome",
+            "Cliente Fantasia", 
+            "Produto Nome",
+            "Quantidade",
+            "Preço Venda",
+            "Data (YYYY-MM-DD)"
+        ]
+        
+        for col, header in enumerate(headers, 1):
+            cell = ws.cell(row=4, column=col, value=header)
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = header_alignment
+            cell.border = border
+        
+        # Linha 5: Exemplo 1
+        exemplo1 = [
+            "CAIQUE ANDRADE NASCIMENTO",
+            "KAIQUE ITATIM",
+            "SKOL LATA 350ML",
+            286,
+            31.00,
+            "2024-01-15"
+        ]
+        
+        for col, value in enumerate(exemplo1, 1):
+            cell = ws.cell(row=5, column=col, value=value)
+            cell.border = border
+            if col == 4 or col == 5:  # Quantidade e Preço
+                cell.alignment = Alignment(horizontal="center")
+        
+        # Linha 6: Exemplo 2
+        exemplo2 = [
+            "CAIQUE ANDRADE NASCIMENTO",
+            "KAIQUE ITATIM", 
+            "BRAHMA CHOPP LATA 350 ML",
+            286,
+            32.00,
+            "2024-01-15"
+        ]
+        
+        for col, value in enumerate(exemplo2, 1):
+            cell = ws.cell(row=6, column=col, value=value)
+            cell.border = border
+            if col == 4 or col == 5:  # Quantidade e Preço
+                cell.alignment = Alignment(horizontal="center")
+        
+        # Linha 7: Exemplo 3
+        exemplo3 = [
+            "LUCIANO VIEIRA SILVA DE ARAUJO",
+            "LUCIANO MOURA",
+            "RED BULL ENERGY DRINK 250 ML",
+            144,
+            150.00,
+            "2024-01-16"
+        ]
+        
+        for col, value in enumerate(exemplo3, 1):
+            cell = ws.cell(row=7, column=col, value=value)
+            cell.border = border
+            if col == 4 or col == 5:  # Quantidade e Preço
+                cell.alignment = Alignment(horizontal="center")
+        
+        # Linha 8: Vazia
+        ws['A8'] = ""
+        
+        # Linha 9: Dicas importantes
+        ws['A9'] = "💡 DICAS IMPORTANTES:"
+        ws['A9'].font = Font(bold=True, color="366092")
+        ws.merge_cells('A9:F9')
+        
+        # Linha 10: Dica 1
+        ws['A10'] = "• Data deve estar no formato: YYYY-MM-DD (ex: 2024-01-15)"
+        ws['A10'].font = info_font
+        ws.merge_cells('A10:F10')
+        
+        # Linha 11: Dica 2
+        ws['A11'] = "• Preços devem usar ponto como separador decimal: 31.00 (não 31,00)"
+        ws['A11'].font = info_font
+        ws.merge_cells('A11:F11')
+        
+        # Linha 12: Dica 3
+        ws['A12'] = "• Nomes de clientes e produtos devem existir no sistema"
+        ws['A12'].font = info_font
+        ws.merge_cells('A12:F12')
+        
+        # Linha 13: Dica 4
+        ws['A13'] = "• Salve este arquivo como CSV (.csv) antes de importar"
+        ws['A13'].font = info_font
+        ws.merge_cells('A13:F13')
+        
+        # Ajustar largura das colunas
+        column_widths = [25, 20, 30, 12, 12, 15]
+        for i, width in enumerate(column_widths, 1):
+            ws.column_dimensions[get_column_letter(i)].width = width
+        
+        # Salvar em buffer
+        buffer = io.BytesIO()
+        wb.save(buffer)
+        buffer.seek(0)
+        
+        return send_file(
+            buffer,
+            as_attachment=True,
+            download_name='exemplo_importacao_pedidos.xlsx',
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        
     except Exception as e:
-        current_app.logger.error(f"Erro ao baixar arquivo de exemplo: {str(e)}")
-        flash('Erro ao baixar arquivo de exemplo', 'error')
+        current_app.logger.error(f"Erro ao gerar arquivo de exemplo: {str(e)}")
+        flash('Erro ao gerar arquivo de exemplo', 'error')
         return redirect(url_for('pedidos.importar_pedidos'))

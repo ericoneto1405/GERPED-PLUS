@@ -51,6 +51,9 @@ Flask-Login==0.6.3
 Flask-Migrate==4.0.7
 alembic==1.13.1
 
+# Drivers de Banco de Dados
+psycopg[binary]==3.2.12
+
 # Observabilidade e Métricas
 python-json-logger==2.0.7
 prometheus-client==0.20.0

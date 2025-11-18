@@ -23,11 +23,19 @@ class BaseConfig:
     
     # Banco de dados
     # SQLite requer /// para caminho relativo ou //// para caminho absoluto
-    # FIX: Ignorar DATABASE_URL se tiver valores de exemplo inválidos
-    _db_url = os.getenv("DATABASE_URL", "")
+    DATABASE_REQUIRE_SSL = os.getenv('DATABASE_REQUIRE_SSL', 'True').lower() == 'true'
+    _db_url = os.getenv("DATABASE_URL", "").strip()
     if _db_url and ("usuario" in _db_url or "senha" in _db_url or "porta" in _db_url or "host" in _db_url):
         # DATABASE_URL tem valores de exemplo, ignorar
         _db_url = ""
+    elif _db_url.startswith("postgres://"):
+        # Compatibilidade com strings antigas
+        _db_url = _db_url.replace("postgres://", "postgresql://", 1)
+    
+    if _db_url and _db_url.lower().startswith("postgresql://") and DATABASE_REQUIRE_SSL:
+        if "sslmode=" not in _db_url.lower():
+            separator = "&" if "?" in _db_url else "?"
+            _db_url = f"{_db_url}{separator}sslmode=require"
     
     SQLALCHEMY_DATABASE_URI = _db_url or f"sqlite:///{os.path.abspath(os.path.join(BASE_DIR, 'instance', 'sistema.db'))}"
     SQLALCHEMY_TRACK_MODIFICATIONS = False

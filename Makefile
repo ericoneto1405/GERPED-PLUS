@@ -250,6 +250,7 @@ docs:
 	@echo "  - docs/GUIA_CACHE.md (FASE 8)"
 	@echo "  - docs/QUALIDADE_CI_CD.md (FASE 9)"
 	@echo "  - docs/API_EXAMPLES.md (FASE 10)"
+	@echo "  - docs/NEON_SETUP.md"
 	@echo "  - RECOMENDACOES_INDICES.md (FASE 8)"
 	@echo ""
 	@echo "$(BLUE)🌐 Documentação interativa:$(NC)"
@@ -273,4 +274,3 @@ status:
 	@echo ""
 	@echo "$(BLUE)Migrations:$(NC)"
 	@$(PYTHON) alembic_migrate.py db current 2>/dev/null || echo "  Nenhuma migration aplicada"
-

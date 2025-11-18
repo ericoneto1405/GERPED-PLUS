@@ -83,6 +83,13 @@ gunicorn -w 4 -b 0.0.0.0:8000 wsgi:app
 gunicorn -w 4 -b 127.0.0.1:8000 --access-logfile - --error-logfile - wsgi:app
 ```
 
+### **Banco gerenciado (Neon - Free Tier)**
+
+1. Crie um projeto em [https://neon.tech](https://neon.tech) e copie o *connection string* no formato `postgresql://usuario:senha@ep-xxxxx.neon.tech:5432/neondb`.
+2. No `.env`, configure `DATABASE_URL` com esse valor e mantenha `DATABASE_REQUIRE_SSL=True` (Neon exige TLS).
+3. Rode as migrations normalmente: `FLASK_ENV=production make migrate`.
+4. Para detalhes do passo a passo e troubleshooting, consulte `docs/NEON_SETUP.md`.
+
 ⚠️ **IMPORTANTE:**
 - Use PostgreSQL ou MySQL em produção (não SQLite)
 - Configure HTTPS via Nginx/Apache

@@ -107,6 +107,32 @@ def enqueue_pdf_job(coleta_data: dict):
         current_app.logger.warning("⚠️ Fila de PDF indisponível, geração será síncrona")
         return None
 
+    try:
+        from .tasks import generate_receipt_task
+
+        job = pdf_queue.enqueue(
+            generate_receipt_task,
+            coleta_data,
+            job_timeout=600,
+            result_ttl=86400,
+            failure_ttl=86400,
+        )
+        current_app.logger.info(
+            "✅ Job de recibo enfileirado",
+            extra={
+                "job_id": job.id,
+                "pedido_id": coleta_data.get("pedido_id"),
+            },
+        )
+        return job.id
+    except Exception as e:  # pragma: no cover - depende do worker
+        current_app.logger.error(
+            "❌ Erro ao enfileirar geração de recibo",
+            exc_info=e,
+            extra={"pedido_id": coleta_data.get("pedido_id")},
+        )
+        return None
+
 
 def enqueue_receipt_cleanup_job(ttl_hours: int | None = None):
     """
@@ -134,32 +160,6 @@ def enqueue_receipt_cleanup_job(ttl_hours: int | None = None):
         current_app.logger.debug(
             "Falha ao enfileirar job de limpeza de recibos",
             exc_info=exc,
-        )
-        return None
-    
-    try:
-        from .tasks import generate_receipt_task
-        
-        job = pdf_queue.enqueue(
-            generate_receipt_task,
-            coleta_data,
-            job_timeout=600,
-            result_ttl=86400,
-            failure_ttl=86400,
-        )
-        current_app.logger.info(
-            "✅ Job de recibo enfileirado",
-            extra={
-                "job_id": job.id,
-                "pedido_id": coleta_data.get("pedido_id"),
-            },
-        )
-        return job.id
-    except Exception as e:
-        current_app.logger.error(
-            "❌ Erro ao enfileirar geração de recibo",
-            exc_info=e,
-            extra={"pedido_id": coleta_data.get("pedido_id")},
         )
         return None
 

@@ -9,10 +9,14 @@ class FinanceiroConfig:
     """Configurações centralizadas para o módulo financeiro"""
     
     # Configurações de upload de recibos
-    UPLOAD_RECIBOS_DIR = 'uploads/recibos_pagamento'
-    UPLOAD_TEMP_DIR = 'uploads/temp_recibos'
-    MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
-    ALLOWED_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.pdf', '.doc', '.docx'}
+    UPLOAD_RECIBOS_DIR = os.getenv('FINANCEIRO_UPLOAD_RECIBOS_DIR', 'uploads/recibos_pagamento')
+    UPLOAD_TEMP_DIR = os.getenv('FINANCEIRO_UPLOAD_TEMP_DIR', 'uploads/temp_recibos')
+    MAX_FILE_SIZE = int(os.getenv('FINANCEIRO_MAX_FILE_SIZE', str(5 * 1024 * 1024)))  # 5MB padrão
+    ALLOWED_EXTENSIONS = {
+        ext.strip().lower()
+        for ext in os.getenv('FINANCEIRO_ALLOWED_EXTENSIONS', '.jpg,.jpeg,.png,.pdf').split(',')
+        if ext.strip()
+    }
     
     # Configurações de OCR - Google Vision
     OCR_CACHE_ENABLED = True
@@ -27,10 +31,7 @@ class FinanceiroConfig:
     USE_LOCAL_OCR_ONLY = os.getenv('FINANCEIRO_OCR_LOCAL_ONLY', 'False').lower() == 'true'
     
     # Configurações Google Vision
-    GOOGLE_VISION_CREDENTIALS_PATH = os.getenv(
-        'GOOGLE_VISION_CREDENTIALS_PATH',
-        '/Users/ericobrandao/keys/gvision-credentials.json'
-    )
+    GOOGLE_VISION_CREDENTIALS_PATH = os.getenv('FINANCEIRO_GVISION_CREDENTIALS_PATH')
     GOOGLE_VISION_DETECTION_TYPE = 'TEXT_DETECTION'  # ou 'DOCUMENT_TEXT_DETECTION'
     GOOGLE_VISION_INPUT_BUCKET = 'sap-ocr-input'
     GOOGLE_VISION_INPUT_PREFIX = 'financeiro/ocr/input'

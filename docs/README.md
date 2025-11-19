@@ -91,6 +91,7 @@ gunicorn -w 4 -b 127.0.0.1:8000 --access-logfile - --error-logfile - wsgi:app
 4. Para detalhes do passo a passo e troubleshooting, consulte `docs/NEON_SETUP.md`.
 
 ⚠️ **IMPORTANTE:**
+- Defina `SECRET_KEY` e `DATABASE_URL` nas variáveis de ambiente antes de subir para produção.
 - Use PostgreSQL ou MySQL em produção (não SQLite)
 - Configure HTTPS via Nginx/Apache
 - Use Redis para cache e rate limiting

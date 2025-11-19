@@ -12,32 +12,62 @@ import os
 from datetime import timedelta, datetime
 
 
+APP_ENV = os.getenv('FLASK_ENV', 'development').lower()
+
+
+def _default_sqlite_uri(base_dir: str) -> str:
+    return f"sqlite:///{os.path.abspath(os.path.join(base_dir, 'instance', 'sistema.db'))}"
+
+
+def _resolve_secret_key(env: str) -> str:
+    secret = os.getenv('SECRET_KEY')
+    if secret:
+        return secret
+    if env in ('development', 'testing'):
+        return 'dev-key-insecure-change-me'
+    raise RuntimeError(
+        'SECRET_KEY não configurada. Defina SECRET_KEY nas variáveis de ambiente para executar em produção.'
+    )
+
+
+def _sanitize_database_url(raw_url: str) -> str:
+    url = raw_url.strip()
+    if not url:
+        return ''
+    placeholders = ('usuario', 'senha', 'porta', 'host', 'example.com')
+    if any(token in url for token in placeholders):
+        return ''
+    if url.startswith('postgres://'):
+        url = url.replace('postgres://', 'postgresql://', 1)
+    return url
+
+
+def _resolve_database_uri(base_dir: str, env: str, require_ssl: bool) -> str:
+    db_url = _sanitize_database_url(os.getenv('DATABASE_URL', ''))
+    if db_url:
+        if db_url.lower().startswith('postgresql://') and require_ssl and 'sslmode=' not in db_url.lower():
+            separator = '&' if '?' in db_url else '?'
+            db_url = f"{db_url}{separator}sslmode=require"
+        return db_url
+    if env == 'production':
+        raise RuntimeError('DATABASE_URL não configurada. Defina um banco PostgreSQL/MySQL antes do deploy.')
+    return _default_sqlite_uri(base_dir)
+
+
 class BaseConfig:
     """Configuração base compartilhada entre todos os ambientes"""
     
     # Diretório base
     BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+    ENVIRONMENT = APP_ENV
     
     # Segurança - SECRET_KEY obrigatória
-    SECRET_KEY = os.getenv("SECRET_KEY", "dev-key-insecure-change-me")
+    SECRET_KEY = _resolve_secret_key(APP_ENV)
     
     # Banco de dados
     # SQLite requer /// para caminho relativo ou //// para caminho absoluto
     DATABASE_REQUIRE_SSL = os.getenv('DATABASE_REQUIRE_SSL', 'True').lower() == 'true'
-    _db_url = os.getenv("DATABASE_URL", "").strip()
-    if _db_url and ("usuario" in _db_url or "senha" in _db_url or "porta" in _db_url or "host" in _db_url):
-        # DATABASE_URL tem valores de exemplo, ignorar
-        _db_url = ""
-    elif _db_url.startswith("postgres://"):
-        # Compatibilidade com strings antigas
-        _db_url = _db_url.replace("postgres://", "postgresql://", 1)
-    
-    if _db_url and _db_url.lower().startswith("postgresql://") and DATABASE_REQUIRE_SSL:
-        if "sslmode=" not in _db_url.lower():
-            separator = "&" if "?" in _db_url else "?"
-            _db_url = f"{_db_url}{separator}sslmode=require"
-    
-    SQLALCHEMY_DATABASE_URI = _db_url or f"sqlite:///{os.path.abspath(os.path.join(BASE_DIR, 'instance', 'sistema.db'))}"
+    SQLALCHEMY_DATABASE_URI = _resolve_database_uri(BASE_DIR, APP_ENV, DATABASE_REQUIRE_SSL)
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ECHO = False
     

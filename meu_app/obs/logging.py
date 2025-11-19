@@ -25,9 +25,31 @@ Autor: Sistema SAP
 
 import logging
 import os
+import re
 from logging.handlers import RotatingFileHandler
 from pythonjsonlogger import jsonlogger
 from flask import has_request_context, request, g
+
+SENSITIVE_KEYS = {'cpf', 'cnpj', 'documento', 'pix', 'email', 'token'}
+
+
+def _mask_value(value: str) -> str:
+    if not isinstance(value, str):
+        return value
+    masked = re.sub(r'(\b\d{3})\d{5}(\d{3}\b)', r'\1*****\2', value)
+    masked = re.sub(r'(\b\d{2})\d{7}(\d{2}\b)', r'\1*****\2', masked)
+    masked = re.sub(r'([\w\.\-]+)@([\w\-]+)', r'***@\2', masked)
+    return masked
+
+
+def _mask_sensitive_data(log_record: dict) -> None:
+    for key, value in list(log_record.items()):
+        key_lower = str(key).lower()
+        if key_lower in SENSITIVE_KEYS:
+            log_record[key] = _mask_value(str(value))
+    message = log_record.get('message')
+    if message:
+        log_record['message'] = _mask_value(str(message))
 
 
 class CustomJsonFormatter(jsonlogger.JsonFormatter):
@@ -66,6 +88,8 @@ class CustomJsonFormatter(jsonlogger.JsonFormatter):
         # Garantir que level seja string
         if 'levelname' in log_record:
             log_record['level'] = log_record.pop('levelname')
+
+        _mask_sensitive_data(log_record)
 
 
 def setup_structured_logging(app):
@@ -165,4 +189,3 @@ def get_logger(name):
         >>> logger.info("Operação concluída", extra={"duration_ms": 150})
     """
     return logging.getLogger(name)
-

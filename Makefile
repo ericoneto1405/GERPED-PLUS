@@ -251,6 +251,8 @@ docs:
 	@echo "  - docs/QUALIDADE_CI_CD.md (FASE 9)"
 	@echo "  - docs/API_EXAMPLES.md (FASE 10)"
 	@echo "  - docs/NEON_SETUP.md"
+	@echo "  - docs/SECURITY_PIPELINE.md"
+	@echo "  - docs/GO_LIVE_CHECKLIST.md"
 	@echo "  - RECOMENDACOES_INDICES.md (FASE 8)"
 	@echo ""
 	@echo "$(BLUE)🌐 Documentação interativa:$(NC)"

@@ -187,6 +187,10 @@ sistema-sap/
 - Healthchecks expostos em `/healthz` (liveness) e `/readiness` (depende de DB/Redis); use `curl http://localhost:5004/healthz` no diagnóstico.
 - For automatizado, mantenha `scripts/manage_server.sh` como wrapper para iniciar/parar o app via `make server-start`/`make server-stop`.
 
+### Segurança Operacional
+- Consulte `docs/SECURITY_PIPELINE.md` para entender e customizar o workflow de Semgrep/Snyk.
+- Antes do go-live, valide o checklist em `docs/GO_LIVE_CHECKLIST.md`.
+
 ---
 
 ## ⚡ Comandos Rápidos (Makefile)

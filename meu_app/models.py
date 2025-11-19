@@ -1,5 +1,6 @@
 from datetime import datetime
 import enum
+from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy import Enum as EnumType
 
@@ -223,7 +224,7 @@ class ItemColetado(db.Model):
     def __repr__(self):
         return f'<ItemColetado {self.id} - Qtd: {self.quantidade_coletada}>'
 
-class Usuario(db.Model):
+class Usuario(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String(50), nullable=False, unique=True)
     senha_hash = db.Column(db.String(128), nullable=False)  # Renomeado de 'senha' para 'senha_hash'

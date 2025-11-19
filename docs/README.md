@@ -92,6 +92,7 @@ gunicorn -w 4 -b 127.0.0.1:8000 --access-logfile - --error-logfile - wsgi:app
 
 ⚠️ **IMPORTANTE:**
 - Defina `SECRET_KEY` e `DATABASE_URL` nas variáveis de ambiente antes de subir para produção.
+- Ajuste `LOGIN_MAX_ATTEMPTS` e `LOGIN_LOCKOUT_SECONDS` conforme a política da sua empresa para bloquear tentativas sucessivas.
 - Use PostgreSQL ou MySQL em produção (não SQLite)
 - Configure HTTPS via Nginx/Apache
 - Use Redis para cache e rate limiting

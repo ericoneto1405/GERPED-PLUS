@@ -35,6 +35,9 @@ class UsuarioService:
             
             if not senha or not senha.strip():
                 return False, "Senha é obrigatória", None
+            valido, mensagem = self.validar_politica_senha(senha.strip())
+            if not valido:
+                return False, mensagem, None
             
             if tipo not in ['admin', 'comum']:
                 return False, "Tipo de usuário inválido", None

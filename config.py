@@ -104,6 +104,8 @@ class BaseConfig:
     RATELIMIT_ENABLED = True
     RATELIMIT_STORAGE_URL = os.getenv('REDIS_URL', 'memory://')
     RATELIMIT_DEFAULT = "200 per hour"
+    LOGIN_MAX_ATTEMPTS = int(os.getenv('LOGIN_MAX_ATTEMPTS', '5'))
+    LOGIN_LOCKOUT_SECONDS = int(os.getenv('LOGIN_LOCKOUT_SECONDS', '300'))
     
     # Security Headers
     SECURITY_HEADERS_ENABLED = False

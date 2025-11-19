@@ -12,6 +12,7 @@ Data: 2024
 from functools import wraps
 from typing import Optional, Tuple, Dict, Any
 from flask import session, redirect, url_for, request, jsonify, current_app
+from flask_login import current_user
 from datetime import datetime, timedelta
 
 
@@ -123,7 +124,8 @@ def login_obrigatorio(f):
     """
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if 'usuario_id' not in session:
+        is_authenticated = getattr(current_user, 'is_authenticated', False)
+        if not is_authenticated or 'usuario_id' not in session:
             # Se for uma requisição AJAX ou API, retornar JSON
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or \
                request.path.startswith('/api/') or \
@@ -161,7 +163,8 @@ def permissao_necessaria(permissao):
         @wraps(f)
         def decorated_function(*args, **kwargs):
             # Primeiro verificar se está logado
-            if 'usuario_id' not in session:
+            is_authenticated = getattr(current_user, 'is_authenticated', False)
+            if not is_authenticated or 'usuario_id' not in session:
                 if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or \
                    request.path.startswith('/api/') or \
                    request.headers.get('Accept') == 'application/json':

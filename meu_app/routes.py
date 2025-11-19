@@ -1,10 +1,10 @@
 from flask import Blueprint, render_template, request, redirect, url_for, jsonify, session, current_app, send_from_directory, Response
+from flask_login import current_user, login_user, logout_user
 from . import db
 from .models import Cliente, Produto, Pedido, ItemPedido, Pagamento, Coleta, Usuario, Apuracao, StatusPedido
 import os
 from datetime import datetime, timedelta
 from sqlalchemy import func
-from functools import wraps
 import shutil
 from .decorators import login_obrigatorio, permissao_necessaria, admin_necessario
 from .security import limiter
@@ -70,12 +70,29 @@ def login():
     mensagem_expirou = None
     if request.method == 'GET' and request.args.get('session_expired'):
         mensagem_expirou = 'Sua sessão expirou por inatividade. Faça login novamente.'
+    attempts = session.get('login_attempts') or {}
+    locked_until_raw = attempts.get('locked_until')
+    if locked_until_raw:
+        try:
+            locked_until = datetime.fromisoformat(locked_until_raw)
+        except ValueError:
+            locked_until = None
+        if locked_until and locked_until > datetime.utcnow():
+            tempo_restante = int((locked_until - datetime.utcnow()).total_seconds())
+            return render_template(
+                'login.html',
+                erro=f"Muitas tentativas falhas. Tente novamente em {tempo_restante} segundos.",
+            )
+        attempts.pop('locked_until', None)
+        attempts.pop('count', None)
+        session['login_attempts'] = attempts
     
     if request.method == 'POST':
         nome = request.form['usuario']
         senha = request.form['senha']
         usuario = Usuario.query.filter_by(nome=nome).first()
         if usuario and usuario.check_senha(senha):
+            login_user(usuario)
             session['usuario_id'] = usuario.id
             session['usuario_nome'] = usuario.nome
             session['usuario_tipo'] = usuario.tipo
@@ -87,9 +104,24 @@ def login():
             session['ultimo_acesso'] = datetime.utcnow().isoformat()
             session.permanent = True
             session.modified = True
+            session.pop('login_attempts', None)
             current_app.logger.info(f"Login bem-sucedido: {nome} (IP: {request.remote_addr})")
             return redirect(url_for('main.painel'))
         else:
+            max_attempts = current_app.config.get('LOGIN_MAX_ATTEMPTS', 5)
+            lockout_seconds = current_app.config.get('LOGIN_LOCKOUT_SECONDS', 300)
+            attempts = session.get('login_attempts') or {'count': 0}
+            attempts['count'] = attempts.get('count', 0) + 1
+            if attempts['count'] >= max_attempts:
+                locked_until = datetime.utcnow() + timedelta(seconds=lockout_seconds)
+                attempts['locked_until'] = locked_until.isoformat()
+                attempts['count'] = 0
+                current_app.logger.warning(
+                    "Acesso bloqueado temporariamente após tentativas falhas (usuario=%s, IP=%s)",
+                    nome,
+                    request.remote_addr,
+                )
+            session['login_attempts'] = attempts
             current_app.logger.warning(f"Tentativa de login falhou: {nome} (IP: {request.remote_addr})")
             return render_template('login.html', erro="Usuário ou senha inválidos.")
     return render_template('login.html', erro=mensagem_expirou)
@@ -391,6 +423,7 @@ def painel():
 @bp.route('/logout')
 def logout():
     usuario = session.get('usuario_nome', 'N/A')
+    logout_user()
     session.clear()
     current_app.logger.info(f"Logout: {usuario} (IP: {request.remote_addr})")
     return redirect(url_for('main.login'))

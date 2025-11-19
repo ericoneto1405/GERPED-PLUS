@@ -31,8 +31,15 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Garante que o arquivo PID seja removido ao sair
-trap 'rm -f "$PID_FILE"' EXIT
+# Utilitário para limpar PID inválido
+cleanup_stale_pid() {
+    if [ -f "$PID_FILE" ]; then
+        PID=$(cat "$PID_FILE")
+        if ! ps -p "$PID" > /dev/null 2>&1; then
+            rm -f "$PID_FILE"
+        fi
+    fi
+}
 
 # Verifica dependências
 command -v lsof >/dev/null 2>&1 || { echo -e "${RED}❌ Comando 'lsof' não encontrado. Por favor, instale-o.${NC}"; exit 1; }
@@ -61,6 +68,7 @@ check_port() {
 
 # Verifica se o servidor está rodando
 is_running() {
+    cleanup_stale_pid
     if [ -f "$PID_FILE" ]; then
         PID=$(cat "$PID_FILE")
         if ps -p "$PID" > /dev/null 2>&1; then
@@ -128,6 +136,7 @@ start_server() {
 
 # Para o servidor
 stop_server() {
+    cleanup_stale_pid
     print_info "Parando servidor Flask..."
     
     # Tenta parar pelo PID file
@@ -173,6 +182,7 @@ restart_server() {
 
 # Mostra status do servidor
 show_status() {
+    cleanup_stale_pid
     echo
     print_info "====== Status do Servidor Flask ======"
     echo

@@ -98,6 +98,12 @@ gunicorn -w 4 -b 127.0.0.1:8000 --access-logfile - --error-logfile - wsgi:app
 - Use Redis para cache e rate limiting
 - Configure firewall e backups automáticos
 
+### **Ambiente Python e dependências**
+
+- O Dockerfile oficial utiliza `python:3.9-alpine`. Gere o `requirements.txt` com Python 3.9 (`pip-compile --python 3.9 ...`) para evitar incompatibilidades binárias.
+- Caso deseje usar Python 3.13 localmente, atualize o Dockerfile para a mesma versão antes do deploy.
+- Rode `make install` dentro do virtualenv para garantir que scripts locais e container compartilham as mesmas dependências.
+
 ---
 
 ## 🔑 Credenciais (Apenas DEV/Seed)
@@ -173,6 +179,13 @@ sistema-sap/
 - **Cache:** Redis, Flask-Caching
 - **CI/CD:** GitHub Actions, Pre-commit
 - **Documentação:** Swagger/OpenAPI (Flasgger)
+
+## 🩺 Operação e Monitoramento
+
+- `make server-status` (ou `scripts/manage_server.sh status`) mostra PID, consumo de CPU/memória e verifica os endpoints `/` e `/healthz`.
+- `make server-logs` (ou `scripts/manage_server.sh logs`) acompanha o arquivo `instance/logs/server.log` em tempo real.
+- Healthchecks expostos em `/healthz` (liveness) e `/readiness` (depende de DB/Redis); use `curl http://localhost:5004/healthz` no diagnóstico.
+- For automatizado, mantenha `scripts/manage_server.sh` como wrapper para iniciar/parar o app via `make server-start`/`make server-stop`.
 
 ---
 

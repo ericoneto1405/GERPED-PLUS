@@ -1,10 +1,10 @@
 """
-Aplicação Flask - Sistema SAP
+Aplicação Flask - Sistema GERPED
 ==============================
 
 App Factory pattern com suporte a múltiplos ambientes e extensões.
 
-Autor: Sistema SAP
+Autor: Sistema GERPED
 Data: Outubro 2025
 """
 

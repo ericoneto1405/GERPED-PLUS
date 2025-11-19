@@ -42,7 +42,7 @@
    ```bash
    aws secretsmanager create-secret \
        --name sap/production \
-       --description "Credenciais do Sistema SAP" \
+       --description "Credenciais do Sistema GERPED" \
        --secret-string '{
          "SECRET_KEY": "your-secret-key-here",
          "DATABASE_URL": "postgresql://...",

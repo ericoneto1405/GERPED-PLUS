@@ -7,7 +7,7 @@ Sistema de documentação interativa de APIs usando Flasgger.
 Endpoint: /docs - Swagger UI interativo
 Endpoint: /apispec - OpenAPI JSON
 
-Autor: Sistema SAP - Fase 10
+Autor: Sistema GERPED - Fase 10
 """
 
 from flasgger import Swagger
@@ -33,7 +33,7 @@ SWAGGER_CONFIG = {
 SWAGGER_TEMPLATE = {
     "swagger": "2.0",
     "info": {
-        "title": "Sistema SAP API",
+        "title": "Sistema GERPED API",
         "description": """
 # Sistema de Gestão Empresarial SAP
 
@@ -77,7 +77,7 @@ A maioria dos endpoints requer autenticação via sessão.
         "version": "2.0.0",
         "termsOfService": "",
         "contact": {
-            "name": "Sistema SAP",
+            "name": "Sistema GERPED",
             "email": "suporte@sistema-sap.com",
         },
         "license": {

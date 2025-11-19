@@ -1,6 +1,6 @@
 # 🚀 Guia de Implantação no Neon (PostgreSQL Serverless)
 
-Este passo a passo mostra como apontar o Sistema SAP para um banco PostgreSQL gratuito usando o **Neon**.
+Este passo a passo mostra como apontar o Sistema GERPED para um banco PostgreSQL gratuito usando o **Neon**.
 
 ## 1. Criar o banco
 
@@ -50,4 +50,4 @@ Isso cria todo o schema no banco Neon.
 - Use *branches* separados (ex.: `staging`) para ambientes diferentes.
 - Ajuste limites de conexão no Neon se planeja usar muitos workers Gunicorn.
 
-Pronto! O Sistema SAP agora usa um banco PostgreSQL gerenciado gratuitamente, mantendo TLS obrigatório e migrações controladas pelo Alembic.
+Pronto! O Sistema GERPED agora usa um banco PostgreSQL gerenciado gratuitamente, mantendo TLS obrigatório e migrações controladas pelo Alembic.

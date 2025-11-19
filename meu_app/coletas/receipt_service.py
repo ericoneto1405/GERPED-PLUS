@@ -330,7 +330,7 @@ class ReceiptService:
                 fontName='Helvetica'
             )
             data_emissao = datetime.now().strftime('%d/%m/%Y às %H:%M:%S')
-            story.append(Paragraph(f"Recibo emitido em {data_emissao} pelo Sistema SAP", rodape_style))
+            story.append(Paragraph(f"Recibo emitido em {data_emissao} pelo Sistema GERPED", rodape_style))
             
             # Construir PDF
             doc.build(story)

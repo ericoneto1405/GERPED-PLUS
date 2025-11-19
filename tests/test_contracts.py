@@ -5,7 +5,7 @@ Testes de Contrato (Snapshot Testing)
 Testes que validam o formato de resposta das APIs permanece consistente.
 Previne breaking changes não intencionais em contratos de API.
 
-Autor: Sistema SAP - Fase 9
+Autor: Sistema GERPED - Fase 9
 """
 
 import pytest

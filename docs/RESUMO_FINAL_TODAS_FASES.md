@@ -374,7 +374,7 @@ curl /metrics         # Prometheus
 
 ## 🎉 RESULTADO FINAL
 
-O **Sistema SAP** evoluiu de um projeto funcional para uma **aplicação enterprise-grade** com:
+O **Sistema GERPED** evoluiu de um projeto funcional para uma **aplicação enterprise-grade** com:
 
 ### Infraestrutura
 - 🗃️ **Migrations profissionais** com Alembic
@@ -539,7 +539,7 @@ Todas as 5 fases implementadas com 100% de score:
 
 ## 🎊 PARABÉNS!
 
-Em **um único dia de trabalho**, o Sistema SAP ganhou:
+Em **um único dia de trabalho**, o Sistema GERPED ganhou:
 
 - 🗃️ **Migrations profissionais**
 - 🔍 **Observabilidade enterprise**

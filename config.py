@@ -4,7 +4,7 @@ Configurações da Aplicação por Ambiente
 
 Configuração simples e objetiva para Flask App Factory.
 
-Autor: Sistema SAP
+Autor: Sistema GERPED
 Data: Outubro 2025
 """
 

@@ -19,7 +19,7 @@ RED='\033[0;31m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-echo -e "${BLUE}🔍 Sistema SAP - Smoke Tests${NC}"
+echo -e "${BLUE}🔍 Sistema GERPED - Smoke Tests${NC}"
 echo -e "${BLUE}Base URL: ${BASE_URL}${NC}"
 echo ""
 

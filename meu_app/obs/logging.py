@@ -20,7 +20,7 @@ Uso:
         "valor": 1500.00
     })
 
-Autor: Sistema SAP
+Autor: Sistema GERPED
 """
 
 import logging

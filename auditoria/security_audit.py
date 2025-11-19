@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Script de Auditoria de Segurança - Sistema SAP
+Script de Auditoria de Segurança - Sistema GERPED
 Analisa o código fonte em busca de vulnerabilidades comuns
 """
 
@@ -298,7 +298,7 @@ class SecurityAuditor:
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Relatório de Segurança - Sistema SAP</title>
+    <title>Relatório de Segurança - Sistema GERPED</title>
     <style>
         * {{ margin: 0; padding: 0; box-sizing: border-box; }}
         body {{ 
@@ -392,7 +392,7 @@ class SecurityAuditor:
     <div class="container">
         <div class="header">
             <h1>🔒 Relatório de Segurança</h1>
-            <p>Sistema SAP - Auditoria de Código Fonte</p>
+            <p>Sistema GERPED - Auditoria de Código Fonte</p>
             <p>Data: {data['scan_date']}</p>
         </div>
         

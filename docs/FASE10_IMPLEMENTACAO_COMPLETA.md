@@ -149,7 +149,7 @@ http --form POST http://localhost:5004/login \
 
 **Output Visual**:
 ```
-🔍 Sistema SAP - Smoke Tests
+🔍 Sistema GERPED - Smoke Tests
 Base URL: http://localhost:5004
 
 📊 Healthchecks
@@ -523,7 +523,7 @@ make smoke                             # Testes rápidos
 #### Informações da API
 
 ```yaml
-title: Sistema SAP API
+title: Sistema GERPED API
 version: 2.0.0
 description: |
   Sistema de Gestão Empresarial
@@ -631,6 +631,6 @@ O sistema agora possui:
 
 **Implementado por**: Cursor AI (Claude Sonnet 4.5)  
 **Data**: 08 de Outubro de 2025  
-**Projeto**: Sistema SAP  
+**Projeto**: Sistema GERPED  
 **Fase**: 10 - Documentação e Developer Experience
 

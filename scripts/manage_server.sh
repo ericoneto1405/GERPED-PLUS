@@ -1,6 +1,6 @@
 #!/bin/bash
 # ==================================================================
-# Script de Gerenciamento do Servidor Flask - Sistema SAP
+# Script de Gerenciamento do Servidor Flask - Sistema GERPED
 # ==================================================================
 # Gerencia o ciclo de vida do servidor Flask de forma robusta
 #
@@ -11,7 +11,7 @@
 #   ./manage_server.sh status   - Mostra status do servidor
 #   ./manage_server.sh logs     - Mostra logs em tempo real
 #
-# Autor: Sistema SAP
+# Autor: Sistema GERPED
 # ==================================================================
 
 set -euo pipefail

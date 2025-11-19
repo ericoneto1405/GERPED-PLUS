@@ -8,7 +8,7 @@
 
 ## 📊 RESUMO EXECUTIVO
 
-Este documento detalha o endurecimento de segurança completo implementado no Sistema SAP. Foram aplicados **20 controles críticos** de segurança cobrindo as categorias do OWASP Top 10 e boas práticas da indústria.
+Este documento detalha o endurecimento de segurança completo implementado no Sistema GERPED. Foram aplicados **20 controles críticos** de segurança cobrindo as categorias do OWASP Top 10 e boas práticas da indústria.
 
 ### Estatísticas
 

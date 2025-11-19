@@ -4,7 +4,7 @@ Testes do Sistema RBAC (Role-Based Access Control)
 
 Testa autorização por papéis e controle de acesso.
 
-Autor: Sistema SAP
+Autor: Sistema GERPED
 Data: Outubro 2025
 """
 

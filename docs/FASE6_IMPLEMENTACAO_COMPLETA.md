@@ -486,6 +486,6 @@ O sistema agora possui:
 
 **Implementado por**: Cursor AI (Claude Sonnet 4.5)  
 **Data**: 08 de Outubro de 2025  
-**Projeto**: Sistema SAP  
+**Projeto**: Sistema GERPED  
 **Fase**: 6 - Observabilidade e Logs
 

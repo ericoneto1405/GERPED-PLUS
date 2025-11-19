@@ -24,7 +24,7 @@ Uso:
     
     business_operation('pedido', 'criacao')
 
-Autor: Sistema SAP
+Autor: Sistema GERPED
 """
 
 from prometheus_client import Counter, Histogram, Gauge, generate_latest, REGISTRY

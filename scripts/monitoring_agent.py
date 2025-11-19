@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Monitoramento ativo básico para o go-live do Sistema SAP.
+Monitoramento ativo básico para o go-live do Sistema GERPED.
 
 Coleta métricas de CPU, memória e latência HTTP do endpoint informado
 e grava em stdout e/ou arquivo JSONL.

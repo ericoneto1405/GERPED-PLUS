@@ -27,7 +27,7 @@ Uso:
     # Invalidar cache manualmente
     invalidate_cache(['pedido.criado'])
 
-Autor: Sistema SAP - Fase 8
+Autor: Sistema GERPED - Fase 8
 Data: Outubro 2025
 """
 

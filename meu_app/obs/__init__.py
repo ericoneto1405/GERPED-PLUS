@@ -9,7 +9,7 @@ Componentes:
 - metrics: Métricas Prometheus para monitoramento
 - middleware: Middleware de logging e rastreamento de requests
 
-Autor: Sistema SAP - Fase 6
+Autor: Sistema GERPED - Fase 6
 Data: Outubro 2025
 """
 

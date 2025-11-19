@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Análise de Qualidade de Código - Sistema SAP
+Análise de Qualidade de Código - Sistema GERPED
 ===========================================
 
 Script para identificar problemas de qualidade de código:

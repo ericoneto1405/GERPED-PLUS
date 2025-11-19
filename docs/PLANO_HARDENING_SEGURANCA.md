@@ -1,4 +1,4 @@
-# 🔒 Plano de Hardening de Segurança - Sistema SAP
+# 🔒 Plano de Hardening de Segurança - Sistema GERPED
 
 ## 📊 Status de Segurança Atual
 
@@ -202,7 +202,7 @@
 | CI/CD Security | 80% | 8/10 |
 | **TOTAL** | **90%** | **90/100** |
 
-**Sistema SAP**: 🟢 **NÍVEL 9.0/10 DE SEGURANÇA**
+**Sistema GERPED**: 🟢 **NÍVEL 9.0/10 DE SEGURANÇA**
 
 ---
 
@@ -721,7 +721,7 @@ Criar `SECURITY_AUDIT.md` mostrando:
 
 ## 🏆 CONCLUSÃO
 
-O **Sistema SAP** JÁ POSSUI:
+O **Sistema GERPED** JÁ POSSUI:
 - ✅ **CSRF Protection** completo
 - ✅ **Talisman** (headers + CSP + HSTS)
 - ✅ **Rate Limiting** configurado

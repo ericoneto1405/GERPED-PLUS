@@ -1,5 +1,5 @@
 # ==============================================================================
-# Dockerfile - Sistema SAP (Hardened)
+# Dockerfile - Sistema GERPED (Hardened)
 # ==============================================================================
 
 # Build stage
@@ -31,7 +31,7 @@ RUN pip install --no-cache-dir --user -r requirements.txt
 FROM python:3.9-alpine
 
 # Metadados
-LABEL maintainer="Sistema SAP"
+LABEL maintainer="Sistema GERPED"
 LABEL version="2.0"
 LABEL description="Sistema de Gestão Empresarial SAP - Hardened"
 

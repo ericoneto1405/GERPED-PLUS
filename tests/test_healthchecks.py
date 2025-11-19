@@ -4,7 +4,7 @@ Testes de Healthchecks
 
 Testes para endpoints de health e readiness.
 
-Autor: Sistema SAP - Fase 9
+Autor: Sistema GERPED - Fase 9
 """
 
 import pytest

@@ -184,7 +184,7 @@ def main():
     base_path = Path('/Users/ericobrandao/Projects/SAP')
     
     print("╔═══════════════════════════════════════════════════════════════╗")
-    print("║     🔒 ANÁLISE DE CORREÇÕES DE SEGURANÇA - Sistema SAP       ║")
+    print("║     🔒 ANÁLISE DE CORREÇÕES DE SEGURANÇA - Sistema GERPED       ║")
     print("╚═══════════════════════════════════════════════════════════════╝")
     print()
     

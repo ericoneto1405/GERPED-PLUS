@@ -147,7 +147,7 @@
 
 
 Data: 08 de Outubro de 2025
-Desenvolvedor: Sistema SAP - Clean Architecture Team
+Desenvolvedor: Sistema GERPED - Clean Architecture Team
 Status: ✅ COMPLETO E APROVADO
 Próxima Fase: Fase 5 - Banco e Migrations
 

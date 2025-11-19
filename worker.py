@@ -30,7 +30,7 @@ def main():
     redis_url = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
     
     print("=" * 70)
-    print("🚀 RQ Worker - Sistema SAP")
+    print("🚀 RQ Worker - Sistema GERPED")
     print("=" * 70)
     print(f"Redis: {redis_url}")
     print(f"Filas: ocr")

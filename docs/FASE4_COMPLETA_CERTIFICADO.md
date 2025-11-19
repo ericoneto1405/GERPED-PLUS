@@ -7,7 +7,7 @@
 ║                                                                       ║
 ║                    ✅ 100% IMPLEMENTADA ✅                            ║
 ║                                                                       ║
-║                   Sistema SAP - Gerenciamento                         ║
+║                   Sistema GERPED - Gerenciamento                         ║
 ║                                                                       ║
 ║                     Data: 08 de Outubro de 2025                       ║
 ║                                                                       ║
@@ -503,7 +503,7 @@ Com a Fase 4 completa, as próximas fases ficam **MUITO** mais fáceis:
 ## 🎊 ASSINATURAS E APROVAÇÕES
 
 ### Implementação
-**Desenvolvedor**: Sistema SAP - Clean Architecture Team  
+**Desenvolvedor**: Sistema GERPED - Clean Architecture Team  
 **Data**: 08/10/2025  
 **Status**: ✅ APROVADO  
 
@@ -533,7 +533,7 @@ Com a Fase 4 completa, as próximas fases ficam **MUITO** mais fáceis:
 ║                    🏆 CERTIFICADO OFICIAL 🏆                          ║
 ║                                                                       ║
 ║         Este documento certifica que a FASE 4 do projeto             ║
-║              Sistema SAP - Gerenciamento Empresarial                  ║
+║              Sistema GERPED - Gerenciamento Empresarial                  ║
 ║                                                                       ║
 ║         Foi implementada com SUCESSO e atende a 100% dos             ║
 ║         requisitos estabelecidos em docs/fases_corretivas.md         ║

@@ -1,4 +1,4 @@
-# 🏢 Sistema SAP - Gestão de Pedidos e Vendas
+# 🏢 Sistema GERPED - Gestão de Pedidos e Vendas
 
 Sistema completo de gestão empresarial desenvolvido em Flask.
 

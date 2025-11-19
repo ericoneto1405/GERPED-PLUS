@@ -200,7 +200,7 @@
 
 
 Data: 08/10/2025
-Responsável: Sistema SAP - Clean Architecture Team
+Responsável: Sistema GERPED - Clean Architecture Team
 Status: ✅ COMPLETO E CERTIFICADO
 Próxima Fase: Fase 5 - Banco e Migrations com Alembic
 

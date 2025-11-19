@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Automação de deploy com rollback seguro para o Sistema SAP
+# Automação de deploy com rollback seguro para o Sistema GERPED
 # Uso: deploy_with_rollback.sh /caminho/artefato.tar.gz
 
 set -euo pipefail

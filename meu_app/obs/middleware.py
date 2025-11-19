@@ -11,7 +11,7 @@ Features:
 - Correlação de logs via request_id
 - Métricas automáticas de HTTP
 
-Autor: Sistema SAP
+Autor: Sistema GERPED
 """
 
 import time

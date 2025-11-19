@@ -1,4 +1,4 @@
-# Makefile - Sistema SAP
+# Makefile - Sistema GERPED
 # =======================
 # Comandos úteis para desenvolvimento
 #
@@ -9,7 +9,7 @@
 #   make lint          - Executa linters
 #   make format        - Formata código
 #
-# Autor: Sistema SAP - Fase 9
+# Autor: Sistema GERPED - Fase 9
 
 .PHONY: help dev test lint format clean install migrate security
 
@@ -28,7 +28,7 @@ RED := \033[0;31m
 NC := \033[0m # No Color
 
 help:
-	@echo "$(BLUE)Sistema SAP - Comandos Disponíveis$(NC)"
+	@echo "$(BLUE)Sistema GERPED - Comandos Disponíveis$(NC)"
 	@echo ""
 	@echo "$(GREEN)Desenvolvimento:$(NC)"
 	@echo "  make dev              - Inicia servidor de desenvolvimento"

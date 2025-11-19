@@ -11,7 +11,7 @@ Papéis definidos:
 - VENDEDOR: Painel do vendedor
 - COMUM: Acesso básico (clientes, produtos, pedidos)
 
-Autor: Sistema SAP
+Autor: Sistema GERPED
 Data: Outubro 2025
 """
 

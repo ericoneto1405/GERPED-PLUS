@@ -203,7 +203,7 @@ python worker.py
 **Saída esperada**:
 ```
 ======================================================================
-🚀 RQ Worker - Sistema SAP
+🚀 RQ Worker - Sistema GERPED
 ======================================================================
 Redis: redis://localhost:6379/0
 Filas: ocr

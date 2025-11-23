@@ -33,9 +33,9 @@ class FinanceiroConfig:
     # Configurações Google Vision
     GOOGLE_VISION_CREDENTIALS_PATH = os.getenv('FINANCEIRO_GVISION_CREDENTIALS_PATH')
     GOOGLE_VISION_DETECTION_TYPE = 'TEXT_DETECTION'  # ou 'DOCUMENT_TEXT_DETECTION'
-    GOOGLE_VISION_INPUT_BUCKET = 'sap-ocr-input'
+    GOOGLE_VISION_INPUT_BUCKET = 'gerped-ocr-input'
     GOOGLE_VISION_INPUT_PREFIX = 'financeiro/ocr/input'
-    GOOGLE_VISION_OUTPUT_BUCKET = 'sap-ocr-output'
+    GOOGLE_VISION_OUTPUT_BUCKET = 'gerped-ocr-output'
     GOOGLE_VISION_OUTPUT_PREFIX = 'financeiro/ocr/output'
     
     # Configurações de validação

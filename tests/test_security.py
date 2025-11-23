@@ -32,6 +32,7 @@ class SecurityTestConfig(TestingConfig):
 @pytest.fixture
 def security_app():
     app = create_app(SecurityTestConfig)
+    app.config.update(SESSION_COOKIE_SAMESITE="Strict")
 
     with app.app_context():
         db.create_all()
@@ -124,7 +125,8 @@ def test_session_cookie_flags(security_app):
     cookies = response.headers.getlist("Set-Cookie")
     assert cookies, "Expected a session cookie to be issued"
 
-    session_cookie = next((c for c in cookies if "sap_session" in c), "")
+    cookie_name = security_app.config.get("SESSION_COOKIE_NAME", "session")
+    session_cookie = next((c for c in cookies if cookie_name in c), "")
     assert "Secure" in session_cookie
     assert "HttpOnly" in session_cookie
     assert "SameSite=Strict" in session_cookie

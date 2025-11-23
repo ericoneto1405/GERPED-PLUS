@@ -34,7 +34,7 @@ help:
 	@echo "  make dev              - Inicia servidor de desenvolvimento"
 	@echo "  make server-start     - Inicia servidor (com gerenciamento)"
 	@echo "  make server-stop      - Para servidor"
-	@echo "  make server-restart   - Reinicia servidor"
+	@echo "  make restart          - Reinicia servidor"
 	@echo "  make server-status    - Status do servidor"
 	@echo "  make server-logs      - Mostra logs em tempo real"
 	@echo "  make install          - Instala dependências"
@@ -73,7 +73,7 @@ server-start:
 server-stop:
 	@bash scripts/manage_server.sh stop
 
-server-restart:
+restart:
 	@bash scripts/manage_server.sh restart
 
 server-status:

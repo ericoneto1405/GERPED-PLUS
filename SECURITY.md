@@ -1,4 +1,4 @@
-# 🔒 RELATÓRIO DE SEGURANÇA - SISTEMA SAP
+# 🔒 RELATÓRIO DE SEGURANÇA - SISTEMA GERPED
 
 **Data:** Outubro 2025  
 **Versão:** 2.0  
@@ -281,13 +281,13 @@ pytest tests/test_security.py -v              # Testes gerais
 ## 📞 CONTATO
 
 **Equipe de Segurança:**
-- Email: security@sistema-sap.com
+- Email: security@sistema-gerped.com
 - Slack: #security-team
 - PagerDuty: Security On-Call
 
 **Para reportar vulnerabilidade:**
 1. **NÃO** abra issue pública
-2. Envie email para security@sistema-sap.com
+2. Envie email para security@sistema-gerped.com
 3. Inclua: descrição, steps to reproduce, impacto
 4. Resposta em até 48h
 

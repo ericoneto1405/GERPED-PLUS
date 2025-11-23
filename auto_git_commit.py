@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Sistema de Auto-Commit para Git
-Desenvolvido para: github.com/ericoneto1405/sistema-sap
+Desenvolvido para: github.com/ericoneto1405/sistema-gerped
 """
 
 import os

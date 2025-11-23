@@ -28,19 +28,35 @@ from .exceptions import (
 def listar_financeiro():
     """Lista dados financeiros"""
     try:
-        tipo = request.args.get('filtro', 'pendentes')
+        tipo = request.args.get('filtro', 'todos')
         mes = request.args.get('mes', '')
         ano = request.args.get('ano', '')
+        ordenar_por = request.args.get('sort', 'data')
+        direcao = request.args.get('direction', 'desc')
+
+        campos_validos = ['id', 'cliente', 'data', 'status', 'valor', 'pago', 'saldo']
+        if ordenar_por not in campos_validos:
+            ordenar_por = 'data'
+        if direcao not in ['asc', 'desc']:
+            direcao = 'desc'
         
-        pedidos = FinanceiroService.listar_pedidos_financeiro(tipo, mes, ano)
+        pedidos = FinanceiroService.listar_pedidos_financeiro(tipo, mes, ano, ordenar_por, direcao)
         
         current_app.logger.info(f"Financeiro acessado por {session.get('usuario_nome', 'N/A')}")
         
-        return render_template('financeiro.html', pedidos=pedidos, filtro=tipo, mes=mes, ano=ano)
+        return render_template(
+            'financeiro.html',
+            pedidos=pedidos,
+            filtro=tipo,
+            mes=mes,
+            ano=ano,
+            current_sort=ordenar_por,
+            current_direction=direcao
+        )
     except Exception as e:
         current_app.logger.error(f"Erro ao listar financeiro: {str(e)}")
         flash(f"Erro ao carregar dados financeiros: {str(e)}", 'error')
-        return render_template('financeiro.html', pedidos=[], filtro='pendentes')
+        return render_template('financeiro.html', pedidos=[], filtro='pendentes', current_sort='data', current_direction='desc')
 
 @financeiro_bp.route('/exportar', methods=['GET'])
 @login_obrigatorio
@@ -297,6 +313,7 @@ def processar_recibo_ocr():
                 'ocr_status': 'failed',
                 'ocr_message': 'OCR temporariamente indisponível - digite os dados manualmente',
                 'ocr_texto': None,
+                'ocr_error': str(ocr_error)
             }
             ml_result = PaymentValidatorService.evaluate_text(None)
             response_data['ml_backend'] = ml_result.get('backend')
@@ -315,31 +332,6 @@ def processar_recibo_ocr():
         # Limpar o arquivo temporário
         if os.path.exists(file_path):
             os.remove(file_path)
-
-@financeiro_bp.route('/comprovantes', methods=['GET'])
-@login_obrigatorio
-@permissao_necessaria('acesso_financeiro')
-def listar_comprovantes():
-    """Lista comprovantes de pagamento organizados por cliente"""
-    try:
-        mes = request.args.get('mes', '')
-        ano = request.args.get('ano', '')
-        
-        dados = FinanceiroService.listar_comprovantes_por_cliente(mes, ano)
-        
-        current_app.logger.info(f"Comprovantes acessados por {session.get('usuario_nome', 'N/A')}")
-        
-        return render_template('comprovantes_pagamento.html', 
-                             clientes=dados['clientes'],
-                             total_comprovantes=dados['total_comprovantes'],
-                             mes=mes, 
-                             ano=ano)
-    except Exception as e:
-        current_app.logger.error(f"Erro ao listar comprovantes: {str(e)}")
-        flash(f"Erro ao carregar comprovantes: {str(e)}", 'error')
-        return render_template('comprovantes_pagamento.html', 
-                             clientes=[], 
-                             total_comprovantes=0)
 
 @financeiro_bp.route('/editar-pagamento/<int:pedido_id>', methods=['GET', 'POST'])
 @login_obrigatorio

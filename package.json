@@ -1,7 +1,7 @@
 {
-  "name": "sap-coletas",
+  "name": "gerped-coletas",
   "version": "1.0.0",
-  "description": "Sistema de gestão SAP - Módulo Coletas",
+  "description": "Sistema de gestão GERPED - Módulo Coletas",
   "scripts": {
     "lint:js": "eslint 'meu_app/static/js/coletas/**/*.js' --ext .js",
     "test:coletas": "pytest tests/coletas/ -q",

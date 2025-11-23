@@ -18,7 +18,7 @@
       "ram_percent",
       "latency_ms"
     ],
-    "sample_command": "python3 scripts/monitoring_agent.py --target-url http://localhost:5000/healthz --interval 60 --output /var/log/sap/monitoring.jsonl"
+    "sample_command": "python3 scripts/monitoring_agent.py --target-url http://localhost:5000/healthz --interval 60 --output /var/log/gerped/monitoring.jsonl"
   },
   "logging": {
     "stack": "Grafana + Loki + Promtail + Alertmanager",

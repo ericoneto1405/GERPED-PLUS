@@ -2,11 +2,12 @@
 Rotas consolidadas do módulo de coletas
 Integra funcionalidades do módulo logística
 """
-from flask import Blueprint, render_template, current_app, flash, request, redirect, url_for, session, send_file
+from flask import Blueprint, render_template, current_app, flash, request, redirect, url_for, session, send_file, abort
 from ..decorators import login_obrigatorio
 from app.auth.rbac import requires_logistica
 import re
 from typing import Optional
+from pathlib import Path
 
 coletas_bp = Blueprint('coletas', __name__, url_prefix='/coletas')
 from .services.coleta_service import ColetaService
@@ -59,6 +60,11 @@ def _cpf_valido(cpf: str) -> bool:
         if digito != int(cpf[tamanho]):
             return False
     return True
+
+
+def _is_ajax_request() -> bool:
+    """Detecta requisições AJAX/Fetch."""
+    return request.headers.get('X-Requested-With') == 'XMLHttpRequest'
 
 
 def _parse_quantidade(raw_valor: str) -> Optional[int]:
@@ -128,17 +134,25 @@ def dashboard():
 def processar_coleta(pedido_id):
     """Processa uma coleta (funcionalidade original)"""
     if request.method == 'POST':
+        is_ajax = _is_ajax_request()
+
+        def respond_error(message: str, category: str = 'error', status: int = 400):
+            if is_ajax:
+                return {'success': False, 'message': message}, status
+            flash(message, category)
+            return redirect(url_for('coletas.processar_coleta', pedido_id=pedido_id))
+
         try:
-            # CORREÇÃO: Buscar detalhes ANTES de processar a coleta
             detalhes = ColetaService.buscar_detalhes_pedido(pedido_id)
             if not detalhes:
+                if is_ajax:
+                    return {'success': False, 'message': 'Pedido não encontrado ou não disponível para coleta.'}, 404
                 flash('Pedido não encontrado ou não disponível para coleta', 'error')
                 return redirect(url_for('coletas.dashboard'))
 
             cliente_service = ClienteService()
             retirantes_autorizados = cliente_service.listar_retirantes_autorizados(detalhes['cliente'].id)
             
-            # Extrair dados do formulário
             nome_retirada = request.form.get('nome_retirada', '').strip()
             documento_retirada_raw = request.form.get('documento_retirada', '').strip()
             nome_conferente = request.form.get('nome_conferente', '').strip()
@@ -146,25 +160,21 @@ def processar_coleta(pedido_id):
             observacoes = request.form.get('observacoes', '').strip()
 
             if not _nome_valido(nome_retirada):
-                flash('Informe o nome completo de quem está retirando (somente letras).', 'error')
-                return redirect(url_for('coletas.processar_coleta', pedido_id=pedido_id))
+                return respond_error('Informe o nome completo de quem está retirando (somente letras).')
 
             if not _nome_valido(nome_conferente):
-                flash('Informe o nome completo do conferente (somente letras).', 'error')
-                return redirect(url_for('coletas.processar_coleta', pedido_id=pedido_id))
+                return respond_error('Informe o nome completo do conferente (somente letras).')
 
             nome_retirada = ' '.join(nome_retirada.split())
             nome_conferente = ' '.join(nome_conferente.split())
 
             documento_retirada = _normalizar_cpf(documento_retirada_raw)
             if not documento_retirada:
-                flash('CPF da pessoa que retira é inválido.', 'error')
-                return redirect(url_for('coletas.processar_coleta', pedido_id=pedido_id))
+                return respond_error('CPF da pessoa que retira é inválido.')
 
             cpf_conferente = _normalizar_cpf(cpf_conferente_raw)
             if not cpf_conferente:
-                flash('CPF do conferente é inválido.', 'error')
-                return redirect(url_for('coletas.processar_coleta', pedido_id=pedido_id))
+                return respond_error('CPF do conferente é inválido.')
 
             limites_quantidade = {}
             for item in detalhes['itens']:
@@ -173,7 +183,6 @@ def processar_coleta(pedido_id):
                 max_permitido = max(0, min(pendente, estoque_disp))
                 limites_quantidade[item.id] = max_permitido
             
-            # Extrair itens da coleta
             itens_coleta = []
             try:
                 for key, value in request.form.items():
@@ -191,10 +200,7 @@ def processar_coleta(pedido_id):
                         raise ValueError('Item informado não corresponde ao pedido selecionado.')
 
                     quantidade = _parse_quantidade(value)
-                    if quantidade is None:
-                        continue
-
-                    if limite == 0:
+                    if quantidade is None or limite == 0:
                         continue
 
                     if quantidade > limite:
@@ -215,14 +221,11 @@ def processar_coleta(pedido_id):
                         "conferente_mascarado": _mascarar_cpf(cpf_conferente),
                     },
                 )
-                flash(str(value_error), 'error')
-                return redirect(url_for('coletas.processar_coleta', pedido_id=pedido_id))
+                return respond_error(str(value_error))
             
             if not itens_coleta:
-                flash('Selecione pelo menos um item para coleta!', 'error')
-                return redirect(url_for('coletas.processar_coleta', pedido_id=pedido_id))
+                return respond_error('Selecione pelo menos um item para coleta!', status=422)
             
-            # Processar coleta
             sucesso, mensagem, coleta = ColetaService.processar_coleta(
                 pedido_id=pedido_id,
                 responsavel_coleta_id=session.get('usuario_id'),
@@ -234,8 +237,10 @@ def processar_coleta(pedido_id):
                 cpf_conferente=cpf_conferente
             )
             
+            alerta_autorizacao = None
             autorizados_ativos = {r.cpf for r in retirantes_autorizados if r.ativo}
             if documento_retirada not in autorizados_ativos:
+                alerta_autorizacao = '⚠️ Retirante informado não está na lista autorizada. Confirme com o cliente antes de liberar.'
                 current_app.logger.warning(
                     "Tentativa de retirada por CPF não autorizado",
                     extra={
@@ -243,67 +248,89 @@ def processar_coleta(pedido_id):
                         "documento_mascarado": _mascarar_cpf(documento_retirada),
                     },
                 )
-                flash('⚠️ Retirante informado não está na lista autorizada. Confirme com o cliente antes de liberar.', 'warning')
+                if not is_ajax:
+                    flash(alerta_autorizacao, 'warning')
 
-            if sucesso:
-                # CORREÇÃO: Usar detalhes coletados ANTES da mudança de status
-                try:
-                    itens_recibo = []
-                    for item_data in itens_coleta:
-                        for item in detalhes['itens']:
-                            if item.id == item_data['item_id']:
-                                itens_recibo.append({
-                                    'produto_nome': item.produto.nome,
-                                    'quantidade': item_data['quantidade']
-                                })
-                                break
-                    
-                    coleta_data = {
-                        'pedido_id': pedido_id,
-                        'data_coleta': coleta.data_coleta if hasattr(coleta, 'data_coleta') else None,
-                        'status': coleta.status.value if hasattr(coleta, 'status') else 'PROCESSADA',
-                        'nome_retirada': nome_retirada,
-                        'documento_retirada': _formatar_cpf(documento_retirada),
-                        'nome_conferente': nome_conferente,
-                        'cpf_conferente': _formatar_cpf(cpf_conferente),
-                        'itens_coleta': itens_recibo
-                    }
-                    
-                    try:
-                        job_id = ReceiptService.enfileirar_recibo_pdf(coleta_data)
-                        if job_id:
-                            flash(f'{mensagem} Recibo em processamento. O download será liberado em instantes.', 'info')
-                            return redirect(url_for('coletas.status_recibo', job_id=job_id, pedido_id=pedido_id))
-                        
-                        pdf_path = ReceiptService.gerar_recibo_pdf(coleta_data)
-                        
-                        flash(f'{mensagem} Recibo gerado com sucesso!', 'success')
-                        return send_file(pdf_path, as_attachment=True, download_name=f'recibo_coleta_{pedido_id}.pdf')
-                    
-                    except ConfigurationError as e:
-                        current_app.logger.error("Dependência ausente para geração de recibo", exc_info=e)
-                        flash('Dependência para geração de recibos não encontrada. Contate o administrador.', 'error')
-                        return redirect(url_for('coletas.index'))
-                    except FileProcessingError as e:
-                        current_app.logger.error("Erro ao processar geração de recibo", exc_info=e)
-                        flash(f'{mensagem} (Erro ao gerar recibo)', 'warning')
-                        return redirect(url_for('coletas.index'))
-                    except Exception as e:
-                        current_app.logger.error(f"Erro inesperado ao gerar recibo: {str(e)}", exc_info=e)
-                        flash(f'{mensagem} (Erro ao gerar recibo)', 'warning')
-                        return redirect(url_for('coletas.index'))
+            if not sucesso:
+                return respond_error(mensagem)
+
+            try:
+                itens_recibo = []
+                for item_data in itens_coleta:
+                    for item in detalhes['itens']:
+                        if item.id == item_data['item_id']:
+                            itens_recibo.append({
+                                'produto_nome': item.produto.nome,
+                                'quantidade': item_data['quantidade']
+                            })
+                            break
                 
+                coleta_data = {
+                    'pedido_id': pedido_id,
+                    'data_coleta': coleta.data_coleta if hasattr(coleta, 'data_coleta') else None,
+                    'status': coleta.status.value if hasattr(coleta, 'status') else 'PROCESSADA',
+                    'cliente_nome': detalhes.get('cliente').nome if detalhes.get('cliente') else 'N/A',
+                    'nome_retirada': nome_retirada,
+                    'documento_retirada': _formatar_cpf(documento_retirada),
+                    'nome_conferente': nome_conferente,
+                    'cpf_conferente': _formatar_cpf(cpf_conferente),
+                    'itens_coleta': itens_recibo
+                }
+                
+                try:
+                    job_id = ReceiptService.enfileirar_recibo_imagem(coleta_data)
+                    if job_id:
+                        status_url = url_for('coletas.status_recibo', job_id=job_id, pedido_id=pedido_id)
+                        msg = f'{mensagem} Recibo em processamento. O download será liberado em instantes.'
+                        if is_ajax:
+                            return {'success': True, 'message': msg, 'status_url': status_url}
+                        flash(msg, 'info')
+                        return redirect(status_url)
+                    
+                    imagem_path = ReceiptService.gerar_recibo_imagem(coleta_data)
+                    download_url = url_for(
+                        'coletas.visualizar_recibo',
+                        filename=os.path.basename(imagem_path),
+                        _external=True
+                    )
+                    
+                    sucesso_msg = f'{mensagem} Recibo gerado com sucesso!'
+                    if alerta_autorizacao and is_ajax:
+                        sucesso_msg = f"{sucesso_msg} {alerta_autorizacao}"
+                    elif alerta_autorizacao:
+                        flash(alerta_autorizacao, 'warning')
+
+                    if is_ajax:
+                        return {
+                            'success': True,
+                            'message': sucesso_msg,
+                            'download_url': download_url,
+                        }
+                    
+                    flash(sucesso_msg, 'success')
+                    return send_file(
+                        imagem_path,
+                        mimetype='image/jpeg'
+                    )
+                
+                except ConfigurationError as e:
+                    current_app.logger.error("Dependência ausente para geração de recibo", exc_info=e)
+                    return respond_error('Dependência para geração de recibos não encontrada. Contate o administrador.', status=500)
+                except FileProcessingError as e:
+                    current_app.logger.error("Erro ao processar geração de recibo", exc_info=e)
+                    return respond_error(f'{mensagem} (Erro ao gerar recibo)', category='warning', status=500)
                 except Exception as e:
-                    current_app.logger.error(f"Erro ao preparar dados do recibo: {str(e)}", exc_info=e)
-                    flash(f'{mensagem} (Erro ao preparar recibo)', 'warning')
-                    return redirect(url_for('coletas.index'))
+                    current_app.logger.error(f"Erro inesperado ao gerar recibo: {str(e)}", exc_info=e)
+                    return respond_error(f'{mensagem} (Erro ao gerar recibo)', category='warning', status=500)
             
-            else:
-                flash(mensagem, 'error')
-                return redirect(url_for('coletas.processar_coleta', pedido_id=pedido_id))
+            except Exception as e:
+                current_app.logger.error(f"Erro ao preparar dados do recibo: {str(e)}", exc_info=e)
+                return respond_error(f'{mensagem} (Erro ao preparar recibo)', category='warning', status=500)
                 
         except Exception as e:
             current_app.logger.error(f"Erro ao processar coleta: {str(e)}")
+            if is_ajax:
+                return {'success': False, 'message': 'Erro interno do servidor ao processar a coleta.'}, 500
             flash('Erro interno do servidor ao processar a coleta.', 'error')
             return redirect(url_for('coletas.processar_coleta', pedido_id=pedido_id))
     
@@ -340,14 +367,13 @@ def status_recibo(job_id):
     
     if status_info.get('status') == 'finished':
         result = status_info.get('result') or {}
-        pdf_path = result.get('pdf_path')
-        if pdf_path and os.path.exists(pdf_path):
-            download_name = os.path.basename(pdf_path)
-            return send_file(pdf_path, as_attachment=True, download_name=download_name)
+        arquivo_path = result.get('image_path') or result.get('pdf_path')
+        if arquivo_path and os.path.exists(arquivo_path):
+            return send_file(arquivo_path, mimetype='image/jpeg')
         
         current_app.logger.error(
             "Recibo finalizado, mas arquivo não encontrado",
-            extra={"job_id": job_id, "pdf_path": pdf_path},
+            extra={"job_id": job_id, "arquivo_path": arquivo_path},
         )
         flash('Recibo finalizado, mas o arquivo não foi localizado no servidor.', 'error')
         return redirect(url_for('coletas.index'))
@@ -369,6 +395,25 @@ def status_recibo(job_id):
         progress=progress,
         stage=stage,
     )
+
+
+@coletas_bp.route('/recibos/arquivo/<path:filename>')
+@login_obrigatorio
+@requires_logistica
+def visualizar_recibo(filename):
+    """Exibe o recibo gerado em formato JPG."""
+    recibos_dir = Path(current_app.instance_path) / 'recibos'
+    try:
+        safe_dir = recibos_dir.resolve()
+        file_path = (safe_dir / filename).resolve()
+        file_path.relative_to(safe_dir)
+    except (FileNotFoundError, ValueError):
+        abort(404)
+
+    if not file_path.exists():
+        abort(404)
+
+    return send_file(str(file_path), mimetype='image/jpeg')
 
 
 @coletas_bp.route('/detalhes/<int:pedido_id>')

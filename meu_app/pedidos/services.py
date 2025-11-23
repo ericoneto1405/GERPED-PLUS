@@ -16,7 +16,7 @@ from ..models import (
 )
 from flask import current_app, session
 from typing import Dict, List, Tuple, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import json
 from collections import defaultdict
 from decimal import Decimal, InvalidOperation
@@ -294,7 +294,7 @@ class PedidoService:
             # Confirmar pedido
             pedido.confirmado_comercial = True
             pedido.confirmado_por = session.get('usuario_nome', 'Usuário')
-            pedido.data_confirmacao = datetime.utcnow()
+            pedido.data_confirmacao = datetime.now(timezone.utc)
             
             db.session.commit()
             
@@ -333,7 +333,7 @@ class PedidoService:
             List[Dict]: Lista de pedidos com informações calculadas e ordenadas
         """
         try:
-            pedidos_query = Pedido.query
+            pedidos_query = Pedido.query.order_by(Pedido.data.desc())
             
             # Filtro por data
             if data_inicio:
@@ -362,29 +362,39 @@ class PedidoService:
             for pedido in pedidos:
                 total_venda = sum(i.valor_total_venda for i in pedido.itens)
                 total_pago = sum(p.valor for p in pedido.pagamentos)
-                
-                # Determinar status baseado na confirmação comercial e pagamentos
-                if not pedido.confirmado_comercial:
-                    status = 'Aguardando Comercial'
-                elif total_pago >= total_venda and total_venda > 0:
-                    status = 'LIBERADO P/ FINANCEIRO'
-                else:
-                    status = 'Pendente'
+
+                # Determinar status exibido e código de fase (usado para filtros)
+                fase_status = 'AGUARDANDO FINANCEIRO'
+                status_codigo = 'aguardando_financeiro'
+
+                if pedido.status == StatusPedido.PAGAMENTO_APROVADO:
+                    fase_status = 'LIBERADO PARA COLETA'
+                    status_codigo = 'liberado_coleta'
+                elif pedido.status == StatusPedido.COLETA_PARCIAL:
+                    fase_status = 'COLETADO PARCIAL'
+                    status_codigo = 'coletado_parcial'
+                elif pedido.status == StatusPedido.COLETA_CONCLUIDA:
+                    fase_status = 'COLETA CONCLUÍDA'
+                    status_codigo = 'coleta_concluida'
+                elif pedido.status == StatusPedido.CANCELADO:
+                    fase_status = 'CANCELADO'
+                    status_codigo = 'cancelado'
                 
                 # Aplicar filtro de status
                 if filtro_status != 'todos':
-                    if filtro_status == 'aguardando comercial' and status != 'Aguardando Comercial':
+                    if filtro_status == 'aguardando_financeiro' and status_codigo != 'aguardando_financeiro':
                         continue
-                    elif filtro_status == 'liberado p/ financeiro' and status != 'LIBERADO P/ FINANCEIRO':
+                    elif filtro_status == 'liberado_coleta' and status_codigo != 'liberado_coleta':
                         continue
-                    elif filtro_status == 'pendente' and status != 'Pendente':
+                    elif filtro_status == 'coletado_parcial' and status_codigo not in ('coletado_parcial', 'coleta_concluida'):
                         continue
                 
                 resultado.append({
                     'pedido': pedido,
                     'total_venda': float(total_venda),
                     'total_pago': float(total_pago),
-                    'status': status,
+                    'status': fase_status,
+                    'status_codigo': status_codigo,
                     'cliente_nome': pedido.cliente.nome,
                     'data_pedido': pedido.data,
                     'id_pedido': pedido.id
@@ -400,13 +410,17 @@ class PedidoService:
             elif ordenar_por == 'valor':
                 resultado.sort(key=lambda x: x['total_venda'], reverse=(direcao == 'desc'))
             elif ordenar_por == 'status':
-                # Ordenação por status com prioridade
                 status_order = {
-                    'Aguardando Comercial': 1,
-                    'Pendente': 2,
-                    'LIBERADO P/ FINANCEIRO': 3
+                    'aguardando_financeiro': 1,
+                    'liberado_coleta': 2,
+                    'coletado_parcial': 3,
+                    'coleta_concluida': 4,
+                    'cancelado': 5
                 }
-                resultado.sort(key=lambda x: status_order.get(x['status'], 999), reverse=(direcao == 'desc'))
+                resultado.sort(
+                    key=lambda x: status_order.get(x.get('status_codigo'), 999),
+                    reverse=(direcao == 'desc')
+                )
             
             return resultado
             

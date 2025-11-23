@@ -97,6 +97,10 @@ class FileUploadValidator:
             file_size = len(file.read())
             file.seek(0)  # Voltar ao início do arquivo
             
+            # Verificar se o arquivo está vazio antes de outras validações
+            if file_size == 0:
+                return False, "Arquivo está vazio", None
+
             # Verificar tamanho do arquivo
             max_size = cls.MAX_FILE_SIZES.get(file_type, 5 * 1024 * 1024)
             if file_size > max_size:
@@ -132,10 +136,6 @@ class FileUploadValidator:
             
             elif file_mime not in cls.ALLOWED_MIME_TYPES[file_type]:
                 return False, f"Tipo de arquivo não permitido. Tipo detectado: {file_mime}", None
-            
-            # Verificar se o arquivo não está vazio
-            if file_size == 0:
-                return False, "Arquivo está vazio", None
             
             # Metadados do arquivo
             metadata = {
@@ -207,6 +207,8 @@ class FileUploadValidator:
         
         # Validar file_type (prevenir path traversal)
         safe_file_type = file_type.replace('..', '').replace('/', '').replace('\\', '')
+        if safe_file_type != file_type or not safe_file_type:
+            raise UploadSecurityError("Tentativa de path traversal detectada")
         
         # Diretório específico para o tipo de arquivo
         type_dir = os.path.join(base_upload_dir, safe_file_type)

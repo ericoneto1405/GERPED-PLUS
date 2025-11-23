@@ -65,7 +65,13 @@ class FinanceiroService:
         return None, None
     
     @staticmethod
-    def listar_pedidos_financeiro(tipo_filtro: str = 'pendentes', mes: str = '', ano: str = '') -> List[Dict]:
+    def listar_pedidos_financeiro(
+        tipo_filtro: str = 'pendentes',
+        mes: str = '',
+        ano: str = '',
+        ordenar_por: str = 'data',
+        direcao: str = 'desc'
+    ) -> List[Dict]:
         """
         Lista pedidos para análise financeira
         
@@ -75,7 +81,7 @@ class FinanceiroService:
             ano: Ano para filtrar
             
         Returns:
-            List[Dict]: Lista de pedidos com informações financeiras
+            List[Dict]: Lista de pedidos com informações financeiras ordenados
         """
         try:
             # IMPORTANTE: O módulo financeiro só deve mostrar pedidos confirmados pelo comercial
@@ -94,37 +100,53 @@ class FinanceiroService:
             
             resultado = []
 
+            filtro_status = (tipo_filtro or 'todos').lower()
+
             for pedido in pedidos:
-                # Usar método centralizado do modelo
                 totais = pedido.calcular_totais()
-                status = pedido.obter_status_pagamento()
-                
-                # Aplicar filtro de tipo
-                if tipo_filtro == 'pendentes' and (status == 'Pendente' or status == 'Parcial'):
+                total_pedido = totais['total_pedido']
+                total_pago = totais['total_pago']
+                saldo = max(total_pedido - total_pago, 0)
+
+                if total_pago <= 0:
+                    status_financeiro = 'AGUARDANDO'
+                elif total_pago < total_pedido:
+                    status_financeiro = 'PAGO PARCIAL'
+                else:
+                    status_financeiro = 'PAGO'
+
+                deve_incluir = (
+                    filtro_status == 'todos' or
+                    (filtro_status == 'pendentes' and status_financeiro in ('AGUARDANDO', 'PAGO PARCIAL')) or
+                    (filtro_status == 'pagos' and status_financeiro == 'PAGO')
+                )
+
+                if deve_incluir:
                     resultado.append({
                         'pedido': pedido,
-                        'total_pedido': totais['total_pedido'],
-                        'total_pago': totais['total_pago'],
-                        'saldo': totais['saldo'],
-                        'status': status
-                    })
-                elif tipo_filtro == 'pagos' and status == 'Pago':
-                    resultado.append({
-                        'pedido': pedido,
-                        'total_pedido': totais['total_pedido'],
-                        'total_pago': totais['total_pago'],
-                        'saldo': totais['saldo'],
-                        'status': status
-                    })
-                elif tipo_filtro == 'todos':
-                    resultado.append({
-                        'pedido': pedido,
-                        'total_pedido': totais['total_pedido'],
-                        'total_pago': totais['total_pago'],
-                        'saldo': totais['saldo'],
-                        'status': status
+                        'total_pedido': total_pedido,
+                        'total_pago': total_pago,
+                        'saldo': saldo,
+                        'status': status_financeiro
                     })
             
+            reverse = (direcao == 'desc')
+            if ordenar_por == 'id':
+                resultado.sort(key=lambda x: x['pedido'].id, reverse=reverse)
+            elif ordenar_por == 'cliente':
+                resultado.sort(key=lambda x: x['pedido'].cliente.nome.lower(), reverse=reverse)
+            elif ordenar_por == 'data':
+                resultado.sort(key=lambda x: x['pedido'].data, reverse=reverse)
+            elif ordenar_por == 'status':
+                status_order = {'AGUARDANDO': 1, 'PAGO PARCIAL': 2, 'PAGO': 3}
+                resultado.sort(key=lambda x: status_order.get(x['status'], 999), reverse=reverse)
+            elif ordenar_por == 'valor':
+                resultado.sort(key=lambda x: x['total_pedido'], reverse=reverse)
+            elif ordenar_por == 'pago':
+                resultado.sort(key=lambda x: x['total_pago'], reverse=reverse)
+            elif ordenar_por == 'saldo':
+                resultado.sort(key=lambda x: x['saldo'], reverse=reverse)
+
             return resultado
             
         except Exception as e:
@@ -292,87 +314,3 @@ class FinanceiroService:
                 'ano': ano
             }
     
-    @staticmethod
-    def listar_comprovantes_por_cliente(mes: str = '', ano: str = '') -> Dict:
-        """
-        Lista todos os comprovantes de pagamento organizados por cliente
-        
-        Args:
-            mes: Mês para filtrar
-            ano: Ano para filtrar
-            
-        Returns:
-            Dict: Dicionário com clientes e seus comprovantes
-        """
-        try:
-            from ..models import Pagamento, Cliente
-            
-            # Aplicar filtros de data
-            data_inicio, data_fim = FinanceiroService._get_date_range(mes, ano)
-            
-            # Query base para pagamentos com comprovantes
-            query = Pagamento.query.filter(Pagamento.caminho_recibo.isnot(None))
-            
-            if data_inicio and data_fim:
-                query = query.filter(Pagamento.data_pagamento >= data_inicio, 
-                                   Pagamento.data_pagamento <= data_fim)
-            
-            # Carregar relacionamentos necessários
-            pagamentos = query.options(
-                joinedload(Pagamento.pedido).joinedload(Pedido.cliente)
-            ).order_by(Pagamento.data_pagamento.desc()).all()
-            
-            # Organizar por cliente
-            comprovantes_por_cliente = {}
-            
-            for pagamento in pagamentos:
-                cliente_id = pagamento.pedido.cliente.id
-                cliente_nome = pagamento.pedido.cliente.nome
-                
-                if cliente_id not in comprovantes_por_cliente:
-                    comprovantes_por_cliente[cliente_id] = {
-                        'cliente': {
-                            'id': cliente_id,
-                            'nome': cliente_nome
-                        },
-                        'comprovantes': []
-                    }
-                
-                comprovantes_por_cliente[cliente_id]['comprovantes'].append({
-                    'pagamento': pagamento,
-                    'pedido_id': pagamento.pedido.id,
-                    'data_pagamento': pagamento.data_pagamento,
-                    'valor': pagamento.valor,
-                    'metodo_pagamento': pagamento.metodo_pagamento,
-                    'caminho_recibo': pagamento.caminho_recibo,
-                    'id_transacao': pagamento.id_transacao,
-                    'observacoes': pagamento.observacoes,
-                    # NOVOS CAMPOS - dados extraídos
-                    'data_comprovante': pagamento.data_comprovante,
-                    'banco_emitente': pagamento.banco_emitente,
-                    'agencia_recebedor': pagamento.agencia_recebedor,
-                    'conta_recebedor': pagamento.conta_recebedor,
-                    'chave_pix_recebedor': pagamento.chave_pix_recebedor
-                })
-            
-            # Ordenar clientes por nome
-            clientes_ordenados = sorted(
-                comprovantes_por_cliente.values(), 
-                key=lambda x: x['cliente']['nome']
-            )
-            
-            return {
-                'clientes': clientes_ordenados,
-                'total_comprovantes': sum(len(cliente['comprovantes']) for cliente in clientes_ordenados),
-                'mes': mes,
-                'ano': ano
-            }
-            
-        except Exception as e:
-            current_app.logger.error(f"Erro ao listar comprovantes por cliente: {str(e)}")
-            return {
-                'clientes': [],
-                'total_comprovantes': 0,
-                'mes': mes,
-                'ano': ano
-            }

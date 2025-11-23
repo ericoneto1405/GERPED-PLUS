@@ -52,7 +52,7 @@ class TestHealthchecks:
         assert 'service' in data
         assert 'timestamp' in data
         assert data['status'] == 'healthy'
-        assert data['service'] == 'sistema-sap'
+        assert data['service'] == 'sistema-gerped'
     
     def test_readiness_endpoint_exists(self, client):
         """Verifica se endpoint /readiness existe"""

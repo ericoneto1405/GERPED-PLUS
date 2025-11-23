@@ -33,7 +33,7 @@ FROM python:3.9-alpine
 # Metadados
 LABEL maintainer="Sistema GERPED"
 LABEL version="2.0"
-LABEL description="Sistema de Gestão Empresarial SAP - Hardened"
+LABEL description="Sistema de Gestão Empresarial GERPED - Hardened"
 
 # Instalar apenas dependências runtime
 RUN apk add --no-cache \

@@ -126,9 +126,9 @@
         </tbody>
     </table>
 
-    <p class="totais">💰 Total do Pedido: R$ {{ '%.2f' % total }}</p>
-    <p class="totais">✅ Total Pago: R$ {{ '%.2f' % pago }}</p>
-    <p class="totais">🧾 Saldo: R$ {{ '%.2f' % saldo }}</p>
+    <p class="totais">💰 Total do Pedido: {{ total | currency_brl }}</p>
+    <p class="totais">✅ Total Pago: {{ pago | currency_brl }}</p>
+    <p class="totais">🧾 Saldo: {{ saldo | currency_brl }}</p>
 
     <h2>Histórico de Pagamentos</h2>
     <table>
@@ -143,7 +143,7 @@
             {% for pagamento in pedido.pagamentos %}
             <tr>
                 <td>{{ pagamento.data_pagamento.strftime('%d/%m/%Y %H:%M') }}</td>
-                <td>R$ {{ '%.2f' % pagamento.valor }}</td>
+                <td>{{ pagamento.valor | currency_brl }}</td>
                 <td>{{ pagamento.metodo_pagamento }}</td>
             </tr>
             {% else %}

@@ -11,38 +11,39 @@
     </div>
 </div>
 
-<form method="get" style="margin-bottom: 20px; display: flex; align-items: flex-end; gap: 15px; flex-wrap: wrap;">
+<form method="get" class="filtro-form">
     <div>
         <label>Status:</label><br>
         <select name="filtro" id="filtroStatus">
             <option value="todos" {% if filtro == 'todos' %}selected{% endif %}>Todos</option>
-            <option value="aguardando comercial" {% if filtro == 'aguardando comercial' %}selected{% endif %}>Aguardando Comercial</option>
-            <option value="liberado p/ financeiro" {% if filtro == 'liberado p/ financeiro' %}selected{% endif %}>Liberado P/ Financeiro</option>
-            <option value="pendente" {% if filtro == 'pendente' %}selected{% endif %}>Pendente</option>
+            <option value="aguardando_financeiro" {% if filtro == 'aguardando_financeiro' %}selected{% endif %}>Aguardando Financeiro</option>
+            <option value="liberado_coleta" {% if filtro == 'liberado_coleta' %}selected{% endif %}>Liberado para Coleta</option>
+            <option value="coletado_parcial" {% if filtro == 'coletado_parcial' %}selected{% endif %}>Coletado (parcial ou total)</option>
         </select>
     </div>
 
-    <div style="display: flex; align-items: flex-end; gap: 15px;">
-        <div>
+    <div class="date-range">
+        <div class="form-group">
             <label>Data Inicial:</label><br>
-            <input type="date" name="data_inicio" value="{{ data_inicio }}" id="data_inicio">
+            <input type="date" name="data_inicio" value="{{ data_inicio }}" id="data_inicio" class="form-control">
         </div>
 
-        <div>
+        <div class="form-group">
             <label>Data Final:</label><br>
-            <input type="date" name="data_fim" value="{{ data_fim }}" id="data_fim">
+            <input type="date" name="data_fim" value="{{ data_fim }}" id="data_fim" class="form-control">
         </div>
 
-        <div style="margin-bottom: 8px; font-weight: bold; color: #6c757d;">OU</div>
+        <div class="divider-text">OU</div>
 
-        <div>
+        <div class="form-group">
             <label>Mês/Ano Inteiro:</label><br>
-            <input type="month" name="mes_ano" id="mes_ano" value="{{ mes_ano }}">
+            <input type="month" name="mes_ano" id="mes_ano" value="{{ mes_ano }}" class="form-control">
         </div>
     </div>
 
-    <div>
-        <button type="submit" class="botao">Filtrar</button>
+    <div class="form-group">
+        <label>&nbsp;</label><br>
+        <button type="submit" class="btn-primary">Filtrar</button>
     </div>
 </form>
 
@@ -91,7 +92,51 @@
         transform: translateY(-1px);
     }
 
-    table {
+    .filtro-form {
+        margin-bottom: 20px;
+        display: flex;
+        align-items: flex-end;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .form-control {
+        padding: 8px 12px;
+        border-radius: 6px;
+        border: 1px solid #dee2e6;
+        min-width: 200px;
+    }
+
+    .date-range {
+        display: flex;
+        align-items: flex-end;
+        gap: 15px;
+    }
+
+    .divider-text {
+        margin-bottom: 8px;
+        font-weight: bold;
+        color: #6c757d;
+    }
+
+    .table-toolbar {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        margin-bottom: 16px;
+    }
+
+    .pedidos-table thead th {
+        text-align: center;
+    }
+
+    .pedidos-table {
         width: 100%;
         border-collapse: collapse;
         background: #fff;
@@ -99,59 +144,30 @@
         margin-bottom: 30px;
     }
 
-    th, td {
-        padding: 10px;
-        border: 1px solid #ddd;
+    .pedidos-table th,
+    .pedidos-table td {
+        padding: 12px 16px;
+        border-bottom: 1px solid #f1f3f4;
         text-align: center;
     }
 
-    th {
-        background-color: #2c3e50;
-        color: #ffffff !important;
-        font-weight: bold;
-        text-align: center;
-        padding: 12px 8px;
-        border: 1px solid #ddd;
+    .pedidos-table th[data-column-index] {
         cursor: pointer;
         user-select: none;
         position: relative;
-        transition: all 0.2s ease;
+        font-weight: 600;
+        background: #f8f9fa;
     }
 
-    th:hover {
-        background-color: #34495e;
-        transform: translateY(-1px);
+    .pedidos-table th[data-column-index] .sort-indicator {
+        font-size: 0.7rem;
+        margin-left: 6px;
+        color: #adb5bd;
     }
 
-    th.sortable::after {
-        content: '↕️';
-        position: absolute;
-        right: 8px;
-        opacity: 0.6;
-        font-size: 14px;
-    }
-
-    th.sort-asc::after {
-        content: '↑';
-        opacity: 1;
-        color: #4CAF50;
-    }
-
-    th.sort-desc::after {
-        content: '↓';
-        opacity: 1;
-        color: #FF9800;
-    }
-
-    th.sortable:hover::after {
-        opacity: 1;
-    }
-
-    /* Destaque para cabeçalho ativo */
-    th.sort-asc,
-    th.sort-desc {
-        background-color: #34495e;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    .pedidos-table th.sorted-asc,
+    .pedidos-table th.sorted-desc {
+        color: #0d6efd;
     }
 
     /* Animação suave para mudanças de ordenação */
@@ -230,6 +246,24 @@
         padding: 4px 8px;
         border-radius: 4px;
     }
+
+    .status-coleta {
+        color: #0d6efd;
+        font-weight: bold;
+        background-color: rgba(13, 110, 253, 0.1);
+        padding: 4px 8px;
+        border-radius: 4px;
+    }
+
+    .status-cancelado {
+        color: #b02a37;
+        font-weight: bold;
+        background-color: rgba(220, 53, 69, 0.08);
+        padding: 4px 8px;
+        border-radius: 4px;
+    }
+
+    .icon-svg {
         height: 16px;
         fill: currentColor;
     }
@@ -408,14 +442,24 @@
 
 </style>
 
+<div class="table-toolbar" style="margin-bottom: 16px;">
+    <div class="input-group shadow-sm" style="max-width: 360px;">
+        <span class="input-group-text bg-white">
+            <i class="fas fa-search text-muted"></i>
+        </span>
+        <input type="search" id="filtroPedidos" class="form-control" placeholder="Buscar por cliente, status, valor..." />
+    </div>
+    <small class="text-muted">Clique nos cabeçalhos para ordenar e use a busca para filtrar rapidamente.</small>
+</div>
+
 <table class="pedidos-table">
     <thead>
         <tr>
-            <th class="sortable" data-sort="id">#</th>
-            <th class="sortable" data-sort="cliente">CLIENTE</th>
-            <th class="sortable" data-sort="data">DATA E HORA</th>
-            <th class="sortable" data-sort="valor">VALOR DO PEDIDO</th>
-            <th class="sortable" data-sort="status">STATUS</th>
+            <th data-column-index="0">#</th>
+            <th data-column-index="1">CLIENTE</th>
+            <th data-column-index="2">DATA E HORA</th>
+            <th data-column-index="3">VALOR DO PEDIDO</th>
+            <th data-column-index="4">STATUS</th>
             <th>VER PEDIDO</th>
             <th>AÇÕES</th>
         </tr>
@@ -426,8 +470,8 @@
             <td>#{{ item.pedido.id }}</td>
             <td>{{ item.pedido.cliente.nome }}</td>
             <td>{{ item.pedido.data.strftime('%d/%m/%Y %H:%M') }}</td>
-            <td>R$ {{ '%.2f' % item.total_venda }}</td>
-            <td class="{{ 'status-financeiro' if item.status == 'LIBERADO P/ FINANCEIRO' else 'status-comercial' if item.status == 'Aguardando Comercial' else 'status-pendente' }}">
+            <td>{{ item.total_venda | currency_brl }}</td>
+            <td class="{% if item.status_codigo == 'liberado_coleta' %}status-financeiro{% elif item.status_codigo in ['coletado_parcial', 'coleta_concluida'] %}status-coleta{% elif item.status_codigo == 'cancelado' %}status-cancelado{% else %}status-pendente{% endif %}">
                 {{ item.status }}
             </td>
             <td>
@@ -649,87 +693,95 @@ window.onclick = function(event) {
     }
 }
 
-// ===== FUNCIONALIDADE DE ORDENAÇÃO =====
-// Variáveis de controle de ordenação
-let currentSort = '{{ current_sort }}';
-let currentDirection = '{{ current_direction }}';
+document.addEventListener('DOMContentLoaded', () => {
+    const tabela = document.querySelector('.pedidos-table');
+    if (!tabela) return;
 
-// Função para ordenar
-function sortTable(column) {
-    // Determinar nova direção
-    if (currentSort === column) {
-        currentDirection = currentDirection === 'asc' ? 'desc' : 'asc';
-    } else {
-        currentSort = column;
-        currentDirection = 'asc';
-    }
-    
-    // Atualizar indicadores visuais
-    updateSortIndicators();
-    
-    // Recarregar página com novos parâmetros
-    const url = new URL(window.location);
-    url.searchParams.set('sort', currentSort);
-    url.searchParams.set('direction', currentDirection);
-    
-    // Mostrar loading
-    showLoading();
-    
-    window.location.href = url.toString();
-}
+    const tbody = tabela.querySelector('tbody');
+    const headers = tabela.querySelectorAll('th[data-column-index]');
+    const filtro = document.getElementById('filtroPedidos');
+    let currentSort = { index: null, direction: 'asc' };
 
-// Função para atualizar indicadores visuais
-function updateSortIndicators() {
-    // Remover todas as classes de ordenação
-    document.querySelectorAll('th.sortable').forEach(th => {
-        th.classList.remove('sort-asc', 'sort-desc');
-    });
-    
-    // Adicionar classe ao cabeçalho atual
-    const currentHeader = document.querySelector(`th[data-sort="${currentSort}"]`);
-    if (currentHeader) {
-        currentHeader.classList.add(`sort-${currentDirection}`);
-    }
-}
+    const parseValue = (cell, index) => {
+        if (index === 0) {
+            const numero = parseInt(cell.textContent.replace('#', '').trim(), 10);
+            return Number.isNaN(numero) ? cell.textContent.trim().toLowerCase() : numero;
+        }
+        if (index === 2) {
+            const texto = cell.textContent.trim();
+            const [data, hora] = texto.split(' ');
+            if (!data || !hora) return texto.toLowerCase();
+            const [dia, mes, ano] = data.split('/');
+            return `${ano}-${mes}-${dia} ${hora}`;
+        }
+        if (index === 3) {
+            const normalizado = cell.textContent.replace(/R\$\s*/i, '').replace(/\./g, '').replace(',', '.');
+            const valor = parseFloat(normalizado);
+            return Number.isNaN(valor) ? 0 : valor;
+        }
+        return cell.textContent.trim().toLowerCase();
+    };
 
-// Função para mostrar loading
-function showLoading() {
-    const tbody = document.querySelector('tbody');
-    if (tbody) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px;"><div class="spinner"></div><br>Ordenando dados...</td></tr>';
-    }
-}
-
-// Adicionar event listeners aos cabeçalhos
-document.addEventListener('DOMContentLoaded', function() {
-    // Atualizar indicadores
-    updateSortIndicators();
-    
-    // Adicionar event listeners
-    document.querySelectorAll('th.sortable').forEach(th => {
-        th.addEventListener('click', function() {
-            const column = this.getAttribute('data-sort');
-            sortTable(column);
-        });
-        
-        // Adicionar feedback visual no hover
-        th.addEventListener('mouseenter', function() {
-            if (!this.classList.contains('sort-asc') && !this.classList.contains('sort-desc')) {
-                this.style.background = '#34495e';
+    const applySortIndicators = () => {
+        headers.forEach((header) => {
+            header.classList.remove('sorted-asc', 'sorted-desc');
+            let indicator = header.querySelector('.sort-indicator');
+            if (!indicator) {
+                indicator = document.createElement('span');
+                indicator.className = 'sort-indicator';
+                header.appendChild(indicator);
             }
+            indicator.textContent = '';
         });
-        
-        th.addEventListener('mouseleave', function() {
-            if (!this.classList.contains('sort-asc') && !this.classList.contains('sort-desc')) {
-                this.style.background = '#2c3e50';
+
+        const target = headers[currentSort.index];
+        if (!target) return;
+        let indicator = target.querySelector('.sort-indicator');
+        if (!indicator) {
+            indicator = document.createElement('span');
+            indicator.className = 'sort-indicator';
+            target.appendChild(indicator);
+        }
+        target.classList.add(currentSort.direction === 'asc' ? 'sorted-asc' : 'sorted-desc');
+        indicator.textContent = currentSort.direction === 'asc' ? '▲' : '▼';
+    };
+
+    const sortRows = (index, direction) => {
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        rows.sort((rowA, rowB) => {
+            const a = parseValue(rowA.children[index], index);
+            const b = parseValue(rowB.children[index], index);
+
+            if (typeof a === 'number' && typeof b === 'number') {
+                return direction === 'asc' ? a - b : b - a;
             }
+            return direction === 'asc'
+                ? String(a).localeCompare(String(b))
+                : String(b).localeCompare(String(a));
+        });
+
+        rows.forEach((row) => tbody.appendChild(row));
+        applySortIndicators();
+    };
+
+    headers.forEach((header, index) => {
+        header.addEventListener('click', () => {
+            const direction = (currentSort.index === index && currentSort.direction === 'asc') ? 'desc' : 'asc';
+            currentSort = { index, direction };
+            sortRows(index, direction);
         });
     });
-    
-    // Adicionar tooltip informativo
-    document.querySelectorAll('th.sortable').forEach(th => {
-        th.title = 'Clique para ordenar (crescente/decrescente)';
-    });
+
+    if (filtro) {
+        filtro.addEventListener('input', (event) => {
+            const termo = event.target.value.trim().toLowerCase();
+            const rows = tbody.querySelectorAll('tr');
+            rows.forEach((row) => {
+                const texto = row.textContent.toLowerCase();
+                row.style.display = texto.includes(termo) ? '' : 'none';
+            });
+        });
+    }
 });
 
 // Lógica para filtros de data

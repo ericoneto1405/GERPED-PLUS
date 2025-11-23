@@ -82,6 +82,7 @@ class BaseConfig:
     except (TypeError, ValueError):
         _session_timeout_minutes = 10
     SESSION_INACTIVITY_TIMEOUT = timedelta(minutes=_session_timeout_minutes)
+    SESSION_INACTIVITY_TIMEOUT_ADMIN = timedelta(hours=8)
     
     # Uploads
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB

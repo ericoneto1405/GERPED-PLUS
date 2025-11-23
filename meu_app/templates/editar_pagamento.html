@@ -133,9 +133,9 @@
     
     <div class="info-box">
         <p><strong>Cliente:</strong> {{ pedido.cliente.nome }}</p>
-        <p><strong>Total do Pedido:</strong> R$ {{ '%.2f' % total }}</p>
-        <p><strong>Total já Pago:</strong> R$ {{ '%.2f' % pago }}</p>
-        <p><strong>Saldo Restante:</strong> <span style="color: #e67e22; font-weight: bold;">R$ {{ '%.2f' % (saldo if saldo > 0 else 0) }}</span></p>
+        <p><strong>Total do Pedido:</strong> {{ total | currency_brl }}</p>
+        <p><strong>Total já Pago:</strong> {{ pago | currency_brl }}</p>
+        <p><strong>Saldo Restante:</strong> <span style="color: #e67e22; font-weight: bold;">{{ (saldo if saldo > 0 else 0) | currency_brl }}</span></p>
     </div>
 
     {% if pagamentos %}
@@ -152,7 +152,7 @@
                 <strong>Pagamento #{{ pagamento.id }}</strong>
                 <span class="badge">{{ pagamento.data_pagamento.strftime('%d/%m/%Y %H:%M') }}</span>
                 <br>
-                <span>Valor: R$ {{ '%.2f' % pagamento.valor }}</span> | 
+                <span>Valor: {{ pagamento.valor | currency_brl }}</span> | 
                 <span>Método: {{ pagamento.metodo_pagamento }}</span>
                 {% if pagamento.observacoes %}
                 <br><small>Obs: {{ pagamento.observacoes }}</small>

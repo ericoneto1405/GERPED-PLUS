@@ -10,7 +10,7 @@ Dependências opcionais:
 
 Uso:
     python scripts/monitoring_agent.py --target-url http://localhost:5000/healthz \
-        --interval 60 --output /var/log/sap/monitoring.jsonl
+        --interval 60 --output /var/log/gerped/monitoring.jsonl
 """
 
 from __future__ import annotations

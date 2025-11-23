@@ -30,6 +30,20 @@ document.addEventListener('DOMContentLoaded', () => {
         ocrStatus: !!ocrStatus
     });
 
+    const formatBRL = (valor) => {
+        try {
+            return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        } catch (_) {
+            return `R$ ${valor.toFixed(2).replace('.', ',')}`;
+        }
+    };
+
+    const setValorFormatado = (numero) => {
+        if (numero === null || numero === undefined || !valorInput) return;
+        valorInput.value = formatBRL(numero);
+        valorInput.dataset.rawValue = numero.toFixed(2);
+    };
+
     const parseValor = (valor) => {
         if (typeof valor === 'number') {
             return Number.isFinite(valor) ? valor : null;
@@ -79,7 +93,10 @@ document.addEventListener('DOMContentLoaded', () => {
     form.addEventListener('submit', (event) => {
         const totalPedido = parseFloat(form.dataset.total) || 0;
         const totalPago = parseFloat(form.dataset.pago) || 0;
-        const novoValor = parseFloat(valorInput.value) || 0;
+        const novoValor = parseValor(valorInput.value) || 0;
+
+        // Antes de enviar, garantir que o backend receba no formato 1234.56
+        valorInput.value = novoValor.toFixed(2);
 
         if (totalPedido && (totalPago + novoValor) > totalPedido) {
             const confirmar = window.confirm(
@@ -184,14 +201,36 @@ document.addEventListener('DOMContentLoaded', () => {
                         ocrStatus.appendChild(fallbackInfo);
                     }
 
+                    // ML (beta) apenas informativo: não bloqueia decisões
+                    if (data.ml_status || data.ml_confidence !== undefined) {
+                        const mlBox = document.createElement('div');
+                        mlBox.style.marginTop = '8px';
+                        mlBox.style.padding = '10px';
+                        mlBox.style.borderRadius = '6px';
+                        mlBox.style.background = '#f5f7fb';
+                        mlBox.style.border = '1px dashed #cfd6e6';
+                        const conf = data.ml_confidence !== undefined && data.ml_confidence !== null
+                            ? (Number(data.ml_confidence) * 100).toFixed(2) + '%'
+                            : '—';
+                        mlBox.innerHTML = `
+                            <div style="font-weight: 600; color: #34495e;">
+                                🤖 ML (beta) – apenas para consulta
+                            </div>
+                            <div style="font-size: 0.95em; color: #5a6b7b; margin-top: 4px;">
+                                Status: <strong>${data.ml_status || 'indefinido'}</strong> | Confiança: <strong>${conf}</strong><br>
+                                Este resultado não bloqueia o fluxo até o modelo estar 100% treinado.
+                            </div>
+                        `;
+                        ocrStatus.appendChild(mlBox);
+                    }
+
                     if (data.valor_encontrado !== undefined && data.valor_encontrado !== null) {
                         console.log('💰 Valor encontrado pelo OCR:', data.valor_encontrado);
                         const valorNumerico = parseValor(data.valor_encontrado);
                         console.log('💰 Valor parseado:', valorNumerico);
                         
                         if (valorNumerico !== null) {
-                            valorInput.value = valorNumerico.toFixed(2);
-                            valorInput.dataset.originalValue = valorNumerico.toFixed(2);
+                            setValorFormatado(valorNumerico);
                             console.log('✅ Campo valor preenchido com:', valorInput.value);
                             foundSomething = true;
                         } else {
@@ -351,7 +390,7 @@ document.addEventListener('DOMContentLoaded', () => {
         valorInput.addEventListener('blur', () => {
             const parsed = parseValor(valorInput.value);
             if (parsed !== null) {
-                valorInput.value = parsed.toFixed(2);
+                setValorFormatado(parsed);
             }
         });
     }

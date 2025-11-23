@@ -151,6 +151,7 @@
                 </div>
                 
                 <div class="card-body">
+                    <div id="coletaAlert" class="alert d-none" role="alert"></div>
                     {% if retirantes_autorizados is defined %}
                     <div class="alert alert-info" style="margin-bottom: 20px;">
                         <strong>Retirantes autorizados pelo cliente:</strong>
@@ -348,64 +349,98 @@
 
 <script nonce="{{ nonce }}">
 document.addEventListener('DOMContentLoaded', function() {
-    // Aplicar máscaras de CPF
-    const cpfMask = {
-        mask: '000.000.000-00'
-    };
-    
+    const cpfMask = { mask: '000.000.000-00' };
     const docRetirada = document.getElementById('documento_retirada');
     const cpfConferente = document.getElementById('cpf_conferente');
-    
     if (docRetirada && typeof IMask !== 'undefined') {
         IMask(docRetirada, cpfMask);
     }
     if (cpfConferente && typeof IMask !== 'undefined') {
         IMask(cpfConferente, cpfMask);
     }
-    
-    // Proteção contra duplo-clique
+
     const form = document.getElementById('formColeta');
     const btnProcessar = document.getElementById('btnProcessar');
-    
+    const btnText = btnProcessar ? btnProcessar.querySelector('.btn-text') : null;
+    const btnLoading = btnProcessar ? btnProcessar.querySelector('.btn-loading') : null;
+    const alertBox = document.getElementById('coletaAlert');
+
+    const toggleButton = (disabled) => {
+        if (!btnProcessar) {
+            return;
+        }
+        btnProcessar.disabled = disabled;
+        if (btnText) btnText.style.display = disabled ? 'none' : 'inline';
+        if (btnLoading) btnLoading.style.display = disabled ? 'inline' : 'none';
+    };
+
+    const showAlert = (type, message) => {
+        if (!alertBox) {
+            alert(message);
+            return;
+        }
+        alertBox.classList.remove('d-none', 'alert-success', 'alert-danger', 'alert-warning', 'alert-info');
+        alertBox.classList.add(`alert-${type}`);
+        alertBox.textContent = message;
+    };
+
     if (form && btnProcessar) {
         form.addEventListener('submit', function(e) {
-            // Prevenir múltiplos submits
+            e.preventDefault();
             if (btnProcessar.disabled) {
-                e.preventDefault();
                 return false;
             }
-            
-            // Desabilitar botão
-            btnProcessar.disabled = true;
-            
-            // Atualizar visual
-            const btnText = btnProcessar.querySelector('.btn-text');
-            const btnLoading = btnProcessar.querySelector('.btn-loading');
-            
-            if (btnText) btnText.style.display = 'none';
-            if (btnLoading) btnLoading.style.display = 'inline';
-            
-            // Validar que pelo menos um item foi selecionado
+
             const inputs = document.querySelectorAll('.quantidade-input');
             let algumaSelecionada = false;
-            
             inputs.forEach(function(input) {
-                if (input.value && parseInt(input.value) > 0) {
+                if (input.value && parseInt(input.value, 10) > 0) {
                     algumaSelecionada = true;
                 }
             });
-            
             if (!algumaSelecionada) {
-                e.preventDefault();
-                alert('Selecione pelo menos um item para coleta!');
-                
-                // Re-habilitar botão
-                btnProcessar.disabled = false;
-                if (btnText) btnText.style.display = 'inline';
-                if (btnLoading) btnLoading.style.display = 'none';
-                
+                showAlert('warning', 'Selecione pelo menos um item para coleta!');
                 return false;
             }
+
+            toggleButton(true);
+
+            const formData = new FormData(form);
+            fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(async (response) => {
+                let data = null;
+                try {
+                    data = await response.json();
+                } catch (error) {
+                    // sem corpo json
+                }
+
+                if (!response.ok || !data || data.success === false) {
+                    const message = (data && data.message) ? data.message : 'Erro ao processar a coleta.';
+                    showAlert('danger', message);
+                    toggleButton(false);
+                    return;
+                }
+
+                showAlert('success', data.message || 'Coleta processada com sucesso.');
+                if (data.download_url) {
+                    window.open(data.download_url, '_blank');
+                } else if (data.status_url) {
+                    window.open(data.status_url, '_blank');
+                }
+                form.reset();
+                toggleButton(false);
+            })
+            .catch(() => {
+                showAlert('danger', 'Erro ao enviar os dados. Verifique sua conexão e tente novamente.');
+                toggleButton(false);
+            });
         });
     }
 });

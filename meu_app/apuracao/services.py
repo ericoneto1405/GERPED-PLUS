@@ -98,7 +98,7 @@ Sistema de logs detalhado para auditoria:
 from ..models import db, Apuracao, Pedido, LogAtividade
 from flask import current_app, session
 from typing import Dict, List, Tuple, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from calendar import monthrange
 from decimal import Decimal, InvalidOperation
 import json
@@ -280,7 +280,9 @@ class ApuracaoService:
         global _cache_estatisticas_timestamp
         if _cache_estatisticas_timestamp is None:
             return False
-        return (datetime.utcnow() - _cache_estatisticas_timestamp).total_seconds() < CACHE_DURATION
+        return (
+            datetime.now(timezone.utc) - _cache_estatisticas_timestamp
+        ).total_seconds() < CACHE_DURATION
     
     @staticmethod
     def _clear_cache():
@@ -345,7 +347,7 @@ class ApuracaoService:
                 raise ApuracaoValidationError("Ano deve estar entre 1900 e 2100")
             
             # ✅ FASE 3.3 - Validação de período futuro
-            data_atual = datetime.utcnow()
+            data_atual = datetime.now(timezone.utc)
             if ano > data_atual.year or (ano == data_atual.year and mes > data_atual.month):
                 raise ApuracaoValidationError("Não é possível criar apuração para período futuro")
             
@@ -1246,7 +1248,7 @@ class ApuracaoService:
             
             # ✅ FASE 2.9 - Otimização: Armazenar no cache
             _cache_estatisticas = estatisticas
-            _cache_estatisticas_timestamp = datetime.utcnow()
+            _cache_estatisticas_timestamp = datetime.now(timezone.utc)
             
             current_app.logger.debug("Estatísticas calculadas e armazenadas no cache")
             return estatisticas

@@ -21,7 +21,7 @@ receivers:
         chat_id: "${TELEGRAM_CHAT_ID}"
         parse_mode: "Markdown"
         message: |
-          🚨 *Alerta SAP* 🚨
+          🚨 *Alerta GERPED* 🚨
           *Alerta:* {{ .CommonAnnotations.summary }}
           *Severidade:* {{ .CommonLabels.severity }}
           *Descrição:* {{ .CommonAnnotations.description }}

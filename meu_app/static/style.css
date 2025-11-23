@@ -82,9 +82,9 @@ body {
 }
 
 .header-logo {
-    height: 240px;
+    height: 48px;
     width: auto;
-    max-width: 1200px;
+    max-width: 220px;
     object-fit: contain;
     filter: brightness(0) saturate(100%) invert(0%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(0%) contrast(100%);
     transition: all 0.3s ease;
@@ -1469,14 +1469,17 @@ table tbody tr:last-child td {
 .login-card {
     background: #ffffff;
     border: 1px solid #e2e8f0;
-    border-radius: 16px;
-    padding: 20px 40px;
+    border-radius: 18px;
+    padding: 28px 32px 24px;
     width: 100%;
-    max-width: 480px;
+    max-width: 420px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     position: relative;
     z-index: 1;
     transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
 }
 
 .login-card:hover {
@@ -1484,20 +1487,22 @@ table tbody tr:last-child td {
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
 }
 
+.login-brand {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
 .login-card h2 {
-    text-align: center;
-    margin-bottom: 12px;
     color: #2c3e50;
     font-weight: 700;
-    font-size: 2rem;
-    letter-spacing: -0.025em;
+    font-size: 1.65rem;
+    letter-spacing: -0.02em;
 }
 
 .login-card .logo {
-    display: block;
-    margin: 0 auto 8px;
-    max-width: 320px;
-    width: 100%;
+    width: min(140px, 45%);
     height: auto;
     filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.08));
     transition: all 0.3s ease;
@@ -1510,7 +1515,7 @@ table tbody tr:last-child td {
 
 /* Estilos específicos para formulário de login */
 .login-card .form-group {
-    margin-bottom: 12px;
+    margin-bottom: 10px;
 }
 
 .login-card .form-group label {
@@ -1590,6 +1595,22 @@ table tbody tr:last-child td {
 
 .login-card .btn-primary:active {
     transform: translateY(-1px);
+}
+
+.forgot-password {
+    display: inline-block;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+    color: #4b5ae2;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.2s ease;
+    align-self: flex-end;
+}
+
+.forgot-password:hover {
+    text-decoration: underline;
+    color: #303ab0;
 }
 
 /* Alertas específicos para login */
@@ -3408,59 +3429,8 @@ html body .login-container .login-card {
     
     /* ============ FINANCEIRO ============ */
     
-    /* Tabela de comprovantes */
-    .comprovantes-table {
-        font-size: 0.75rem !important;
-    }
-    
-    .comprovantes-table th,
-    .comprovantes-table td {
-        padding: 6px 4px !important;
-    }
-    
-    /* Cards de cliente */
-    .cliente-card {
-        margin-bottom: 16px !important;
-    }
-    
-    .cliente-header {
-        padding: 12px !important;
-    }
-    
-    .cliente-nome {
-        font-size: 1.1rem !important;
-    }
-    
-    /* Valores legíveis */
-    .valor-pagamento {
-        font-size: 0.95rem !important;
-    }
-    
-    .pedido-numero {
-        font-size: 0.9rem !important;
-    }
-    
-    /* Badges menores */
-    .metodo-badge {
-        font-size: 0.65rem !important;
-        padding: 4px 6px !important;
-    }
-    
-    /* ID Transação */
-    .id-transacao {
-        font-size: 0.65rem !important;
-        padding: 3px 5px !important;
-    }
-    
-    /* Botão ver comprovante */
-    .btn-ver-comprovante {
-        font-size: 0.75rem !important;
-        padding: 6px 10px !important;
-    }
-    
     /* Filtros de período */
-    .financeiro .filter-form,
-    .comprovantes-pagamento .filter-form {
+    .financeiro .filter-form {
         margin-bottom: 16px;
     }
     
@@ -3672,5 +3642,3 @@ html body .login-container .login-card {
         display: none !important;
     }
 }
-
-

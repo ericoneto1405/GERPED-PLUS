@@ -10,10 +10,11 @@ Data: 2024
 """
 
 from functools import wraps
-from typing import Optional, Tuple, Dict, Any
-from flask import session, redirect, url_for, request, jsonify, current_app
+from typing import Any, Dict, Optional, Tuple
+from datetime import datetime, timedelta, timezone
+
+from flask import current_app, jsonify, redirect, request, session, url_for
 from flask_login import current_user
-from datetime import datetime, timedelta
 
 
 def _register_rollout_event(event_type: str, descricao: str, extras: Optional[Dict[str, Any]] = None):
@@ -50,7 +51,7 @@ def _rollout_allows_access() -> Tuple[bool, Optional[Tuple[Any, int, Dict[str, s
 
     # Se não houver data configurada, utiliza o primeiro acesso como marco inicial.
     if start_at is None:
-        start_at = datetime.utcnow()
+        start_at = datetime.now(timezone.utc)
         rollout_cfg['start_at'] = start_at
         _register_rollout_event(
             'rollout_iniciado',
@@ -60,7 +61,7 @@ def _rollout_allows_access() -> Tuple[bool, Optional[Tuple[Any, int, Dict[str, s
     # Desativa controle após janela interna expirar
     if internal_days is not None and internal_days >= 0:
         janela_final = start_at + timedelta(days=internal_days)
-        if datetime.utcnow() >= janela_final:
+        if datetime.now(timezone.utc) >= janela_final:
             rollout_cfg['enabled'] = False
             current_app.logger.info("Janela de rollout interno expirou; acesso público liberado automaticamente.")
             _register_rollout_event(
@@ -105,7 +106,7 @@ def _rollout_allows_access() -> Tuple[bool, Optional[Tuple[Any, int, Dict[str, s
         'error': True,
         'message': mensagem,
         'type': 'RolloutRestrictedAccess',
-        'timestamp': datetime.utcnow().isoformat(),
+        'timestamp': datetime.now(timezone.utc).isoformat(),
     }
 
     body = jsonify(payload)
@@ -134,7 +135,7 @@ def login_obrigatorio(f):
                     'error': True,
                     'message': 'Acesso negado. Faça login para continuar.',
                     'type': 'AuthenticationRequired',
-                    'timestamp': datetime.now().isoformat()
+                    'timestamp': datetime.now(timezone.utc).isoformat()
                 }), 401
             
             # Para requisições normais, redirecionar para login
@@ -204,7 +205,7 @@ def permissao_necessaria(permissao):
                     'message': f'Acesso negado. Você não tem permissão para acessar esta funcionalidade.',
                     'type': 'InsufficientPermissions',
                     'permission_required': permissao,
-                    'timestamp': datetime.now().isoformat()
+                    'timestamp': datetime.now(timezone.utc).isoformat()
                 }), 403
             
             return f(*args, **kwargs)
@@ -292,7 +293,7 @@ def validar_metodo_http(metodos_permitidos):
                         'message': f'Método {request.method} não permitido para esta rota.',
                         'type': 'MethodNotAllowed',
                         'allowed_methods': metodos_permitidos,
-                        'timestamp': datetime.now().isoformat()
+                        'timestamp': datetime.now(timezone.utc).isoformat()
                     }), 405
                 
                 return jsonify({

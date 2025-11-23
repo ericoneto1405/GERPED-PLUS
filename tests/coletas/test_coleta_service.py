@@ -15,7 +15,10 @@ class TestColetaService:
     def test_listar_pedidos_para_coleta_sucesso(self, mock_pedido, mock_session):
         """Testa listagem de pedidos para coleta com sucesso"""
         # Arrange
-        mock_pedido.query.filter.return_value.options.return_value.all.return_value = [
+        mock_filter = mock_pedido.query.filter.return_value
+        mock_options = mock_filter.options.return_value
+        mock_options.order_by.return_value = mock_options
+        mock_options.all.return_value = [
             MagicMock(id=1, status=StatusPedido.PAGAMENTO_APROVADO),
             MagicMock(id=2, status=StatusPedido.COLETA_PARCIAL)
         ]
@@ -48,7 +51,9 @@ class TestColetaService:
         mock_pedido_obj = MagicMock()
         mock_pedido_obj.id = 1
         mock_pedido_obj.status = StatusPedido.PAGAMENTO_APROVADO
-        mock_pedido.query.filter.return_value.options.return_value.first.return_value = mock_pedido_obj
+        mock_filter = mock_pedido.query.filter.return_value
+        mock_filter.options.return_value.first.return_value = mock_pedido_obj
+        mock_filter.first.return_value = mock_pedido_obj
         
         # Act
         resultado = ColetaService.buscar_detalhes_pedido(1)
@@ -62,7 +67,9 @@ class TestColetaService:
     def test_buscar_detalhes_pedido_nao_encontrado(self, mock_pedido, mock_session):
         """Testa busca de detalhes de pedido não encontrado"""
         # Arrange
-        mock_pedido.query.filter.return_value.options.return_value.first.return_value = None
+        mock_filter = mock_pedido.query.filter.return_value
+        mock_filter.options.return_value.first.return_value = None
+        mock_filter.first.return_value = None
         
         # Act
         resultado = ColetaService.buscar_detalhes_pedido(999)
@@ -74,29 +81,41 @@ class TestColetaService:
     @patch('meu_app.coletas.services.coleta_service.Pedido')
     @patch('meu_app.coletas.services.coleta_service.ItemPedido')
     @patch('meu_app.coletas.services.coleta_service.Estoque')
-    def test_processar_coleta_sucesso(self, mock_estoque, mock_item_pedido, mock_pedido, mock_session):
+    @patch('meu_app.coletas.services.coleta_service.ColetaService._registrar_movimentacao_estoque')
+    def test_processar_coleta_sucesso(self, mock_registrar_mov, mock_estoque, mock_item_pedido, mock_pedido, mock_session):
         """Testa processamento de coleta com sucesso"""
         # Arrange
         mock_pedido_obj = MagicMock()
         mock_pedido_obj.id = 1
         mock_pedido_obj.status = StatusPedido.PAGAMENTO_APROVADO
         mock_pedido_obj.itens = []
-        
-        mock_pedido.query.filter.return_value.with_for_update.return_value.first.return_value = mock_pedido_obj
-        
+
         mock_item_obj = MagicMock()
         mock_item_obj.id = 1
         mock_item_obj.pedido_id = 1
         mock_item_obj.produto_id = 1
         mock_item_obj.produto = MagicMock()
         mock_item_obj.produto.nome = "Produto Teste"
-        
-        mock_item_pedido.query.filter.return_value.with_for_update.return_value.first.return_value = mock_item_obj
-        
+        mock_item_obj.quantidade = 10
+
         mock_estoque_obj = MagicMock()
         mock_estoque_obj.quantidade = 10
-        
-        mock_estoque.query.filter_by.return_value.with_for_update.return_value.first.return_value = mock_estoque_obj
+
+        pedido_query = MagicMock()
+        item_query = MagicMock()
+        sum_query = MagicMock()
+        estoque_query = MagicMock()
+        mock_session.query.side_effect = [
+            pedido_query,
+            item_query,
+            sum_query,
+            estoque_query,
+        ]
+
+        pedido_query.filter.return_value.with_for_update.return_value.first.return_value = mock_pedido_obj
+        item_query.filter.return_value.with_for_update.return_value.first.return_value = mock_item_obj
+        sum_query.join.return_value.filter.return_value.scalar.return_value = 0
+        estoque_query.filter_by.return_value.with_for_update.return_value.first.return_value = mock_estoque_obj
         
         # Act
         sucesso, mensagem, coleta = ColetaService.processar_coleta(
@@ -154,7 +173,7 @@ class TestColetaService:
         mock_coleta_obj.id = 1
         mock_coleta_obj.pedido_id = 1
         
-        mock_pedido.query.filter.return_value.first.return_value = mock_pedido_obj
+        mock_session.query.return_value.filter.return_value.first.return_value = mock_pedido_obj
         mock_coleta.query.filter_by.return_value.order_by.return_value.all.return_value = [mock_coleta_obj]
         
         # Act
@@ -170,7 +189,7 @@ class TestColetaService:
     def test_buscar_historico_coletas_pedido_nao_encontrado(self, mock_pedido, mock_session):
         """Testa busca de histórico com pedido não encontrado"""
         # Arrange
-        mock_pedido.query.filter.return_value.first.return_value = None
+        mock_session.query.return_value.filter.return_value.first.return_value = None
         
         # Act
         resultado = ColetaService.buscar_historico_coletas(999)

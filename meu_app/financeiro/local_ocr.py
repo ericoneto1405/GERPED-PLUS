@@ -94,9 +94,26 @@ class LocalOcrFallback:
 
     @staticmethod
     def _read_pdf(file_path: str) -> Optional[str]:
-        # 1) PyPDF2
+        # 0) PyMuPDF (fitz) - mais resiliente que poppler para PDFs de banco
         try:
-            from PyPDF2 import PdfReader  # type: ignore
+            import fitz  # type: ignore
+
+            with fitz.open(file_path) as doc:
+                texts = []
+                for page in doc:
+                    content = page.get_text("text") or ""
+                    if content.strip():
+                        texts.append(content)
+                if texts:
+                    combined = "\n".join(texts).strip()
+                    if combined:
+                        return combined
+        except Exception:
+            pass
+
+        # 1) PyPDF (novo nome do PyPDF2)
+        try:
+            from pypdf import PdfReader  # type: ignore
 
             reader = PdfReader(file_path)
             text_parts = []
@@ -145,8 +162,16 @@ class LocalOcrFallback:
         try:
             with open(file_path, 'rb') as fh:
                 raw = fh.read()
+            # Se parecer claramente um PDF binário, não usar como texto
+            if raw.startswith(b'%PDF'):
+                return None
+
             text = raw.decode('utf-8', errors='ignore')
-            text = re.sub(r'\s+', ' ', text)  # Normalizar espaços
+            text = re.sub(r'\s+', ' ', text)
+            # Heurística simples: descartar se a maior parte é não-imprimível
+            printable = sum(1 for ch in text if 32 <= ord(ch) < 127)
+            if len(text) == 0 or printable / max(len(text), 1) < 0.7:
+                return None
             return text if text.strip() else None
         except Exception:
             return None

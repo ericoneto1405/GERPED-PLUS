@@ -7,17 +7,8 @@
 {% block content %}
 <div class="card">
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2>
-            {% if filtro == 'pagos' %}
-                Pedidos Pagos
-            {% else %}
-                Pedidos Pendentes de Pagamento
-            {% endif %}
-        </h2>
+        <h2>📊 Painel Financeiro</h2>
         <div class="d-flex gap-2">
-            <a href="{{ url_for('financeiro.listar_financeiro', filtro='pendentes') }}" class="btn">Pendentes</a>
-            <a href="{{ url_for('financeiro.listar_financeiro', filtro='pagos') }}" class="btn">Pagos</a>
-            <a href="{{ url_for('financeiro.listar_comprovantes') }}" class="btn btn-info">📄 Comprovantes de Pagamento</a>
             <a href="{{ url_for('financeiro.exportar_financeiro', filtro=filtro, mes=mes, ano=ano) }}" class="btn btn-success">📥 Exportar Excel</a>
         </div>
     </div>
@@ -70,18 +61,28 @@
         </div>
     </div>
 
-    <div class="table-responsive">
-        <table class="table">
+    <div class="table-toolbar mb-3">
+        <div class="input-group shadow-sm" style="max-width: 360px;">
+            <span class="input-group-text bg-white">
+                <i class="fas fa-search text-muted"></i>
+            </span>
+            <input type="search" id="filtroFinanceiro" class="form-control" placeholder="Buscar por cliente, status, valor..." />
+        </div>
+        <small class="text-muted">Clique nos cabeçalhos para ordenar e utilize a busca para filtrar rapidamente.</small>
+    </div>
+
+    <div class="table-container">
+        <table class="financeiro-table">
             <thead>
                 <tr>
-                    <th>ID Pedido</th>
-                    <th>Cliente</th>
-                    <th>Data do Pedido</th>
-                    <th>Status</th>
-                    <th>Total Pedido</th>
-                    <th>Total Pago</th>
-                    <th>Saldo</th>
-                    <th>Ações</th>
+                    <th data-column-index="0">#</th>
+                    <th data-column-index="1">CLIENTE</th>
+                    <th data-column-index="2">DATA E HORA</th>
+                    <th data-column-index="3">STATUS</th>
+                    <th data-column-index="4">VALOR DO PEDIDO</th>
+                    <th data-column-index="5">TOTAL PAGO</th>
+                    <th data-column-index="6">SALDO</th>
+                    <th>AÇÕES</th>
                 </tr>
             </thead>
             <tbody>
@@ -89,42 +90,36 @@
                 {% set pedido = item.pedido %}
                 {% set total = item.total_pedido %}
                 {% set pago = item.total_pago %}
-                <tr class="align-middle">
+                <tr class="align-middle pedido-row" data-details-id="details-{{ pedido.id }}">
                     <td>#{{ pedido.id }}</td>
                     <td>{{ pedido.cliente.nome }}</td>
                     <td>{{ pedido.data.strftime('%d/%m/%Y %H:%M') }}</td>
-                    <td>
-                        {% if item.status == 'Pago' %}
-                            <span class="badge bg-success">✅ Pago</span>
-                        {% elif item.status == 'Parcial' %}
-                            <span class="badge bg-warning">⚠️ Parcial</span>
-                        {% elif item.status == 'Pendente' %}
-                            <span class="badge bg-danger">❌ Pendente</span>
-                        {% else %}
-                            <span class="badge bg-secondary">📄 {{ item.status }}</span>
-                        {% endif %}
+                    <td class="{% if item.status == 'PAGO' %}status-financeiro{% elif item.status == 'PAGO PARCIAL' %}status-coleta{% elif item.status == 'AGUARDANDO' %}status-pendente{% else %}status-secundario{% endif %}">
+                        {{ item.status }}
                     </td>
-                    <td>R$ {{ '%.2f' % total }}</td>
-                    <td>R$ {{ '%.2f' % pago }}</td>
-                    <td>R$ {{ '%.2f' % (total - pago if total - pago > 0 else 0) }}</td>
+                    <td>{{ total | currency_brl }}</td>
+                    <td>{{ pago | currency_brl }}</td>
+                    <td>{{ (total - pago if total - pago > 0 else 0) | currency_brl }}</td>
                     <td>
-                        <a href="{{ url_for('pedidos.visualizar_pedido', id=pedido.id, origem='financeiro') }}" class="btn btn-sm btn-warning" target="_blank" title="Visualizar Pedido">👁️</a>
-                        <button class="btn btn-sm btn-info" type="button" data-bs-toggle="collapse" data-bs-target="#details-{{ pedido.id }}" aria-expanded="false" aria-controls="details-{{ pedido.id }}" title="Detalhes dos Pagamentos">📜</button>
-                        {% if item.status == 'Pendente' or item.status == 'Parcial' %}
-                            <a href="{{ url_for('financeiro.registrar_pagamento', pedido_id=pedido.id) }}" class="btn btn-sm btn-success" title="Registrar Pagamento">💳</a>
-                        {% endif %}
-                        <a href="{{ url_for('financeiro.editar_pagamento', pedido_id=pedido.id) }}"
-                           class="btn btn-sm btn-primary"
-                           title="Editar Pagamento"
-                           data-action="open-edit-payment"
-                           target="_blank"
-                           rel="noopener">✏️ Editar</a>
-                        {% if pago == 0 or pago == 0.0 %}
-                            <button class="btn btn-sm btn-secondary" 
-                                    data-action="retornar-comercial"
-                                    data-pedido-id="{{ pedido.id }}"
-                                    title="Retornar para Comercial (Pedido sem pagamentos)">⬅️ Retornar</button>
-                        {% endif %}
+                        <div class="financeiro-actions">
+                            <a href="{{ url_for('pedidos.visualizar_pedido', id=pedido.id, origem='financeiro') }}" class="btn btn-sm btn-warning" target="_blank" title="Visualizar Pedido">👁️</a>
+                            <button class="btn btn-sm btn-info" type="button" data-bs-toggle="collapse" data-bs-target="#details-{{ pedido.id }}" aria-expanded="false" aria-controls="details-{{ pedido.id }}" title="Detalhes dos Pagamentos">📜</button>
+                            {% if item.status in ['AGUARDANDO', 'PAGO PARCIAL'] %}
+                                <a href="{{ url_for('financeiro.registrar_pagamento', pedido_id=pedido.id) }}" class="btn btn-primary btn-registrar" title="Registrar Pagamento">💳 Registrar</a>
+                            {% endif %}
+                            <a href="{{ url_for('financeiro.editar_pagamento', pedido_id=pedido.id) }}"
+                               class="btn btn-sm btn-primary"
+                               title="Editar Pagamento"
+                               data-action="open-edit-payment"
+                               target="_blank"
+                               rel="noopener">✏️</a>
+                            {% if pago == 0 or pago == 0.0 %}
+                                <button class="btn btn-sm btn-secondary" 
+                                        data-action="retornar-comercial"
+                                        data-pedido-id="{{ pedido.id }}"
+                                        title="Retornar para Comercial (Pedido sem pagamentos)">⬅️</button>
+                            {% endif %}
+                        </div>
                     </td>
                 </tr>
                 <tr class="collapse" id="details-{{ pedido.id }}">
@@ -146,7 +141,7 @@
                                     {% for pagamento in pedido.pagamentos %}
                                         <tr>
                                             <td>{{ pagamento.data_pagamento.strftime('%d/%m/%Y %H:%M') }}</td>
-                                            <td><strong>R$ {{ '%.2f' % pagamento.valor }}</strong></td>
+                                            <td><strong>{{ pagamento.valor | currency_brl }}</strong></td>
                                             <td><em>{{ pagamento.metodo_pagamento }}</em></td>
                                             <td>
                                                 {% if pagamento.id_transacao %}
@@ -182,28 +177,141 @@
     </div>
 </div>
 
-<style>
-.badge {
-    font-size: 0.75rem;
-    padding: 0.25rem 0.5rem;
-}
+<style nonce="{{ nonce }}">
+    .table-container {
+        width: 100%;
+        overflow-x: auto;
+        margin-top: 15px;
+    }
 
-.bg-success {
-    background-color: #28a745 !important;
-}
+    .table-toolbar {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
 
-.bg-warning {
-    background-color: #ffc107 !important;
-    color: #212529 !important;
-}
+    .financeiro-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: #fff;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        border-radius: 12px;
+        overflow: hidden;
+    }
 
-.bg-danger {
-    background-color: #dc3545 !important;
-}
+    .financeiro-table thead th,
+    .financeiro-table tbody td {
+        padding: 12px 16px;
+        border-bottom: 1px solid #f1f3f4;
+        text-align: center;
+    }
 
-.bg-secondary {
-    background-color: #6c757d !important;
-}
+    .financeiro-table thead th {
+        background: #f8f9fa;
+        font-weight: 600;
+    }
+
+    .financeiro-table thead th[data-column-index] {
+        cursor: pointer;
+        user-select: none;
+        position: relative;
+    }
+
+    .financeiro-table thead th[data-column-index] .sort-indicator {
+        font-size: 0.7rem;
+        margin-left: 6px;
+        color: #adb5bd;
+    }
+
+    .financeiro-table thead th.sorted-asc,
+    .financeiro-table thead th.sorted-desc {
+        color: #0d6efd;
+    }
+
+    .status-financeiro {
+        color: #28a745;
+        background-color: rgba(40, 167, 69, 0.1);
+        font-weight: bold;
+        padding: 6px 10px;
+        border-radius: 4px;
+    }
+
+    .status-coleta {
+        color: #0d6efd;
+        background-color: rgba(13, 110, 253, 0.1);
+        font-weight: bold;
+        padding: 6px 10px;
+        border-radius: 4px;
+    }
+
+    .status-pendente {
+        color: #b02a37;
+        background-color: rgba(220, 53, 69, 0.12);
+        font-weight: bold;
+        padding: 6px 10px;
+        border-radius: 4px;
+    }
+
+    .status-secundario {
+        color: #41464b;
+        background-color: rgba(108, 117, 125, 0.2);
+        font-weight: bold;
+        padding: 6px 10px;
+        border-radius: 4px;
+    }
+
+    .badge {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+    }
+
+    .bg-dark {
+        background-color: #212529 !important;
+    }
+
+    .financeiro-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: center;
+    }
+
+    .financeiro-actions .btn {
+        min-width: 36px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.9rem;
+    }
+
+    .financeiro-actions .btn-registrar {
+        min-width: 140px;
+        background: var(--accent-purple);
+        color: #fff;
+        font-weight: 600;
+        padding: 8px 16px;
+        border-radius: 8px;
+    }
+
+    .financeiro-actions .btn-registrar:hover {
+        background: var(--accent-purple-light);
+        color: #fff;
+    }
+
+    .spinner {
+        border: 2px solid #f3f3f3;
+        border-top: 2px solid #667eea;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        animation: spin 1s linear infinite;
+        display: inline-block;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
 </style>
 {% endblock %}
 
@@ -211,32 +319,128 @@
 {{ super() }}
 <script nonce="{{ nonce }}">
     document.addEventListener('DOMContentLoaded', function() {
-        console.log('Script financeiro carregado');
-        
-        // Event listener para links de edição
+        const tabela = document.querySelector('.financeiro-table');
+        if (!tabela) return;
+
+        const tbody = tabela.querySelector('tbody');
+        const headers = tabela.querySelectorAll('th[data-column-index]');
+        const filtro = document.getElementById('filtroFinanceiro');
+        let currentSort = { index: null, direction: 'asc' };
+
+        const parseValue = (cell, index) => {
+            const text = cell.textContent.trim();
+            if (index === 0) {
+                const numero = parseInt(text.replace('#', ''), 10);
+                return Number.isNaN(numero) ? text.toLowerCase() : numero;
+            }
+            if (index === 2) {
+                const [data, hora] = text.split(' ');
+                if (!data || !hora) return text.toLowerCase();
+                const [dia, mes, ano] = data.split('/');
+                return `${ano}-${mes}-${dia} ${hora}`;
+            }
+            if ([4, 5, 6].includes(index)) {
+                const normalizado = text.replace(/R\$\s*/i, '').replace(/\./g, '').replace(',', '.');
+                const valor = parseFloat(normalizado);
+                return Number.isNaN(valor) ? 0 : valor;
+            }
+            return text.toLowerCase();
+        };
+
+        const getRowPairs = () => {
+            const rows = [];
+            tbody.querySelectorAll('tr.pedido-row').forEach((row) => {
+                const detailsId = row.getAttribute('data-details-id');
+                const detailRow = detailsId ? document.getElementById(detailsId) : null;
+                rows.push({ row, detail: detailRow });
+            });
+            return rows;
+        };
+
+        const applySortIndicators = () => {
+            headers.forEach((header) => {
+                header.classList.remove('sorted-asc', 'sorted-desc');
+                let indicator = header.querySelector('.sort-indicator');
+                if (!indicator) {
+                    indicator = document.createElement('span');
+                    indicator.className = 'sort-indicator';
+                    header.appendChild(indicator);
+                }
+                indicator.textContent = '';
+            });
+            const target = headers[currentSort.index];
+            if (!target) return;
+            let indicator = target.querySelector('.sort-indicator');
+            if (!indicator) {
+                indicator = document.createElement('span');
+                indicator.className = 'sort-indicator';
+                target.appendChild(indicator);
+            }
+            target.classList.add(currentSort.direction === 'asc' ? 'sorted-asc' : 'sorted-desc');
+            indicator.textContent = currentSort.direction === 'asc' ? '▲' : '▼';
+        };
+
+        const sortRows = (index, direction) => {
+            const pairs = getRowPairs();
+            pairs.sort((a, b) => {
+                const valA = parseValue(a.row.children[index], index);
+                const valB = parseValue(b.row.children[index], index);
+
+                if (typeof valA === 'number' && typeof valB === 'number') {
+                    return direction === 'asc' ? valA - valB : valB - valA;
+                }
+                return direction === 'asc'
+                    ? String(valA).localeCompare(String(valB))
+                    : String(valB).localeCompare(String(valA));
+            });
+
+            pairs.forEach(({ row, detail }) => {
+                tbody.appendChild(row);
+                if (detail) {
+                    tbody.appendChild(detail);
+                }
+            });
+            applySortIndicators();
+        };
+
+        headers.forEach((header, index) => {
+            header.addEventListener('click', () => {
+                const direction = (currentSort.index === index && currentSort.direction === 'asc') ? 'desc' : 'asc';
+                currentSort = { index, direction };
+                sortRows(index, direction);
+            });
+        });
+        applySortIndicators();
+
+        if (filtro) {
+            filtro.addEventListener('input', (event) => {
+                const termo = event.target.value.trim().toLowerCase();
+                getRowPairs().forEach(({ row, detail }) => {
+                    const texto = row.textContent.toLowerCase() + (detail ? detail.textContent.toLowerCase() : '');
+                    const match = texto.includes(termo);
+                    row.style.display = match ? '' : 'none';
+                    if (detail) {
+                        detail.style.display = match ? '' : 'none';
+                    }
+                });
+            });
+        }
+
         document.querySelectorAll('[data-action="open-edit-payment"]').forEach((link) => {
             link.addEventListener('click', (event) => {
                 event.preventDefault();
                 window.open(link.href, '_blank', 'noopener');
             });
         });
-        
-        // Event listener para botões de retornar comercial
+
         const botoesRetornar = document.querySelectorAll('[data-action="retornar-comercial"]');
-        console.log('Botões retornar encontrados:', botoesRetornar.length);
-        
         botoesRetornar.forEach(function(button) {
             button.addEventListener('click', function(event) {
                 event.preventDefault();
                 const pedidoId = this.getAttribute('data-pedido-id');
-                console.log('Botão retornar clicado! Pedido ID:', pedidoId);
                 
                 if (confirm('Tem certeza que deseja retornar este pedido para o comercial? Esta ação só é permitida para pedidos sem pagamentos.')) {
-                    console.log('Confirmado, enviando requisição...');
-                    
-                    // Obter token CSRF
                     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || window.CSRF_TOKEN;
-                    console.log('CSRF Token:', csrfToken ? 'Presente' : 'AUSENTE');
                     
                     fetch(`/financeiro/retornar-comercial/${pedidoId}`, {
                         method: 'POST',

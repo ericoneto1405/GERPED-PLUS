@@ -5,7 +5,7 @@ echo "🧪 Teste Rápido - OCR Financeiro"
 echo "================================"
 echo ""
 
-cd /Users/ericobrandao/Projects/SAP
+cd /Users/ericobrandao/Projects/GERPED
 
 echo "1️⃣ Verificando endpoint..."
 python3 << 'EOF'
@@ -57,7 +57,7 @@ EOF
 
 echo ""
 echo "4️⃣ Testando JavaScript está acessível..."
-JS_FILE="/Users/ericobrandao/Projects/SAP/meu_app/static/js/financeiro_pagamento.js"
+JS_FILE="/Users/ericobrandao/Projects/GERPED/meu_app/static/js/financeiro_pagamento.js"
 if [ -f "$JS_FILE" ]; then
     echo "✅ JavaScript existe"
     echo "   Linhas: $(wc -l < "$JS_FILE")"

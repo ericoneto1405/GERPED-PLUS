@@ -1,9 +1,21 @@
 from flask import Blueprint, render_template, request, redirect, url_for, jsonify, session, current_app, send_from_directory, Response
 from flask_login import current_user, login_user, logout_user
 from . import db
-from .models import Cliente, Produto, Pedido, ItemPedido, Pagamento, Coleta, Usuario, Apuracao, StatusPedido
+from .models import (
+    Cliente,
+    Produto,
+    Pedido,
+    ItemPedido,
+    Pagamento,
+    Coleta,
+    Usuario,
+    Apuracao,
+    StatusPedido,
+    PasswordResetToken,
+)
 import os
-from datetime import datetime, timedelta
+import secrets
+from datetime import datetime, timedelta, timezone
 from sqlalchemy import func
 import shutil
 from .decorators import login_obrigatorio, permissao_necessaria, admin_necessario
@@ -77,8 +89,9 @@ def login():
             locked_until = datetime.fromisoformat(locked_until_raw)
         except ValueError:
             locked_until = None
-        if locked_until and locked_until > datetime.utcnow():
-            tempo_restante = int((locked_until - datetime.utcnow()).total_seconds())
+        current_time = datetime.now(timezone.utc)
+        if locked_until and locked_until > current_time:
+            tempo_restante = int((locked_until - current_time).total_seconds())
             return render_template(
                 'login.html',
                 erro=f"Muitas tentativas falhas. Tente novamente em {tempo_restante} segundos.",
@@ -101,7 +114,7 @@ def login():
             session['acesso_pedidos'] = usuario.acesso_pedidos
             session['acesso_financeiro'] = usuario.acesso_financeiro
             session['acesso_logistica'] = usuario.acesso_logistica
-            session['ultimo_acesso'] = datetime.utcnow().isoformat()
+            session['ultimo_acesso'] = datetime.now(timezone.utc).isoformat()
             session.permanent = True
             session.modified = True
             session.pop('login_attempts', None)
@@ -113,7 +126,7 @@ def login():
             attempts = session.get('login_attempts') or {'count': 0}
             attempts['count'] = attempts.get('count', 0) + 1
             if attempts['count'] >= max_attempts:
-                locked_until = datetime.utcnow() + timedelta(seconds=lockout_seconds)
+                locked_until = datetime.now(timezone.utc) + timedelta(seconds=lockout_seconds)
                 attempts['locked_until'] = locked_until.isoformat()
                 attempts['count'] = 0
                 current_app.logger.warning(
@@ -125,6 +138,106 @@ def login():
             current_app.logger.warning(f"Tentativa de login falhou: {nome} (IP: {request.remote_addr})")
             return render_template('login.html', erro="Usuário ou senha inválidos.")
     return render_template('login.html', erro=mensagem_expirou)
+
+
+def _criar_token_reset(usuario):
+    # invalidar tokens anteriores abertos
+    PasswordResetToken.query.filter_by(usuario_id=usuario.id, usado=False).delete()
+    token = secrets.token_urlsafe(48)
+    expira = datetime.now(timezone.utc) + timedelta(hours=current_app.config.get('RESET_TOKEN_EXPIRATION_HOURS', 1))
+    token_obj = PasswordResetToken(usuario_id=usuario.id, token=token, expires_at=expira)
+    db.session.add(token_obj)
+    db.session.commit()
+    return token
+
+
+def _enviar_email_reset(usuario, token):
+    try:
+        import requests
+    except ImportError:  # pragma: no cover
+        current_app.logger.error('Biblioteca requests não está disponível para enviar e-mail.')
+        return
+    api_key = current_app.config.get('SENDGRID_API_KEY') or os.getenv('SENDGRID_API_KEY')
+    from_email = current_app.config.get('SENDGRID_FROM_EMAIL') or os.getenv('SENDGRID_FROM_EMAIL') or 'noreply@gerped.local'
+    reset_url = url_for('main.reset_password', token=token, _external=True)
+    subject = 'GerpedPlus - Redefinição de Senha'
+    conteudo = f"Olá {usuario.nome},\n\nRecebemos uma solicitação para redefinir sua senha no GerpedPlus. Clique no link abaixo para continuar:\n{reset_url}\n\nSe você não fez esta solicitação, ignore este e-mail. O link expira em 1 hora."
+
+    if not api_key:
+        current_app.logger.warning('SENDGRID_API_KEY não configurada. Link de reset: %s', reset_url)
+        return
+
+    data = {
+        "personalizations": [
+            {
+                "to": [{"email": usuario.nome}],
+                "subject": subject,
+            }
+        ],
+        "from": {"email": from_email},
+        "content": [
+            {"type": "text/plain", "value": conteudo},
+        ],
+    }
+
+    try:
+        response = requests.post(
+            'https://api.sendgrid.com/v3/mail/send',
+            headers={'Authorization': f'Bearer {api_key}', 'Content-Type': 'application/json'},
+            json=data,
+            timeout=10,
+        )
+        if response.status_code >= 400:
+            current_app.logger.error('Falha ao enviar e-mail de reset: %s', response.text)
+    except Exception as exc:
+        current_app.logger.exception('Erro ao enviar e-mail de reset: %s', exc)
+
+
+@bp.route('/esqueci-senha', methods=['GET', 'POST'])
+def forgot_password():
+    mensagem = None
+    erro = None
+    if request.method == 'POST':
+        identificador = request.form.get('identificador', '').strip()
+        if not identificador:
+            erro = 'Informe seu usuário (e-mail) para continuar.'
+        else:
+            usuario = Usuario.query.filter(func.lower(Usuario.nome) == identificador.lower()).first()
+            mensagem = 'Se este usuário estiver cadastrado, enviaremos um e-mail com instruções.'
+            if usuario:
+                token = _criar_token_reset(usuario)
+                _enviar_email_reset(usuario, token)
+    return render_template('forgot_password.html', mensagem=mensagem, erro=erro)
+
+
+@bp.route('/resetar-senha/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+    token_obj = PasswordResetToken.query.filter_by(token=token).first()
+    erro = None
+    mensagem = None
+    if not token_obj or token_obj.usado or token_obj.expires_at < datetime.now(timezone.utc):
+        erro = 'Link de redefinição inválido ou expirado.'
+        return render_template('reset_password.html', erro=erro)
+
+    if request.method == 'POST':
+        senha = request.form.get('senha', '')
+        confirmar = request.form.get('confirmar', '')
+        if len(senha) < 6:
+            erro = 'A nova senha deve ter pelo menos 6 caracteres.'
+        elif senha != confirmar:
+            erro = 'As senhas não conferem.'
+        else:
+            usuario = Usuario.query.get(token_obj.usuario_id)
+            if not usuario:
+                erro = 'Usuário não encontrado.'
+            else:
+                usuario.set_senha(senha)
+                token_obj.usado = True
+                db.session.commit()
+                mensagem = 'Senha redefinida com sucesso. Faça login novamente.'
+                return render_template('reset_password.html', mensagem=mensagem)
+
+    return render_template('reset_password.html', erro=erro)
 
 @bp.route('/api/pedido/<int:pedido_id>')
 @login_obrigatorio
@@ -487,7 +600,7 @@ def healthz():
               example: healthy
             service:
               type: string
-              example: sistema-sap
+              example: sistema-gerped
             timestamp:
               type: string
               format: date-time
@@ -498,7 +611,7 @@ def healthz():
         # Verificação básica - app está respondendo
         return jsonify({
             'status': 'healthy',
-            'service': 'sistema-sap',
+            'service': 'sistema-gerped',
             'timestamp': datetime.now().isoformat()
         }), 200
     except Exception as e:

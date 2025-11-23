@@ -10,7 +10,7 @@
 #   pre-commit run --all-files  # Executar em todos os arquivos
 #   pre-commit run <hook-id>    # Executar hook específico
 #
-# Autor: Sistema SAP - Fase 9
+# Autor: Sistema GERPED - Fase 9
 
 repos:
   # ===========================

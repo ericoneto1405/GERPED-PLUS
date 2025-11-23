@@ -1,13 +1,13 @@
 groups:
-  - name: sap-go-live
+  - name: gerped-go-live
     interval: 1m
     rules:
-      - alert: SAPErrorRateHigh
+      - alert: GERPEDErrorRateHigh
         expr: |
-          sum(count_over_time({job="sap-app", level="ERROR"}[5m])) > 5
+          sum(count_over_time({job="gerped-app", level="ERROR"}[5m])) > 5
         for: 2m
         labels:
           severity: critical
         annotations:
-          summary: "Erros críticos no SAP"
+          summary: "Erros críticos no GERPED"
           description: "Foram detectados mais de 5 registros de log em nível ERROR nos últimos 5 minutos."

@@ -181,7 +181,7 @@ class SecurityPatcher:
             return False
 
 def main():
-    base_path = Path('/Users/ericobrandao/Projects/SAP')
+    base_path = Path('/Users/ericobrandao/Projects/GERPED')
     
     print("╔═══════════════════════════════════════════════════════════════╗")
     print("║     🔒 ANÁLISE DE CORREÇÕES DE SEGURANÇA - Sistema GERPED       ║")

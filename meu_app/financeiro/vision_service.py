@@ -7,8 +7,16 @@ import re
 import uuid
 from typing import Optional, Dict, List, Tuple
 from datetime import datetime
-from google.cloud import vision, storage
-from google.api_core.exceptions import NotFound
+# Importações opcionais (evitar falha em ambientes sem dependências GCP)
+try:
+    from google.cloud import vision, storage
+    from google.api_core.exceptions import NotFound
+    _gcp_import_error = None
+except Exception as exc:  # pragma: no cover - depende do ambiente
+    vision = None  # type: ignore
+    storage = None  # type: ignore
+    NotFound = Exception  # type: ignore
+    _gcp_import_error = exc
 from .config import FinanceiroConfig
 from .exceptions import OcrProcessingError
 
@@ -29,6 +37,10 @@ class VisionOcrService:
             vision.ImageAnnotatorClient: Cliente do Google Vision
         """
         if cls._client is None:
+            if _gcp_import_error is not None or vision is None:
+                raise OcrProcessingError(
+                    f"Bibliotecas Google Cloud Vision indisponíveis: {_gcp_import_error}"
+                )
             try:
                 api_key = FinanceiroConfig.get_google_api_key()
                 credentials_path = FinanceiroConfig.get_google_credentials_path()
@@ -71,6 +83,10 @@ class VisionOcrService:
     def _get_storage_client(cls):
         """Obtém cliente do Google Cloud Storage"""
         if cls._storage_client is None:
+            if _gcp_import_error is not None or storage is None:
+                raise OcrProcessingError(
+                    f"Bibliotecas Google Cloud Storage indisponíveis: {_gcp_import_error}"
+                )
             try:
                 credentials_path = FinanceiroConfig.get_google_credentials_path()
                 if not credentials_path or not os.path.exists(credentials_path):

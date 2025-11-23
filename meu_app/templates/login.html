@@ -3,15 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - SAP</title>
+    <title>Login - GERPED</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
     <div class="login-container">
         <form method="POST" class="login-card">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <img src="{{ url_for('static', filename='images/logo_gerpedplus.png') }}" alt="Logo" class="logo">
-            <h2>Login</h2>
+            <div class="login-brand">
+                <img src="{{ url_for('static', filename='images/gerped_plus.png') }}" alt="Logo" class="logo">
+                <h2>Login</h2>
+            </div>
             
             {% if erro %}
                 <div class="alert alert-danger">{{ erro }}</div>
@@ -26,6 +28,7 @@
                 <label for="senha">Senha</label>
                 <input type="password" id="senha" name="senha" class="form-control" placeholder="Digite sua senha" required>
             </div>
+            <a class="forgot-password" href="{{ url_for('main.forgot_password') }}">Esqueci minha senha</a>
             
             <button type="submit" class="btn btn-primary" style="width: 100%;">Entrar</button>
         </form>

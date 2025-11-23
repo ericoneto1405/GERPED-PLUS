@@ -11,7 +11,7 @@ Data: Outubro 2025
 import logging
 import os
 import traceback
-from datetime import datetime
+from datetime import datetime, timezone
 from logging.handlers import RotatingFileHandler
 
 from dotenv import load_dotenv
@@ -92,7 +92,7 @@ def create_app(config_class=None):
     
     # Log de inicialização
     app.logger.info('=' * 60)
-    app.logger.info('Aplicação SAP iniciada')
+    app.logger.info('Aplicação GERPED iniciada')
     app.logger.info(f'Ambiente: {app.config.get("ENV", "development")}')
     app.logger.info(f'Debug: {app.debug}')
     
@@ -171,6 +171,7 @@ def initialize_extensions(app):
     def enforce_session_inactivity_timeout():
         """Encerra sessão após período configurado de inatividade."""
         timeout = app.config.get('SESSION_INACTIVITY_TIMEOUT')
+        timeout_admin = app.config.get('SESSION_INACTIVITY_TIMEOUT_ADMIN', timeout)
         if not timeout:
             return
         
@@ -181,13 +182,9 @@ def initialize_extensions(app):
         if 'usuario_id' not in session:
             return
         
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         usuario_tipo = (session.get('usuario_tipo') or '').lower()
-        if usuario_tipo == 'admin':
-            session['ultimo_acesso'] = now.isoformat()
-            session.permanent = True
-            session.modified = True
-            return
+        timeout_atual = timeout_admin if usuario_tipo == 'admin' else timeout
         
         last_seen_raw = session.get('ultimo_acesso')
         last_seen = None
@@ -197,7 +194,7 @@ def initialize_extensions(app):
             except ValueError:
                 app.logger.warning("Valor inválido em session['ultimo_acesso']; resetando controle de inatividade.")
         
-        if last_seen and now - last_seen > timeout:
+        if last_seen and now - last_seen > timeout_atual:
             from flask_login import logout_user  # Import lazy para evitar ciclos
             app.logger.info("Sessão expirada por inatividade para usuário_id=%s", session.get('usuario_id'))
             logout_user()

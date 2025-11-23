@@ -16,28 +16,41 @@
     <!-- Resumo Total -->
     {% set total_valor_necessidade = necessidade_compra | sum(attribute='valor_total_necessidade') %}
     {% if total_valor_necessidade > 0 %}
-    <div class="alert alert-warning" style="margin-bottom: 20px; padding: 12px 16px; border-left: 4px solid #dc3545;">
-        <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 0.95rem;">
-            <strong>💰 Necessidade Total de Compra Valor:</strong>
-            <span style="font-weight: 600; color: #dc3545;">
-                {{ "R$ {:,.2f}".format(total_valor_necessidade).replace(',', 'X').replace('.', ',').replace('X', '.') }}
-            </span>
-        </div>
+    <div class="alert alert-warning necessidade-total-banner">
+        <strong>💰 Necessidade Total de Compra:</strong>
+        <span>
+            {{ "R$ {:,.2f}".format(total_valor_necessidade).replace(',', 'X').replace('.', ',').replace('X', '.') }}
+        </span>
     </div>
     {% endif %}
     
+    <div class="table-toolbar mb-3">
+        <div class="input-group shadow-sm" style="max-width: 360px;">
+            <span class="input-group-text bg-white">
+                <i class="fas fa-search text-muted"></i>
+            </span>
+            <input type="search"
+                   id="filtroGlobal"
+                   class="form-control"
+                   placeholder="Buscar por produto, status, valores..." />
+        </div>
+        <small class="text-muted d-block mt-2">
+            Clique nos cabeçalhos para ordenar e use a busca para filtrar rapidamente.
+        </small>
+    </div>
+
     <div class="table-responsive">
         <table class="necessidade-table">
             <thead>
                 <tr>
-                    <th>PRODUTO</th>
-                    <th>PEDIDOS<br>LIBERADOS</th>
-                    <th>ESTOQUE</th>
-                    <th>SALDO</th>
-                    <th>NECESSIDADE<br>DE COMPRA</th>
-                    <th>VALOR<br>UNITÁRIO</th>
-                    <th>VALOR<br>TOTAL</th>
-                    <th>STATUS</th>
+                    <th data-column-index="0">PRODUTO</th>
+                    <th data-column-index="1">PEDIDOS<br>LIBERADOS</th>
+                    <th data-column-index="2">ESTOQUE</th>
+                    <th data-column-index="3">SALDO</th>
+                    <th data-column-index="4">NECESSIDADE<br>DE COMPRA</th>
+                    <th data-column-index="5">VALOR<br>UNITÁRIO</th>
+                    <th data-column-index="6">VALOR<br>TOTAL</th>
+                    <th data-column-index="7">STATUS</th>
                 </tr>
             </thead>
             <tbody>
@@ -100,6 +113,25 @@
         box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     }
     
+    .table-toolbar {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .necessidade-total-banner {
+        display: inline-flex !important;
+        align-items: center;
+        gap: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        color: #dc3545;
+        padding: 10px 16px !important;
+        border-left: 4px solid #dc3545;
+        width: auto;
+        white-space: nowrap;
+    }
+
     .section-header h3 {
         color: #2c3e50;
         margin: 0 0 5px 0;
@@ -126,6 +158,20 @@
         color: #495057;
         border-bottom: 2px solid #dee2e6;
         font-size: 0.9rem;
+    }
+    .necessidade-table th[data-column-index] {
+        cursor: pointer;
+        user-select: none;
+        position: relative;
+    }
+    .necessidade-table th[data-column-index] .sort-indicator {
+        font-size: 0.7rem;
+        margin-left: 6px;
+        color: #adb5bd;
+    }
+    .necessidade-table th.sorted-asc,
+    .necessidade-table th.sorted-desc {
+        color: #0d6efd;
     }
     
     .necessidade-table td {
@@ -229,4 +275,82 @@
         }
     }
 </style>
+
+<script nonce="{{ nonce }}">
+document.addEventListener('DOMContentLoaded', () => {
+    const tabela = document.querySelector('.necessidade-table');
+    if (!tabela) {
+        return;
+    }
+    const tbody = tabela.querySelector('tbody');
+    const headers = tabela.querySelectorAll('th[data-column-index]');
+    let currentSort = { index: null, direction: 'asc' };
+
+    const parseCellValue = (cell) => {
+        const text = cell.textContent.trim()
+            .replace(/R\$\s?/i, '')
+            .replace(/\./g, '')
+            .replace(',', '.');
+        const number = parseFloat(text);
+        if (!Number.isNaN(number)) {
+            return number;
+        }
+        return cell.textContent.trim().toLowerCase();
+    };
+
+    const applySortIndicators = () => {
+        headers.forEach((header) => {
+            header.classList.remove('sorted-asc', 'sorted-desc');
+            const indicator = header.querySelector('.sort-indicator');
+            if (indicator) {
+                indicator.textContent = '';
+            }
+        });
+        const target = headers[currentSort.index];
+        if (!target) return;
+        target.classList.add(currentSort.direction === 'asc' ? 'sorted-asc' : 'sorted-desc');
+        let indicator = target.querySelector('.sort-indicator');
+        if (!indicator) {
+            indicator = document.createElement('span');
+            indicator.className = 'sort-indicator';
+            target.appendChild(indicator);
+        }
+        indicator.textContent = currentSort.direction === 'asc' ? '▲' : '▼';
+    };
+
+    headers.forEach((header, index) => {
+        header.addEventListener('click', () => {
+            const direction = (currentSort.index === index && currentSort.direction === 'asc') ? 'desc' : 'asc';
+            currentSort = { index, direction };
+
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            rows.sort((rowA, rowB) => {
+                const a = parseCellValue(rowA.children[index]);
+                const b = parseCellValue(rowB.children[index]);
+                if (typeof a === 'number' && typeof b === 'number') {
+                    return direction === 'asc' ? a - b : b - a;
+                }
+                return direction === 'asc'
+                    ? String(a).localeCompare(String(b))
+                    : String(b).localeCompare(String(a));
+            });
+
+            rows.forEach((row) => tbody.appendChild(row));
+            applySortIndicators();
+        });
+    });
+
+    const filtroGlobal = document.getElementById('filtroGlobal');
+    if (filtroGlobal) {
+        filtroGlobal.addEventListener('input', (event) => {
+            const termo = event.target.value.trim().toLowerCase();
+            const rows = tbody.querySelectorAll('tr');
+            rows.forEach((row) => {
+                const texto = row.textContent.toLowerCase();
+                row.style.display = texto.includes(termo) ? '' : 'none';
+            });
+        });
+    }
+});
+</script>
 {% endblock %}

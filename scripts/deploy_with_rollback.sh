@@ -5,7 +5,7 @@
 set -euo pipefail
 shopt -s nullglob
 
-APP_NAME="${APP_NAME:-sap}"
+APP_NAME="${APP_NAME:-gerped}"
 DEPLOY_ROOT="${DEPLOY_ROOT:-/opt/${APP_NAME}}"
 RELEASES_DIR="${RELEASES_DIR:-${DEPLOY_ROOT}/releases}"
 SHARED_DIR="${SHARED_DIR:-${DEPLOY_ROOT}/shared}"

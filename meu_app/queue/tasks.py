@@ -97,7 +97,7 @@ def process_ocr_task(file_path: str, pedido_id: int, pagamento_id: Optional[int]
 
 def generate_receipt_task(coleta_data: Dict) -> Dict:
     """
-    Task assíncrona para gerar recibo de coleta em PDF.
+    Task assíncrona para gerar recibo de coleta em imagem (JPG).
     
     Args:
         coleta_data: Dicionário com informações da coleta.
@@ -120,7 +120,7 @@ def generate_receipt_task(coleta_data: Dict) -> Dict:
 
             from meu_app.coletas.receipt_service import ReceiptService
 
-            pdf_path = ReceiptService.gerar_recibo_pdf(coleta_data)
+            image_path = ReceiptService.gerar_recibo_imagem(coleta_data)
 
             if job:
                 job.meta['progress'] = 100
@@ -129,7 +129,8 @@ def generate_receipt_task(coleta_data: Dict) -> Dict:
 
             return {
                 'success': True,
-                'pdf_path': pdf_path,
+                'image_path': image_path,
+                'pdf_path': image_path,  # Compatibilidade retroativa
                 'pedido_id': coleta_data.get('pedido_id'),
             }
 

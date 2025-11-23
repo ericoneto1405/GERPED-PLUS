@@ -15,9 +15,8 @@ class TestCSPHeaders:
     
     def test_csp_header_presente(self, client, app):
         """Verifica se header CSP está presente nas respostas"""
-        with client:
-            response = client.get('/')
-            assert 'Content-Security-Policy' in response.headers, "CSP header deve estar presente"
+        response = client.get('/')
+        assert 'Content-Security-Policy' in response.headers, "CSP header deve estar presente"
     
     def test_csp_sem_unsafe_inline_producao(self, app):
         """Verifica ausência de unsafe-inline em produção"""
@@ -42,19 +41,18 @@ class TestCSPHeaders:
     
     def test_csp_nonce_unico_por_request(self, client):
         """Verifica se nonce é único para cada request"""
-        with client:
-            response1 = client.get('/login')
-            response2 = client.get('/login')
-            
-            csp1 = response1.headers.get('Content-Security-Policy', '')
-            csp2 = response2.headers.get('Content-Security-Policy', '')
-            
-            # Extrair nonces (formato: 'nonce-XXXX')
-            nonces1 = re.findall(r"'nonce-([^']+)'", csp1)
-            nonces2 = re.findall(r"'nonce-([^']+)'", csp2)
-            
-            if nonces1 and nonces2:
-                assert nonces1[0] != nonces2[0], "Nonces devem ser únicos por request"
+        response1 = client.get('/login')
+        response2 = client.get('/login')
+        
+        csp1 = response1.headers.get('Content-Security-Policy', '')
+        csp2 = response2.headers.get('Content-Security-Policy', '')
+        
+        # Extrair nonces (formato: 'nonce-XXXX')
+        nonces1 = re.findall(r"'nonce-([^']+)'", csp1)
+        nonces2 = re.findall(r"'nonce-([^']+)'", csp2)
+        
+        if nonces1 and nonces2:
+            assert nonces1[0] != nonces2[0], "Nonces devem ser únicos por request"
     
     def test_csp_strict_dynamic_presente(self, app):
         """Verifica se strict-dynamic está presente em produção"""
@@ -225,41 +223,34 @@ class TestNonceInjection:
     
     def test_nonce_disponivel_no_context(self, app, client):
         """Verifica se nonce está disponível no contexto dos templates"""
-        with client:
-            with app.test_request_context('/'):
-                from flask import g, render_template_string
-                
-                # Gerar nonce
-                from meu_app.security import _register_nonce_context_processor
-                
-                # Simular contexto
-                template = "{{ nonce }}"
-                rendered = render_template_string(template)
-                
-                # Nonce deve existir e não estar vazio
-                assert rendered, "Nonce deve estar disponível no contexto"
-                assert len(rendered) > 0, "Nonce não deve estar vazio"
+        from flask import render_template_string
+
+        @app.route("/__nonce_test")
+        def _nonce_test():
+            return render_template_string("{{ nonce }}")
+
+        response = client.get("/__nonce_test")
+        rendered = response.get_data(as_text=True)
+        assert rendered.strip(), "Nonce deve estar disponível no contexto"
     
     def test_nonce_formato_valido(self, client):
         """Verifica se nonce tem formato válido (base64url)"""
-        with client:
-            response = client.get('/login')
-            csp = response.headers.get('Content-Security-Policy', '')
+        response = client.get('/login')
+        csp = response.headers.get('Content-Security-Policy', '')
+        
+        # Extrair nonce
+        nonces = re.findall(r"'nonce-([^']+)'", csp)
+        
+        if nonces:
+            nonce = nonces[0]
+            # Verificar formato base64url (apenas caracteres válidos)
+            assert re.match(r'^[A-Za-z0-9_-]+$', nonce), \
+                "Nonce deve ter formato base64url válido"
             
-            # Extrair nonce
-            nonces = re.findall(r"'nonce-([^']+)'", csp)
-            
-            if nonces:
-                nonce = nonces[0]
-                # Verificar formato base64url (apenas caracteres válidos)
-                assert re.match(r'^[A-Za-z0-9_-]+$', nonce), \
-                    "Nonce deve ter formato base64url válido"
-                
-                # Verificar comprimento mínimo (16 bytes = ~22 chars em base64)
-                assert len(nonce) >= 20, \
-                    "Nonce deve ter comprimento mínimo de 20 caracteres"
+            # Verificar comprimento mínimo (16 bytes = ~22 chars em base64)
+            assert len(nonce) >= 20, \
+                "Nonce deve ter comprimento mínimo de 20 caracteres"
 
 
 if __name__ == '__main__':
     pytest.main([__file__, '-v'])
-

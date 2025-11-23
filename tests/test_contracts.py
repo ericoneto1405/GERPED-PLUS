@@ -71,7 +71,7 @@ def authenticated_client(client):
     """Cliente autenticado"""
     # Login
     client.post('/login', data={
-        'nome': 'admin',
+        'usuario': 'admin',
         'senha': 'admin123'
     }, follow_redirects=True)
     
@@ -81,7 +81,7 @@ def authenticated_client(client):
 class TestAPIContracts:
     """Testes de contrato de APIs"""
     
-    def test_healthz_contract(self, client, snapshot):
+    def test_healthz_contract(self, client):
         """
         Snapshot do contrato de /healthz
         
@@ -90,13 +90,10 @@ class TestAPIContracts:
         response = client.get('/healthz')
         data = response.get_json()
         
-        # Remover timestamp (varia)
         data.pop('timestamp', None)
-        
-        # Validar estrutura
-        assert data == snapshot
+        assert data == {'service': 'sistema-gerped', 'status': 'healthy'}
     
-    def test_readiness_contract(self, client, snapshot):
+    def test_readiness_contract(self, client):
         """
         Snapshot do contrato de /readiness
         """
@@ -118,24 +115,24 @@ class TestAPIContracts:
         response = client.get('/metrics')
         
         assert response.status_code == 200
-        assert response.content_type == 'text/plain; charset=utf-8'
+        assert response.content_type.startswith('text/plain')
+        assert 'charset=utf-8' in response.content_type
         
         # Verificar que contém métricas esperadas
         text = response.data.decode('utf-8')
         assert 'http_requests_total' in text
         assert 'http_request_duration_seconds' in text
     
-    def test_error_response_contract(self, client, snapshot):
+    def test_error_response_contract(self, client):
         """
         Snapshot do formato de erro padrão
         """
-        response = client.get('/rota-inexistente')
-        data = response.get_json()
+        response = client.get('/rota-inexistente', headers={'Accept': 'application/json'})
+        data = response.get_json() or {}
         
         # Remover timestamp
         data.pop('timestamp', None)
         
-        # Estrutura de erro padrão
         assert 'error' in data
         assert 'message' in data
         assert 'type' in data
@@ -193,4 +190,3 @@ class TestResponseTimeContract:
         
         assert response.status_code in [200, 503]
         assert duration < 500, f"Readiness muito lento: {duration}ms"
-

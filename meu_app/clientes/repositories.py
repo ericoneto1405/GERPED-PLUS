@@ -20,7 +20,8 @@ class ClienteRepository:
 
     def __init__(self, session=None, model=None):
         self._session = session
-        self._model = model or Cliente
+        # Keep reference lazy so tests can patch Cliente dynamically
+        self._model = model
 
     @property
     def session(self):
@@ -28,7 +29,7 @@ class ClienteRepository:
 
     @property
     def model(self):
-        return self._model
+        return self._model or Cliente
 
     def buscar_por_id(self, cliente_id: int) -> Optional[Cliente]:
         try:
@@ -91,10 +92,11 @@ class ClienteRepository:
             print(f"Erro ao atualizar cliente: {str(e)}")
             raise
 
-    def excluir(self, cliente: Cliente) -> None:
+    def excluir(self, cliente: Cliente) -> bool:
         try:
             self.session.delete(cliente)
             self.session.commit()
+            return True
         except SQLAlchemyError as e:
             self.session.rollback()
             print(f"Erro ao excluir cliente: {str(e)}")
@@ -123,7 +125,8 @@ class RetiranteAutorizadoRepository:
 
     def __init__(self, session=None, model=None):
         self._session = session
-        self._model = model or ClienteRetiranteAutorizado
+        # Permite injetar mock do modelo em testes
+        self._model = model
 
     @property
     def session(self):
@@ -131,7 +134,7 @@ class RetiranteAutorizadoRepository:
 
     @property
     def model(self):
-        return self._model
+        return self._model or ClienteRetiranteAutorizado
 
     def listar_por_cliente(self, cliente_id: int) -> List[ClienteRetiranteAutorizado]:
         try:

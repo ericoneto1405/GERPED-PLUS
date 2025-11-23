@@ -1,9 +1,10 @@
 """
-Serviço para geração de recibo de coleta em PDF
-Modelo EXATO baseado na interface mostrada
+Serviço para geração de recibo de coleta em imagem (JPG)
 """
-from datetime import datetime, timedelta
+from __future__ import annotations
 import os
+import textwrap
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Dict, Optional
 
@@ -11,396 +12,250 @@ from flask import current_app
 
 from meu_app.exceptions import ConfigurationError, FileProcessingError
 
-try:
-    from reportlab.lib.pagesizes import A4
-    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
-    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-    from reportlab.lib.units import cm
-    from reportlab.lib import colors
-    from reportlab.lib.enums import TA_CENTER
-    from reportlab.graphics.shapes import Drawing, Rect, Line
+try:  # pragma: no cover - Pillow pode estar ausente em ambientes limitados
+    from PIL import Image, ImageDraw, ImageFont
+    PIL_AVAILABLE = True
+    PIL_IMPORT_ERROR: Optional[ImportError] = None
+except ImportError as import_error:  # pragma: no cover
+    Image = ImageDraw = ImageFont = None  # type: ignore
+    PIL_AVAILABLE = False
+    PIL_IMPORT_ERROR = import_error
 
-    REPORTLAB_AVAILABLE = True
-    REPORTLAB_IMPORT_ERROR: Optional[ImportError] = None
-except ImportError as import_error:  # pragma: no cover - ambiente sem reportlab
-    REPORTLAB_AVAILABLE = False
-    REPORTLAB_IMPORT_ERROR = import_error
+FONT_CANDIDATES = [
+    ("/System/Library/Fonts/SFNSDisplay.ttf", "/System/Library/Fonts/SFNSDisplay-Bold.ttf"),
+    ("/System/Library/Fonts/Supplemental/Arial.ttf", "/System/Library/Fonts/Supplemental/Arial Bold.ttf"),
+    ("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"),
+    ("/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf", "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf"),
+]
 
 
 class ReceiptService:
-    """Serviço para geração de recibos de coleta"""
-    
+    """Serviço para geração de recibos de coleta."""
+
+    _font_cache: Dict[tuple[int, bool], ImageFont.FreeTypeFont] = {}
+
+    @staticmethod
+    def _load_font(size: int, bold: bool = False) -> ImageFont.ImageFont:
+        cache_key = (size, bold)
+        if cache_key in ReceiptService._font_cache:
+            return ReceiptService._font_cache[cache_key]
+
+        candidates = FONT_CANDIDATES or [(None, None)]
+        for regular_path, bold_path in candidates:
+            path = bold_path if bold else regular_path
+            if path and os.path.exists(path):
+                try:
+                    font = ImageFont.truetype(path, size=size)
+                    ReceiptService._font_cache[cache_key] = font
+                    return font
+                except OSError:
+                    continue
+
+        font = ImageFont.load_default()
+        ReceiptService._font_cache[cache_key] = font
+        return font
+
+    @staticmethod
+    def _draw_dashed_rectangle(draw: ImageDraw.ImageDraw, box: tuple[int, int, int, int], *, dash_length: int = 18,
+                               gap: int = 12, color=(120, 120, 120), width: int = 3) -> None:
+        x1, y1, x2, y2 = box
+
+        def _draw_segment(start, end):
+            draw.line([start, end], fill=color, width=width)
+
+        # Top and bottom
+        for x in range(x1, x2, dash_length + gap):
+            _draw_segment((x, y1), (min(x + dash_length, x2), y1))
+            _draw_segment((x, y2), (min(x + dash_length, x2), y2))
+
+        # Left and right
+        for y in range(y1, y2, dash_length + gap):
+            _draw_segment((x1, y), (x1, min(y + dash_length, y2)))
+            _draw_segment((x2, y), (x2, min(y + dash_length, y2)))
+
+    @staticmethod
+    def _format_data_coleta(valor) -> str:
+        if isinstance(valor, datetime):
+            return valor.strftime('%d/%m/%Y %H:%M')
+        if valor:
+            return str(valor)
+        return datetime.now().strftime('%d/%m/%Y %H:%M')
+
+    @staticmethod
+    def gerar_recibo_imagem(coleta_data: Dict, output_dir: Optional[str] = None) -> str:
+        """Gera um recibo em JPG baseado no layout fornecido."""
+        if not PIL_AVAILABLE:
+            erro = PIL_IMPORT_ERROR or ImportError('Biblioteca Pillow indisponível')
+            raise ConfigurationError(
+                message='Biblioteca Pillow não está instalada. Configure antes de gerar recibos.',
+                details={'missing_dependency': 'Pillow', 'original_error': str(erro)}
+            )
+
+        receipts_dir = output_dir or os.path.join(current_app.instance_path, 'recibos')
+        os.makedirs(receipts_dir, exist_ok=True)
+        ReceiptService.limpar_recibos_antigos(receipts_dir)
+
+        width, height = 1240, 1754  # Aproximadamente A4 em 150 DPI
+        margin = 100
+        background_color = (255, 255, 255)
+        accent = (31, 41, 55)  # azul escuro
+        table_border = (15, 23, 42)
+
+        title_font = ReceiptService._load_font(48, bold=True)
+        section_font = ReceiptService._load_font(28, bold=True)
+        text_font = ReceiptService._load_font(26)
+        small_font = ReceiptService._load_font(22)
+        tiny_font = ReceiptService._load_font(18)
+
+        image = Image.new('RGB', (width, height), background_color)
+        draw = ImageDraw.Draw(image)
+
+        y = 130
+        draw.text((margin, y), 'Recibo de Coleta', font=title_font, fill=accent)
+        y += title_font.size + 30
+
+        info_lines = [
+            ('Pedido', f"#{coleta_data.get('pedido_id', 'N/A')}"),
+            ('Cliente', coleta_data.get('cliente_nome', 'N/A')),
+            ('Data da Coleta', ReceiptService._format_data_coleta(coleta_data.get('data_coleta'))),
+            ('Coletado por', coleta_data.get('nome_retirada', 'N/A')),
+            ('Conferido por', coleta_data.get('nome_conferente', 'N/A')),
+        ]
+
+        for label, value in info_lines:
+            draw.text((margin, y), f"{label}:", font=section_font, fill=accent)
+            draw.text((margin + 270, y), value or 'N/A', font=text_font, fill=(60, 60, 60))
+            y += text_font.size + 12
+
+        y += 30
+
+        # Tabela de itens
+        table_x1 = margin
+        table_x2 = width - margin
+        header_height = 70
+        row_height = 70
+        items = coleta_data.get('itens_coleta') or [{'produto_nome': 'Produto não informado', 'quantidade': '0'}]
+        table_height = header_height + row_height * len(items)
+        table_y1 = y
+        table_y2 = y + table_height
+
+        draw.rectangle([table_x1, table_y1, table_x2, table_y1 + header_height], fill=(239, 241, 245), outline=table_border,
+                       width=3)
+        draw.line([(table_x1 + (table_x2 - table_x1) * 0.65, table_y1),
+                   (table_x1 + (table_x2 - table_x1) * 0.65, table_y1 + header_height)], fill=table_border, width=3)
+        draw.text((table_x1 + 20, table_y1 + header_height / 2 - section_font.size / 2), 'Produto', font=section_font,
+                  fill=table_border)
+        draw.text((table_x1 + (table_x2 - table_x1) * 0.65 + 20,
+                   table_y1 + header_height / 2 - section_font.size / 2), 'Quantidade Coletada', font=section_font,
+                  fill=table_border)
+
+        current_y = table_y1 + header_height
+        for item in items:
+            draw.rectangle([table_x1, current_y, table_x2, current_y + row_height], outline=table_border, width=2)
+            produto = item.get('produto_nome', 'N/A')
+            quantidade = str(item.get('quantidade', 0))
+            produto_lines = textwrap.wrap(produto, width=40) or ['N/A']
+            produto_text = '\n'.join(produto_lines)
+            draw.multiline_text((table_x1 + 20, current_y + 15), produto_text, font=small_font,
+                                 fill=(50, 50, 50), spacing=4)
+            draw.text((table_x1 + (table_x2 - table_x1) * 0.65 + 20, current_y + 20), quantidade, font=small_font,
+                      fill=(50, 50, 50))
+            current_y += row_height
+
+        y = table_y2 + 60
+
+        # Assinaturas
+        line_length = (table_x2 - table_x1 - 80) / 2
+        sig_y = y
+        left_start = table_x1
+        right_start = table_x1 + line_length + 80
+        draw.line([(left_start, sig_y), (left_start + line_length, sig_y)], fill=table_border, width=3)
+        draw.line([(right_start, sig_y), (right_start + line_length, sig_y)], fill=table_border, width=3)
+
+        draw.text((left_start, sig_y + 10), 'Assinatura do Coletador', font=small_font, fill=accent)
+        draw.text((left_start, sig_y + 45), f"CPF: {coleta_data.get('documento_retirada', 'N/A')}", font=tiny_font,
+                  fill=(70, 70, 70))
+        draw.text((right_start, sig_y + 10), 'Assinatura do Conferente', font=small_font, fill=accent)
+        draw.text((right_start, sig_y + 45), f"CPF: {coleta_data.get('cpf_conferente', 'N/A')}", font=tiny_font,
+                  fill=(70, 70, 70))
+
+        y = sig_y + 150
+
+        placeholder_height = 260
+        placeholder_box = (table_x1, y, table_x2, y + placeholder_height)
+        ReceiptService._draw_dashed_rectangle(draw, placeholder_box)
+        msg = 'DOCUMENTO DE IDENTIFICAÇÃO\nAUTORIZADO PARA COLETA'
+        bbox = draw.multiline_textbbox((0, 0), msg, font=small_font, align='center')
+        text_width = bbox[2] - bbox[0]
+        text_height = bbox[3] - bbox[1]
+        draw.multiline_text(
+            ((table_x1 + table_x2 - text_width) / 2, y + (placeholder_height - text_height) / 2),
+            msg,
+            font=small_font,
+            fill=(90, 90, 90),
+            align='center'
+        )
+
+        y += placeholder_height + 60
+        rodape = f"Recibo emitido em {datetime.now().strftime('%d/%m/%Y às %H:%M:%S')} pelo Sistema GERPED"
+        draw.text((margin, y), rodape, font=tiny_font, fill=(120, 120, 120))
+
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f"recibo_coleta_{coleta_data.get('pedido_id', 'N')}_{timestamp}.jpg"
+        filepath = os.path.join(receipts_dir, filename)
+
+        try:
+            image.save(filepath, format='JPEG', quality=90)
+        except Exception as exc:  # pragma: no cover - exceções raras
+            raise FileProcessingError(
+                message='Falha ao salvar recibo de coleta em JPG',
+                details={'pedido_id': coleta_data.get('pedido_id'), 'arquivo': filepath, 'error': str(exc)}
+            ) from exc
+
+        current_app.logger.info(
+            'Recibo de coleta (JPG) gerado com sucesso',
+            extra={'pedido_id': coleta_data.get('pedido_id'), 'arquivo': filepath,
+                   'quantidade_itens': len(coleta_data.get('itens_coleta', []))},
+        )
+        return filepath
+
     @staticmethod
     def gerar_recibo_pdf(coleta_data: Dict, output_dir: Optional[str] = None) -> str:
-        """
-        Gera um recibo PDF EXATO como o modelo mostrado
-        
-        Args:
-            coleta_data: Dicionário com dados da coleta
-            output_dir: Diretório opcional para salvar o PDF (default: instance/recibos)
-            
-        Returns:
-            str: Caminho do arquivo PDF gerado
-        """
-        if not REPORTLAB_AVAILABLE:
-            erro = REPORTLAB_IMPORT_ERROR or ImportError("Biblioteca reportlab indisponível")
-            current_app.logger.error(
-                "Dependência ReportLab ausente ao gerar recibo de coleta",
-                exc_info=erro,
-            )
-            raise ConfigurationError(
-                message="Biblioteca ReportLab não está instalada. Configure dependência antes de gerar recibos.",
-                details={"missing_dependency": "reportlab", "original_error": str(erro)},
-            )
-        
-        receipts_dir = output_dir or os.path.join(current_app.instance_path, 'recibos')
-        filepath = None
-        
-        try:
-            # Criar diretório de recibos se não existir
-            os.makedirs(receipts_dir, exist_ok=True)
-            ReceiptService.limpar_recibos_antigos(receipts_dir)
-            
-            # Nome do arquivo
-            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            filename = f"recibo_coleta_{coleta_data['pedido_id']}_{timestamp}.pdf"
-            filepath = os.path.join(receipts_dir, filename)
-            
-            # Criar documento PDF
-            doc = SimpleDocTemplate(
-                filepath,
-                pagesize=A4,
-                rightMargin=2*cm,
-                leftMargin=2*cm,
-                topMargin=2*cm,
-                bottomMargin=2*cm
-            )
-            
-            # Estilos
-            styles = getSampleStyleSheet()
-            
-            # Estilo para título principal "Recibo de Coleta"
-            main_title_style = ParagraphStyle(
-                'MainTitle',
-                parent=styles['Heading1'],
-                fontSize=20,
-                textColor=colors.black,
-                alignment=TA_CENTER,
-                spaceAfter=20,
-                fontName='Helvetica-Bold'
-            )
-            
-            # Estilo para informações do pedido
-            info_style = ParagraphStyle(
-                'OrderInfo',
-                parent=styles['Normal'],
-                fontSize=12,
-                textColor=colors.black,
-                spaceAfter=8,
-                fontName='Helvetica'
-            )
-            
-            # Estilo para cabeçalho da tabela
-            table_header_style = ParagraphStyle(
-                'TableHeader',
-                parent=styles['Normal'],
-                fontSize=11,
-                textColor=colors.black,
-                alignment=TA_CENTER,
-                spaceAfter=10,
-                fontName='Helvetica-Bold'
-            )
-            
-            # Estilo para assinaturas
-            signature_style = ParagraphStyle(
-                'SignatureStyle',
-                parent=styles['Normal'],
-                fontSize=12,
-                textColor=colors.black,
-                alignment=TA_CENTER,
-                spaceAfter=15,
-                fontName='Helvetica-Bold'
-            )
-            
-            # Estilo para documento de identificação
-            doc_style = ParagraphStyle(
-                'DocStyle',
-                parent=styles['Normal'],
-                fontSize=12,
-                textColor=colors.black,
-                alignment=TA_CENTER,
-                spaceAfter=10,
-                fontName='Helvetica-Bold'
-            )
-            
-            # Lista de elementos para o PDF
-            story = []
-            
-            # Título principal "Recibo de Coleta"
-            story.append(Paragraph("📄 Recibo de Coleta", main_title_style))
-            story.append(Spacer(1, 0.5*cm))
-            
-            # Informações do pedido e coleta
-            pedido_info = f"""
-            <b>Pedido:</b> #{coleta_data['pedido_id']}<br/>
-            <b>Cliente:</b> {coleta_data.get('cliente_nome', 'N/A')}<br/>
-            <b>Data da Coleta:</b> {coleta_data.get('data_coleta', datetime.now().strftime('%d/%m/%Y %H:%M'))}<br/>
-            <b>Coletado por:</b> {coleta_data.get('nome_retirada', 'N/A')}<br/>
-            <b>Liberado por:</b> {coleta_data.get('nome_conferente', 'N/A')}
-            """
-            story.append(Paragraph(pedido_info, info_style))
-            story.append(Spacer(1, 0.5*cm))
-            
-            # Cabeçalho da tabela de itens
-            story.append(Paragraph("Itens Coletados", table_header_style))
-            
-            # Criar tabela de itens coletados
-            items_data = [['Produto', 'Quantidade Coletada']]
-            
-            for item in coleta_data.get('itens_coleta', []):
-                produto_nome = item.get('produto_nome', 'N/A')
-                quantidade = item.get('quantidade', 0)
-                
-                items_data.append([
-                    produto_nome,
-                    str(quantidade)
-                ])
-            
-            # Tabela de itens
-            items_table = Table(items_data, colWidths=[12*cm, 4*cm])
-            items_table.setStyle(TableStyle([
-                ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                ('FONTSIZE', (0, 0), (-1, 0), 10),
-                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-                ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-                ('GRID', (0, 0), (-1, -1), 1, colors.black),
-                ('FONTSIZE', (0, 1), (-1, -1), 9),
-                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ]))
-            
-            story.append(items_table)
-            story.append(Spacer(1, 0.5*cm))
-            
-            # ========================================
-            # SEÇÃO DE ASSINATURAS - LAYOUT PROFISSIONAL
-            # ========================================
-            
-            # Título da seção
-            assinaturas_title = ParagraphStyle(
-                'AssinaturasTitle',
-                parent=styles['Heading2'],
-                fontSize=14,
-                textColor=colors.black,
-                alignment=TA_CENTER,
-                spaceAfter=20,
-                fontName='Helvetica-Bold'
-            )
-            story.append(Paragraph("ASSINATURAS", assinaturas_title))
-            story.append(Spacer(1, 0.3*cm))
-            
-            # ========================================
-            # ASSINATURA DO CLIENTE (Pessoa que Coletou)
-            # ========================================
-            
-            # Nome completo
-            cliente_nome_style = ParagraphStyle(
-                'ClienteNome',
-                parent=styles['Normal'],
-                fontSize=11,
-                textColor=colors.black,
-                alignment=TA_CENTER,
-                fontName='Helvetica-Bold',
-                spaceAfter=5
-            )
-            story.append(Paragraph(f"RETIRADO POR: {coleta_data.get('nome_retirada', 'N/A').upper()}", cliente_nome_style))
-            
-            # Linha pontilhada para assinatura (mais larga e visível)
-            linha_assinatura = Drawing(12*cm, 0.8*cm)
-            linha_assinatura.add(Line(0, 0.4*cm, 12*cm, 0.4*cm, 
-                                     strokeColor=colors.black,
-                                     strokeWidth=1,
-                                     strokeDashArray=[3, 3]))
-            story.append(linha_assinatura)
-            
-            # Texto "Assinatura" abaixo da linha
-            assinatura_label_style = ParagraphStyle(
-                'AssinaturaLabel',
-                parent=styles['Normal'],
-                fontSize=9,
-                textColor=colors.black,
-                alignment=TA_CENTER,
-                fontName='Helvetica',
-                spaceAfter=8
-            )
-            story.append(Paragraph("Assinatura do Cliente", assinatura_label_style))
-            
-            # CPF/Documento
-            doc_cliente_style = ParagraphStyle(
-                'DocCliente',
-                parent=styles['Normal'],
-                fontSize=10,
-                textColor=colors.black,
-                alignment=TA_CENTER,
-                fontName='Helvetica-Bold',
-                spaceAfter=8
-            )
-            story.append(Paragraph(f"CPF/RG: {coleta_data.get('documento_retirada', '_________________')}", doc_cliente_style))
-            
-            story.append(Spacer(1, 0.5*cm))
-            
-            # ========================================
-            # ASSINATURA DO FUNCIONÁRIO (Conferente)
-            # ========================================
-            
-            story.append(Paragraph(f"LIBERADO POR: {coleta_data.get('nome_conferente', 'N/A').upper()}", cliente_nome_style))
-            
-            # Linha pontilhada para assinatura
-            linha_funcionario = Drawing(12*cm, 0.8*cm)
-            linha_funcionario.add(Line(0, 0.4*cm, 12*cm, 0.4*cm,
-                                      strokeColor=colors.black,
-                                      strokeWidth=1,
-                                      strokeDashArray=[3, 3]))
-            story.append(linha_funcionario)
-            
-            # Texto "Assinatura" abaixo
-            story.append(Paragraph("Assinatura do Funcionário Responsável", assinatura_label_style))
-            
-            # CPF do conferente
-            story.append(Paragraph(f"CPF: {coleta_data.get('cpf_conferente', '_________________')}", doc_cliente_style))
-            
-            story.append(Spacer(1, 0.5*cm))
-            
-            # ========================================
-            # ÁREA PARA ANEXAR DOCUMENTO (MUITO MAIOR)
-            # ========================================
-            
-            # Título com instrução
-            doc_title_style = ParagraphStyle(
-                'DocTitle',
-                parent=styles['Normal'],
-                fontSize=12,
-                textColor=colors.black,
-                alignment=TA_CENTER,
-                fontName='Helvetica-Bold',
-                spaceAfter=10
-            )
-            story.append(Paragraph("⚠️ ANEXAR CÓPIA DO DOCUMENTO DE IDENTIFICAÇÃO ABAIXO ⚠️", doc_title_style))
-            
-            # Retângulo para colar documento (otimizado para caber em 1 página)
-            doc_drawing = Drawing(16*cm, 4*cm)
-            
-            # Retângulo tracejado bem destacado
-            rect = Rect(0, 0, 16*cm, 4*cm)
-            rect.strokeColor = colors.black
-            rect.strokeWidth = 2
-            rect.strokeDashArray = [8, 4]
-            rect.fillColor = colors.whitesmoke
-            doc_drawing.add(rect)
-            
-            # Texto dentro do retângulo
-            from reportlab.graphics.shapes import String
-            texto_centralizado = String(8*cm, 2*cm, 
-                                       "COLAR CÓPIA DO DOCUMENTO AQUI",
-                                       fontSize=16,
-                                       fillColor=colors.grey,
-                                       textAnchor='middle')
-            doc_drawing.add(texto_centralizado)
-            
-            # Moldura interna (guia visual)
-            moldura_interna = Rect(0.3*cm, 0.3*cm, 15.4*cm, 3.4*cm)
-            moldura_interna.strokeColor = colors.lightgrey
-            moldura_interna.strokeWidth = 1
-            moldura_interna.strokeDashArray = [3, 3]
-            moldura_interna.fillColor = None
-            doc_drawing.add(moldura_interna)
-            
-            story.append(doc_drawing)
-            story.append(Spacer(1, 0.5*cm))
-            
-            # Rodapé com data/hora de emissão
-            rodape_style = ParagraphStyle(
-                'Rodape',
-                parent=styles['Normal'],
-                fontSize=8,
-                textColor=colors.grey,
-                alignment=TA_CENTER,
-                fontName='Helvetica'
-            )
-            data_emissao = datetime.now().strftime('%d/%m/%Y às %H:%M:%S')
-            story.append(Paragraph(f"Recibo emitido em {data_emissao} pelo Sistema GERPED", rodape_style))
-            
-            # Construir PDF
-            doc.build(story)
-
-            current_app.logger.info(
-                "Recibo de coleta gerado com sucesso",
-                extra={
-                    "pedido_id": coleta_data.get("pedido_id"),
-                    "arquivo": filepath,
-                    "quantidade_itens": len(coleta_data.get("itens_coleta", [])),
-                },
-            )
-            return filepath
-            
-        except Exception as e:
-            details = {
-                "pedido_id": coleta_data.get("pedido_id"),
-                "arquivo": filepath,
-                "diretorio": receipts_dir,
-                "error": str(e),
-            }
-            current_app.logger.error(
-                "Erro ao gerar recibo de coleta",
-                exc_info=e,
-                extra=details,
-            )
-            raise FileProcessingError(
-                message="Falha ao gerar recibo de coleta em PDF",
-                details=details,
-            ) from e
+        """Compatibilidade: mantém assinatura antiga mas gera JPG."""
+        current_app.logger.debug('gerar_recibo_pdf está obsoleto. Gerando recibo em JPG.')
+        return ReceiptService.gerar_recibo_imagem(coleta_data, output_dir=output_dir)
 
     @staticmethod
-    def enfileirar_recibo_pdf(coleta_data: Dict) -> Optional[str]:
-        """
-        Tenta enfileirar a geração do recibo em background.
-        
-        Returns:
-            Optional[str]: ID do job enfileirado ou None caso não seja possível.
-        """
+    def enfileirar_recibo_imagem(coleta_data: Dict) -> Optional[str]:
+        """Tenta enfileirar a geração do recibo em imagem."""
         try:
             from meu_app.queue import enqueue_pdf_job
-        except ImportError as exc:  # pragma: no cover - cenário inesperado
-            current_app.logger.error(
-                "Erro ao importar fila para geração de recibo",
-                exc_info=exc,
-            )
+        except ImportError as exc:  # pragma: no cover
+            current_app.logger.error('Erro ao importar fila para geração de recibo', exc_info=exc)
             return None
-        
+
         try:
             job_id = enqueue_pdf_job(coleta_data)
             if job_id:
                 ReceiptService.agendar_limpeza_recibos()
             return job_id
-        except Exception as exc:  # pragma: no cover - execução depende do ambiente
+        except Exception as exc:  # pragma: no cover
             current_app.logger.warning(
-                "Falha ao enfileirar geração assíncrona de recibo, utilizando fallback síncrono",
+                'Falha ao enfileirar geração assíncrona de recibo. Utilizando fluxo síncrono.',
                 exc_info=exc,
-                extra={"pedido_id": coleta_data.get("pedido_id")},
+                extra={'pedido_id': coleta_data.get('pedido_id')},
             )
             return None
 
     @staticmethod
+    def enfileirar_recibo_pdf(coleta_data: Dict) -> Optional[str]:
+        """Compatibilidade retroativa."""
+        return ReceiptService.enfileirar_recibo_imagem(coleta_data)
+
+    @staticmethod
     def limpar_recibos_antigos(output_dir: Optional[str] = None, ttl_hours: Optional[int] = None) -> int:
-        """
-        Remove recibos antigos com base na configuração de TTL.
-        
-        Returns:
-            int: quantidade de arquivos removidos
-        """
-        ttl = ttl_hours or current_app.config.get("COLETAS_RECIBO_TTL_HORAS", 24)
+        """Remove recibos antigos com base na configuração de TTL."""
+        ttl = ttl_hours or current_app.config.get('COLETAS_RECIBO_TTL_HORAS', 24)
         if ttl <= 0:
             return 0
 
@@ -408,48 +263,45 @@ class ReceiptService:
         if not diretorio.exists():
             return 0
 
-        limite_temporal = datetime.utcnow() - timedelta(hours=ttl)
+        limite_temporal = datetime.now(timezone.utc) - timedelta(hours=ttl)
         removidos = 0
 
-        for arquivo in diretorio.glob("recibo_coleta_*.pdf"):
+        for arquivo in diretorio.glob('recibo_coleta_*'):
+            if arquivo.suffix.lower() not in {'.jpg', '.jpeg', '.pdf'}:
+                continue
             try:
-                mod_time = datetime.utcfromtimestamp(arquivo.stat().st_mtime)
+                mod_time = datetime.fromtimestamp(arquivo.stat().st_mtime, timezone.utc)
                 if mod_time < limite_temporal:
                     arquivo.unlink()
                     removidos += 1
             except FileNotFoundError:
                 continue
-            except Exception as exc:  # pragma: no cover - comportamento defensivo
+            except Exception as exc:  # pragma: no cover
                 current_app.logger.warning(
-                    "Falha ao remover recibo expirado",
+                    'Falha ao remover recibo expirado',
                     exc_info=exc,
-                    extra={"arquivo": str(arquivo)},
+                    extra={'arquivo': str(arquivo)},
                 )
 
         if removidos:
             current_app.logger.info(
-                "Recibos de coleta expirados removidos",
-                extra={"removidos": removidos, "diretorio": str(diretorio)},
+                'Recibos de coleta expirados removidos',
+                extra={'removidos': removidos, 'diretorio': str(diretorio)},
             )
 
         return removidos
 
     @staticmethod
     def agendar_limpeza_recibos(ttl_hours: Optional[int] = None) -> Optional[str]:
-        """
-        Enfileira uma tarefa para limpar recibos expirados.
-        """
+        """Enfileira uma tarefa para limpar recibos expirados."""
         try:
             from meu_app.queue import enqueue_receipt_cleanup_job
         except ImportError as exc:  # pragma: no cover
-            current_app.logger.debug("Fila indisponível para limpeza de recibos.", exc_info=exc)
+            current_app.logger.debug('Fila indisponível para limpeza de recibos', exc_info=exc)
             return None
 
         try:
             return enqueue_receipt_cleanup_job(ttl_hours=ttl_hours)
         except Exception as exc:  # pragma: no cover
-            current_app.logger.debug(
-                "Não foi possível agendar limpeza de recibos expirados",
-                exc_info=exc,
-            )
+            current_app.logger.debug('Não foi possível agendar limpeza de recibos expirados', exc_info=exc)
             return None

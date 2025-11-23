@@ -59,12 +59,58 @@
         color: var(--accent-purple-light);
     }
 
-    table {
+    .table-toolbar {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .clientes-table {
         width: 100%;
         border-collapse: collapse;
         background: #fff;
         box-shadow: 0 2px 6px rgba(0,0,0,0.05);
         margin-bottom: 30px;
+    }
+
+    .clientes-table thead {
+        background: #f8f9fa;
+    }
+
+    .clientes-table th {
+        padding: 12px 16px;
+        text-align: left;
+        font-weight: 600;
+        color: #495057;
+        border-bottom: 2px solid #dee2e6;
+        font-size: 0.9rem;
+    }
+
+    .clientes-table td {
+        padding: 12px 16px;
+        border-bottom: 1px solid #f1f3f4;
+        font-size: 0.95rem;
+    }
+
+    .clientes-table tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+
+    .clientes-table th[data-column-index] {
+        cursor: pointer;
+        user-select: none;
+        position: relative;
+    }
+
+    .clientes-table th[data-column-index] .sort-indicator {
+        font-size: 0.7rem;
+        margin-left: 6px;
+        color: #adb5bd;
+    }
+
+    .clientes-table th.sorted-asc,
+    .clientes-table th.sorted-desc {
+        color: #0d6efd;
     }
 
     .icon-btn.icon-secondary {
@@ -173,14 +219,24 @@
     });
 </script>
 
-<table>
+<div class="table-toolbar" style="margin-bottom: 16px;">
+    <div class="input-group shadow-sm" style="max-width: 360px;">
+        <span class="input-group-text bg-white">
+            <i class="fas fa-search text-muted"></i>
+        </span>
+        <input type="search" id="filtroClientes" class="form-control" placeholder="Buscar cliente, cidade, CPF/CNPJ..." />
+    </div>
+    <small class="text-muted">Use a busca para filtrar rapidamente e clique nos títulos para ordenar.</small>
+</div>
+
+<table class="clientes-table">
     <thead>
         <tr>
-            <th>NOME</th>
-            <th>FANTASIA</th>
-            <th>TELEFONE</th>
-            <th>CIDADE</th>
-            <th>CPF/CNPJ</th>
+            <th data-column-index="0">NOME</th>
+            <th data-column-index="1">FANTASIA</th>
+            <th data-column-index="2">TELEFONE</th>
+            <th data-column-index="3">CIDADE</th>
+            <th data-column-index="4">CPF/CNPJ</th>
             <th>AÇÕES</th>
         </tr>
     </thead>
@@ -222,4 +278,73 @@
 </table>
 
 <a href="{{ url_for('main.painel') }}" class="btn-voltar">⬅ Voltar ao Painel</a>
+
+<script nonce="{{ nonce }}">
+document.addEventListener('DOMContentLoaded', () => {
+    const tabela = document.querySelector('.clientes-table');
+    if (!tabela) return;
+    const tbody = tabela.querySelector('tbody');
+    const headers = tabela.querySelectorAll('th[data-column-index]');
+    const filtro = document.getElementById('filtroClientes');
+    let currentSort = { index: null, direction: 'asc' };
+
+    const applySortIndicators = () => {
+        headers.forEach((header) => {
+            header.classList.remove('sorted-asc', 'sorted-desc');
+            let indicator = header.querySelector('.sort-indicator');
+            if (!indicator) {
+                indicator = document.createElement('span');
+                indicator.className = 'sort-indicator';
+                header.appendChild(indicator);
+            }
+            indicator.textContent = '';
+        });
+
+        const target = headers[currentSort.index];
+        if (!target) return;
+        let indicator = target.querySelector('.sort-indicator');
+        if (!indicator) {
+            indicator = document.createElement('span');
+            indicator.className = 'sort-indicator';
+            target.appendChild(indicator);
+        }
+        target.classList.add(currentSort.direction === 'asc' ? 'sorted-asc' : 'sorted-desc');
+        indicator.textContent = currentSort.direction === 'asc' ? '▲' : '▼';
+    };
+
+    const sortRows = (index, direction) => {
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        rows.sort((rowA, rowB) => {
+            const a = rowA.children[index].textContent.trim().toLowerCase();
+            const b = rowB.children[index].textContent.trim().toLowerCase();
+            if (direction === 'asc') {
+                return a.localeCompare(b);
+            }
+            return b.localeCompare(a);
+        });
+
+        rows.forEach((row) => tbody.appendChild(row));
+        applySortIndicators();
+    };
+
+    headers.forEach((header, index) => {
+        header.addEventListener('click', () => {
+            const direction = (currentSort.index === index && currentSort.direction === 'asc') ? 'desc' : 'asc';
+            currentSort = { index, direction };
+            sortRows(index, direction);
+        });
+    });
+
+    if (filtro) {
+        filtro.addEventListener('input', (event) => {
+            const termo = event.target.value.trim().toLowerCase();
+            const rows = tbody.querySelectorAll('tr');
+            rows.forEach((row) => {
+                const texto = row.textContent.toLowerCase();
+                row.style.display = texto.includes(termo) ? '' : 'none';
+            });
+        });
+    }
+});
+</script>
 {% endblock %}

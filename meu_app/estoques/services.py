@@ -2,11 +2,13 @@
 Serviços para o módulo de estoques
 Contém toda a lógica de negócio separada das rotas
 """
-from ..models import db, Estoque, Produto, LogAtividade, MovimentacaoEstoque
-from flask import current_app, session
-from typing import Dict, List, Tuple, Optional
 import json
-from datetime import datetime
+from datetime import datetime, timezone
+from typing import Dict, List, Optional, Tuple
+
+from flask import current_app, session
+
+from ..models import LogAtividade, MovimentacaoEstoque, Produto, Estoque, db
 
 class EstoqueService:
     """Serviço para operações relacionadas a estoques"""
@@ -46,11 +48,13 @@ class EstoqueService:
             # Converter data_entrada de string para datetime
             try:
                 if data_entrada:
-                    data_entrada_dt = datetime.fromisoformat(data_entrada.replace('Z', '+00:00'))
+                    data_entrada_dt = datetime.fromisoformat(
+                        data_entrada.replace('Z', '+00:00')
+                    )
                 else:
-                    data_entrada_dt = datetime.utcnow()
+                    data_entrada_dt = datetime.now(timezone.utc)
             except ValueError:
-                data_entrada_dt = datetime.utcnow()
+                data_entrada_dt = datetime.now(timezone.utc)
             
             # Usar nome do usuário logado como conferente se não fornecido
             if not conferente:
@@ -128,11 +132,13 @@ class EstoqueService:
             # Converter data_entrada de string para datetime
             try:
                 if data_entrada:
-                    data_entrada_dt = datetime.fromisoformat(data_entrada.replace('Z', '+00:00'))
+                    data_entrada_dt = datetime.fromisoformat(
+                        data_entrada.replace('Z', '+00:00')
+                    )
                 else:
-                    data_entrada_dt = datetime.utcnow()
+                    data_entrada_dt = datetime.now(timezone.utc)
             except ValueError:
-                data_entrada_dt = datetime.utcnow()
+                data_entrada_dt = datetime.now(timezone.utc)
             
             # Atualizar dados
             estoque.quantidade = quantidade
@@ -277,11 +283,13 @@ class EstoqueService:
             # Converter data_entrada de string para datetime
             try:
                 if data_entrada:
-                    data_entrada_dt = datetime.fromisoformat(data_entrada.replace('Z', '+00:00'))
+                    data_entrada_dt = datetime.fromisoformat(
+                        data_entrada.replace('Z', '+00:00')
+                    )
                 else:
-                    data_entrada_dt = datetime.utcnow()
+                    data_entrada_dt = datetime.now(timezone.utc)
             except ValueError:
-                data_entrada_dt = datetime.utcnow()
+                data_entrada_dt = datetime.now(timezone.utc)
             
             # Usar nome do usuário logado como conferente se não fornecido
             if not conferente:

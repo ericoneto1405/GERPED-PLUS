@@ -35,7 +35,7 @@ SWAGGER_TEMPLATE = {
     "info": {
         "title": "Sistema GERPED API",
         "description": """
-# Sistema de Gestão Empresarial SAP
+# Sistema de Gestão Empresarial GERPED
 
 API REST completa para gestão de pedidos, vendas, financeiro e logística.
 
@@ -78,7 +78,7 @@ A maioria dos endpoints requer autenticação via sessão.
         "termsOfService": "",
         "contact": {
             "name": "Sistema GERPED",
-            "email": "suporte@sistema-sap.com",
+            "email": "suporte@sistema-gerped.com",
         },
         "license": {
             "name": "MIT",

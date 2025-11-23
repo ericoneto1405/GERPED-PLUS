@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Controle de Estoque - SAP{% endblock %}
+{% block title %}Controle de Estoque - GERPED{% endblock %}
 {% block page_title %}Controle de Estoque{% endblock %}
 
 {% block content %}
@@ -18,14 +18,23 @@
 
 <div class="content-section">
     <div class="table-container">
-        <table class="data-table">
+        <div class="table-toolbar">
+            <div class="input-group shadow-sm" style="max-width: 360px;">
+                <span class="input-group-text bg-white">
+                    <i class="fas fa-search text-muted"></i>
+                </span>
+                <input type="search" id="filtroEstoques" class="form-control" placeholder="Buscar por produto, conferente, status..." />
+            </div>
+            <small class="text-muted">Clique nos títulos para ordenar e utilize a busca para filtrar rapidamente.</small>
+        </div>
+        <table class="data-table estoques-table">
             <thead>
                 <tr>
-                    <th>Descrição</th>
-                    <th>Data de Modificação</th>
-                    <th>Conferente</th>
-                    <th>Status</th>
-                    <th>Estoque Atual</th>
+                    <th data-column-index="0">Descrição</th>
+                    <th data-column-index="1">Data de Modificação</th>
+                    <th data-column-index="2">Conferente</th>
+                    <th data-column-index="3">Status</th>
+                    <th data-column-index="4">Estoque Atual</th>
                     <th>Ações</th>
                 </tr>
             </thead>
@@ -125,6 +134,41 @@
     color: #666;
     margin-left: 8px;
 }
+
+.table-toolbar {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 12px;
+}
+
+.estoques-table thead {
+    background: #f8f9fa;
+}
+
+.estoques-table th,
+.estoques-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid #f1f3f4;
+}
+
+.estoques-table th[data-column-index] {
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+    font-weight: 600;
+}
+
+.estoques-table th[data-column-index] .sort-indicator {
+    font-size: 0.7rem;
+    margin-left: 6px;
+    color: #adb5bd;
+}
+
+.estoques-table th.sorted-asc,
+.estoques-table th.sorted-desc {
+    color: #0d6efd;
+}
 </style>
 {% endblock %}
 
@@ -145,6 +189,94 @@ $(document).ready(function() {
             $(this).addClass('high-stock');
         }
     });
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    const tabela = document.querySelector('.estoques-table');
+    if (!tabela) return;
+
+    const tbody = tabela.querySelector('tbody');
+    const headers = tabela.querySelectorAll('th[data-column-index]');
+    const filtro = document.getElementById('filtroEstoques');
+    let currentSort = { index: null, direction: 'asc' };
+
+    const parseValue = (cell, index) => {
+        if (index === 1) {
+            // datas no formato dd/mm/yyyy hh:mm
+            const text = cell.textContent.trim();
+            const [data, hora] = text.split(' ');
+            if (!data || !hora) return text.toLowerCase();
+            const [dia, mes, ano] = data.split('/');
+            const value = `${ano}-${mes}-${dia} ${hora}`;
+            return value;
+        }
+        if (index === 4) {
+            const number = parseInt(cell.textContent.trim(), 10);
+            return Number.isNaN(number) ? 0 : number;
+        }
+        return cell.textContent.trim().toLowerCase();
+    };
+
+    const applySortIndicators = () => {
+        headers.forEach((header) => {
+            header.classList.remove('sorted-asc', 'sorted-desc');
+            let indicator = header.querySelector('.sort-indicator');
+            if (!indicator) {
+                indicator = document.createElement('span');
+                indicator.className = 'sort-indicator';
+                header.appendChild(indicator);
+            }
+            indicator.textContent = '';
+        });
+
+        const target = headers[currentSort.index];
+        if (!target) return;
+        let indicator = target.querySelector('.sort-indicator');
+        if (!indicator) {
+            indicator = document.createElement('span');
+            indicator.className = 'sort-indicator';
+            target.appendChild(indicator);
+        }
+        target.classList.add(currentSort.direction === 'asc' ? 'sorted-asc' : 'sorted-desc');
+        indicator.textContent = currentSort.direction === 'asc' ? '▲' : '▼';
+    };
+
+    const sortRows = (index, direction) => {
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        rows.sort((rowA, rowB) => {
+            const a = parseValue(rowA.children[index], index);
+            const b = parseValue(rowB.children[index], index);
+
+            if (typeof a === 'number' && typeof b === 'number') {
+                return direction === 'asc' ? a - b : b - a;
+            }
+            return direction === 'asc'
+                ? String(a).localeCompare(String(b))
+                : String(b).localeCompare(String(a));
+        });
+
+        rows.forEach((row) => tbody.appendChild(row));
+        applySortIndicators();
+    };
+
+    headers.forEach((header, index) => {
+        header.addEventListener('click', () => {
+            const direction = (currentSort.index === index && currentSort.direction === 'asc') ? 'desc' : 'asc';
+            currentSort = { index, direction };
+            sortRows(index, direction);
+        });
+    });
+
+    if (filtro) {
+        filtro.addEventListener('input', (event) => {
+            const termo = event.target.value.trim().toLowerCase();
+            const rows = tbody.querySelectorAll('tr');
+            rows.forEach((row) => {
+                const texto = row.textContent.toLowerCase();
+                row.style.display = texto.includes(termo) ? '' : 'none';
+            });
+        });
+    }
 });
 </script>
 {% endblock %}

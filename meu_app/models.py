@@ -1,10 +1,16 @@
-from datetime import datetime
+from datetime import datetime, timezone
 import enum
+import secrets
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy import Enum as EnumType
 
 from . import db
+
+
+def utcnow():
+    """Retorna datetime timezone-aware em UTC."""
+    return datetime.now(timezone.utc)
 
 class Cliente(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -13,7 +19,7 @@ class Cliente(db.Model):
     endereco = db.Column(db.String(255))
     cidade = db.Column(db.String(100))
     cpf_cnpj = db.Column(db.String(20))
-    data_cadastro = db.Column(db.DateTime, default=datetime.utcnow)
+    data_cadastro = db.Column(db.DateTime, default=utcnow)
     telefone = db.Column(db.String(20))
     retirantes_autorizados = db.relationship(
         'ClienteRetiranteAutorizado',
@@ -154,8 +160,8 @@ class ClienteRetiranteAutorizado(db.Model):
     cpf = db.Column(db.String(11), nullable=False)
     observacoes = db.Column(db.String(255))
     ativo = db.Column(db.Boolean, default=True, nullable=False)
-    criado_em = db.Column(db.DateTime, default=datetime.utcnow)
-    atualizado_em = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    criado_em = db.Column(db.DateTime, default=utcnow)
+    atualizado_em = db.Column(db.DateTime, default=utcnow, onupdate=utcnow)
 
     __table_args__ = (
         db.UniqueConstraint('cliente_id', 'cpf', name='uq_cliente_retirante_cpf'),
@@ -175,7 +181,7 @@ class Coleta(db.Model):
     pedido_id = db.Column(db.Integer, db.ForeignKey('pedido.id'), nullable=False)
     
     # Dados da coleta
-    data_coleta = db.Column(db.DateTime, default=datetime.utcnow)
+    data_coleta = db.Column(db.DateTime, default=utcnow)
     responsavel_coleta_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
     nome_retirada = db.Column(db.String(100), nullable=False)
     documento_retirada = db.Column(db.String(20), nullable=False)
@@ -255,6 +261,18 @@ class Usuario(db.Model, UserMixin):
         raise AttributeError('Acesso direto à senha não é permitido. Use set_senha() e check_senha()')
 
 
+class PasswordResetToken(db.Model):
+    __tablename__ = 'password_reset_token'
+
+    id = db.Column(db.Integer, primary_key=True)
+    usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
+    token = db.Column(db.String(128), unique=True, nullable=False, default=lambda: secrets.token_urlsafe(48))
+    expires_at = db.Column(db.DateTime, nullable=False)
+    usado = db.Column(db.Boolean, default=False)
+
+    usuario = db.relationship('Usuario', backref=db.backref('reset_tokens', lazy='dynamic'))
+
+
 class Apuracao(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     mes = db.Column(db.Integer, nullable=False)  # 1-12
@@ -277,8 +295,8 @@ class Apuracao(db.Model):
     definitivo = db.Column(db.Boolean, default=False)  # True = não pode ser editada
     
     # Timestamps
-    data_criacao = db.Column(db.DateTime, default=datetime.utcnow)
-    data_atualizacao = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    data_criacao = db.Column(db.DateTime, default=utcnow)
+    data_atualizacao = db.Column(db.DateTime, default=utcnow, onupdate=utcnow)
     
     # Relacionamento com usuário que criou
     usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
@@ -332,7 +350,7 @@ class LogAtividade(db.Model):
     dados_extras = db.Column(db.Text)  # JSON com dados adicionais
     
     # Timestamp
-    data_hora = db.Column(db.DateTime, default=datetime.utcnow)
+    data_hora = db.Column(db.DateTime, default=utcnow)
     
     # IP do usuário (para auditoria)
     ip_address = db.Column(db.String(45), nullable=True)  # IPv4 ou IPv6
@@ -346,9 +364,9 @@ class Estoque(db.Model):
     produto_id = db.Column(db.Integer, db.ForeignKey('produto.id'), nullable=False, unique=True)
     quantidade = db.Column(db.Integer, nullable=False, default=0)
     conferente = db.Column(db.String(100), nullable=False)
-    data_conferencia = db.Column(db.DateTime, default=datetime.utcnow)
-    data_entrada = db.Column(db.DateTime, default=datetime.utcnow)
-    data_modificacao = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    data_conferencia = db.Column(db.DateTime, default=utcnow)
+    data_entrada = db.Column(db.DateTime, default=utcnow)
+    data_modificacao = db.Column(db.DateTime, default=utcnow, onupdate=utcnow)
     status = db.Column(db.String(50), nullable=False, default='Contagem')
     
     # Relacionamento com produto
@@ -367,7 +385,7 @@ class MovimentacaoEstoque(db.Model):
     quantidade_atual = db.Column(db.Integer, nullable=False)
     motivo = db.Column(db.String(200), nullable=False)
     responsavel = db.Column(db.String(100), nullable=False)
-    data_movimentacao = db.Column(db.DateTime, default=datetime.utcnow)
+    data_movimentacao = db.Column(db.DateTime, default=utcnow)
     observacoes = db.Column(db.Text, nullable=True)
     
     # Relacionamento com produto
@@ -383,7 +401,7 @@ class OcrQuota(db.Model):
     ano = db.Column(db.Integer, nullable=False)
     mes = db.Column(db.Integer, nullable=False)  # 1-12
     contador = db.Column(db.Integer, default=0, nullable=False)
-    data_atualizacao = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    data_atualizacao = db.Column(db.DateTime, default=utcnow, onupdate=utcnow)
     
     # Índice único para ano/mês
     __table_args__ = (db.UniqueConstraint('ano', 'mes', name='uq_ocr_quota_ano_mes'),)

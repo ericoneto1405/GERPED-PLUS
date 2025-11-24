@@ -16,5 +16,5 @@ pytest-mock>=3.14.0
 pytest-snapshot>=0.9.0
 
 # Type stubs
-types-redis==4.6.0.20240903
+types-redis==4.6.0.20241004
 types-requests==2.32.0.20240914

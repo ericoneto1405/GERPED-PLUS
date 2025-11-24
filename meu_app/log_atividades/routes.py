@@ -45,24 +45,15 @@ def listar_atividades():
         # Buscar atividades com paginação
         service = LogAtividadesService()
         resultado = service.listar_atividades(
-            filtro_modulo=filtro_modulo if filtro_modulo else None,
+            filtro_modulo=filtro_modulo or None,
+            filtro_usuario_id=filtro_usuario_id,
+            filtro_tipo=filtro_tipo or None,
+            filtro_busca=filtro_busca or None,
             data_inicio=data_inicio,
             data_fim=data_fim,
             page=page,
             per_page=per_page
         )
-        
-        # Aplicar filtros adicionais (backend)
-        atividades = resultado['atividades']
-        if filtro_usuario_id:
-            atividades = [a for a in atividades if a.usuario_id == filtro_usuario_id]
-        if filtro_tipo:
-            atividades = [a for a in atividades if filtro_tipo.lower() in a.tipo_atividade.lower()]
-        if filtro_busca:
-            busca_lower = filtro_busca.lower()
-            atividades = [a for a in atividades if 
-                         busca_lower in a.descricao.lower() or 
-                         busca_lower in a.titulo.lower()]
         
         # Obter estatísticas
         stats = service.obter_estatisticas()
@@ -75,7 +66,7 @@ def listar_atividades():
         current_app.logger.info(f"Log de atividades acessado por {session.get('usuario_nome', 'N/A')}")
         
         return render_template('log_atividades.html', 
-                             atividades=atividades,
+                             atividades=resultado['atividades'],
                              modulos=modulos,
                              usuarios=usuarios,
                              stats=stats,
@@ -88,7 +79,7 @@ def listar_atividades():
                              },
                              page=resultado['page'],
                              per_page=resultado['per_page'],
-                             total_registros=len(atividades),
+                             total_registros=resultado['total_registros'],
                              total_paginas=resultado['total_paginas'])
                              
     except ValueError as e:
@@ -140,6 +131,7 @@ def visualizar_atividade(atividade_id):
 
 @log_atividades_bp.route('/limpar', methods=['POST'])
 @login_obrigatorio
+@admin_necessario
 def limpar_logs():
     """Limpa logs antigos"""
     try:
@@ -185,8 +177,12 @@ def obter_estatisticas():
 def exportar_logs():
     """Exporta logs de atividades"""
     try:
-        # Filtro mes_ano
+        # Filtros
         mes_ano = request.args.get('mes_ano', '')
+        filtro_usuario_id = request.args.get('usuario_id', type=int)
+        filtro_modulo = request.args.get('modulo', '')
+        filtro_tipo = request.args.get('tipo', '')
+        filtro_busca = request.args.get('busca', '')
         
         # Converter mes_ano para data_inicio e data_fim
         data_inicio = None
@@ -202,19 +198,19 @@ def exportar_logs():
             except:
                 pass
         
-        # Buscar todas as atividades (sem paginação)
         service = LogAtividadesService()
-        resultado = service.listar_atividades(
-            filtro_modulo=None,
+        atividades = service.listar_todas_atividades(
+            filtro_modulo=filtro_modulo or None,
+            filtro_usuario_id=filtro_usuario_id,
+            filtro_tipo=filtro_tipo or None,
+            filtro_busca=filtro_busca or None,
             data_inicio=data_inicio,
-            data_fim=data_fim,
-            page=1,
-            per_page=10000  # Número alto para pegar todos
+            data_fim=data_fim
         )
         
         # Preparar dados para exportação
         dados_exportacao = []
-        for atividade in resultado['atividades']:
+        for atividade in atividades:
             dados_exportacao.append({
                 'id': atividade.id,
                 'usuario': atividade.usuario.nome if atividade.usuario else 'N/A',
@@ -233,7 +229,11 @@ def exportar_logs():
             'dados': dados_exportacao,
             'total': len(dados_exportacao),
             'filtros': {
-                'mes_ano': mes_ano
+                'mes_ano': mes_ano,
+                'usuario_id': filtro_usuario_id,
+                'modulo': filtro_modulo,
+                'tipo': filtro_tipo,
+                'busca': filtro_busca
             }
         })
         

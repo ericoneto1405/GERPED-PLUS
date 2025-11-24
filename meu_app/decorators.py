@@ -17,6 +17,25 @@ from flask import current_app, jsonify, redirect, request, session, url_for
 from flask_login import current_user
 
 
+ROLLOUT_EVENT_LABELS = {
+    'rollout_iniciado': {
+        'tipo': 'Liberação interna iniciada',
+        'titulo': 'Início da liberação interna',
+        'modulo': 'Liberação do sistema',
+    },
+    'rollout_concluido': {
+        'tipo': 'Liberação finalizada',
+        'titulo': 'Fim da liberação interna',
+        'modulo': 'Liberação do sistema',
+    },
+    'rollout_acesso_negado': {
+        'tipo': 'Acesso bloqueado durante liberação',
+        'titulo': 'Acesso bloqueado',
+        'modulo': 'Liberação do sistema',
+    },
+}
+
+
 def _register_rollout_event(event_type: str, descricao: str, extras: Optional[Dict[str, Any]] = None):
     """
     Registra evento relacionado ao rollout usando o módulo de log de atividades.
@@ -25,11 +44,16 @@ def _register_rollout_event(event_type: str, descricao: str, extras: Optional[Di
     try:
         from .log_atividades.services import LogAtividadesService  # noqa: WPS433 import inside function
         service = LogAtividadesService()
+        label_info = ROLLOUT_EVENT_LABELS.get(event_type, {
+            'tipo': 'Atualização da liberação',
+            'titulo': 'Atualização da liberação',
+            'modulo': 'Liberação do sistema',
+        })
         service.registrar_atividade(
-            tipo_atividade=event_type,
-            titulo="Controle de Go-Live",
+            tipo_atividade=label_info['tipo'],
+            titulo=label_info['titulo'],
             descricao=descricao,
-            modulo='rollout',
+            modulo=label_info['modulo'],
             dados_extras=extras or {},
             ip_address=request.remote_addr
         )
@@ -53,10 +77,14 @@ def _rollout_allows_access() -> Tuple[bool, Optional[Tuple[Any, int, Dict[str, s
     if start_at is None:
         start_at = datetime.now(timezone.utc)
         rollout_cfg['start_at'] = start_at
+        rollout_cfg['start_logged'] = False
+
+    if not rollout_cfg.get('start_logged'):
         _register_rollout_event(
             'rollout_iniciado',
-            f"Rollout interno iniciado automaticamente em {start_at.isoformat()}",
+            f"A liberação interna começou em {start_at.strftime('%d/%m/%Y %H:%M')}",
         )
+        rollout_cfg['start_logged'] = True
 
     # Desativa controle após janela interna expirar
     if internal_days is not None and internal_days >= 0:
@@ -64,11 +92,13 @@ def _rollout_allows_access() -> Tuple[bool, Optional[Tuple[Any, int, Dict[str, s
         if datetime.now(timezone.utc) >= janela_final:
             rollout_cfg['enabled'] = False
             current_app.logger.info("Janela de rollout interno expirou; acesso público liberado automaticamente.")
-            _register_rollout_event(
-                'rollout_concluido',
-                'Janela de go-live interno concluída automaticamente; acesso liberado.',
-                {'start_at': start_at.isoformat(), 'internal_days': internal_days}
-            )
+            if not rollout_cfg.get('end_logged'):
+                _register_rollout_event(
+                    'rollout_concluido',
+                    'Período interno finalizado. Todos os usuários podem acessar normalmente.',
+                    {'start_at': start_at.isoformat(), 'internal_days': internal_days}
+                )
+                rollout_cfg['end_logged'] = True
             return True, None
 
     usuario_nome = (session.get('usuario_nome') or '').lower()
@@ -82,7 +112,7 @@ def _rollout_allows_access() -> Tuple[bool, Optional[Tuple[Any, int, Dict[str, s
 
     mensagem = rollout_cfg.get(
         'blocked_message',
-        'Ambiente em go-live controlado. Tente novamente após a liberação oficial.'
+        'Liberaremos o acesso para todos assim que a implantação terminar.'
     )
 
     current_app.logger.warning(
@@ -90,16 +120,6 @@ def _rollout_allows_access() -> Tuple[bool, Optional[Tuple[Any, int, Dict[str, s
         session.get('usuario_nome', 'desconhecido'),
         session.get('usuario_tipo', 'desconhecido'),
         request.path,
-    )
-    _register_rollout_event(
-        'rollout_acesso_negado',
-        f"Acesso negado a {session.get('usuario_nome', 'desconhecido')} na rota {request.path}",
-        {
-            'usuario': session.get('usuario_nome'),
-            'tipo': session.get('usuario_tipo'),
-            'endpoint': request.endpoint,
-            'path': request.path,
-        }
     )
 
     payload = {

@@ -99,8 +99,74 @@ class LogAtividadesService:
             current_app.logger.error(f"Erro ao registrar atividade: {str(e)}")
             return False, f"Erro ao registrar atividade: {str(e)}", None
     
-    def listar_atividades(self, filtro_modulo: str = None, data_inicio: str = None, data_fim: str = None, 
-                         page: int = 1, per_page: int = 20) -> Dict[str, Any]:
+    def _build_query(self,
+                     filtro_modulo: Optional[str] = None,
+                     filtro_usuario_id: Optional[int] = None,
+                     filtro_tipo: Optional[str] = None,
+                     filtro_busca: Optional[str] = None,
+                     data_inicio: Optional[str] = None,
+                     data_fim: Optional[str] = None):
+        """Monta a query com todos os filtros suportados."""
+        query = LogAtividade.query
+
+        if filtro_modulo:
+            query = query.filter(LogAtividade.modulo == filtro_modulo)
+
+        if filtro_usuario_id:
+            query = query.filter(LogAtividade.usuario_id == filtro_usuario_id)
+
+        if filtro_tipo:
+            termo_tipo = f"%{filtro_tipo.lower()}%"
+            query = query.filter(func.lower(LogAtividade.tipo_atividade).like(termo_tipo))
+
+        if filtro_busca:
+            termo_busca = f"%{filtro_busca.lower()}%"
+            query = query.filter(or_(
+                func.lower(LogAtividade.descricao).like(termo_busca),
+                func.lower(LogAtividade.titulo).like(termo_busca)
+            ))
+
+        if data_inicio:
+            if not LogAtividadesService._validar_formato_data(data_inicio):
+                raise ValidationError(
+                    message="Formato de data de início inválido",
+                    error_code="INVALID_DATE_FORMAT",
+                    details={'field': 'data_inicio', 'expected_format': 'YYYY-MM-DD'}
+                )
+            data_inicio_dt = datetime.strptime(data_inicio, "%Y-%m-%d")
+            query = query.filter(LogAtividade.data_hora >= data_inicio_dt)
+
+        if data_fim:
+            if not LogAtividadesService._validar_formato_data(data_fim):
+                raise ValidationError(
+                    message="Formato de data de fim inválido",
+                    error_code="INVALID_DATE_FORMAT",
+                    details={'field': 'data_fim', 'expected_format': 'YYYY-MM-DD'}
+                )
+            data_fim_dt = datetime.strptime(data_fim, "%Y-%m-%d") + timedelta(days=1) - timedelta(seconds=1)
+            query = query.filter(LogAtividade.data_hora <= data_fim_dt)
+
+        if data_inicio and data_fim:
+            inicio = datetime.strptime(data_inicio, "%Y-%m-%d")
+            fim = datetime.strptime(data_fim, "%Y-%m-%d")
+            if inicio > fim:
+                raise ValidationError(
+                    message="Data de início deve ser menor que a data de fim",
+                    error_code="INVALID_DATE_RANGE",
+                    details={'data_inicio': data_inicio, 'data_fim': data_fim}
+                )
+
+        return query
+
+    def listar_atividades(self,
+                          filtro_modulo: str = None,
+                          filtro_usuario_id: int = None,
+                          filtro_tipo: str = None,
+                          filtro_busca: str = None,
+                          data_inicio: str = None,
+                          data_fim: str = None,
+                          page: int = 1,
+                          per_page: int = 20) -> Dict[str, Any]:
         """
         Lista atividades do sistema com paginação otimizada
         
@@ -115,44 +181,14 @@ class LogAtividadesService:
             Dict com atividades, paginação e estatísticas
         """
         try:
-            query = LogAtividade.query
-            
-            # Aplicar filtros
-            if filtro_modulo:
-                query = query.filter(LogAtividade.modulo == filtro_modulo)
-            
-            # Validação e filtro de data de início
-            if data_inicio:
-                if not LogAtividadesService._validar_formato_data(data_inicio):
-                    raise ValidationError(
-                        message="Formato de data de início inválido",
-                        error_code="INVALID_DATE_FORMAT",
-                        details={'field': 'data_inicio', 'expected_format': 'YYYY-MM-DD'}
-                    )
-                data_inicio_dt = datetime.strptime(data_inicio, "%Y-%m-%d")
-                query = query.filter(LogAtividade.data_hora >= data_inicio_dt)
-            
-            # Validação e filtro de data de fim
-            if data_fim:
-                if not LogAtividadesService._validar_formato_data(data_fim):
-                    raise ValidationError(
-                        message="Formato de data de fim inválido",
-                        error_code="INVALID_DATE_FORMAT",
-                        details={'field': 'data_fim', 'expected_format': 'YYYY-MM-DD'}
-                    )
-                data_fim_dt = datetime.strptime(data_fim, "%Y-%m-%d") + timedelta(days=1) - timedelta(seconds=1)
-                query = query.filter(LogAtividade.data_hora <= data_fim_dt)
-            
-            # Validar datas (início deve ser menor que fim)
-            if data_inicio and data_fim:
-                inicio = datetime.strptime(data_inicio, "%Y-%m-%d")
-                fim = datetime.strptime(data_fim, "%Y-%m-%d")
-                if inicio > fim:
-                    raise ValidationError(
-                        message="Data de início deve ser menor que a data de fim",
-                        error_code="INVALID_DATE_RANGE",
-                        details={'data_inicio': data_inicio, 'data_fim': data_fim}
-                    )
+            query = self._build_query(
+                filtro_modulo=filtro_modulo,
+                filtro_usuario_id=filtro_usuario_id,
+                filtro_tipo=filtro_tipo,
+                filtro_busca=filtro_busca,
+                data_inicio=data_inicio,
+                data_fim=data_fim
+            )
             
             # Contar total de registros
             total_registros = query.count()
@@ -183,6 +219,27 @@ class LogAtividadesService:
             db_error = handle_database_error(e, 'listar_atividades')
             current_app.logger.error(f"Erro ao listar atividades: {str(e)}")
             raise db_error
+
+    def listar_todas_atividades(self,
+                                filtro_modulo: str = None,
+                                filtro_usuario_id: int = None,
+                                filtro_tipo: str = None,
+                                filtro_busca: str = None,
+                                data_inicio: str = None,
+                                data_fim: str = None) -> List[LogAtividade]:
+        """Retorna todas as atividades aplicando os mesmos filtros (sem paginação)."""
+        query = self._build_query(
+            filtro_modulo=filtro_modulo,
+            filtro_usuario_id=filtro_usuario_id,
+            filtro_tipo=filtro_tipo,
+            filtro_busca=filtro_busca,
+            data_inicio=data_inicio,
+            data_fim=data_fim
+        )
+
+        return query.options(
+            db.joinedload(LogAtividade.usuario)
+        ).order_by(LogAtividade.data_hora.desc()).all()
     
     @staticmethod
     def _validar_formato_data(data_str: str) -> bool:

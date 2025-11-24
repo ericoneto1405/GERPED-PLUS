@@ -12,9 +12,9 @@
 </div>
 
 <form method="get" class="filtro-form">
-    <div>
-        <label>Status:</label><br>
-        <select name="filtro" id="filtroStatus">
+    <div class="form-group">
+        <label>Status:</label>
+        <select name="filtro" id="filtroStatus" class="form-control">
             <option value="todos" {% if filtro == 'todos' %}selected{% endif %}>Todos</option>
             <option value="aguardando_financeiro" {% if filtro == 'aguardando_financeiro' %}selected{% endif %}>Aguardando Financeiro</option>
             <option value="liberado_coleta" {% if filtro == 'liberado_coleta' %}selected{% endif %}>Liberado para Coleta</option>
@@ -24,25 +24,25 @@
 
     <div class="date-range">
         <div class="form-group">
-            <label>Data Inicial:</label><br>
+            <label>Data Inicial:</label>
             <input type="date" name="data_inicio" value="{{ data_inicio }}" id="data_inicio" class="form-control">
         </div>
 
         <div class="form-group">
-            <label>Data Final:</label><br>
+            <label>Data Final:</label>
             <input type="date" name="data_fim" value="{{ data_fim }}" id="data_fim" class="form-control">
         </div>
 
         <div class="divider-text">OU</div>
 
         <div class="form-group">
-            <label>Mês/Ano Inteiro:</label><br>
+            <label>Mês/Ano Inteiro:</label>
             <input type="month" name="mes_ano" id="mes_ano" value="{{ mes_ano }}" class="form-control">
         </div>
     </div>
 
     <div class="form-group">
-        <label>&nbsp;</label><br>
+        <label>&nbsp;</label>
         <button type="submit" class="btn-primary">Filtrar</button>
     </div>
 </form>

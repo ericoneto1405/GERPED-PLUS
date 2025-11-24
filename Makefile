@@ -116,6 +116,12 @@ backup-db:
 	cp instance/sistema.db instance/backups/sistema_backup_$(shell date +%Y%m%d_%H%M%S).db
 	@echo "$(GREEN)✅ Backup criado em instance/backups/$(NC)"
 
+backup-financeiro:
+	@echo "$(GREEN)💾 Criando backup completo (banco + recibos)...$(NC)"
+	@chmod +x scripts/backup_financeiro.sh
+	@scripts/backup_financeiro.sh
+	@echo "$(GREEN)✅ Backup salvo em backups/<timestamp>$(NC)"
+
 # ===========================
 # TESTES
 # ===========================

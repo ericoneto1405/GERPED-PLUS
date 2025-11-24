@@ -81,7 +81,7 @@
                 </div>
                 <div class="ranking-list">
                     {% for cliente in ranking_faturamento %}
-                    <div class="ranking-item" onclick="abrirModalCliente({{ cliente.id }}, '{{ cliente.nome }}')">
+                    <div class="ranking-item" onclick="abrirModalCliente({{ cliente.id }}, '{{ cliente.nome|escapejs }}')">
                         <span class="ranking-pos">{{ loop.index }}º</span>
                         <span class="ranking-nome">{{ cliente.nome }}</span>
                         <span class="ranking-valor">R$ {{ "%.2f"|format(cliente.valor_total) }}</span>
@@ -97,7 +97,7 @@
                 </div>
                 <div class="ranking-list">
                     {% for cliente in ranking_margem %}
-                    <div class="ranking-item" onclick="abrirModalCliente({{ cliente.id }}, '{{ cliente.nome }}')">
+                    <div class="ranking-item" onclick="abrirModalCliente({{ cliente.id }}, '{{ cliente.nome|escapejs }}')">
                         <span class="ranking-pos">{{ loop.index }}º</span>
                         <span class="ranking-nome">{{ cliente.nome }}</span>
                         <span class="ranking-valor">{{ "%.1f"|format(cliente.margem_media) }}%</span>
@@ -140,7 +140,8 @@
                         <th>Cliente</th>
                         <th>Última Compra</th>
                         <th>Valor</th>
-                        <th>Dias</th>
+                        <th>Dias sem comprar</th>
+                        <th>Recorrência média</th>
                     </tr>
                 </thead>
                 <tbody id="corpoTabelaClientes"></tbody>
@@ -629,11 +630,15 @@ function abrirModalClientes(periodo) {
             tbody.innerHTML = '';
             data.clientes.forEach(cliente => {
                 const tr = document.createElement('tr');
+                const recorrencia = cliente.recorrencia_media_dias !== null
+                    ? `${cliente.recorrencia_media_dias.toFixed(1)} dias`
+                    : 'Sem histórico';
                 tr.innerHTML = `
                     <td>${cliente.nome}</td>
                     <td>${cliente.ultima_compra ? new Date(cliente.ultima_compra).toLocaleDateString('pt-BR') : 'N/A'}</td>
                     <td>R$ ${cliente.valor_ultima_compra.toFixed(2)}</td>
                     <td>${cliente.dias_sem_comprar} dias</td>
+                    <td>${recorrencia}</td>
                 `;
                 tr.style.cursor = 'pointer';
                 tr.onclick = () => {

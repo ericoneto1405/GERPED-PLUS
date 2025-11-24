@@ -440,6 +440,11 @@ table th {
     border-bottom: 1px solid var(--border-color);
 }
 
+table th[data-column-index] {
+    cursor: pointer !important;
+    user-select: none;
+}
+
 table td {
     padding: 16px;
     color: var(--text-secondary);

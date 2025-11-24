@@ -4,6 +4,7 @@ Implementa a sugestão CLI #2: Refatoração para unificar funcionalidades
 """
 import logging
 from typing import Dict, List, Tuple, Optional
+from datetime import datetime
 from flask import current_app, has_app_context
 from sqlalchemy import func, case, and_
 
@@ -198,7 +199,7 @@ class ColetaService:
                 f"Filtro '{filtro}': {len(lista_pedidos)} pedidos após filtragem Python"
             )
 
-            return lista_pedidos
+            return ColetaService._agrupar_por_cliente(lista_pedidos, filtro)
             
         except Exception as e:
             _app_logger().error(f"Erro ao listar pedidos para coleta: {str(e)}")
@@ -220,7 +221,7 @@ class ColetaService:
             _app_logger().error(f"Fallback de pedidos para coleta falhou: {str(e)}")
             return []
 
-        lista: List[Dict] = []
+        agrupados_por_cliente: Dict[int, Dict] = {}
         for pedido in pedidos:
             itens = getattr(pedido, "itens", []) or []
             total_itens = sum(getattr(item, "quantidade", 0) or 0 for item in itens)
@@ -241,22 +242,114 @@ class ColetaService:
             if filtro == "coletados" and not is_coletado_completo:
                 continue
 
-            lista.append(
-                {
-                    "pedido": pedido,
-                    "total_itens": total_itens,
-                    "itens_coletados": itens_coletados,
-                    "itens_pendentes": itens_pendentes,
-                    "total_venda": total_venda,
-                    "total_pago": total_pago,
-                    "coletado_completo": is_coletado_completo,
-                    "pagamento_aprovado": getattr(
-                        pedido, "pagamento_aprovado", False
-                    ),
-                }
-            )
+            cliente_id = getattr(pedido.cliente, "id", None)
+            chave = cliente_id if cliente_id is not None else -1
 
-        return lista
+            if chave not in agrupados_por_cliente:
+                agrupados_por_cliente[chave] = {
+                    "pedido": pedido,
+                    "pedidos_ids": [],
+                    "total_itens": 0,
+                    "itens_coletados": 0,
+                    "itens_pendentes": 0,
+                    "total_venda": 0.0,
+                    "total_pago": 0.0,
+                    "coletado_completo": True,
+                    "pagamento_aprovado": True,
+                    "data_mais_recente": pedido.data,
+                }
+            agrupado = agrupados_por_cliente[chave]
+            agrupado["pedidos_ids"].append(pedido.id)
+            agrupado["total_itens"] += total_itens
+            agrupado["itens_coletados"] += itens_coletados
+            agrupado["itens_pendentes"] += itens_pendentes
+            agrupado["total_venda"] += total_venda
+            agrupado["total_pago"] += total_pago
+            agrupado["coletado_completo"] = agrupado["coletado_completo"] and is_coletado_completo
+            agrupado["pagamento_aprovado"] = agrupado["pagamento_aprovado"] and getattr(pedido, "pagamento_aprovado", False)
+            if pedido.data and (agrupado["data_mais_recente"] is None or pedido.data > agrupado["data_mais_recente"]):
+                agrupado["data_mais_recente"] = pedido.data
+
+        return ColetaService._agrupar_por_cliente(lista, filtro)
+
+    @staticmethod
+    def _agrupar_por_cliente(lista_pedidos: List[Dict], filtro: str) -> List[Dict]:
+        """
+        Consolida pedidos por cliente para simplificar o trabalho da logística.
+        """
+        if not lista_pedidos:
+            return []
+
+        agrupados_por_cliente: Dict[int, Dict] = {}
+        for dados in lista_pedidos:
+            pedido = dados.get("pedido")
+            cliente = getattr(pedido, "cliente", None)
+            cliente_id = getattr(cliente, "id", None)
+            chave = cliente_id if cliente_id is not None else -1
+
+            agrupado = agrupados_por_cliente.get(chave)
+            if not agrupado:
+                agrupado = {
+                    "pedido": pedido,
+                    "cliente": cliente,
+                    "cliente_nome": getattr(cliente, "nome", "Cliente não identificado"),
+                    "pedidos_ids": [],
+                    "total_itens": 0,
+                    "itens_coletados": 0,
+                    "itens_pendentes": 0,
+                    "total_venda": 0.0,
+                    "total_pago": 0.0,
+                    "coletado_completo": True,
+                    "pagamento_aprovado": True,
+                    "data_mais_recente": getattr(pedido, "data", None),
+                }
+                agrupados_por_cliente[chave] = agrupado
+
+            agrupado["pedidos_ids"].append(getattr(pedido, "id", None))
+            agrupado["total_itens"] += dados.get("total_itens", 0)
+            agrupado["itens_coletados"] += dados.get("itens_coletados", 0)
+            agrupado["itens_pendentes"] += dados.get("itens_pendentes", 0)
+            agrupado["total_venda"] += dados.get("total_venda", 0.0)
+            agrupado["total_pago"] += dados.get("total_pago", 0.0)
+            agrupado["coletado_completo"] = agrupado["coletado_completo"] and dados.get("coletado_completo", False)
+            agrupado["pagamento_aprovado"] = agrupado["pagamento_aprovado"] and dados.get("pagamento_aprovado", False)
+
+            data_pedido = getattr(pedido, "data", None)
+            if data_pedido and (
+                agrupado["data_mais_recente"] is None or data_pedido > agrupado["data_mais_recente"]
+            ):
+                agrupado["data_mais_recente"] = data_pedido
+
+        agrupados = list(agrupados_por_cliente.values())
+        for agrupado in agrupados:
+            total = agrupado["total_itens"]
+            coletados = agrupado["itens_coletados"]
+            agrupado["percentual"] = (coletados / total * 100) if total else 0
+            agrupado["pedidos_ids"] = [pid for pid in agrupado["pedidos_ids"] if pid is not None]
+            agrupado["pedidos_ids"].sort()
+
+            if agrupado["coletado_completo"]:
+                agrupado["status_label"] = "Coleta concluída"
+                agrupado["status_badge"] = "bg-success"
+            elif coletados > 0:
+                agrupado["status_label"] = "Coleta parcial"
+                agrupado["status_badge"] = "bg-info"
+            else:
+                agrupado["status_label"] = "Aguardando coleta"
+                agrupado["status_badge"] = "bg-warning"
+
+        agrupados.sort(
+            key=lambda item: item["data_mais_recente"]
+            or getattr(item.get("pedido"), "data", None)
+            or datetime.min
+        )
+
+        if filtro == "pendentes":
+            agrupados = [g for g in agrupados if g["total_itens"] > 0 and not g["coletado_completo"]]
+        elif filtro == "coletados":
+            agrupados = [g for g in agrupados if g["coletado_completo"]]
+
+        return agrupados
 
     @staticmethod
     def buscar_detalhes_pedido(pedido_id: int) -> Optional[Dict]:

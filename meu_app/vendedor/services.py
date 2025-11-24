@@ -492,6 +492,25 @@ class VendedorService:
                 valor_ultima = 0
             
             dias_sem_comprar = (hoje - cliente.ultima_compra.date()).days
+
+            pedidos_cliente = Pedido.query.filter_by(cliente_id=cliente.id)\
+                                          .filter(Pedido.status.in_([
+                                              StatusPedido.PAGAMENTO_APROVADO,
+                                              StatusPedido.COLETA_PARCIAL,
+                                              StatusPedido.COLETA_CONCLUIDA
+                                          ]))\
+                                          .order_by(Pedido.data.desc()).all()
+
+            recorrencia_media = None
+            if len(pedidos_cliente) > 1:
+                datas = [p.data.date() for p in pedidos_cliente]
+                diffs = [
+                    (datas[idx] - datas[idx + 1]).days
+                    for idx in range(len(datas) - 1)
+                    if (datas[idx] - datas[idx + 1]).days >= 0
+                ]
+                if diffs:
+                    recorrencia_media = sum(diffs) / len(diffs)
             
             resultado.append({
                 'id': cliente.id,
@@ -500,7 +519,9 @@ class VendedorService:
                 'telefone': cliente.telefone,
                 'ultima_compra': cliente.ultima_compra,
                 'valor_ultima_compra': float(valor_ultima),
-                'dias_sem_comprar': dias_sem_comprar
+                'dias_sem_comprar': dias_sem_comprar,
+                'total_pedidos': len(pedidos_cliente),
+                'recorrencia_media_dias': float(recorrencia_media) if recorrencia_media is not None else None
             })
         
         return sorted(resultado, key=lambda x: x['dias_sem_comprar'], reverse=True)

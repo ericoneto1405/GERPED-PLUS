@@ -5,8 +5,8 @@
 {% block content %}
 <div class="card">
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2 class="mb-0">📝 Novo Pedido</h2>
-        <a href="{{ url_for('pedidos.listar_pedidos') }}" class="btn btn-secondary">⬅ Voltar</a>
+        <h2 class="mb-0"><i class="bi bi-pencil-square icon-text"></i> Novo Pedido</h2>
+        <a href="{{ url_for('pedidos.listar_pedidos') }}" class="btn btn-secondary"><i class="bi bi-arrow-left icon-text"></i> Voltar</a>
     </div>
 
     <form method="POST" id="formPedido" action="{{ url_for('pedidos.novo_pedido') }}">
@@ -26,12 +26,12 @@
 
         <div id="itens" class="item-container"></div>
 
-        <button type="button" class="btn btn-info btn-sm mt-2" data-action="add-item">➕ Adicionar Produto</button>
+        <button type="button" class="btn btn-info btn-sm mt-2" data-action="add-item"><i class="bi bi-plus-lg icon-text"></i> Adicionar Produto</button>
         
         
         <script nonce="{{ nonce }}">
             function adicionarItem() {
-                console.log('🚀 Adicionando produto...');
+                console.log('[Pedidos] Adicionando produto...');
                 
                 const container = document.getElementById('itens');
                 if (!container) {
@@ -56,14 +56,14 @@
                         <div style="width: 150px;">
                             <input type="text" name="preco_venda" class="form-control currency-input" placeholder="Preço Venda" data-currency="true" required>
                         </div>
-                        <button type="button" class="btn btn-danger btn-sm" data-action="remove-item">🗑️</button>
+                        <button type="button" class="btn btn-danger btn-sm" data-action="remove-item" aria-label="Remover item"><i class="bi bi-trash icon-text"></i></button>
                     </div>
                 `;
                 
                 // Adicionar ao container
                 container.insertAdjacentHTML('beforeend', produtoHTML);
                 
-                console.log('✅ Produto adicionado! Total:', container.children.length);
+                console.log('[Pedidos] Produto adicionado. Total:', container.children.length);
                 
                 // Carregar produtos via AJAX
                 carregarProdutosNoSelect(container.lastElementChild.querySelector('select'));
@@ -112,11 +112,11 @@
             
             // Função para confirmar pedido
             window.confirmarPedido = function() {
-                console.log('🔍 Função confirmarPedido executada!');
+                console.log('[Pedidos] Função confirmarPedido executada!');
                 try {
                     let resumo = "";
                     const cliente = document.querySelector('select[name="cliente_id"]');
-                    console.log('👤 Cliente selecionado:', cliente ? cliente.options[cliente.selectedIndex].text : 'Nenhum');
+                    console.log('[Pedidos] Cliente selecionado:', cliente ? cliente.options[cliente.selectedIndex].text : 'Nenhum');
                     resumo += `<p><strong>Cliente:</strong> ${cliente.options[cliente.selectedIndex].text}</p>`;
 
                     const itens = document.querySelectorAll('#itens > div');
@@ -164,17 +164,17 @@
             
             // Função para iniciar envio do pedido
             window.iniciarEnvioPedido = function() {
-                console.log('🚀 Iniciando envio do pedido...');
+                console.log('[Pedidos] Iniciando envio do pedido...');
                 fecharModal();
                 document.getElementById('modalLoading').style.display = 'flex';
                 
                 // Debug: verificar se o formulário existe
                 const form = document.getElementById('formPedido');
-                console.log('📋 Formulário encontrado:', form);
-                console.log('🎯 Action do formulário:', form.action);
+                console.log('[Pedidos] Formulário encontrado:', form);
+                console.log('[Pedidos] Action do formulário:', form.action);
                 
                 setTimeout(() => {
-                    console.log('⏰ Enviando formulário...');
+                    console.log('[Pedidos] Enviando formulário...');
                     form.submit();
                 }, 500);
             }
@@ -187,7 +187,7 @@
         <hr class="mt-4">
 
         <div class="text-end">
-            <button type="button" class="btn btn-primary btn-lg" data-action="submit-pedido">💾 Salvar Pedido</button>
+            <button type="button" class="btn btn-primary btn-lg" data-action="submit-pedido"><i class="bi bi-save icon-text"></i> Salvar Pedido</button>
         </div>
     </form>
 </div>
@@ -199,8 +199,8 @@
         <div class="card-body">
             <div id="resumoPedido" class="mb-3"></div>
             <div class="d-flex justify-content-end gap-2">
-                <button type="button" class="btn btn-secondary" data-action="cancel-confirmation">❌ Cancelar</button>
-                <button type="button" class="btn btn-success" data-action="confirm-submit">✔️ Confirmar</button>
+                <button type="button" class="btn btn-secondary" data-action="cancel-confirmation"><i class="bi bi-x-circle-fill text-danger icon-text"></i> Cancelar</button>
+                <button type="button" class="btn btn-success" data-action="confirm-submit"><i class="bi bi-check icon-text"></i> Confirmar</button>
             </div>
         </div>
     </div>

@@ -4,12 +4,12 @@
 
 {% block content %}
 <div class="page-header">
-    <h2>📤 Importar Pedidos Históricos</h2>
+    <h2><i class="bi bi-upload icon-text"></i> Importar Pedidos Históricos</h2>
 </div>
 
 {% if resultado_importacao %}
 <div class="import-result-card">
-    <h3>📊 Resumo da Importação</h3>
+    <h3><i class="bi bi-bar-chart icon-text"></i> Resumo da Importação</h3>
     {% set resumo = resultado_importacao.resumo | default({}, true) %}
     {% set erros = resultado_importacao.resultados | default([], true) %}
     <div class="summary-grid">
@@ -20,7 +20,7 @@
 
     {% if erros %}
         <div class="import-errors">
-            <h4>⚠️ Detalhes dos Erros</h4>
+            <h4><i class="bi bi-exclamation-triangle icon-text"></i> Detalhes dos Erros</h4>
             <p>As seguintes linhas não puderam ser importadas. Corrija-as na sua planilha e tente novamente.</p>
             <div class="table-responsive">
                 <table class="error-table">
@@ -69,11 +69,11 @@
 
 <div class="import-container">
     <div class="instructions-card">
-        <h3>📋 Instruções</h3>
+        <h3><i class="bi bi-clipboard icon-text"></i> Instruções</h3>
         <p>Use esta funcionalidade para importar pedidos antigos e criar uma base histórica no sistema.</p>
         
         <div class="instruction-section">
-            <h4>📊 Formato do Arquivo</h4>
+            <h4><i class="bi bi-bar-chart icon-text"></i> Formato do Arquivo</h4>
             <p>O arquivo pode ser CSV ou Excel (.xlsx, .xls) e deve conter as seguintes colunas:</p>
             <ul>
                 <li><strong>cliente_nome</strong>: Nome do cliente exatamente como está cadastrado <em>(obrigatório se não informar a coluna fantasia)</em></li>
@@ -84,14 +84,14 @@
                 <li><strong>data</strong>: Data do pedido <span class="help-text">(formato: YYYY-MM-DD ou DD/MM/YYYY)</span></li>
             </ul>
             <div class="alert-info">
-                <strong>⚠️ Atenção:</strong> Use os nomes exatamente como aparecem nas telas de Clientes e Produtos. 
+                <strong><i class="bi bi-exclamation-triangle icon-text"></i> Atenção:</strong> Use os nomes exatamente como aparecem nas telas de Clientes e Produtos. 
                 Você pode informar o nome oficial, o nome fantasia ou ambos — o sistema aceita a primeira correspondência válida.
                 Se existir mais de um cadastro com o mesmo nome/fantasia, um alerta será exibido.
             </div>
         </div>
 
         <div class="instruction-section">
-            <h4>📝 Exemplo de Arquivo CSV</h4>
+            <h4><i class="bi bi-pencil-square icon-text"></i> Exemplo de Arquivo CSV</h4>
             <div class="code-block">
                 <pre>cliente_nome,cliente_fantasia,produto_nome,quantidade,preco_venda,data
 CAIQUE ANDRADE NASCIMENTO,KAIQUE ITATIM,SKOL LATA 350ML,286,31.00,15/01/2024
@@ -112,11 +112,11 @@ LUCIANO VIEIRA SILVA DE ARAUJO,LUCIANO MOURA,BUDWEISER LATA 350ML,280,37.00,16/0
                     Baixar Arquivo de Exemplo
                 </a>
             </div>
-            <p class="note">💡 <strong>Nota:</strong> Linhas com mesma data e cliente serão agrupadas em um único pedido. Copie/cole os nomes direto do sistema para evitar erros de digitação.</p>
+            <p class="note"><i class="bi bi-lightbulb icon-text"></i> <strong>Nota:</strong> Linhas com mesma data e cliente serão agrupadas em um único pedido. Copie/cole os nomes direto do sistema para evitar erros de digitação.</p>
         </div>
 
         <div class="instruction-section">
-            <h4>⚠️ Importante</h4>
+            <h4><i class="bi bi-exclamation-triangle icon-text"></i> Importante</h4>
             <ul>
                 <li><strong>Antes de começar:</strong> Copie os nomes exatos nas telas:
                     <ul style="margin-top: 8px; margin-bottom: 8px;">
@@ -133,7 +133,7 @@ LUCIANO VIEIRA SILVA DE ARAUJO,LUCIANO MOURA,BUDWEISER LATA 350ML,280,37.00,16/0
     </div>
 
     <div class="upload-card">
-        <h3>📁 Upload do Arquivo</h3>
+        <h3><i class="bi bi-folder icon-text"></i> Upload do Arquivo</h3>
         <form method="POST" enctype="multipart/form-data" id="formImportar">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             
@@ -148,7 +148,7 @@ LUCIANO VIEIRA SILVA DE ARAUJO,LUCIANO MOURA,BUDWEISER LATA 350ML,280,37.00,16/0
                 </div>
                 <div class="file-info" id="fileInfo" style="display: none;">
                     <span id="fileName"></span>
-                    <button type="button" class="btn-remove" data-action="remove-file">✕</button>
+                    <button type="button" class="btn-remove" data-action="remove-file"><i class="bi bi-x icon-text"></i></button>
                 </div>
             </div>
 
@@ -645,6 +645,6 @@ LUCIANO VIEIRA SILVA DE ARAUJO,LUCIANO MOURA,BUDWEISER LATA 350ML,280,37.00,16/0
     removeFileButton?.addEventListener('click', removeFile);
 </script>
 
-<a href="{{ url_for('pedidos.listar_pedidos') }}" class="botao">⬅ Voltar aos Pedidos</a>
+<a href="{{ url_for('pedidos.listar_pedidos') }}" class="botao"><i class="bi bi-arrow-left icon-text"></i> Voltar aos Pedidos</a>
 
 {% endblock %}

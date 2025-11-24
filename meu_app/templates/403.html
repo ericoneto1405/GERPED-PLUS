@@ -6,7 +6,9 @@
 
 {% block content %}
 <div class="card" style="max-width: 600px; margin: 50px auto; text-align: center;">
-    <div style="font-size: 72px; margin-bottom: 20px;">🔒</div>
+    <div style="font-size: 72px; margin-bottom: 20px;">
+        <i class="bi bi-lock-fill"></i>
+    </div>
     
     <h2 style="color: #d32f2f; margin-bottom: 20px;">Acesso Negado</h2>
     
@@ -16,7 +18,7 @@
     
     <div style="background: #fff3cd; padding: 20px; border-radius: 8px; margin-bottom: 30px; border-left: 4px solid #ffc107;">
         <p style="margin: 0; color: #856404;">
-            <strong>🔑 Permissão Necessária:</strong><br>
+            <strong><i class="bi bi-key icon-text"></i>Permissão Necessária:</strong><br>
             Esta página requer permissões de acesso específicas.
         </p>
     </div>
@@ -27,11 +29,11 @@
     
     <div style="display: flex; gap: 15px; justify-content: center;">
         <a href="{{ url_for('main.painel') }}" class="btn btn-primary">
-            🏠 Voltar ao Painel
+            <i class="bi bi-house-door icon-text"></i>Voltar ao Painel
         </a>
         
         <a href="javascript:history.back()" class="btn btn-secondary">
-            ← Voltar
+            <i class="bi bi-arrow-left icon-text"></i>Voltar
         </a>
     </div>
     

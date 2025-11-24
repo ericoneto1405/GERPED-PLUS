@@ -95,25 +95,7 @@ def _nome_valido(nome: str) -> bool:
 @login_obrigatorio
 @requires_logistica
 def index():
-    """Lista pedidos para coleta - interface simples e direta"""
-    try:
-        filtro = request.args.get('filtro', 'pendentes')
-        pedidos = ColetaService.listar_pedidos_para_coleta(filtro)
-        
-        current_app.logger.info(f"Lista de coletas acessada por {session.get('usuario_nome', 'N/A')} - Filtro: {filtro}")
-        
-        return render_template('coletas/lista_coletas.html', pedidos=pedidos, filtro=filtro)
-    except Exception as e:
-        current_app.logger.error(f"Erro ao listar pedidos para coleta: {str(e)}")
-        flash('Erro ao carregar lista de coletas', 'error')
-        return render_template('coletas/lista_coletas.html', pedidos=[], filtro='pendentes')
-
-
-@coletas_bp.route('/dashboard')
-@login_obrigatorio
-@requires_logistica
-def dashboard():
-    """Dashboard com filtros (funcionalidade do logística)"""
+    """Dashboard principal das coletas (visual logístico padronizado)"""
     try:
         filtro = request.args.get('filtro', 'pendentes')
         

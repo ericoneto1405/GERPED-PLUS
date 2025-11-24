@@ -149,7 +149,7 @@
 </head>
 <body>
 
-    <h1>💳 Lançar Pagamento para Pedido #{{ pedido.id }}</h1>
+    <h1><i class="bi bi-credit-card icon-text"></i> Lançar Pagamento para Pedido #{{ pedido.id }}</h1>
     
     <div style="background: #fff; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.1);">
         <p><strong>Cliente:</strong> {{ pedido.cliente.nome }}</p>
@@ -177,10 +177,10 @@
         <label for="observacoes">Observações (opcional):</label>
         <input type="text" id="observacoes" name="observacoes" placeholder="Observações sobre o pagamento">
 
-        <label for="recibo">📄 Recibo de Pagamento (opcional):</label>
+        <label for="recibo"><i class="bi bi-file-earmark-text icon-text"></i> Recibo de Pagamento (opcional):</label>
         <input type="file" id="recibo" name="recibo">
         <small class="form-text text-muted">
-            💡 Faça upload para preenchimento automático dos dados, ou digite manualmente
+            <i class="bi bi-lightbulb icon-text"></i> Faça upload para preenchimento automático dos dados, ou digite manualmente
         </small>
 
         <input type="hidden" name="id_transacao">
@@ -190,10 +190,10 @@
         <input type="hidden" name="conta_recebedor" id="conta_recebedor">
         <input type="hidden" name="chave_pix_recebedor" id="chave_pix_recebedor">
 
-        <button type="submit">💾 Confirmar Pagamento</button>
+        <button type="submit"><i class="bi bi-save icon-text"></i> Confirmar Pagamento</button>
     </form>
 
-    <h3>📜 Histórico de Pagamentos</h3>
+    <h3><i class="bi bi-journal-text icon-text"></i> Histórico de Pagamentos</h3>
     <ul>
         {% for p in pedido.pagamentos %}
             <li>{{ p.data_pagamento.strftime('%d/%m/%Y %H:%M') }} - {{ p.valor | currency_brl }} - {{ p.metodo_pagamento }}{% if p.observacoes %} - {{ p.observacoes }}{% endif %}{% if p.caminho_recibo %} - <a href="{{ url_for('financeiro.ver_recibo', filename=p.caminho_recibo) }}" target="_blank">Ver Recibo</a>{% endif %}</li>
@@ -202,7 +202,7 @@
         {% endfor %}
     </ul>
 
-    <a href="{{ url_for('financeiro.listar_financeiro') }}" class="voltar">⬅ Voltar ao Financeiro</a>
+    <a href="{{ url_for('financeiro.listar_financeiro') }}" class="voltar"><i class="bi bi-arrow-left icon-text"></i> Voltar ao Financeiro</a>
 
     <script src="{{ url_for('static', filename='js/financeiro_pagamento.js') }}" nonce="{{ nonce }}" defer></script>
     

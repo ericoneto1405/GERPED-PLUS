@@ -6,7 +6,7 @@
 
 {% block content %}
 <div class="card" style="max-width: 600px; margin: 0 auto;">
-    <h2>{% if produto %}✏️ Editar Produto{% else %}➕ Novo Produto{% endif %}</h2>
+    <h2>{% if produto %}<i class="bi bi-pencil icon-text"></i> Editar Produto{% else %}<i class="bi bi-plus-lg icon-text"></i> Novo Produto{% endif %}</h2>
     
     <form method="POST" id="formProduto">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -51,9 +51,9 @@
         </div>
 
         <div class="d-flex gap-2 justify-content-between mt-4">
-            <a href="{{ url_for('produtos.listar_produtos') }}" class="btn btn-secondary">⬅ Voltar</a>
+            <a href="{{ url_for('produtos.listar_produtos') }}" class="btn btn-secondary"><i class="bi bi-arrow-left icon-text"></i> Voltar</a>
             <button type="submit" class="btn btn-success" id="btnSalvar">
-                💾 Salvar Produto
+                <i class="bi bi-save icon-text"></i> Salvar Produto
             </button>
         </div>
     </form>
@@ -70,12 +70,12 @@ document.getElementById('formProduto').addEventListener('submit', function(e) {
     
     // Desabilitar botão após submit
     btnSalvar.disabled = true;
-    btnSalvar.innerHTML = '⏳ Salvando...';
+    btnSalvar.innerHTML = 'Salvando...';
     
     // Re-habilitar após 3 segundos (caso haja erro e página não redirecione)
     setTimeout(function() {
         btnSalvar.disabled = false;
-        btnSalvar.innerHTML = '💾 Salvar Produto';
+        btnSalvar.innerHTML = 'Salvar Produto';
     }, 3000);
 });
 </script>

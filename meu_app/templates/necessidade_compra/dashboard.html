@@ -6,7 +6,7 @@
 <!-- Tabela de Análise de Necessidade de Compra -->
 <div class="necessidade-compra-section mb-4">
     <div class="section-header">
-        <h3>📊 Análise de Necessidade de Compra</h3>
+        <h3><i class="bi bi-bar-chart icon-text"></i> Análise de Necessidade de Compra</h3>
         <p style="color: #6c757d; font-size: 0.9rem; margin-top: 5px;">
             Baseado nos pedidos liberados pelo Financeiro
         </p>
@@ -17,7 +17,7 @@
     {% set total_valor_necessidade = necessidade_compra | sum(attribute='valor_total_necessidade') %}
     {% if total_valor_necessidade > 0 %}
     <div class="alert alert-warning necessidade-total-banner">
-        <strong>💰 Necessidade Total de Compra:</strong>
+        <strong><i class="bi bi-cash-stack icon-text"></i> Necessidade Total de Compra:</strong>
         <span>
             {{ "R$ {:,.2f}".format(total_valor_necessidade).replace(',', 'X').replace('.', ',').replace('X', '.') }}
         </span>
@@ -83,11 +83,11 @@
                     </td>
                     <td>
                         {% if item.status == 'CRÍTICO' %}
-                            <span class="badge-critico">🚨 CRÍTICO</span>
+                            <span class="badge-critico"><i class="bi bi-exclamation-octagon icon-text"></i> CRÍTICO</span>
                         {% elif item.status == 'ZERADO' %}
-                            <span class="badge-zerado">⚠️ ZERADO</span>
+                            <span class="badge-zerado"><i class="bi bi-exclamation-triangle icon-text"></i> ZERADO</span>
                         {% else %}
-                            <span class="badge-ok">✅ SUFICIENTE</span>
+                            <span class="badge-ok"><i class="bi bi-check-circle-fill text-success icon-text"></i> SUFICIENTE</span>
                         {% endif %}
                     </td>
                 </tr>
@@ -99,7 +99,7 @@
     {% else %}
     <div style="padding: 30px; text-align: center; background: #f8f9fa; border-radius: 8px;">
         <p style="color: #6c757d; margin: 0;">
-            ℹ️ Nenhum pedido com pagamento aprovado no momento.
+            ℹ Nenhum pedido com pagamento aprovado no momento.
         </p>
     </div>
     {% endif %}
@@ -303,7 +303,7 @@ document.addEventListener('DOMContentLoaded', () => {
             header.classList.remove('sorted-asc', 'sorted-desc');
             const indicator = header.querySelector('.sort-indicator');
             if (indicator) {
-                indicator.textContent = '';
+                indicator.innerHTML = '';
             }
         });
         const target = headers[currentSort.index];
@@ -315,7 +315,9 @@ document.addEventListener('DOMContentLoaded', () => {
             indicator.className = 'sort-indicator';
             target.appendChild(indicator);
         }
-        indicator.textContent = currentSort.direction === 'asc' ? '▲' : '▼';
+        indicator.innerHTML = currentSort.direction === 'asc'
+            ? '<i class="bi bi-caret-up-fill"></i>'
+            : '<i class="bi bi-caret-down-fill"></i>';
     };
 
     headers.forEach((header, index) => {

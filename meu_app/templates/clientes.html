@@ -6,10 +6,10 @@
 
 {% block content %}
 <div class="page-header">
-    <h2>👥 Lista de Clientes</h2>
+    <h2><i class="bi bi-people icon-text"></i> Lista de Clientes</h2>
     <div class="header-buttons">
-        <a href="{{ url_for('clientes.novo_cliente') }}" class="btn-primary">➕ Novo Cliente</a>
-        <a href="{{ url_for('main.painel') }}" class="btn-voltar">⬅ Voltar ao Painel</a>
+        <a href="{{ url_for('clientes.novo_cliente') }}" class="btn-primary"><i class="bi bi-plus-lg icon-text"></i> Novo Cliente</a>
+        <a href="{{ url_for('main.painel') }}" class="btn-voltar"><i class="bi bi-arrow-left icon-text"></i> Voltar ao Painel</a>
     </div>
 </div>
 
@@ -129,7 +129,7 @@
 <div id="errorModal" class="modal" style="display: block;">
     <div class="modal-content">
         <span class="close-button">&times;</span>
-        <h2>⚠️ Erro ao Excluir</h2>
+        <h2><i class="bi bi-exclamation-triangle icon-text"></i> Erro ao Excluir</h2>
         <p>{{ error_modal }}</p>
     </div>
 </div>
@@ -277,7 +277,7 @@
     </tbody>
 </table>
 
-<a href="{{ url_for('main.painel') }}" class="btn-voltar">⬅ Voltar ao Painel</a>
+<a href="{{ url_for('main.painel') }}" class="btn-voltar"><i class="bi bi-arrow-left icon-text"></i> Voltar ao Painel</a>
 
 <script nonce="{{ nonce }}">
 document.addEventListener('DOMContentLoaded', () => {
@@ -297,7 +297,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 indicator.className = 'sort-indicator';
                 header.appendChild(indicator);
             }
-            indicator.textContent = '';
+            indicator.innerHTML = '';
         });
 
         const target = headers[currentSort.index];
@@ -309,7 +309,9 @@ document.addEventListener('DOMContentLoaded', () => {
             target.appendChild(indicator);
         }
         target.classList.add(currentSort.direction === 'asc' ? 'sorted-asc' : 'sorted-desc');
-        indicator.textContent = currentSort.direction === 'asc' ? '▲' : '▼';
+        indicator.innerHTML = currentSort.direction === 'asc'
+            ? '<i class="bi bi-caret-up-fill"></i>'
+            : '<i class="bi bi-caret-down-fill"></i>';
     };
 
     const sortRows = (index, direction) => {

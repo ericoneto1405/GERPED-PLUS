@@ -27,25 +27,25 @@
     
     <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
         <a href="{{ url_for('main.painel') }}" class="btn btn-primary" style="padding: 12px 30px; font-size: 16px;">
-            🏠 Voltar para o Painel
+            <i class="bi bi-house-door icon-text"></i>Voltar para o Painel
         </a>
         
         <a href="javascript:location.reload()" class="btn btn-secondary" style="padding: 12px 30px; font-size: 16px;">
-            🔄 Tentar Novamente
+            <i class="bi bi-arrow-repeat icon-text"></i>Tentar Novamente
         </a>
     </div>
     
     {% if error %}
     <div style="margin-top: 40px; padding: 20px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; text-align: left;">
         <p style="font-size: 14px; color: #856404; margin: 0; margin-bottom: 10px;">
-            <strong>⚠️ Modo Debug - Detalhes do Erro:</strong>
+            <strong><i class="bi bi-exclamation-triangle icon-text"></i>Modo Debug - Detalhes do Erro:</strong>
         </p>
         <pre style="background: white; padding: 15px; border-radius: 4px; overflow-x: auto; font-size: 12px; color: #d9534f; margin: 0;">{{ error }}</pre>
     </div>
     {% else %}
     <div style="margin-top: 40px; padding: 20px; background: #f8f9fa; border-radius: 8px;">
         <p style="font-size: 14px; color: #95a5a6; margin: 0;">
-            <strong>💡 O que você pode fazer:</strong>
+            <strong><i class="bi bi-lightbulb icon-text"></i>O que você pode fazer:</strong>
         </p>
         <ul style="text-align: left; margin-top: 15px; color: #7f8c8d;">
             <li>Aguarde alguns minutos e tente novamente</li>

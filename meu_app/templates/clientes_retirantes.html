@@ -5,8 +5,8 @@
 
 {% block content %}
 <div class="page-header">
-    <h2>🙋 Retirantes Autorizados</h2>
-    <a href="{{ url_for('clientes.listar_clientes') }}" class="btn-voltar">⬅ Voltar para Clientes</a>
+    <h2><i class="bi bi-person-raised-hand icon-text"></i> Retirantes Autorizados</h2>
+    <a href="{{ url_for('clientes.listar_clientes') }}" class="btn-voltar"><i class="bi bi-arrow-left icon-text"></i> Voltar para Clientes</a>
 </div>
 
 <div class="card">
@@ -28,7 +28,7 @@
                     <input type="text" class="form-control" id="observacoes" name="observacoes" placeholder="Apelido, documento extra, etc. (opcional)">
                 </div>
             </div>
-            <button type="submit" class="btn-primary">➕ Adicionar retirante</button>
+            <button type="submit" class="btn-primary"><i class="bi bi-plus-lg icon-text"></i> Adicionar retirante</button>
         </form>
     </div>
 </div>
@@ -85,7 +85,7 @@
         <p class="texto-vazio">Nenhum retirante autorizado cadastrado para este cliente.</p>
         {% endif %}
         <p class="texto-nota">
-            ⚠️ A logística continua podendo liberar coletas sem estes dados, mas recomendamos confirmar com o cliente sempre que o retirante não estiver nesta lista.
+            <i class="bi bi-exclamation-triangle icon-text"></i> A logística continua podendo liberar coletas sem estes dados, mas recomendamos confirmar com o cliente sempre que o retirante não estiver nesta lista.
         </p>
     </div>
 </div>

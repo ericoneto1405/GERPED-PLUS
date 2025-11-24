@@ -69,7 +69,7 @@
 
             <div class="form-actions">
                 <button type="submit" class="btn btn-primary">
-                    <span class="icon">➕</span>
+                    <span class="icon"><i class="bi bi-plus-lg icon-text"></i></span>
                     Adicionar ao Estoque
                 </button>
                 <a href="{{ url_for('estoques.listar_estoques') }}" class="btn btn-secondary">
@@ -79,7 +79,7 @@
             
             <div class="form-tip">
                 <small class="text-muted">
-                    💡 <strong>Dica:</strong> Pressione ENTER em qualquer campo para salvar rapidamente!
+                    <i class="bi bi-lightbulb icon-text"></i> <strong>Dica:</strong> Pressione ENTER em qualquer campo para salvar rapidamente!
                 </small>
             </div>
         </form>
@@ -89,7 +89,7 @@
 <!-- Informações adicionais -->
 <div class="info-section">
     <div class="info-card">
-        <h3>📋 Informações sobre o Controle de Estoque</h3>
+        <h3><i class="bi bi-clipboard icon-text"></i> Informações sobre o Controle de Estoque</h3>
         <ul>
             <li><strong>Descrição:</strong> Selecione o produto para atualizar seu controle de estoque</li>
             <li><strong>Estoque:</strong> Quantidade atual disponível em estoque (será atualizada)</li>
@@ -98,7 +98,7 @@
             <li><strong>Status:</strong> Tipo de operação realizada no estoque (será atualizado)</li>
         </ul>
         <div class="alert alert-info">
-            <strong>💡 Importante:</strong> A quantidade informada será ADICIONADA ao estoque atual do produto. 
+            <strong><i class="bi bi-lightbulb icon-text"></i> Importante:</strong> A quantidade informada será ADICIONADA ao estoque atual do produto. 
             Se o produto não possui controle de estoque, será criado um novo controle.
         </div>
     </div>
@@ -233,9 +233,9 @@ $(document).ready(function() {
                     
                     // Mostrar informação de estoque atual
                     if (!$('#estoque-atual-info').length) {
-                        $('#produto_id').after('<div id="estoque-atual-info" class="alert alert-warning"><strong>📦 Estoque Atual:</strong> ' + data.estoque.quantidade + ' unidades (Conferente: ' + data.estoque.conferente + ', Status: ' + data.estoque.status + ')</div>');
+                        $('#produto_id').after('<div id="estoque-atual-info" class="alert alert-warning"><strong><i class="bi bi-box-seam icon-text"></i>Estoque Atual:</strong> ' + data.estoque.quantidade + ' unidades (Conferente: ' + data.estoque.conferente + ', Status: ' + data.estoque.status + ')</div>');
                     } else {
-                        $('#estoque-atual-info').html('<strong>📦 Estoque Atual:</strong> ' + data.estoque.quantidade + ' unidades (Conferente: ' + data.estoque.conferente + ', Status: ' + data.estoque.status + ')');
+                        $('#estoque-atual-info').html('<strong><i class="bi bi-box-seam icon-text"></i>Estoque Atual:</strong> ' + data.estoque.quantidade + ' unidades (Conferente: ' + data.estoque.conferente + ', Status: ' + data.estoque.status + ')');
                     }
                 } else {
                     // Produto sem estoque

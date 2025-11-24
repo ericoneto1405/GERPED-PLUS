@@ -267,7 +267,7 @@
 <!-- Gráfico de Evolução Diária -->
 <div class="card mt-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h3>📈 Evolução do Mês - {{ ["", "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", 
+        <h3><i class="bi bi-graph-up icon-text"></i> Evolução do Mês - {{ ["", "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", 
             "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"][mes] }} / {{ ano }}</h3>
     </div>
     
@@ -288,32 +288,6 @@
             <div class="legend-color" style="background-color: #007bff;"></div>
             <span>Margem</span>
         </div>
-    </div>
-</div>
-
-<!-- Termômetro Financeiro Simplificado -->
-<div class="thermometer-container">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h3>📊 Saúde Financeira do Mês</h3>
-        <span class="badge badge-secondary">{{ ["", "jan", "fev", "mar", "abr", "mai", "jun", 
-            "jul", "ago", "set", "out", "nov", "dez"][mes] }} / {{ ano }}</span>
-    </div>
-    
-    <div class="thermometer-simple">
-        <div class="thermometer-indicator" id="thermometer-indicator"></div>
-    </div>
-    
-    <div class="thermometer-labels">
-        <span>Crítico</span>
-        <span>Alerta</span>
-        <span>Neutro</span>
-        <span>Bom</span>
-        <span>Excelente</span>
-    </div>
-    
-    <div class="text-center mt-3">
-        <div class="alert-value">{{ margem_manobra | currency_brl }}</div>
-        <div class="alert-meta">Margem de Manobra Atual</div>
     </div>
 </div>
 

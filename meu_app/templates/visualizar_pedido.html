@@ -86,16 +86,16 @@
     }
 </style>
 <div class="page-header">
-    <h1>📄 Pedido #{{ pedido.id }}</h1>
+    <h1><i class="bi bi-file-earmark-text icon-text"></i> Pedido #{{ pedido.id }}</h1>
     <div>
         {% if origem == 'financeiro' %}
-            <a class="botao-imprimir" href="{{ url_for('financeiro.listar_financeiro') }}">⬅ Voltar para Financeiro</a>
+            <a class="botao-imprimir" href="{{ url_for('financeiro.listar_financeiro') }}"><i class="bi bi-arrow-left icon-text"></i> Voltar para Financeiro</a>
         {% elif origem == 'logistica' %}
-            <a class="botao-imprimir" href="{{ url_for('logistica.listar_logistica') }}">⬅ Voltar para Coletas</a>
+            <a class="botao-imprimir" href="{{ url_for('logistica.listar_logistica') }}"><i class="bi bi-arrow-left icon-text"></i> Voltar para Coletas</a>
         {% else %}
-            <a class="botao-imprimir" href="{{ url_for('pedidos.listar_pedidos', **retorno_params) }}">⬅ Voltar para Pedidos</a>
+            <a class="botao-imprimir" href="{{ url_for('pedidos.listar_pedidos', **retorno_params) }}"><i class="bi bi-arrow-left icon-text"></i> Voltar para Pedidos</a>
         {% endif %}
-        <a class="botao-imprimir" href="#" data-action="print-pedido">🖨️ Imprimir Pedido</a>
+        <a class="botao-imprimir" href="#" data-action="print-pedido"><i class="bi bi-printer icon-text"></i> Imprimir Pedido</a>
     </div>
 </div>
 
@@ -126,9 +126,9 @@
         </tbody>
     </table>
 
-    <p class="totais">💰 Total do Pedido: {{ total | currency_brl }}</p>
-    <p class="totais">✅ Total Pago: {{ pago | currency_brl }}</p>
-    <p class="totais">🧾 Saldo: {{ saldo | currency_brl }}</p>
+    <p class="totais"><i class="bi bi-cash-stack icon-text"></i> Total do Pedido: {{ total | currency_brl }}</p>
+    <p class="totais"><i class="bi bi-check-circle-fill text-success icon-text"></i> Total Pago: {{ pago | currency_brl }}</p>
+    <p class="totais"><i class="bi bi-receipt icon-text"></i> Saldo: {{ saldo | currency_brl }}</p>
 
     <h2>Histórico de Pagamentos</h2>
     <table>

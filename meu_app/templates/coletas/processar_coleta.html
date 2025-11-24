@@ -133,7 +133,7 @@
 </style>
 {% endblock %}
 
-{% block page_title %}📦 Processar Coleta - Pedido #{{ detalhes.pedido.id }}{% endblock %}
+{% block page_title %}<i class="bi bi-box-seam icon-text"></i> Processar Coleta - Pedido #{{ detalhes.pedido.id }}{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
@@ -171,7 +171,7 @@
                                 Desativados: {% for r in inativos %}{{ r.nome }} ({{ r.cpf_formatado() }}){% if not loop.last %}, {% endif %}{% endfor %}
                             </p>
                         {% endif %}
-                        <p class="nota-autorizacao">⚠️ Caso o retirante não esteja na lista, confirme a autorização diretamente com o cliente.</p>
+                        <p class="nota-autorizacao"><i class="bi bi-exclamation-triangle icon-text"></i> Caso o retirante não esteja na lista, confirme a autorização diretamente com o cliente.</p>
                     </div>
                     {% endif %}
                     <form id="formColeta" method="POST">

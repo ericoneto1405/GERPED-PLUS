@@ -129,7 +129,7 @@
 </head>
 <body>
 
-    <h1>✏️ Editar Pagamento - Pedido #{{ pedido.id }}</h1>
+    <h1><i class="bi bi-pencil icon-text"></i> Editar Pagamento - Pedido #{{ pedido.id }}</h1>
     
     <div class="info-box">
         <p><strong>Cliente:</strong> {{ pedido.cliente.nome }}</p>
@@ -140,7 +140,7 @@
 
     {% if pagamentos %}
     <div class="info-box">
-        <h3>📋 Selecione um pagamento para editar:</h3>
+        <h3><i class="bi bi-clipboard icon-text"></i> Selecione um pagamento para editar:</h3>
         <div id="pagamentos-list">
             {% for pagamento in pagamentos %}
             <div class="pagamento-item"
@@ -158,7 +158,7 @@
                 <br><small>Obs: {{ pagamento.observacoes }}</small>
                 {% endif %}
                 {% if pagamento.caminho_recibo %}
-                <br><small>📎 Comprovante anexado</small>
+                <br><small><i class="bi bi-paperclip icon-text"></i> Comprovante anexado</small>
                 {% endif %}
             </div>
             {% endfor %}
@@ -186,32 +186,32 @@
         </div>
 
         <div id="current-recibo" class="current-recibo" style="display: none;">
-            <strong>📎 Comprovante atual:</strong>
+            <strong><i class="bi bi-paperclip icon-text"></i> Comprovante atual:</strong>
             <a id="link-recibo" href="#" target="_blank">Ver comprovante</a>
         </div>
 
         <div class="form-group">
-            <label for="recibo">📄 Novo Recibo de Pagamento (opcional):</label>
+            <label for="recibo"><i class="bi bi-file-earmark-text icon-text"></i> Novo Recibo de Pagamento (opcional):</label>
             <input type="file" id="recibo" name="recibo">
             <small class="form-text text-muted">
-                💡 Deixe em branco para manter o comprovante atual
+                <i class="bi bi-lightbulb icon-text"></i> Deixe em branco para manter o comprovante atual
             </small>
         </div>
 
         <div class="form-actions" style="display: flex; gap: 10px; flex-wrap: wrap;">
-            <button type="submit" data-action="salvar-edicao" class="btn-salvar">💾 Salvar Alterações</button>
-            <button type="button" data-action="excluir-pagamento" class="btn-excluir" style="background-color: #dc3545;">🗑️ Excluir Pagamento</button>
-            <button type="button" data-action="cancelar-edicao" style="background-color: #6c757d;">❌ Cancelar</button>
+            <button type="submit" data-action="salvar-edicao" class="btn-salvar"><i class="bi bi-save icon-text"></i> Salvar Alterações</button>
+            <button type="button" data-action="excluir-pagamento" class="btn-excluir" style="background-color: #dc3545;"><i class="bi bi-trash icon-text"></i> Excluir Pagamento</button>
+            <button type="button" data-action="cancelar-edicao" style="background-color: #6c757d;"><i class="bi bi-x-circle-fill text-danger icon-text"></i> Cancelar</button>
         </div>
     </form>
     {% else %}
     <div class="info-box">
-        <p style="color: #dc3545; font-weight: bold;">⚠️ Este pedido não possui pagamentos registrados.</p>
+        <p style="color: #dc3545; font-weight: bold;"><i class="bi bi-exclamation-triangle icon-text"></i> Este pedido não possui pagamentos registrados.</p>
         <p>Use a opção "Registrar Pagamento" para adicionar um novo pagamento.</p>
     </div>
     {% endif %}
 
-    <a href="{{ url_for('financeiro.listar_financeiro') }}" class="voltar">⬅ Voltar ao Financeiro</a>
+    <a href="{{ url_for('financeiro.listar_financeiro') }}" class="voltar"><i class="bi bi-arrow-left icon-text"></i> Voltar ao Financeiro</a>
 
     <script nonce="{{ nonce }}">
         document.addEventListener('DOMContentLoaded', () => {

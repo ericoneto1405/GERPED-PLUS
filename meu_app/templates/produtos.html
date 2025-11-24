@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="page-header">
-    <h2>📦 Gestão de Produtos</h2>
+    <h2><i class="bi bi-box-seam icon-text"></i> Gestão de Produtos</h2>
 </div>
 
 <!-- Container de Abas -->
@@ -12,10 +12,10 @@
     <!-- Cabeçalho das Abas -->
     <div class="tabs-header">
         <button class="tab-btn active" data-tab="produtos">
-            📦 Gestão de Produtos
+            <i class="bi bi-box-seam icon-text"></i> Gestão de Produtos
         </button>
         <button class="tab-btn" data-tab="precos">
-            💰 Gestão de Preços
+            <i class="bi bi-cash-stack icon-text"></i> Gestão de Preços
         </button>
     </div>
     
@@ -23,24 +23,24 @@
     <div class="tab-content active" id="produtos">
         <div class="action-cards">
             <div class="action-card">
-                <div class="card-icon">➕</div>
+                <div class="card-icon"><i class="bi bi-plus-lg icon-text"></i></div>
                 <h3>Novo Produto</h3>
                 <p>Cadastrar produto individual no sistema</p>
                 <a href="{{ url_for('produtos.novo_produto') }}" class="btn-primary">Criar Produto</a>
             </div>
             
             <div class="action-card">
-                <div class="card-icon">📤</div>
+                <div class="card-icon"><i class="bi bi-upload icon-text"></i></div>
                 <h3>Importar Produtos</h3>
                 <p>Upload de planilha em lote</p>
                 <button class="btn-upload" data-action="trigger-file-input" data-target="fileInput">Selecionar Arquivo</button>
-                <a href="{{ url_for('produtos.download_modelo_produtos') }}" class="btn-link">⬇️ Baixar Modelo</a>
+                <a href="{{ url_for('produtos.download_modelo_produtos') }}" class="btn-link"><i class="bi bi-arrow-down icon-text"></i> Baixar Modelo</a>
             </div>
         </div>
         
         <!-- Tabela de Produtos -->
         <div class="table-section">
-            <h3>📋 Lista de Produtos Cadastrados</h3>
+            <h3><i class="bi bi-clipboard icon-text"></i> Lista de Produtos Cadastrados</h3>
             <div class="table-toolbar">
                 <div class="input-group shadow-sm" style="max-width: 360px;">
                     <span class="input-group-text bg-white">
@@ -105,41 +105,41 @@
     <div class="tab-content" id="precos">
         <div class="action-cards">
             <div class="action-card">
-                <div class="card-icon">✏️</div>
+                <div class="card-icon"><i class="bi bi-pencil icon-text"></i></div>
                 <h3>Preço Manual</h3>
                 <p>Definir preço médio individual</p>
                 <button class="btn-manual" data-action="abrir-modal-preco">Editar Preço</button>
             </div>
             
             <div class="action-card">
-                <div class="card-icon">📊</div>
+                <div class="card-icon"><i class="bi bi-bar-chart icon-text"></i></div>
                 <h3>Importar Preços</h3>
                 <p>Upload de planilha de preços em lote</p>
                 <button class="btn-upload-preco" data-action="trigger-file-input" data-target="fileInputPreco">Selecionar Arquivo</button>
-                <a href="{{ url_for('produtos.download_modelo_precos') }}" class="btn-link">⬇️ Baixar Modelo</a>
+                <a href="{{ url_for('produtos.download_modelo_precos') }}" class="btn-link"><i class="bi bi-arrow-down icon-text"></i> Baixar Modelo</a>
             </div>
         </div>
         
         <!-- Resumo de Preços -->
         <div class="price-summary">
-            <h3>💰 Resumo de Preços</h3>
+            <h3><i class="bi bi-cash-stack icon-text"></i> Resumo de Preços</h3>
             <div class="summary-cards">
                 <div class="summary-card">
-                    <div class="summary-icon">📦</div>
+                    <div class="summary-icon"><i class="bi bi-box-seam icon-text"></i></div>
                     <div class="summary-content">
                         <h4>Total de Produtos</h4>
                         <p>{{ produtos|length }}</p>
                     </div>
                 </div>
                 <div class="summary-card">
-                    <div class="summary-icon">💰</div>
+                    <div class="summary-icon"><i class="bi bi-cash-stack icon-text"></i></div>
                     <div class="summary-content">
                         <h4>Com Preço Definido</h4>
                         <p>{{ produtos|selectattr('preco_medio_compra', 'gt', 0)|list|length }}</p>
                     </div>
                 </div>
                 <div class="summary-card">
-                    <div class="summary-icon">⚠️</div>
+                    <div class="summary-icon"><i class="bi bi-exclamation-triangle icon-text"></i></div>
                     <div class="summary-content">
                         <h4>Sem Preço</h4>
                         <p>{{ produtos|selectattr('preco_medio_compra', 'eq', 0)|list|length }}</p>
@@ -158,7 +158,7 @@
 <div id="errorModal" class="modal" style="display: none;">
     <div class="modal-content">
         <div class="modal-header">
-            <h3>❌ Produto Já Cadastrado</h3>
+            <h3><i class="bi bi-x-circle-fill text-danger icon-text"></i> Produto Já Cadastrado</h3>
             <span class="close" data-action="close-modal-duplicados">&times;</span>
         </div>
         <div class="modal-body">
@@ -175,7 +175,7 @@
 <div id="modalPrecoManual" class="modal" style="display: none;">
     <div class="modal-content">
         <div class="modal-header">
-            <h3>💰 Definir Preço Médio Manual</h3>
+            <h3><i class="bi bi-cash-stack icon-text"></i> Definir Preço Médio Manual</h3>
             <span class="close" data-action="fechar-modal-preco">&times;</span>
         </div>
         <div class="modal-body">
@@ -696,7 +696,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 indicator.className = 'sort-indicator';
                 header.appendChild(indicator);
             }
-            indicator.textContent = '';
+            indicator.innerHTML = '';
         });
 
         const target = headers[currentSort.index];
@@ -708,7 +708,9 @@ document.addEventListener('DOMContentLoaded', () => {
             target.appendChild(indicator);
         }
         target.classList.add(currentSort.direction === 'asc' ? 'sorted-asc' : 'sorted-desc');
-        indicator.textContent = currentSort.direction === 'asc' ? '▲' : '▼';
+        indicator.innerHTML = currentSort.direction === 'asc'
+            ? '<i class="bi bi-caret-up-fill"></i>'
+            : '<i class="bi bi-caret-down-fill"></i>';
     };
 
     const sortRows = (index, direction) => {
@@ -835,7 +837,7 @@ function uploadPlanilha(input) {
         // Mostrar feedback visual imediato
         const btn = document.querySelector('.btn-upload');
         const originalText = btn.textContent;
-        btn.textContent = '⏳ Processando...';
+        btn.textContent = 'Processando...';
         btn.disabled = true;
         
         const formData = new FormData();
@@ -898,7 +900,7 @@ function uploadPrecos(input) {
         // Mostrar feedback visual imediato
         const btn = document.querySelector('.btn-upload-preco');
         const originalText = btn.textContent;
-        btn.textContent = '⏳ Processando...';
+        btn.textContent = 'Processando...';
         btn.disabled = true;
         
         const formData = new FormData();

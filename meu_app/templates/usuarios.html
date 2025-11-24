@@ -6,7 +6,7 @@
 
 {% block content %}
 <div class="card">
-    <h2>👥 Gerenciar Usuários</h2>
+    <h2><i class="bi bi-people icon-text"></i> Gerenciar Usuários</h2>
     
     <form method="POST">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -33,11 +33,11 @@
             <div class="checkboxes">
                 <label class="checkbox-label">
                     <input type="checkbox" name="acesso_clientes"> 
-                    <span>👥 Clientes</span>
+                    <span><i class="bi bi-people icon-text"></i> Clientes</span>
                 </label>
                 <label class="checkbox-label">
                     <input type="checkbox" name="acesso_produtos"> 
-                    <span>📦 Produtos</span>
+                    <span><i class="bi bi-box-seam icon-text"></i> Produtos</span>
                 </label>
                 <label class="checkbox-label">
                     <input type="checkbox" name="acesso_pedidos"> 
@@ -45,7 +45,7 @@
                 </label>
                 <label class="checkbox-label">
                     <input type="checkbox" name="acesso_financeiro"> 
-                    <span>💰 Financeiro</span>
+                    <span><i class="bi bi-cash-stack icon-text"></i> Financeiro</span>
                 </label>
                 <label class="checkbox-label">
                     <input type="checkbox" name="acesso_logistica"> 
@@ -54,12 +54,12 @@
             </div>
         </div>
 
-        <button type="submit" class="btn btn-success">➕ Criar Usuário</button>
+        <button type="submit" class="btn btn-success"><i class="bi bi-plus-lg icon-text"></i> Criar Usuário</button>
     </form>
 </div>
 
 <div class="card">
-    <h3>👥 Usuários Cadastrados</h3>
+    <h3><i class="bi bi-people icon-text"></i> Usuários Cadastrados</h3>
     
     <table class="table">
         <thead>
@@ -78,17 +78,17 @@
                 <td>{{ usuario.nome }}</td>
                 <td>
                     {% if usuario.tipo == 'admin' %}
-                        <span class="badge badge-admin">👤 Admin</span>
+                        <span class="badge badge-admin"><i class="bi bi-person icon-text"></i> Admin</span>
                     {% else %}
-                        <span class="badge badge-user">👨‍💼 Comum</span>
+                        <span class="badge badge-user"><i class="bi bi-person-workspace icon-text"></i> Comum</span>
                     {% endif %}
                 </td>
                 <td>
                     <div class="permissions">
-                        {% if usuario.acesso_clientes %}<span class="permission">👥</span>{% endif %}
-                        {% if usuario.acesso_produtos %}<span class="permission">📦</span>{% endif %}
+                        {% if usuario.acesso_clientes %}<span class="permission"><i class="bi bi-people icon-text"></i></span>{% endif %}
+                        {% if usuario.acesso_produtos %}<span class="permission"><i class="bi bi-box-seam icon-text"></i></span>{% endif %}
                         {% if usuario.acesso_pedidos %}<span class="permission">P</span>{% endif %}
-                        {% if usuario.acesso_financeiro %}<span class="permission">💰</span>{% endif %}
+                        {% if usuario.acesso_financeiro %}<span class="permission"><i class="bi bi-cash-stack icon-text"></i></span>{% endif %}
                         {% if usuario.acesso_logistica %}<span class="permission">L</span>{% endif %}
                     </div>
                 </td>
@@ -104,14 +104,14 @@
                                 data-acesso-pedidos="{{ usuario.acesso_pedidos|tojson|safe }}"
                                 data-acesso-financeiro="{{ usuario.acesso_financeiro|tojson|safe }}"
                                 data-acesso-logistica="{{ usuario.acesso_logistica|tojson|safe }}">
-                            ✏️ Editar
+                            <i class="bi bi-pencil icon-text"></i> Editar
                         </button>
                         
                         <!-- Botão Alterar Senha -->
                         <button class="btn btn-warning btn-sm btn-alterar-senha" 
                                 data-id="{{ usuario.id }}" 
                                 data-nome="{{ usuario.nome }}">
-                            🔑 Senha
+                            <i class="bi bi-key icon-text"></i> Senha
                         </button>
                         
                         <!-- Botão Redefinir Senha (apenas para admins) -->
@@ -119,7 +119,7 @@
                         <button class="btn btn-info btn-sm btn-redefinir-senha" 
                                 data-id="{{ usuario.id }}" 
                                 data-nome="{{ usuario.nome }}">
-                            🔄 Redefinir
+                            <i class="bi bi-arrow-repeat icon-text"></i> Redefinir
                         </button>
                         {% endif %}
                         
@@ -127,7 +127,7 @@
                         {% if usuario.nome != 'admin' %}
                             <form method="POST" action="{{ url_for('usuarios.excluir_usuario', id=usuario.id) }}" style="display:inline;" class="form-excluir-usuario">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <button type="submit" class="btn btn-danger btn-sm">🗑️ Excluir</button>
+                                <button type="submit" class="btn btn-danger btn-sm"><i class="bi bi-trash icon-text"></i> Excluir</button>
                             </form>
                         {% else %}
                             <span class="protected-user">Protegido</span>
@@ -148,7 +148,7 @@
 <div id="modalEditarUsuario" class="modal" style="display: none;">
     <div class="modal-content">
         <div class="modal-header">
-            <h3 class="modal-title">✏️ Editar Usuário</h3>
+            <h3 class="modal-title"><i class="bi bi-pencil icon-text"></i> Editar Usuário</h3>
             <span class="close">&times;</span>
         </div>
         <form id="formEditarUsuario" method="POST">
@@ -172,11 +172,11 @@
                     <div class="checkboxes">
                         <label class="checkbox-label">
                             <input type="checkbox" name="acesso_clientes" id="editAcessoClientes"> 
-                            <span>👥 Clientes</span>
+                            <span><i class="bi bi-people icon-text"></i> Clientes</span>
                         </label>
                         <label class="checkbox-label">
                             <input type="checkbox" name="acesso_produtos" id="editAcessoProdutos"> 
-                            <span>📦 Produtos</span>
+                            <span><i class="bi bi-box-seam icon-text"></i> Produtos</span>
                         </label>
                         <label class="checkbox-label">
                             <input type="checkbox" name="acesso_pedidos" id="editAcessoPedidos"> 
@@ -184,7 +184,7 @@
                         </label>
                         <label class="checkbox-label">
                             <input type="checkbox" name="acesso_financeiro" id="editAcessoFinanceiro"> 
-                            <span>💰 Financeiro</span>
+                            <span><i class="bi bi-cash-stack icon-text"></i> Financeiro</span>
                         </label>
                         <label class="checkbox-label">
                             <input type="checkbox" name="acesso_logistica" id="editAcessoLogistica"> 
@@ -205,7 +205,7 @@
 <div id="modalAlterarSenha" class="modal" style="display: none;">
     <div class="modal-content">
         <div class="modal-header">
-            <h3 class="modal-title">🔑 Alterar Senha</h3>
+            <h3 class="modal-title"><i class="bi bi-key icon-text"></i> Alterar Senha</h3>
             <span class="close">&times;</span>
         </div>
         <form id="formAlterarSenha" method="POST">
@@ -239,14 +239,14 @@
 <div id="modalRedefinirSenha" class="modal" style="display: none;">
     <div class="modal-content">
         <div class="modal-header">
-            <h3 class="modal-title">🔄 Redefinir Senha</h3>
+            <h3 class="modal-title"><i class="bi bi-arrow-repeat icon-text"></i> Redefinir Senha</h3>
             <span class="close">&times;</span>
         </div>
         <form id="formRedefinirSenha" method="POST">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="modal-body">
                 <div class="alert alert-info">
-                    <strong>⚠️ Aviso:</strong> Esta ação redefinirá a senha do usuário. 
+                    <strong><i class="bi bi-exclamation-triangle icon-text"></i> Aviso:</strong> Esta ação redefinirá a senha do usuário. 
                     O usuário precisará usar a nova senha no próximo login.
                 </div>
                 

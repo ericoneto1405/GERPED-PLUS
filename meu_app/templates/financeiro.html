@@ -7,16 +7,16 @@
 {% block content %}
 <div class="card">
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2>📊 Painel Financeiro</h2>
+        <h2><i class="bi bi-bar-chart icon-text"></i> Painel Financeiro</h2>
         <div class="d-flex gap-2">
-            <a href="{{ url_for('financeiro.exportar_financeiro', filtro=filtro, mes=mes, ano=ano) }}" class="btn btn-success">📥 Exportar Excel</a>
+            <a href="{{ url_for('financeiro.exportar_financeiro', filtro=filtro, mes=mes, ano=ano) }}" class="btn btn-success"><i class="bi bi-download icon-text"></i> Exportar Excel</a>
         </div>
     </div>
 
     <!-- Filtro de Mês e Ano -->
     <div class="card mb-3">
         <div class="card-body">
-            <h5 class="card-title">📅 Filtro por Período</h5>
+            <h5 class="card-title"><i class="bi bi-calendar-event icon-text"></i> Filtro por Período</h5>
             <form method="get" class="row g-3 align-items-end">
                 <div class="col-md-3">
                     <label for="mes" class="form-label">Mês:</label>
@@ -55,7 +55,7 @@
                     </select>
                 </div>
                 <div class="col-md-3">
-                    <button type="submit" class="btn btn-primary w-100">🔍 Filtrar</button>
+                    <button type="submit" class="btn btn-primary w-100"><i class="bi bi-search icon-text"></i> Filtrar</button>
                 </div>
             </form>
         </div>
@@ -102,22 +102,22 @@
                     <td>{{ (total - pago if total - pago > 0 else 0) | currency_brl }}</td>
                     <td>
                         <div class="financeiro-actions">
-                            <a href="{{ url_for('pedidos.visualizar_pedido', id=pedido.id, origem='financeiro') }}" class="btn btn-sm btn-warning" target="_blank" title="Visualizar Pedido">👁️</a>
-                            <button class="btn btn-sm btn-info" type="button" data-bs-toggle="collapse" data-bs-target="#details-{{ pedido.id }}" aria-expanded="false" aria-controls="details-{{ pedido.id }}" title="Detalhes dos Pagamentos">📜</button>
+                            <a href="{{ url_for('pedidos.visualizar_pedido', id=pedido.id, origem='financeiro') }}" class="btn btn-sm btn-warning" target="_blank" title="Visualizar Pedido"><i class="bi bi-eye icon-text"></i></a>
+                            <button class="btn btn-sm btn-info" type="button" data-bs-toggle="collapse" data-bs-target="#details-{{ pedido.id }}" aria-expanded="false" aria-controls="details-{{ pedido.id }}" title="Detalhes dos Pagamentos"><i class="bi bi-journal-text icon-text"></i></button>
                             {% if item.status in ['AGUARDANDO', 'PAGO PARCIAL'] %}
-                                <a href="{{ url_for('financeiro.registrar_pagamento', pedido_id=pedido.id) }}" class="btn btn-primary btn-registrar" title="Registrar Pagamento">💳 Registrar</a>
+                                <a href="{{ url_for('financeiro.registrar_pagamento', pedido_id=pedido.id) }}" class="btn btn-primary btn-registrar" title="Registrar Pagamento"><i class="bi bi-credit-card icon-text"></i> Registrar</a>
                             {% endif %}
                             <a href="{{ url_for('financeiro.editar_pagamento', pedido_id=pedido.id) }}"
                                class="btn btn-sm btn-primary"
                                title="Editar Pagamento"
                                data-action="open-edit-payment"
                                target="_blank"
-                               rel="noopener">✏️</a>
+                               rel="noopener"><i class="bi bi-pencil icon-text"></i></a>
                             {% if pago == 0 or pago == 0.0 %}
                                 <button class="btn btn-sm btn-secondary" 
                                         data-action="retornar-comercial"
                                         data-pedido-id="{{ pedido.id }}"
-                                        title="Retornar para Comercial (Pedido sem pagamentos)">⬅️</button>
+                                        title="Retornar para Comercial (Pedido sem pagamentos)"><i class="bi bi-arrow-left icon-text"></i></button>
                             {% endif %}
                         </div>
                     </td>
@@ -152,7 +152,7 @@
                                             </td>
                                             <td>
                                                 {% if pagamento.caminho_recibo %}
-                                                    <a href="{{ url_for('financeiro.ver_recibo', filename=pagamento.caminho_recibo) }}" class="btn btn-sm btn-outline-primary" target="_blank" title="Ver Comprovante">📄</a>
+                                                    <a href="{{ url_for('financeiro.ver_recibo', filename=pagamento.caminho_recibo) }}" class="btn btn-sm btn-outline-primary" target="_blank" title="Ver Comprovante"><i class="bi bi-file-earmark-text icon-text"></i></a>
                                                 {% else %}
                                                     <span class="text-muted">-</span>
                                                 {% endif %}
@@ -366,7 +366,7 @@
                     indicator.className = 'sort-indicator';
                     header.appendChild(indicator);
                 }
-                indicator.textContent = '';
+            indicator.innerHTML = '';
             });
             const target = headers[currentSort.index];
             if (!target) return;
@@ -376,8 +376,10 @@
                 indicator.className = 'sort-indicator';
                 target.appendChild(indicator);
             }
-            target.classList.add(currentSort.direction === 'asc' ? 'sorted-asc' : 'sorted-desc');
-            indicator.textContent = currentSort.direction === 'asc' ? '▲' : '▼';
+        target.classList.add(currentSort.direction === 'asc' ? 'sorted-asc' : 'sorted-desc');
+        indicator.innerHTML = currentSort.direction === 'asc'
+            ? '<i class="bi bi-caret-up-fill"></i>'
+            : '<i class="bi bi-caret-down-fill"></i>';
         };
 
         const sortRows = (index, direction) => {

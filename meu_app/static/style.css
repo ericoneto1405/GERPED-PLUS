@@ -3642,3 +3642,14 @@ html body .login-container .login-card {
         display: none !important;
     }
 }
+
+.icon-text {
+    display: inline-flex;
+    align-items: center;
+    margin-right: 0.35rem;
+    font-size: 1rem;
+}
+
+.icon-text:last-child {
+    margin-right: 0;
+}

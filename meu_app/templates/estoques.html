@@ -9,7 +9,7 @@
         <h2>Controle de Estoque</h2>
         <div class="header-actions">
             <a href="{{ url_for('estoques.novo_estoque') }}" class="btn btn-primary">
-                <span class="icon">➕</span>
+                <span class="icon"><i class="bi bi-plus-lg icon-text"></i></span>
                 Adicionar ao Estoque
             </a>
         </div>
@@ -49,7 +49,7 @@
                                 {% if estoque.produto.codigo_interno %}
                                 <span class="product-code">Código: {{ estoque.produto.codigo_interno }}</span>
                                 {% endif %}
-                                <span class="history-icon">📊</span>
+                                <span class="history-icon"><i class="bi bi-bar-chart icon-text"></i></span>
                             </a>
                         </div>
                     </td>
@@ -83,7 +83,7 @@
                 <tr>
                     <td colspan="6" class="no-data">
                         <div class="empty-state">
-                            <span class="empty-icon">📦</span>
+                            <span class="empty-icon"><i class="bi bi-box-seam icon-text"></i></span>
                             <p>Nenhum registro de estoque encontrado</p>
                             <a href="{{ url_for('estoques.novo_estoque') }}" class="btn btn-primary">Criar primeiro registro</a>
                         </div>
@@ -226,7 +226,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 indicator.className = 'sort-indicator';
                 header.appendChild(indicator);
             }
-            indicator.textContent = '';
+            indicator.innerHTML = '';
         });
 
         const target = headers[currentSort.index];
@@ -238,7 +238,9 @@ document.addEventListener('DOMContentLoaded', () => {
             target.appendChild(indicator);
         }
         target.classList.add(currentSort.direction === 'asc' ? 'sorted-asc' : 'sorted-desc');
-        indicator.textContent = currentSort.direction === 'asc' ? '▲' : '▼';
+        indicator.innerHTML = currentSort.direction === 'asc'
+            ? '<i class="bi bi-caret-up-fill"></i>'
+            : '<i class="bi bi-caret-down-fill"></i>';
     };
 
     const sortRows = (index, direction) => {

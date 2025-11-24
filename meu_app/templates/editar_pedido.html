@@ -5,12 +5,12 @@
 {% block content %}
 <div class="card">
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2 class="mb-0">✏️ Editar Pedido #{{ pedido.id }}</h2>
-        <a href="{{ url_for('pedidos.listar_pedidos') }}" class="btn btn-secondary">⬅ Voltar</a>
+        <h2 class="mb-0"><i class="bi bi-pencil-square icon-text"></i>Editar Pedido #{{ pedido.id }}</h2>
+        <a href="{{ url_for('pedidos.listar_pedidos') }}" class="btn btn-secondary"><i class="bi bi-arrow-left icon-text"></i>Voltar</a>
     </div>
 
     <div class="alert alert-info">
-        <h5 class="alert-heading">📋 Informações do Pedido</h5>
+        <h5 class="alert-heading"><i class="bi bi-clipboard icon-text"></i>Informações do Pedido</h5>
         <p class="mb-1"><strong>Cliente:</strong> {{ pedido.cliente.nome }}</p>
         <p class="mb-1"><strong>Data de Criação:</strong> {{ pedido.data.strftime('%d/%m/%Y às %H:%M') }}</p>
         <p class="mb-0"><strong>Status:</strong> <span class="badge bg-info text-dark">{{ pedido.status }}</span></p>
@@ -31,7 +31,7 @@
 
         <hr>
 
-        <h5>📦 Itens do Pedido</h5>
+        <h5><i class="bi bi-box-seam icon-text"></i>Itens do Pedido</h5>
         <div id="items" class="mb-3">
             {% for item in pedido.itens %}
             <div class="d-flex gap-2 mb-2 align-items-center" data-item-row>
@@ -46,16 +46,16 @@
                 <div style="width: 150px;">
                     <input type="text" name="preco_venda" class="form-control currency-input" placeholder="Preço Venda" value="{{ item.preco_venda|string|replace(',', '.') }}" required>
                 </div>
-                <button type="button" class="btn btn-danger btn-sm" data-action="remove-item">🗑️</button>
+                <button type="button" class="btn btn-danger btn-sm" data-action="remove-item" aria-label="Remover item"><i class="bi bi-trash icon-text"></i></button>
             </div>
             {% endfor %}
         </div>
-        <button type="button" class="btn btn-info btn-sm" data-action="add-item">➕ Adicionar Item</button>
+        <button type="button" class="btn btn-info btn-sm" data-action="add-item"><i class="bi bi-plus-lg icon-text"></i>Adicionar Item</button>
 
         <hr class="mt-4">
 
         <div class="text-end">
-            <button type="submit" class="btn btn-primary btn-lg">💾 Salvar Alterações</button>
+            <button type="submit" class="btn btn-primary btn-lg"><i class="bi bi-save icon-text"></i>Salvar Alterações</button>
         </div>
     </form>
 </div>
@@ -115,7 +115,7 @@
                 <div style="width: 150px;">
                     <input type="text" name="preco_venda" class="form-control currency-input" placeholder="Preço Venda" required>
                 </div>
-                <button type="button" class="btn btn-danger btn-sm" data-action="remove-item">🗑️</button>
+                <button type="button" class="btn btn-danger btn-sm" data-action="remove-item" aria-label="Remover item"><i class="bi bi-trash icon-text"></i></button>
             `;
             
             container.appendChild(itemBox);

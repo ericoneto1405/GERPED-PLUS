@@ -4,10 +4,10 @@
 
 {% block content %}
 <div class="page-header">
-    <h2>📋 Todos os Pedidos</h2>
+    <h2><i class="bi bi-clipboard icon-text"></i> Todos os Pedidos</h2>
     <div class="header-buttons">
-        <a href="{{ url_for('pedidos.importar_pedidos') }}" class="btn-secondary">📤 Importar Histórico</a>
-        <a href="{{ url_for('pedidos.novo_pedido') }}" class="btn-primary">➕ Novo Pedido</a>
+        <a href="{{ url_for('pedidos.importar_pedidos') }}" class="btn-secondary"><i class="bi bi-upload icon-text"></i> Importar Histórico</a>
+        <a href="{{ url_for('pedidos.novo_pedido') }}" class="btn-primary"><i class="bi bi-plus-lg icon-text"></i> Novo Pedido</a>
     </div>
 </div>
 
@@ -477,7 +477,7 @@
             <td>
                 <a href="{{ url_for('pedidos.visualizar_pedido', id=item.pedido.id, origem='pedidos', filtro=filtro, data_inicio=data_inicio, data_fim=data_fim, sort=current_sort, direction=current_direction) }}"
                    class="botao-ver">
-                    👁️ Ver
+                    <i class="bi bi-eye icon-text"></i> Ver
                 </a>
             </td>
             <td>
@@ -512,7 +512,7 @@
 <div id="modalConfirmacao" class="modal">
     <div class="modal-content">
         <div class="modal-header">
-            <h3 class="modal-title" id="modalTitle">🔐 Confirmação de Senha</h3>
+            <h3 class="modal-title" id="modalTitle"><i class="bi bi-shield-lock icon-text"></i> Confirmação de Senha</h3>
             <span class="close" id="btnFecharModal">&times;</span>
         </div>
         <div class="modal-body">
@@ -539,7 +539,7 @@
     </div>
 </div>
 
-<a href="{{ url_for('main.painel') }}" class="botao">⬅ Voltar ao Painel</a>
+<a href="{{ url_for('main.painel') }}" class="botao"><i class="bi bi-arrow-left icon-text"></i> Voltar ao Painel</a>
 
 <script nonce="{{ nonce }}">
 let acaoAtual = '';
@@ -548,7 +548,7 @@ let pedidoId = null;
 function abrirModalEditar(id) {
     acaoAtual = 'editar';
     pedidoId = id;
-    document.getElementById('modalTitle').textContent = '✏️ Editar Pedido';
+    document.getElementById('modalTitle').textContent = 'Editar Pedido';
     document.getElementById('modalMessage').textContent = 'Para editar este pedido, insira a senha do administrador.';
     document.getElementById('btnConfirmar').textContent = 'Editar Pedido';
     document.getElementById('btnConfirmar').className = 'btn btn-primary';
@@ -559,7 +559,7 @@ function abrirModalEditar(id) {
 function abrirModalExcluir(id) {
     acaoAtual = 'excluir';
     pedidoId = id;
-    document.getElementById('modalTitle').textContent = '🗑️ Excluir Pedido';
+    document.getElementById('modalTitle').textContent = 'Excluir Pedido';
     document.getElementById('modalMessage').textContent = 'ATENÇÃO: Esta ação é irreversível! Para excluir este pedido, insira a senha do administrador.';
     document.getElementById('btnConfirmar').textContent = 'Excluir Pedido';
     document.getElementById('btnConfirmar').className = 'btn btn-danger';
@@ -570,7 +570,7 @@ function abrirModalExcluir(id) {
 function abrirModalConfirmarComercial(id) {
     acaoAtual = 'confirmar_comercial';
     pedidoId = id;
-    document.getElementById('modalTitle').textContent = '✅ Confirmar Pedido (Comercial)';
+    document.getElementById('modalTitle').textContent = 'Confirmar Pedido (Comercial)';
     document.getElementById('modalMessage').textContent = 'Para confirmar este pedido e liberá-lo para análise financeira, insira a senha do administrador.';
     document.getElementById('btnConfirmar').textContent = 'Confirmar Pedido';
     document.getElementById('btnConfirmar').className = 'btn btn-success';
@@ -731,7 +731,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 indicator.className = 'sort-indicator';
                 header.appendChild(indicator);
             }
-            indicator.textContent = '';
+            indicator.innerHTML = '';
         });
 
         const target = headers[currentSort.index];
@@ -743,7 +743,9 @@ document.addEventListener('DOMContentLoaded', () => {
             target.appendChild(indicator);
         }
         target.classList.add(currentSort.direction === 'asc' ? 'sorted-asc' : 'sorted-desc');
-        indicator.textContent = currentSort.direction === 'asc' ? '▲' : '▼';
+        indicator.innerHTML = currentSort.direction === 'asc'
+            ? '<i class="bi bi-caret-up-fill"></i>'
+            : '<i class="bi bi-caret-down-fill"></i>';
     };
 
     const sortRows = (index, direction) => {

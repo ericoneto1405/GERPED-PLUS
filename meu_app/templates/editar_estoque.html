@@ -76,7 +76,7 @@
 
             <div class="form-actions">
                 <button type="submit" class="btn btn-primary">
-                    <span class="icon">💾</span>
+                    <span class="icon"><i class="bi bi-save icon-text"></i></span>
                     Atualizar Estoque
                 </button>
                 <a href="{{ url_for('estoques.listar_estoques') }}" class="btn btn-secondary">
@@ -86,7 +86,7 @@
             
             <div class="form-tip">
                 <small class="text-muted">
-                    💡 <strong>Dica:</strong> Pressione ENTER em qualquer campo para salvar rapidamente!
+                    <i class="bi bi-lightbulb icon-text"></i> <strong>Dica:</strong> Pressione ENTER em qualquer campo para salvar rapidamente!
                 </small>
             </div>
         </form>
@@ -96,7 +96,7 @@
 <!-- Histórico do produto -->
 <div class="info-section">
     <div class="info-card">
-        <h3>📋 Informações do Produto</h3>
+        <h3><i class="bi bi-clipboard icon-text"></i> Informações do Produto</h3>
         <div class="product-details">
             <p><strong>Produto:</strong> {{ estoque.produto.nome }}</p>
             {% if estoque.produto.codigo_interno %}

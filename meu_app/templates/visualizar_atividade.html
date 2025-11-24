@@ -8,9 +8,9 @@
 <div class="visualizar-atividade-page">
     <!-- Breadcrumb -->
     <div class="breadcrumb">
-        <a href="{{ url_for('main.painel') }}" class="breadcrumb-item">🏠 Painel</a>
+        <a href="{{ url_for('main.painel') }}" class="breadcrumb-item"><i class="bi bi-house-door icon-text"></i> Painel</a>
         <span class="breadcrumb-separator">›</span>
-        <a href="{{ url_for('log_atividades.listar_atividades') }}" class="breadcrumb-item">📋 Log de Atividades</a>
+        <a href="{{ url_for('log_atividades.listar_atividades') }}" class="breadcrumb-item"><i class="bi bi-clipboard icon-text"></i> Log de Atividades</a>
         <span class="breadcrumb-separator">›</span>
         <span class="breadcrumb-current">Atividade #{{ atividade.id }}</span>
     </div>
@@ -29,7 +29,7 @@
                         {{ atividade.tipo_atividade }}
                     </span>
                     <span class="badge badge-modulo">
-                        📦 {{ atividade.modulo }}
+                        <i class="bi bi-box-seam icon-text"></i> {{ atividade.modulo }}
                     </span>
                 </div>
             </div>
@@ -37,10 +37,10 @@
 
         <!-- Grid de Informações -->
         <div class="info-section">
-            <h3 class="section-title">📊 Informações Gerais</h3>
+            <h3 class="section-title"><i class="bi bi-bar-chart icon-text"></i> Informações Gerais</h3>
             <div class="info-grid">
                 <div class="info-card">
-                    <div class="info-icon">🆔</div>
+                    <div class="info-icon"><i class="bi bi-person-badge icon-text"></i></div>
                     <div class="info-content">
                         <div class="info-label">ID da Atividade</div>
                         <div class="info-value">#{{ atividade.id }}</div>
@@ -48,7 +48,7 @@
                 </div>
 
                 <div class="info-card">
-                    <div class="info-icon">👤</div>
+                    <div class="info-icon"><i class="bi bi-person icon-text"></i></div>
                     <div class="info-content">
                         <div class="info-label">Usuário</div>
                         <div class="info-value">{{ atividade.usuario.nome if atividade.usuario else 'Sistema' }}</div>
@@ -56,7 +56,7 @@
                 </div>
 
                 <div class="info-card">
-                    <div class="info-icon">📅</div>
+                    <div class="info-icon"><i class="bi bi-calendar-event icon-text"></i></div>
                     <div class="info-content">
                         <div class="info-label">Data e Hora</div>
                         <div class="info-value">{{ atividade.data_hora.strftime('%d/%m/%Y %H:%M:%S') }}</div>
@@ -65,7 +65,7 @@
 
                 {% if atividade.ip_address %}
                 <div class="info-card">
-                    <div class="info-icon">🌐</div>
+                    <div class="info-icon"><i class="bi bi-globe2 icon-text"></i></div>
                     <div class="info-content">
                         <div class="info-label">Endereço IP</div>
                         <div class="info-value">{{ atividade.ip_address }}</div>
@@ -77,7 +77,7 @@
 
         <!-- Descrição -->
         <div class="description-section">
-            <h3 class="section-title">📝 Descrição Detalhada</h3>
+            <h3 class="section-title"><i class="bi bi-pencil-square icon-text"></i> Descrição Detalhada</h3>
             <div class="description-box">
                 {{ atividade.descricao }}
             </div>
@@ -86,11 +86,11 @@
         <!-- Dados Extras (se existir) -->
         {% if atividade.dados_extras %}
         <div class="extras-section">
-            <h3 class="section-title">📋 Dados Adicionais</h3>
+            <h3 class="section-title"><i class="bi bi-clipboard icon-text"></i> Dados Adicionais</h3>
             <div class="extras-box">
                 <div class="extras-toolbar">
-                    <button class="btn-tool" onclick="copyExtras()" title="Copiar">📋 Copiar</button>
-                    <button class="btn-tool" onclick="formatJSON()" title="Formatar">🔄 Formatar JSON</button>
+                    <button class="btn-tool" onclick="copyExtras()" title="Copiar"><i class="bi bi-clipboard icon-text"></i> Copiar</button>
+                    <button class="btn-tool" onclick="formatJSON()" title="Formatar"><i class="bi bi-arrow-repeat icon-text"></i> Formatar JSON</button>
                 </div>
                 <pre id="extras-content" class="extras-content">{{ atividade.dados_extras }}</pre>
             </div>
@@ -99,7 +99,7 @@
 
         <!-- Timeline (se houver mais informações) -->
         <div class="timeline-section">
-            <h3 class="section-title">⏱️ Linha do Tempo</h3>
+            <h3 class="section-title"><i class="bi bi-stopwatch icon-text"></i> Linha do Tempo</h3>
             <div class="timeline">
                 <div class="timeline-item">
                     <div class="timeline-marker timeline-marker-primary"></div>
@@ -118,10 +118,10 @@
                 ← Voltar ao Log
             </a>
             <button onclick="window.print()" class="btn btn-primary">
-                🖨️ Imprimir
+                <i class="bi bi-printer icon-text"></i> Imprimir
             </button>
             <button onclick="exportarAtividade()" class="btn btn-success">
-                📥 Exportar JSON
+                <i class="bi bi-download icon-text"></i> Exportar JSON
             </button>
         </div>
     </div>
@@ -522,10 +522,10 @@
 function copyExtras() {
     const content = document.getElementById('extras-content').textContent;
     navigator.clipboard.writeText(content).then(() => {
-        alert('✅ Conteúdo copiado para a área de transferência!');
+        alert('Conteúdo copiado para a área de transferência!');
     }).catch(err => {
         console.error('Erro ao copiar:', err);
-        alert('❌ Erro ao copiar conteúdo');
+        alert('Erro ao copiar conteúdo');
     });
 }
 
@@ -534,9 +534,9 @@ function formatJSON() {
     try {
         const json = JSON.parse(content.textContent);
         content.textContent = JSON.stringify(json, null, 2);
-        alert('✅ JSON formatado com sucesso!');
+        alert('JSON formatado com sucesso!');
     } catch (e) {
-        alert('⚠️ Este conteúdo não é um JSON válido');
+        alert('Atenção: este conteúdo não é um JSON válido');
     }
 }
 
@@ -573,14 +573,14 @@ function exportarAtividade() {
 
 {# Funções Helper #}
 {% macro get_modulo_icon(modulo) %}
-{% if modulo == 'Clientes' %}👥
-{% elif modulo == 'Produtos' %}📦
-{% elif modulo == 'Pedidos' %}📝
-{% elif modulo == 'Financeiro' %}💰
-{% elif modulo == 'Coletas' or modulo == 'Logística' %}🚚
-{% elif modulo == 'Usuários' %}👤
-{% elif modulo == 'Estoque' %}📊
-{% else %}📋
+{% if modulo == 'Clientes' %}<i class="bi bi-people icon-text"></i>
+{% elif modulo == 'Produtos' %}<i class="bi bi-box-seam icon-text"></i>
+{% elif modulo == 'Pedidos' %}<i class="bi bi-pencil-square icon-text"></i>
+{% elif modulo == 'Financeiro' %}<i class="bi bi-cash-stack icon-text"></i>
+{% elif modulo == 'Coletas' or modulo == 'Logística' %}<i class="bi bi-truck icon-text"></i>
+{% elif modulo == 'Usuários' %}<i class="bi bi-person icon-text"></i>
+{% elif modulo == 'Estoque' %}<i class="bi bi-bar-chart icon-text"></i>
+{% else %}<i class="bi bi-clipboard icon-text"></i>
 {% endif %}
 {% endmacro %}
 

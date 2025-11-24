@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="page-header">
-    <h2>📊 Apuração Atacado</h2>
+    <h2><i class="bi bi-bar-chart icon-text"></i> Apuração Atacado</h2>
 </div>
 
 <!-- Month and Year Selection -->
@@ -36,7 +36,7 @@
             </div>
             
             <button type="submit" class="btn-search">
-                <span class="icon-search">🔍</span>
+                <span class="icon-search"><i class="bi bi-search icon-text"></i></span>
                 Buscar / Nova
             </button>
         </div>
@@ -48,10 +48,10 @@
     <!-- Cabeçalho das Abas -->
     <div class="tabs-header">
         <button class="tab-btn active" data-tab="previsao-verbas">
-            📊 Previsão de Verbas
+            <i class="bi bi-bar-chart icon-text"></i> Previsão de Verbas
         </button>
         <button class="tab-btn" data-tab="outro-apuracao">
-            🔒 Apuração Definitiva
+            <i class="bi bi-lock-fill icon-text"></i> Apuração Definitiva
         </button>
     </div>
     
@@ -59,7 +59,7 @@
     <div class="tab-content active" id="previsao-verbas">
         <div class="action-cards">
             <div class="action-card">
-                <div class="card-icon">➕</div>
+                <div class="card-icon"><i class="bi bi-plus-lg icon-text"></i></div>
                 <h3>Nova Previsão</h3>
                 <p>Criar nova previsão de verbas para o período</p>
                 <button class="btn-primary" data-action="criar-nova-previsao">Criar Previsão</button>
@@ -70,7 +70,7 @@
         
         <!-- Tabela de Previsões -->
         <div class="table-section">
-            <h3>📋 Lista de Previsões de Verbas</h3>
+            <h3><i class="bi bi-clipboard icon-text"></i> Lista de Previsões de Verbas</h3>
             <div class="table-container">
                 <table>
                     <thead>
@@ -141,7 +141,7 @@
                     
                     <!-- Indicador de Tipo -->
                     <div class="tipo-indicator previsao-indicator">
-                        <span class="tipo-icon">📊</span>
+                        <span class="tipo-icon"><i class="bi bi-bar-chart icon-text"></i></span>
                         <span class="tipo-text">PREVISÃO DE VERBAS</span>
                         <span class="tipo-desc">Formulário para criar previsões de verbas (rascunho)</span>
                     </div>
@@ -175,7 +175,7 @@
                     <!-- Summary Boxes para Previsão -->
                     <div class="summary-grid">
                         <div class="summary-box summary-receitas-adicionais">
-                            <div class="summary-icon">📈</div>
+                            <div class="summary-icon"><i class="bi bi-graph-up icon-text"></i></div>
                             <div class="summary-content">
                                 <div class="summary-label">Total Verbas</div>
                                 <div class="summary-value" id="previsao-total-verbas">R$ 0,00</div>
@@ -185,11 +185,11 @@
 
                     <div class="form-actions">
                         <button type="button" class="btn-cancel" data-action="cancelar-previsao">
-                            <span class="icon-cancel">❌</span>
+                            <span class="icon-cancel"><i class="bi bi-x-circle-fill text-danger icon-text"></i></span>
                             Cancelar
                         </button>
                         <button type="button" class="btn-save" data-action="salvar-previsao">
-                            <span class="icon-save">💾</span>
+                            <span class="icon-save"><i class="bi bi-save icon-text"></i></span>
                             Salvar Previsão
                         </button>
                     </div>
@@ -201,14 +201,14 @@
     <div class="tab-content" id="outro-apuracao">
         <div class="action-cards">
             <div class="action-card">
-                <div class="card-icon">💰</div>
+                <div class="card-icon"><i class="bi bi-cash-stack icon-text"></i></div>
                 <h3>Nova Apuração Definitiva</h3>
                 <p>Criar nova apuração definitiva para o período</p>
                 <button class="btn-primary" data-action="criar-apuracao-definitiva">Criar Apuração Definitiva</button>
             </div>
             
             <div class="action-card">
-                <div class="card-icon">📊</div>
+                <div class="card-icon"><i class="bi bi-bar-chart icon-text"></i></div>
                 <h3>Dashboard Analítico</h3>
                 <p>Visualizar análises e relatórios</p>
 
@@ -228,7 +228,7 @@
                 
                 <!-- Indicador de Tipo -->
                 <div class="tipo-indicator apuracao-indicator">
-                    <span class="tipo-icon">🔒</span>
+                    <span class="tipo-icon"><i class="bi bi-lock-fill icon-text"></i></span>
                     <span class="tipo-text">APURAÇÃO DEFINITIVA</span>
                     <span class="tipo-desc">Formulário para criar apuração definitiva com todos os custos</span>
                 </div>
@@ -268,7 +268,7 @@
                 <!-- Summary Boxes -->
                 <div class="summary-grid">
                     <div class="summary-box summary-receita">
-                        <div class="summary-icon">📈</div>
+                        <div class="summary-icon"><i class="bi bi-graph-up icon-text"></i></div>
                         <div class="summary-content">
                             <div class="summary-label">Receita Total</div>
                             <div class="summary-value" id="receita-total">R$ 0,00</div>
@@ -276,7 +276,7 @@
                     </div>
                     
                     <div class="summary-box summary-custo">
-                        <div class="summary-icon">📉</div>
+                        <div class="summary-icon"><i class="bi bi-graph-down icon-text"></i></div>
                         <div class="summary-content">
                             <div class="summary-label">Custo Produtos</div>
                             <div class="summary-value" id="custo-produtos">R$ 0,00</div>
@@ -284,7 +284,7 @@
                     </div>
                     
                     <div class="summary-box summary-receitas-adicionais">
-                        <div class="summary-icon">📈</div>
+                        <div class="summary-icon"><i class="bi bi-graph-up icon-text"></i></div>
                         <div class="summary-content">
                             <div class="summary-label">Receitas Adicionais</div>
                             <div class="summary-value" id="receitas-adicionais">R$ 0,00</div>
@@ -292,7 +292,7 @@
                     </div>
                     
                     <div class="summary-box summary-custos-operacionais">
-                        <div class="summary-icon">📉</div>
+                        <div class="summary-icon"><i class="bi bi-graph-down icon-text"></i></div>
                         <div class="summary-content">
                             <div class="summary-label">Custos Operacionais</div>
                             <div class="summary-value" id="custos-operacionais">R$ 0,00</div>
@@ -300,7 +300,7 @@
                     </div>
                     
                     <div class="summary-box summary-resultado">
-                        <div class="summary-icon">💰</div>
+                        <div class="summary-icon"><i class="bi bi-cash-stack icon-text"></i></div>
                         <div class="summary-content">
                             <div class="summary-label">Resultado Líquido</div>
                             <div class="summary-value" id="resultado-liquido">R$ 0,00</div>
@@ -310,11 +310,11 @@
 
                 <div class="form-actions">
                     <button type="button" class="btn-save" data-action="salvar-apuracao">
-                        <span class="icon-save">💾</span>
+                        <span class="icon-save"><i class="bi bi-save icon-text"></i></span>
                         Salvar
                     </button>
                     <button type="button" class="btn-save-definitivo" data-action="salvar-definitivo">
-                        <span class="icon-save">🔒</span>
+                        <span class="icon-save"><i class="bi bi-lock-fill icon-text"></i></span>
                         Salvar Definitivo
                     </button>
                 </div>
@@ -330,7 +330,7 @@
 <div id="modalSenha" class="modal">
     <div class="modal-content">
         <div class="modal-header">
-            <h3 class="modal-title" id="modalTitle">🔐 Confirmação de Senha</h3>
+            <h3 class="modal-title" id="modalTitle"><i class="bi bi-shield-lock icon-text"></i> Confirmação de Senha</h3>
             <span class="close" data-action="fechar-modal">&times;</span>
         </div>
         <div class="modal-body">
@@ -1098,8 +1098,8 @@ function criarNovaApuracaoDefinitiva() {
     // Restaurar botões para apuração definitiva
     const btnSalvar = document.querySelector('.btn-save');
     const btnDefinitivo = document.querySelector('.btn-save-definitivo');
-    btnSalvar.innerHTML = '<span class="icon-save">💾</span> Salvar';
-    btnDefinitivo.innerHTML = '<span class="icon-save">🔒</span> Salvar Definitivo';
+    btnSalvar.innerHTML = '<span class="icon-save"><i class="bi bi-save icon-text"></i></span> Salvar';
+    btnDefinitivo.innerHTML = '<span class="icon-save"><i class="bi bi-lock-fill icon-text"></i></span> Salvar Definitivo';
     
     // Scroll para o formulário
     document.querySelector('.calculation-card').scrollIntoView({ behavior: 'smooth' });
@@ -1371,7 +1371,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const mensagemDefinitiva = document.createElement('div');
         mensagemDefinitiva.innerHTML = `
             <div style="background: #fff3cd; border: 1px solid #ffeaa7; color: #856404; padding: 12px; border-radius: 8px; margin-bottom: 15px; text-align: center;">
-                <strong>🔒 Apuração Definitiva</strong><br>
+                <strong><i class="bi bi-lock-fill icon-text"></i>Apuração Definitiva</strong><br>
                 Esta apuração foi marcada como definitiva e não pode ser alterada sem senha do administrador.
             
         `;
@@ -1456,7 +1456,7 @@ function salvarApuração() {
 
 function salvarDefinitivo() {
     acaoAtual = 'definitivo';
-    document.getElementById('modalTitle').textContent = '🔒 Salvar como Definitivo';
+    document.getElementById('modalTitle').textContent = 'Salvar como Definitivo';
     document.getElementById('modalMessage').textContent = 'ATENÇÃO: Esta ação tornará a apuração definitiva e não poderá ser alterada sem senha do administrador. Para continuar, insira a senha do administrador.';
     document.getElementById('modalSenha').style.display = 'block';
     document.getElementById('senhaAdmin').focus();

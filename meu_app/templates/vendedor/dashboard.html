@@ -6,21 +6,21 @@
 <div class="vendedor-dashboard">
     <!-- Header -->
     <div class="dashboard-header">
-        <h1>📊 Painel do Vendedor</h1>
-        <a href="{{ url_for('main.painel') }}" class="btn-voltar">⬅ Voltar</a>
+        <h1><i class="bi bi-bar-chart icon-text"></i> Painel do Vendedor</h1>
+        <a href="{{ url_for('main.painel') }}" class="btn-voltar"><i class="bi bi-arrow-left icon-text"></i> Voltar</a>
     </div>
 
     <!-- Cards Resumo -->
     <div class="cards-resumo">
         <div class="card-resumo card-total" onclick="abrirModalClientes('todos')">
-            <div class="card-icon">📊</div>
+            <div class="card-icon"><i class="bi bi-bar-chart icon-text"></i></div>
             <div class="card-title">RESUMO GERAL</div>
             <div class="card-number">{{ resumo.total_clientes }}</div>
             <div class="card-label">CLIENTES</div>
         </div>
 
         <div class="card-resumo card-7dias" onclick="abrirModalClientes('7')">
-            <div class="card-icon">🟡</div>
+            <div class="card-icon"><i class="bi bi-circle-fill text-warning icon-text"></i></div>
             <div class="card-title">SEM COMPRA</div>
             <div class="card-subtitle">ÚLTIMOS 7 DIAS</div>
             <div class="card-number">{{ resumo.sem_compra_7_dias }}</div>
@@ -28,7 +28,7 @@
         </div>
 
         <div class="card-resumo card-15dias" onclick="abrirModalClientes('15')">
-            <div class="card-icon">🟠</div>
+            <div class="card-icon"><i class="bi bi-circle-fill text-warning icon-text"></i></div>
             <div class="card-title">SEM COMPRA</div>
             <div class="card-subtitle">ÚLTIMOS 15 DIAS</div>
             <div class="card-number">{{ resumo.sem_compra_15_dias }}</div>
@@ -36,7 +36,7 @@
         </div>
 
         <div class="card-resumo card-30dias" onclick="abrirModalClientes('30')">
-            <div class="card-icon">🔴</div>
+            <div class="card-icon"><i class="bi bi-circle-fill text-danger icon-text"></i></div>
             <div class="card-title">SEM COMPRA</div>
             <div class="card-subtitle">ÚLTIMOS 30 DIAS</div>
             <div class="card-number">{{ resumo.sem_compra_30_dias }}</div>
@@ -47,7 +47,7 @@
     <!-- Rankings -->
     <div class="rankings-section">
         <div class="rankings-header">
-            <h2>🏆 Rankings</h2>
+            <h2><i class="bi bi-trophy icon-text"></i> Rankings</h2>
             <form class="ranking-filter-form" method="get">
                 <div class="filter-group">
                     <label for="data_inicio">Data inicial</label>
@@ -77,7 +77,7 @@
             <!-- Ranking: Clientes por Valor -->
             <div class="ranking-card">
                 <div class="ranking-header">
-                    <h3>💰 CLIENTES POR VALOR</h3>
+                    <h3><i class="bi bi-cash-stack icon-text"></i> CLIENTES POR VALOR</h3>
                 </div>
                 <div class="ranking-list">
                     {% for cliente in ranking_faturamento %}
@@ -93,7 +93,7 @@
             <!-- Ranking: Clientes por Margem -->
             <div class="ranking-card">
                 <div class="ranking-header">
-                    <h3>📈 CLIENTES POR MARGEM</h3>
+                    <h3><i class="bi bi-graph-up icon-text"></i> CLIENTES POR MARGEM</h3>
                 </div>
                 <div class="ranking-list">
                     {% for cliente in ranking_margem %}
@@ -109,7 +109,7 @@
             <!-- Ranking: Produtos por Valor -->
             <div class="ranking-card">
                 <div class="ranking-header">
-                    <h3>🏷️ PRODUTOS POR VALOR</h3>
+                    <h3><i class="bi bi-tag icon-text"></i> PRODUTOS POR VALOR</h3>
                 </div>
                 <div class="ranking-list">
                     {% for produto in ranking_produtos %}
@@ -159,8 +159,8 @@
         <div class="modal-body">
             <!-- Abas -->
             <div class="tabs">
-                <button class="tab-btn active" onclick="trocarAba('pedidos')">📦 Pedidos</button>
-                <button class="tab-btn" onclick="trocarAba('produtos')">🏷️ Produtos Compilados</button>
+                <button class="tab-btn active" onclick="trocarAba('pedidos')"><i class="bi bi-box-seam icon-text"></i> Pedidos</button>
+                <button class="tab-btn" onclick="trocarAba('produtos')"><i class="bi bi-tag icon-text"></i> Produtos Compilados</button>
             </div>
 
             <!-- Conteúdo: Pedidos -->

@@ -11,7 +11,7 @@
 #
 # Autor: Sistema GERPED - Fase 9
 
-.PHONY: help dev test lint format clean install migrate security
+.PHONY: help dev test lint format clean install migrate security restart server-start server-stop server-status server-logs
 
 # Variáveis
 PYTHON := python3
@@ -74,8 +74,11 @@ server-stop:
 	@bash scripts/manage_server.sh stop
 
 restart:
-	@bash scripts/manage_server.sh restart
-
+	@echo "$(GREEN)♻️  Reiniciando servidores...$(NC)"
+	@$(MAKE) server-stop || true
+	@sleep 1
+	@$(MAKE) server-start
+	
 server-status:
 	@bash scripts/manage_server.sh status
 

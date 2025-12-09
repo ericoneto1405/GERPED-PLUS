@@ -3,7 +3,7 @@ Routes para o módulo de Necessidade de Compra
 Funcionalidade original do Dashboard - Análise simples
 """
 
-from flask import render_template
+from flask import current_app, render_template
 from ..decorators import login_obrigatorio
 from . import necessidade_compra_bp
 from .services import NecessidadeCompraService
@@ -14,13 +14,18 @@ from .services import NecessidadeCompraService
 def dashboard():
     """Página principal de análise de necessidade de compra - versão original"""
     try:
-        # Usar a mesma lógica do Dashboard original
-        necessidade_compra = NecessidadeCompraService.calcular_necessidade_compra()
-        
-        return render_template('necessidade_compra/dashboard.html', 
-                             necessidade_compra=necessidade_compra)
-    except Exception as e:
-        from flask import current_app
+        contexto = NecessidadeCompraService.obter_contexto_dashboard()
+        return render_template(
+            'necessidade_compra/dashboard.html',
+            clientes_pedidos=contexto['clientes'],
+            produtos_resumo=contexto['produtos'],
+            total_necessidade=contexto['total_necessidade'],
+        )
+    except Exception as e:  # pragma: no cover - log e fallback visual
         current_app.logger.error(f"Erro ao carregar análise de compra: {str(e)}")
-        return render_template('necessidade_compra/dashboard.html', 
-                             necessidade_compra=[])
+        return render_template(
+            'necessidade_compra/dashboard.html',
+            clientes_pedidos=[],
+            produtos_resumo=[],
+            total_necessidade=0,
+        )

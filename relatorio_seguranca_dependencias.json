@@ -2,20 +2,20 @@
     "report_meta": {
         "scan_target": "environment",
         "scanned": [
-            "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages",
+            "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages",
             "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13",
             "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/lib-dynload",
             "/Library/Frameworks/Python.framework/Versions/3.13/lib/python313.zip",
-            "/Users/ericobrandao/Projects/GERPED/venv/bin",
-            "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages/setuptools/_vendor"
+            "/Users/ericobrandao/Downloads/GERPED PLUS/venv/bin",
+            "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages/setuptools/_vendor"
         ],
         "scanned_full_path": [
-            "/Users/ericobrandao/Projects/GERPED/venv/bin",
+            "/Users/ericobrandao/Downloads/GERPED PLUS/venv/bin",
             "/Library/Frameworks/Python.framework/Versions/3.13/lib/python313.zip",
             "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13",
             "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/lib-dynload",
-            "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages",
-            "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages/setuptools/_vendor"
+            "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages",
+            "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages/setuptools/_vendor"
         ],
         "target_languages": [
             "python"
@@ -71,7 +71,7 @@
                     "name": "deprecated",
                     "specifier": "==1.2.18",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -86,7 +86,7 @@
                     "name": "flask",
                     "specifier": "==2.3.2",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -101,7 +101,7 @@
                     "name": "flask-caching",
                     "specifier": "==2.3.1",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -116,7 +116,7 @@
                     "name": "flask-login",
                     "specifier": "==0.6.3",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -131,7 +131,7 @@
                     "name": "flask-migrate",
                     "specifier": "==4.0.7",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -146,7 +146,7 @@
                     "name": "flask-restful",
                     "specifier": "==0.3.10",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -161,7 +161,7 @@
                     "name": "alembic",
                     "specifier": "==1.13.1",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -176,7 +176,7 @@
                     "name": "aniso8601",
                     "specifier": "==10.0.1",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -191,7 +191,7 @@
                     "name": "annotated-types",
                     "specifier": "==0.7.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -206,7 +206,7 @@
                     "name": "anyio",
                     "specifier": "==4.11.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -221,7 +221,7 @@
                     "name": "apispec",
                     "specifier": "==6.6.1",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -236,7 +236,7 @@
                     "name": "attrs",
                     "specifier": "==25.4.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -251,7 +251,7 @@
                     "name": "authlib",
                     "specifier": "==1.6.5",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -266,7 +266,7 @@
                     "name": "bandit",
                     "specifier": "==1.7.9",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -281,7 +281,7 @@
                     "name": "black",
                     "specifier": "==24.8.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -296,7 +296,7 @@
                     "name": "bleach",
                     "specifier": "==6.2.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -311,7 +311,7 @@
                     "name": "blinker",
                     "specifier": "==1.9.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -326,7 +326,7 @@
                     "name": "boolean-py",
                     "specifier": "==5.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -341,7 +341,7 @@
                     "name": "boto3",
                     "specifier": "==1.34.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -356,7 +356,7 @@
                     "name": "botocore",
                     "specifier": "==1.34.162",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -371,7 +371,7 @@
                     "name": "build",
                     "specifier": "==1.3.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -386,7 +386,7 @@
                     "name": "cachecontrol",
                     "specifier": "==0.14.3",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -401,7 +401,7 @@
                     "name": "cachelib",
                     "specifier": "==0.13.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -416,7 +416,7 @@
                     "name": "cachetools",
                     "specifier": "==6.2.1",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -431,7 +431,7 @@
                     "name": "certifi",
                     "specifier": "==2025.10.5",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -446,7 +446,7 @@
                     "name": "cffi",
                     "specifier": "==2.0.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -461,7 +461,7 @@
                     "name": "cfgv",
                     "specifier": "==3.4.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -476,7 +476,7 @@
                     "name": "charset-normalizer",
                     "specifier": "==3.4.4",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -491,7 +491,7 @@
                     "name": "click",
                     "specifier": "==8.3.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -506,7 +506,7 @@
                     "name": "codespell",
                     "specifier": "==2.3.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -521,7 +521,7 @@
                     "name": "coverage",
                     "specifier": "==7.11.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -536,7 +536,7 @@
                     "name": "croniter",
                     "specifier": "==6.0.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -551,7 +551,7 @@
                     "name": "cryptography",
                     "specifier": "==46.0.2",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -566,7 +566,7 @@
                     "name": "cyclonedx-python-lib",
                     "specifier": "==7.6.2",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -581,7 +581,7 @@
                     "name": "defusedxml",
                     "specifier": "==0.7.1",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -596,7 +596,7 @@
                     "name": "distlib",
                     "specifier": "==0.4.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -611,7 +611,7 @@
                     "name": "dparse",
                     "specifier": "==0.6.4",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -626,7 +626,7 @@
                     "name": "et-xmlfile",
                     "specifier": "==2.0.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -641,7 +641,7 @@
                     "name": "filelock",
                     "specifier": "==3.20.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -656,7 +656,7 @@
                     "name": "flasgger",
                     "specifier": "==0.9.7.1",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -671,7 +671,7 @@
                     "name": "flask-cors",
                     "specifier": "==6.0.1",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -686,7 +686,7 @@
                     "name": "flask-limiter",
                     "specifier": "==4.0.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -701,7 +701,7 @@
                     "name": "flask-session",
                     "specifier": "==0.8.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -716,7 +716,7 @@
                     "name": "flask-sqlalchemy",
                     "specifier": "==3.1.1",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -731,7 +731,7 @@
                     "name": "flask-talisman",
                     "specifier": "==1.1.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -746,7 +746,7 @@
                     "name": "flask-wtf",
                     "specifier": "==1.2.2",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -761,7 +761,7 @@
                     "name": "fsspec",
                     "specifier": "==2025.9.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -776,7 +776,7 @@
                     "name": "google-api-core",
                     "specifier": "==2.26.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -791,7 +791,7 @@
                     "name": "google-auth",
                     "specifier": "==2.41.1",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -806,7 +806,7 @@
                     "name": "google-cloud-core",
                     "specifier": "==2.4.3",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -821,7 +821,7 @@
                     "name": "google-cloud-storage",
                     "specifier": "==2.17.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -836,7 +836,7 @@
                     "name": "google-cloud-vision",
                     "specifier": "==3.10.2",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -851,7 +851,7 @@
                     "name": "google-crc32c",
                     "specifier": "==1.7.1",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -866,7 +866,7 @@
                     "name": "google-resumable-media",
                     "specifier": "==2.7.2",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -881,7 +881,7 @@
                     "name": "googleapis-common-protos",
                     "specifier": "==1.70.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -896,7 +896,7 @@
                     "name": "grpcio",
                     "specifier": "==1.75.1",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -911,7 +911,7 @@
                     "name": "grpcio-status",
                     "specifier": "==1.75.1",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -926,7 +926,7 @@
                     "name": "gunicorn",
                     "specifier": "==23.0.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -941,7 +941,7 @@
                     "name": "h11",
                     "specifier": "==0.16.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -956,7 +956,7 @@
                     "name": "html5lib",
                     "specifier": "==1.1",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -971,7 +971,7 @@
                     "name": "httpcore",
                     "specifier": "==1.0.9",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -986,7 +986,7 @@
                     "name": "httpx",
                     "specifier": "==0.28.1",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -1001,7 +1001,7 @@
                     "name": "identify",
                     "specifier": "==2.6.15",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -1016,7 +1016,7 @@
                     "name": "idna",
                     "specifier": "==3.11",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -1031,7 +1031,7 @@
                     "name": "importlib-metadata",
                     "specifier": "==8.7.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -1046,7 +1046,7 @@
                     "name": "iniconfig",
                     "specifier": "==2.1.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -1061,7 +1061,7 @@
                     "name": "isort",
                     "specifier": "==5.13.2",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -1076,7 +1076,7 @@
                     "name": "itsdangerous",
                     "specifier": "==2.2.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -1091,7 +1091,7 @@
                     "name": "jinja2",
                     "specifier": "==3.1.6",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -1106,7 +1106,7 @@
                     "name": "jmespath",
                     "specifier": "==1.0.1",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -1121,7 +1121,7 @@
                     "name": "joblib",
                     "specifier": "==1.5.2",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -1136,7 +1136,7 @@
                     "name": "jsonschema",
                     "specifier": "==4.25.1",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -1151,7 +1151,7 @@
                     "name": "jsonschema-specifications",
                     "specifier": "==2025.9.1",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -1166,7 +1166,7 @@
                     "name": "license-expression",
                     "specifier": "==30.4.4",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -1181,7 +1181,7 @@
                     "name": "limits",
                     "specifier": "==5.6.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -1196,7 +1196,7 @@
                     "name": "mako",
                     "specifier": "==1.3.10",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -1211,7 +1211,7 @@
                     "name": "markdown-it-py",
                     "specifier": "==4.0.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -1226,7 +1226,7 @@
                     "name": "markupsafe",
                     "specifier": "==3.0.3",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -1241,7 +1241,7 @@
                     "name": "marshmallow",
                     "specifier": "==3.22.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -1256,7 +1256,7 @@
                     "name": "mdurl",
                     "specifier": "==0.1.2",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -1271,7 +1271,7 @@
                     "name": "mistune",
                     "specifier": "==3.1.4",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -1286,7 +1286,7 @@
                     "name": "mpmath",
                     "specifier": "==1.3.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -1301,7 +1301,7 @@
                     "name": "msgpack",
                     "specifier": "==1.1.2",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -1316,7 +1316,7 @@
                     "name": "msgspec",
                     "specifier": "==0.19.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -1331,7 +1331,7 @@
                     "name": "mypy",
                     "specifier": "==1.11.2",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -1346,7 +1346,7 @@
                     "name": "mypy-extensions",
                     "specifier": "==1.1.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -1361,7 +1361,7 @@
                     "name": "networkx",
                     "specifier": "==3.5",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -1376,7 +1376,7 @@
                     "name": "nltk",
                     "specifier": "==3.9.2",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -1391,7 +1391,7 @@
                     "name": "nodeenv",
                     "specifier": "==1.9.1",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -1406,7 +1406,7 @@
                     "name": "numpy",
                     "specifier": "==2.3.4",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -1421,7 +1421,7 @@
                     "name": "openpyxl",
                     "specifier": "==3.1.2",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -1436,7 +1436,7 @@
                     "name": "opentelemetry-api",
                     "specifier": "==1.37.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -1451,7 +1451,7 @@
                     "name": "opentelemetry-sdk",
                     "specifier": "==1.37.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -1466,7 +1466,7 @@
                     "name": "opentelemetry-semantic-conventions",
                     "specifier": "==0.58b0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -1481,7 +1481,7 @@
                     "name": "ordered-set",
                     "specifier": "==4.1.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -1496,7 +1496,7 @@
                     "name": "packageurl-python",
                     "specifier": "==0.17.5",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -1511,7 +1511,7 @@
                     "name": "packaging",
                     "specifier": "==25.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -1526,7 +1526,7 @@
                     "name": "pandas",
                     "specifier": "==2.3.1",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -1541,7 +1541,7 @@
                     "name": "pathspec",
                     "specifier": "==0.12.1",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -1556,7 +1556,7 @@
                     "name": "pdfminer.six",
                     "specifier": "==20231228",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -1571,7 +1571,7 @@
                     "name": "pillow",
                     "specifier": "==10.4.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -1586,7 +1586,7 @@
                     "name": "pip",
                     "specifier": "==25.2",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -1601,7 +1601,7 @@
                     "name": "pip-api",
                     "specifier": "==0.0.34",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -1616,7 +1616,7 @@
                     "name": "pip-audit",
                     "specifier": "==2.7.3",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -1631,7 +1631,7 @@
                     "name": "pip-requirements-parser",
                     "specifier": "==32.0.1",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -1646,7 +1646,7 @@
                     "name": "pip-tools",
                     "specifier": "==7.5.1",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -1661,7 +1661,7 @@
                     "name": "platformdirs",
                     "specifier": "==4.5.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -1676,7 +1676,7 @@
                     "name": "pluggy",
                     "specifier": "==1.6.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -1691,7 +1691,7 @@
                     "name": "pre-commit",
                     "specifier": "==3.7.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -1706,7 +1706,7 @@
                     "name": "prometheus-client",
                     "specifier": "==0.20.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -1721,7 +1721,7 @@
                     "name": "proto-plus",
                     "specifier": "==1.26.1",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -1736,7 +1736,7 @@
                     "name": "protobuf",
                     "specifier": "==6.32.1",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -1751,7 +1751,7 @@
                     "name": "psutil",
                     "specifier": "==7.1.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -1766,7 +1766,7 @@
                     "name": "py-serializable",
                     "specifier": "==1.1.2",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -1781,7 +1781,7 @@
                     "name": "pyasn1",
                     "specifier": "==0.6.1",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -1796,7 +1796,7 @@
                     "name": "pyasn1-modules",
                     "specifier": "==0.4.2",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -1811,7 +1811,7 @@
                     "name": "pycparser",
                     "specifier": "==2.23",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -1826,7 +1826,7 @@
                     "name": "pydantic",
                     "specifier": "==2.9.2",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -1841,7 +1841,7 @@
                     "name": "pydantic-core",
                     "specifier": "==2.23.4",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -1856,7 +1856,7 @@
                     "name": "pygments",
                     "specifier": "==2.19.2",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -1871,7 +1871,7 @@
                     "name": "pyotp",
                     "specifier": "==2.9.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -1886,7 +1886,7 @@
                     "name": "pyparsing",
                     "specifier": "==3.2.5",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -1901,7 +1901,7 @@
                     "name": "pypdf2",
                     "specifier": "==3.0.1",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -1916,7 +1916,7 @@
                     "name": "pypng",
                     "specifier": "==0.20220715.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -1931,7 +1931,7 @@
                     "name": "pyproject-hooks",
                     "specifier": "==1.2.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -1946,7 +1946,7 @@
                     "name": "pytesseract",
                     "specifier": "==0.3.10",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -1961,7 +1961,7 @@
                     "name": "pytest",
                     "specifier": "==8.4.2",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -1976,7 +1976,7 @@
                     "name": "pytest-cov",
                     "specifier": "==7.0.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -1991,7 +1991,7 @@
                     "name": "pytest-flask",
                     "specifier": "==1.3.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -2006,7 +2006,7 @@
                     "name": "pytest-mock",
                     "specifier": "==3.15.1",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -2021,7 +2021,7 @@
                     "name": "pytest-snapshot",
                     "specifier": "==0.9.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -2036,7 +2036,7 @@
                     "name": "python-dateutil",
                     "specifier": "==2.9.0.post0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -2051,7 +2051,7 @@
                     "name": "python-dotenv",
                     "specifier": "==1.0.1",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -2066,7 +2066,7 @@
                     "name": "python-json-logger",
                     "specifier": "==2.0.7",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -2081,7 +2081,7 @@
                     "name": "python-magic",
                     "specifier": "==0.4.27",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -2096,7 +2096,7 @@
                     "name": "pytz",
                     "specifier": "==2025.2",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -2111,7 +2111,7 @@
                     "name": "pyyaml",
                     "specifier": "==6.0.3",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -2126,7 +2126,7 @@
                     "name": "qrcode",
                     "specifier": "==7.4.2",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -2141,7 +2141,7 @@
                     "name": "redis",
                     "specifier": "==6.4.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -2156,7 +2156,7 @@
                     "name": "referencing",
                     "specifier": "==0.37.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -2171,7 +2171,7 @@
                     "name": "regex",
                     "specifier": "==2025.9.18",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -2186,7 +2186,7 @@
                     "name": "reportlab",
                     "specifier": "==4.4.3",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -2201,7 +2201,7 @@
                     "name": "requests",
                     "specifier": "==2.32.4",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -2216,7 +2216,7 @@
                     "name": "rich",
                     "specifier": "==14.2.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -2231,7 +2231,7 @@
                     "name": "rpds-py",
                     "specifier": "==0.27.1",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -2246,7 +2246,7 @@
                     "name": "rq",
                     "specifier": "==1.15.1",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -2261,7 +2261,7 @@
                     "name": "rsa",
                     "specifier": "==4.9.1",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -2276,7 +2276,7 @@
                     "name": "ruamel.yaml",
                     "specifier": "==0.18.15",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -2291,7 +2291,7 @@
                     "name": "ruamel.yaml.clib",
                     "specifier": "==0.2.14",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -2306,7 +2306,7 @@
                     "name": "ruff",
                     "specifier": "==0.6.8",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -2321,7 +2321,7 @@
                     "name": "s3transfer",
                     "specifier": "==0.9.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -2336,7 +2336,7 @@
                     "name": "safety",
                     "specifier": "==3.6.2",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -2351,7 +2351,7 @@
                     "name": "safety-schemas",
                     "specifier": "==0.0.16",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -2366,7 +2366,7 @@
                     "name": "setuptools",
                     "specifier": "==80.9.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -2381,7 +2381,7 @@
                     "name": "shellingham",
                     "specifier": "==1.5.4",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -2396,7 +2396,7 @@
                     "name": "six",
                     "specifier": "==1.17.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -2411,7 +2411,7 @@
                     "name": "sniffio",
                     "specifier": "==1.3.1",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -2426,7 +2426,7 @@
                     "name": "sortedcontainers",
                     "specifier": "==2.4.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -2441,7 +2441,7 @@
                     "name": "sqlalchemy",
                     "specifier": "==2.0.44",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -2456,7 +2456,7 @@
                     "name": "stevedore",
                     "specifier": "==5.5.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -2471,7 +2471,7 @@
                     "name": "sympy",
                     "specifier": "==1.14.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -2486,7 +2486,7 @@
                     "name": "tenacity",
                     "specifier": "==9.1.2",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -2501,7 +2501,7 @@
                     "name": "toml",
                     "specifier": "==0.10.2",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -2516,7 +2516,7 @@
                     "name": "tomlkit",
                     "specifier": "==0.13.3",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -2531,7 +2531,7 @@
                     "name": "torch",
                     "specifier": "==2.9.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -2546,7 +2546,7 @@
                     "name": "tqdm",
                     "specifier": "==4.67.1",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -2561,7 +2561,7 @@
                     "name": "typer",
                     "specifier": "==0.19.2",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -2576,7 +2576,7 @@
                     "name": "types-cffi",
                     "specifier": "==1.17.0.20250915",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -2591,7 +2591,7 @@
                     "name": "types-pyopenssl",
                     "specifier": "==24.1.0.20240722",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -2606,7 +2606,7 @@
                     "name": "types-redis",
                     "specifier": "==4.6.0.20240903",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -2621,7 +2621,7 @@
                     "name": "types-requests",
                     "specifier": "==2.32.0.20240914",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -2636,7 +2636,7 @@
                     "name": "types-setuptools",
                     "specifier": "==80.9.0.20250822",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -2651,7 +2651,7 @@
                     "name": "typing-extensions",
                     "specifier": "==4.15.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -2666,7 +2666,7 @@
                     "name": "typing-inspection",
                     "specifier": "==0.4.2",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -2681,7 +2681,7 @@
                     "name": "tzdata",
                     "specifier": "==2025.2",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -2696,7 +2696,7 @@
                     "name": "urllib3",
                     "specifier": "==2.5.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -2711,7 +2711,7 @@
                     "name": "validate-docbr",
                     "specifier": "==1.11.1",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -2726,7 +2726,7 @@
                     "name": "validators",
                     "specifier": "==0.22.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -2741,7 +2741,7 @@
                     "name": "virtualenv",
                     "specifier": "==20.35.3",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -2756,7 +2756,7 @@
                     "name": "webencodings",
                     "specifier": "==0.5.1",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -2771,7 +2771,7 @@
                     "name": "werkzeug",
                     "specifier": "==2.3.8",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -2786,7 +2786,7 @@
                     "name": "wheel",
                     "specifier": "==0.45.1",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -2801,7 +2801,7 @@
                     "name": "wrapt",
                     "specifier": "==1.17.3",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -2816,7 +2816,7 @@
                     "name": "wtforms",
                     "specifier": "==3.2.1",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -2831,7 +2831,7 @@
                     "name": "zipp",
                     "specifier": "==3.23.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ]
         },
@@ -2846,7 +2846,7 @@
                     "name": "autocommand",
                     "specifier": "==2.2.2",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages/setuptools/_vendor"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages/setuptools/_vendor"
                 }
             ]
         },
@@ -2861,7 +2861,7 @@
                     "name": "backports.tarfile",
                     "specifier": "==1.2.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages/setuptools/_vendor"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages/setuptools/_vendor"
                 }
             ]
         },
@@ -2876,7 +2876,7 @@
                     "name": "inflect",
                     "specifier": "==7.3.1",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages/setuptools/_vendor"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages/setuptools/_vendor"
                 }
             ]
         },
@@ -2891,7 +2891,7 @@
                     "name": "jaraco.collections",
                     "specifier": "==5.1.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages/setuptools/_vendor"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages/setuptools/_vendor"
                 }
             ]
         },
@@ -2906,7 +2906,7 @@
                     "name": "jaraco.context",
                     "specifier": "==5.3.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages/setuptools/_vendor"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages/setuptools/_vendor"
                 }
             ]
         },
@@ -2921,7 +2921,7 @@
                     "name": "jaraco.functools",
                     "specifier": "==4.0.1",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages/setuptools/_vendor"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages/setuptools/_vendor"
                 }
             ]
         },
@@ -2936,7 +2936,7 @@
                     "name": "jaraco.text",
                     "specifier": "==3.12.1",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages/setuptools/_vendor"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages/setuptools/_vendor"
                 }
             ]
         },
@@ -2951,7 +2951,7 @@
                     "name": "more-itertools",
                     "specifier": "==10.3.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages/setuptools/_vendor"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages/setuptools/_vendor"
                 }
             ]
         },
@@ -2966,7 +2966,7 @@
                     "name": "tomli",
                     "specifier": "==2.0.1",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages/setuptools/_vendor"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages/setuptools/_vendor"
                 }
             ]
         },
@@ -2981,7 +2981,7 @@
                     "name": "typeguard",
                     "specifier": "==4.3.0",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages/setuptools/_vendor"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages/setuptools/_vendor"
                 }
             ]
         }
@@ -2998,7 +2998,7 @@
                     "name": "werkzeug",
                     "specifier": "==2.3.8",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ],
             "found": null,
@@ -3122,7 +3122,7 @@
                     "name": "pypdf2",
                     "specifier": "==3.0.1",
                     "url": null,
-                    "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                    "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                 }
             ],
             "found": null,
@@ -3222,7 +3222,7 @@
                 "name": "werkzeug",
                 "specifier": "==2.3.8",
                 "url": null,
-                "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
             },
             "advisory": "Werkzeug is a comprehensive WSGI web application library. The debugger in affected versions of Werkzeug can allow an attacker to execute code on a developer's machine under some circumstances. This requires the attacker to get the developer to interact with a domain and subdomain they control, and enter the debugger PIN, but if they are successful it allows access to the debugger even if it is only running on localhost. This also requires the attacker to guess a URL in the developer's application that will trigger the debugger.",
             "is_transitive": false,
@@ -3255,7 +3255,7 @@
                 "name": "werkzeug",
                 "specifier": "==2.3.8",
                 "url": null,
-                "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
             },
             "advisory": "Affected versions of Werkzeug are vulnerable to Path Traversal (CWE-22) on Windows systems running Python versions below 3.11. The safe_join() function failed to properly detect certain absolute paths on Windows, allowing attackers to potentially access files outside the intended directory. An attacker could craft special paths starting with \"/\" that bypass the directory restrictions on Windows systems. The vulnerability exists in the safe_join() function which relied solely on os.path.isabs() for path validation. This is exploitable on Windows systems by passing paths starting with \"/\" to safe_join(). To remediate, upgrade to the latest version which includes additional path validation checks. \r\nNOTE: This vulnerability specifically affects Windows systems running Python versions below 3.11 where ntpath.isabs() behavior differs.",
             "is_transitive": false,
@@ -3288,7 +3288,7 @@
                 "name": "werkzeug",
                 "specifier": "==2.3.8",
                 "url": null,
-                "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
             },
             "advisory": "Affected versions of Werkzeug are potentially vulnerable to resource exhaustion when parsing file data in forms. Applications using 'werkzeug.formparser.MultiPartParser' to parse 'multipart/form-data' requests (e.g. all flask applications) are vulnerable to a relatively simple but effective resource exhaustion (denial of service) attack. A specifically crafted form submission request can cause the parser to allocate and block 3 to 8 times the upload size in main memory. There is no upper limit; a single upload at 1 Gbit/s can exhaust 32 GB of RAM in less than 60 seconds.",
             "is_transitive": false,
@@ -3321,7 +3321,7 @@
                 "name": "pypdf2",
                 "specifier": "==3.0.1",
                 "url": null,
-                "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
             },
             "advisory": "Pypdf2 is vulnerable to CVE-2023-36464: An attacker may craft a PDF which leads to an infinite loop if '__parse_content_stream' is executed. That is, for example, the case if the user extracted text from such a PDF. Users may modify the line 'while peek not in (b\"\\r\", b\"\\n\")' in 'pypdf/generic/_data_structures.py' to 'while peek not in (b\"\\r\", b\"\\n\", b\"\")' as a workaround.\r\nhttps://github.com/py-pdf/pypdf/pull/1828\r\nhttps://github.com/py-pdf/pypdf/security/advisories/GHSA-4vvm-4w3v-6mr8",
             "is_transitive": false,
@@ -3349,7 +3349,7 @@
                         "name": "werkzeug",
                         "specifier": "==2.3.8",
                         "url": null,
-                        "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                        "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                     },
                     "more_info_url": "https://data.safetycli.com/p/pypi/werkzeug/97c/"
                 }
@@ -3372,7 +3372,7 @@
                         "name": "pypdf2",
                         "specifier": "==3.0.1",
                         "url": null,
-                        "found": "/Users/ericobrandao/Projects/GERPED/venv/lib/python3.13/site-packages"
+                        "found": "/Users/ericobrandao/Downloads/GERPED PLUS/venv/lib/python3.13/site-packages"
                     },
                     "more_info_url": "https://data.safetycli.com/p/pypi/pypdf2/97c/"
                 }

@@ -21,6 +21,10 @@
                     <i class="bi bi-list"></i>
                 </button>
                 <img src="{{ url_for('static', filename='images/gerped_plus.png') }}" alt="GERPEDPLUS" class="header-logo">
+                <div id="header-alert" class="header-alert" aria-live="polite">
+                    <i class="bi bi-bell-fill alert-icon" aria-hidden="true"></i>
+                    <div id="header-alert-message" class="header-alert-message" role="status"></div>
+                </div>
             </div>
             <div class="header-right">
                 <div class="user-info">
@@ -47,6 +51,18 @@
                     </a>
                 </li>
 
+                <!-- Simulação de Pedido -->
+                {% if session.usuario_tipo == 'admin' or session.acesso_pedidos %}
+                <li class="nav-item">
+                    <a href="{{ url_for('simulacao_pedido.index') }}" class="nav-link">
+                        <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2a9 9 0 0 0-9 9c0 3.87 2.69 7.16 6.35 8.25L12 22l2.65-2.75C18.31 18.16 21 14.87 21 11a9 9 0 0 0-9-9zm0 4c1.66 0 3 1.34 3 3 0 .25-.03.49-.08.72l-4.2 4.2A3 3 0 0 1 9 13c0-1.66 1.34-3 3-3 .36 0 .7.07 1.02.19l1.69-1.69A2.99 2.99 0 0 0 12 6zm0 12c-2.76 0-5-2.24-5-5 0-.36.04-.72.12-1.06l2.38 2.38a3 3 0 0 0 4.24 0l2.38-2.38c.08.34.13.7.13 1.06 0 2.76-2.24 5-5 5z"/>
+                        </svg>
+                        <span class="nav-text">Simulação de Pedido</span>
+                    </a>
+                </li>
+                {% endif %}
+
                 <!-- Análise de Compra -->
                 {% if session.usuario_tipo == 'admin' or session.acesso_produtos %}
                 <li class="nav-item">
@@ -55,18 +71,6 @@
                             <path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/>
                         </svg>
                         <span class="nav-text">Análise de Compra</span>
-                    </a>
-                </li>
-                {% endif %}
-
-                <!-- Leitura de Notas -->
-                {% if session.usuario_tipo == 'admin' or session.acesso_financeiro %}
-                <li class="nav-item">
-                    <a href="{{ url_for('leitura_notas.index') }}" class="nav-link">
-                        <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M7 2c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h7l5-5V4c0-1.1-.9-2-2-2H7zm7 18v-3h3l-3 3zM9 6h6v2H9V6zm0 4h6v2H9v-2zm0 4h4v2H9v-2z"/>
-                        </svg>
-                        <span class="nav-text">Leitura de Notas</span>
                     </a>
                 </li>
                 {% endif %}
@@ -237,6 +241,38 @@
                 });
             {% endif %}
         {% endwith %}
+
+        window.updateAlert = function(message, status) {
+            const alertContainer = document.getElementById('header-alert');
+            const messageElement = document.getElementById('header-alert-message');
+
+            if (!alertContainer || !messageElement) {
+                return;
+            }
+
+            const isActive = Boolean(status);
+
+            if (isActive) {
+                messageElement.textContent = message || '';
+                if (message) {
+                    messageElement.setAttribute('title', message);
+                } else {
+                    messageElement.removeAttribute('title');
+                }
+                alertContainer.classList.add('alert-active');
+            } else {
+                messageElement.textContent = '';
+                messageElement.removeAttribute('title');
+                alertContainer.classList.remove('alert-active');
+            }
+        };
+
+        const estoqueAlertMessage = {{ (estoque_alert_message or None)|tojson }};
+        if (estoqueAlertMessage) {
+            updateAlert(estoqueAlertMessage, true);
+        } else {
+            updateAlert('', false);
+        }
     </script>
     
     {% block scripts %}

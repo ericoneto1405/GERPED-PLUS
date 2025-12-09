@@ -1,650 +1,78 @@
 {% extends 'base.html' %}
 
-{% block title %}Importar Pedidos Históricos{% endblock %}
+{% block title %}Importar Histórico{% endblock %}
 
 {% block content %}
 <div class="page-header">
-    <h2><i class="bi bi-upload icon-text"></i> Importar Pedidos Históricos</h2>
+    <h2><i class="bi bi-upload icon-text"></i> Importar Histórico</h2>
 </div>
 
-{% if resultado_importacao %}
-<div class="import-result-card">
-    <h3><i class="bi bi-bar-chart icon-text"></i> Resumo da Importação</h3>
-    {% set resumo = resultado_importacao.resumo | default({}, true) %}
-    {% set erros = resultado_importacao.resultados | default([], true) %}
-    <div class="summary-grid">
-        <div class="summary-item"><strong>{{ resumo.total_linhas | default(0) }}</strong>Linhas processadas</div>
-        <div class="summary-item success"><strong>{{ resumo.pedidos_criados | default(0) }}</strong>Pedidos criados</div>
-        <div class="summary-item error"><strong>{{ resumo.falha | default(0) }}</strong>Linhas com erro</div>
-    </div>
+<div class="import-container simple-import">
+    <form method="POST" enctype="multipart/form-data" id="formImportar">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="file" id="arquivo" name="arquivo" accept=".csv,.xlsx,.xls" required style="display:none">
 
-    {% if erros %}
-        <div class="import-errors">
-            <h4><i class="bi bi-exclamation-triangle icon-text"></i> Detalhes dos Erros</h4>
-            <p>As seguintes linhas não puderam ser importadas. Corrija-as na sua planilha e tente novamente.</p>
-            <div class="table-responsive">
-                <table class="error-table">
-                    <thead>
-                        <tr>
-                            <th>Linha</th>
-                            <th>Dados da Planilha</th>
-                            <th>Erros Encontrados</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for res in erros %}
-                        <tr>
-                            <td>{{ res.linha }}</td>
-                            <td>
-                                {% set dados = res.dados or {} %}
-                                <small>
-                                    <strong>Cliente:</strong> {{ dados.get('cliente_nome', '') }}<br>
-                                    {% if dados.get('cliente_fantasia') %}
-                                        <strong>Fantasia:</strong> {{ dados.get('cliente_fantasia') }}<br>
-                                    {% endif %}
-                                    <strong>Produto:</strong> {{ dados.get('produto_nome', '') }}<br>
-                                    <strong>Qtd:</strong> {{ dados.get('quantidade', '') }}, 
-                                    <strong>Preço:</strong> {{ dados.get('preco_venda', '') }}, 
-                                    <strong>Data:</strong> {{ dados.get('data', '') }}
-                                </small>
-                            </td>
-                            <td>
-                                <ul>
-                                    {% for erro in res.erros %}
-                                        <li>{{ erro }}</li>
-                                    {% endfor %}
-                                </ul>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+        <div class="button-group center-buttons">
+            <button type="button" class="btn-primary" id="btnImportar">Importar Histórico</button>
+            <a href="{{ url_for('pedidos.download_modelo_pedidos') }}" class="btn-secondary">Baixar modelo</a>
         </div>
-    {% else %}
-        <p class="import-summary success-text">Nenhum erro foi encontrado. Todos os registros válidos foram importados.</p>
-    {% endif %}
+    </form>
 </div>
-{% endif %}
 
-<div class="import-container">
-    <div class="instructions-card">
-        <h3><i class="bi bi-clipboard icon-text"></i> Instruções</h3>
-        <p>Use esta funcionalidade para importar pedidos antigos e criar uma base histórica no sistema.</p>
-        
-        <div class="instruction-section">
-            <h4><i class="bi bi-bar-chart icon-text"></i> Formato do Arquivo</h4>
-            <p>O arquivo pode ser CSV ou Excel (.xlsx, .xls) e deve conter as seguintes colunas:</p>
-            <ul>
-                <li><strong>cliente_nome</strong>: Nome do cliente exatamente como está cadastrado <em>(obrigatório se não informar a coluna fantasia)</em></li>
-                <li><strong>cliente_fantasia</strong> <span class="help-text">(opcional)</span>: Nome fantasia/apelido do cliente</li>
-                <li><strong>produto_nome</strong>: Nome do produto exatamente como está cadastrado</li>
-                <li><strong>quantidade</strong>: Quantidade do produto <span class="help-text">(número inteiro)</span></li>
-                <li><strong>preco_venda</strong>: Preço de venda unitário <span class="help-text">(use ponto: 25.50)</span></li>
-                <li><strong>data</strong>: Data do pedido <span class="help-text">(formato: YYYY-MM-DD ou DD/MM/YYYY)</span></li>
-            </ul>
-            <div class="alert-info">
-                <strong><i class="bi bi-exclamation-triangle icon-text"></i> Atenção:</strong> Use os nomes exatamente como aparecem nas telas de Clientes e Produtos. 
-                Você pode informar o nome oficial, o nome fantasia ou ambos — o sistema aceita a primeira correspondência válida.
-                Se existir mais de um cadastro com o mesmo nome/fantasia, um alerta será exibido.
-            </div>
-        </div>
-
-        <div class="instruction-section">
-            <h4><i class="bi bi-pencil-square icon-text"></i> Exemplo de Arquivo CSV</h4>
-            <div class="code-block">
-                <pre>cliente_nome,cliente_fantasia,produto_nome,quantidade,preco_venda,data
-CAIQUE ANDRADE NASCIMENTO,KAIQUE ITATIM,SKOL LATA 350ML,286,31.00,15/01/2024
-CAIQUE ANDRADE NASCIMENTO,KAIQUE ITATIM,BRAHMA CHOPP LATA 350 ML,286,32.00,15/01/2024
-LUCIANO VIEIRA SILVA DE ARAUJO,LUCIANO MOURA,RED BULL ENERGY DRINK 250 ML,144,150.00,16/01/2024
-LUCIANO VIEIRA SILVA DE ARAUJO,LUCIANO MOURA,BUDWEISER LATA 350ML,280,37.00,16/01/2024</pre>
-            </div>
-            <p class="example-explanation">
-                <strong>Como interpretar:</strong><br>
-                • Linhas 2-3: Cliente oficial "CAIQUE ANDRADE NASCIMENTO" (fantasia "KAIQUE ITATIM") pediu 2 produtos no mesmo dia → <strong>1 pedido com 2 itens</strong><br>
-                • Linhas 4-5: Cliente "LUCIANO VIEIRA SILVA DE ARAUJO" (fantasia "LUCIANO MOURA") pediu 2 produtos no mesmo dia → <strong>1 pedido com 2 itens</strong>
-            </p>
-            <div class="download-example">
-                <a href="{{ url_for('pedidos.download_exemplo') }}" class="btn-download">
-                    <svg class="btn-icon" viewBox="0 0 24 24">
-                        <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
-                    </svg>
-                    Baixar Arquivo de Exemplo
-                </a>
-            </div>
-            <p class="note"><i class="bi bi-lightbulb icon-text"></i> <strong>Nota:</strong> Linhas com mesma data e cliente serão agrupadas em um único pedido. Copie/cole os nomes direto do sistema para evitar erros de digitação.</p>
-        </div>
-
-        <div class="instruction-section">
-            <h4><i class="bi bi-exclamation-triangle icon-text"></i> Importante</h4>
-            <ul>
-                <li><strong>Antes de começar:</strong> Copie os nomes exatos nas telas:
-                    <ul style="margin-top: 8px; margin-bottom: 8px;">
-                        <li>Menu → Clientes → Listar</li>
-                        <li>Menu → Produtos → Listar</li>
-                    </ul>
-                </li>
-                <li>Use <strong>ponto (.)</strong> como separador decimal nos preços: 25.50 (não vírgula)</li>
-                <li>O preço de compra será obtido automaticamente do cadastro do produto</li>
-                <li>Formato de data: YYYY-MM-DD (ex: 2024-01-15) ou DD/MM/YYYY (ex: 15/01/2024)</li>
-                <li>Em caso de erros, o sistema continuará importando os pedidos válidos e mostrará um resumo</li>
-            </ul>
-        </div>
-    </div>
-
-    <div class="upload-card">
-        <h3><i class="bi bi-folder icon-text"></i> Upload do Arquivo</h3>
-        <form method="POST" enctype="multipart/form-data" id="formImportar">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            
-            <div class="upload-area" id="uploadArea">
-                <input type="file" id="arquivo" name="arquivo" accept=".csv,.xlsx,.xls" required>
-                <div class="upload-text">
-                    <svg class="upload-icon" viewBox="0 0 24 24">
-                        <path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/>
-                    </svg>
-                    <p><strong>Clique para selecionar</strong> ou arraste o arquivo aqui</p>
-                    <p class="file-types">CSV, XLSX ou XLS</p>
-                </div>
-                <div class="file-info" id="fileInfo" style="display: none;">
-                    <span id="fileName"></span>
-                    <button type="button" class="btn-remove" data-action="remove-file"><i class="bi bi-x icon-text"></i></button>
-                </div>
-            </div>
-
-            <div class="button-group">
-                <button type="submit" class="btn-primary" id="btnImportar">
-                    <svg class="btn-icon" viewBox="0 0 24 24">
-                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-                    </svg>
-                    Importar Pedidos
-                </button>
-                <a href="{{ url_for('pedidos.listar_pedidos') }}" class="btn-secondary">
-                    Cancelar
-                </a>
-            </div>
-        </form>
-
-        <div class="loading-overlay" id="loadingOverlay" style="display: none;">
-            <div class="spinner"></div>
-            <p>Importando pedidos... Por favor, aguarde.</p>
-        </div>
-    </div>
+<div class="loading-overlay" id="loadingOverlay" style="display: none;">
+    <div class="spinner"></div>
+    <p>Enviando arquivo...</p>
 </div>
 
 <style>
-    .page-header {
-        margin-bottom: 30px;
-    }
-
-    .import-container {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 30px;
-        margin-bottom: 30px;
-    }
-
-    .import-result-card {
-        background: white;
-        padding: 24px;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        margin-bottom: 30px;
-    }
-
-    .import-summary {
-        margin: 10px 0;
-        color: #495057;
-    }
-
-    .import-summary.success-text {
-        color: #28a745;
-        font-weight: 600;
-    }
-
-    .import-errors h4 {
-        margin-bottom: 10px;
-        color: #c0392b;
-    }
-
-    .import-errors p {
-        margin: 5px 0 12px;
-        color: #c0392b;
-    }
-
-    .import-errors ul {
-        margin: 0;
-        padding-left: 20px;
-    }
-
-    .import-errors li {
-        margin-bottom: 8px;
-        line-height: 1.5;
-        color: #7f8c8d;
-    }
-
-    .summary-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-        gap: 15px;
-        margin: 20px 0;
-        padding: 15px;
-        background-color: #f8f9fa;
-        border-radius: 8px;
-    }
-
-    .summary-item {
-        background-color: #fff;
-        padding: 15px;
-        border-radius: 8px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        text-align: center;
-    }
-
-    .summary-item strong {
-        display: block;
-        font-size: 1.5rem;
-        margin-bottom: 5px;
-    }
-
-    .summary-item.success strong { color: #28a745; }
-    .summary-item.error strong { color: #dc3545; }
-
-    .table-responsive {
-        overflow-x: auto;
-        margin-top: 20px;
-    }
-
-    .error-table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-
-    .error-table th, .error-table td {
-        padding: 12px 15px;
-        text-align: left;
-        border-bottom: 1px solid #dee2e6;
-    }
-
-    .error-table th {
-        background-color: #f8f9fa;
-        font-weight: 600;
-    }
-
-    .error-table tbody tr:hover {
-        background-color: #f1f3f5;
-    }
-
-    .error-table td ul {
-        padding-left: 18px;
-        margin: 0;
-    }
-
-    .error-table td li {
-        color: #c0392b;
-    }
-
-    @media (max-width: 1024px) {
-        .import-container {
-            grid-template-columns: 1fr;
-        }
-    }
-
-    .instructions-card,
-    .upload-card {
-        background: white;
-        padding: 30px;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    }
-
-    .instructions-card h3,
-    .upload-card h3 {
-        color: #2c3e50;
-        margin-bottom: 20px;
-        font-size: 1.5rem;
-    }
-
-    .instruction-section {
-        margin-bottom: 25px;
-        padding-bottom: 20px;
-        border-bottom: 1px solid #e9ecef;
-    }
-
-    .instruction-section:last-child {
-        border-bottom: none;
-        padding-bottom: 0;
-    }
-
-    .instruction-section h4 {
-        color: #495057;
-        margin-bottom: 12px;
-        font-size: 1.1rem;
-    }
-
-    .instruction-section ul {
-        margin: 15px 0;
-        padding-left: 25px;
-    }
-
-    .instruction-section li {
-        margin: 8px 0;
-        line-height: 1.6;
-    }
-
-    .code-block {
-        background: #f8f9fa;
-        border: 1px solid #dee2e6;
-        border-radius: 8px;
-        padding: 15px;
-        margin: 15px 0;
-        overflow-x: auto;
-    }
-
-    .code-block pre {
-        margin: 0;
-        font-family: 'Courier New', monospace;
-        font-size: 0.9rem;
-        color: #495057;
-    }
-
-    .note {
-        background: #e7f3ff;
-        border-left: 4px solid #2196F3;
-        padding: 12px;
-        border-radius: 4px;
-        margin-top: 15px;
-        font-size: 0.95rem;
-    }
-
-    .upload-area {
-        border: 2px dashed #cbd5e0;
-        border-radius: 12px;
-        padding: 40px;
-        text-align: center;
-        transition: all 0.3s ease;
-        position: relative;
-        background: #f8f9fa;
-        cursor: pointer;
-    }
-
-    .upload-area:hover {
-        border-color: #667eea;
-        background: #f0f4ff;
-    }
-
-    .upload-area.dragover {
-        border-color: #667eea;
-        background: #e7f0ff;
-        transform: scale(1.02);
-    }
-
-    .upload-area input[type="file"] {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        opacity: 0;
-        cursor: pointer;
-    }
-
-    .upload-icon {
-        width: 48px;
-        height: 48px;
-        fill: #667eea;
-        margin-bottom: 15px;
-    }
-
-    .upload-text p {
-        margin: 10px 0;
-        color: #495057;
-    }
-
-    .file-types {
-        font-size: 0.9rem;
-        color: #6c757d;
-    }
-
-    .file-info {
+    .import-container { margin-top: 20px; }
+    .simple-import .button-group {
         display: flex;
+        gap: 12px;
         align-items: center;
-        justify-content: space-between;
-        background: white;
-        padding: 15px 20px;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-
-    .btn-remove {
-        background: #dc3545;
-        color: white;
-        border: none;
-        border-radius: 50%;
-        width: 28px;
-        height: 28px;
-        cursor: pointer;
-        font-size: 18px;
-        line-height: 1;
-        transition: all 0.2s ease;
-    }
-
-    .btn-remove:hover {
-        background: #c82333;
-        transform: scale(1.1);
-    }
-
-    .button-group {
-        display: flex;
-        gap: 15px;
-        margin-top: 25px;
-    }
-
-    .btn-primary,
-    .btn-secondary {
-        display: flex;
-        align-items: center;
+        flex-wrap: wrap;
         justify-content: center;
-        gap: 8px;
-        padding: 12px 24px;
-        border: none;
-        border-radius: 8px;
-        font-weight: 600;
-        font-size: 1rem;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        text-decoration: none;
     }
-
-    .btn-primary {
-        background: #667eea;
-        color: white;
-        flex: 1;
-    }
-
-    .btn-primary:hover {
-        background: #5a67d8;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
-    }
-
-    .btn-secondary {
-        background: #6c757d;
-        color: white;
-    }
-
-    .btn-secondary:hover {
-        background: #5a6268;
-    }
-
-    .btn-icon {
-        width: 20px;
-        height: 20px;
-        fill: currentColor;
-    }
-
     .loading-overlay {
         position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0,0,0,0.7);
+        inset: 0;
+        background: rgba(0,0,0,0.6);
         display: flex;
-        flex-direction: column;
         align-items: center;
         justify-content: center;
+        flex-direction: column;
+        color: #fff;
         z-index: 9999;
-        backdrop-filter: blur(5px);
     }
-
     .spinner {
-        border: 4px solid #f3f3f3;
-        border-top: 4px solid #667eea;
+        width: 40px;
+        height: 40px;
+        border: 4px solid #fff;
+        border-top-color: transparent;
         border-radius: 50%;
-        width: 50px;
-        height: 50px;
-        animation: spin 1s linear infinite;
-        margin-bottom: 20px;
+        animation: spin 0.8s linear infinite;
     }
-
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-
-    .loading-overlay p {
-        color: white;
-        font-size: 1.2rem;
-        font-weight: 600;
-    }
-
-    .download-example {
-        margin: 15px 0;
-    }
-
-    .btn-download {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        padding: 10px 20px;
-        background: #28a745;
-        color: white;
-        border-radius: 8px;
-        text-decoration: none;
-        font-weight: 600;
-        transition: all 0.2s ease;
-    }
-
-    .btn-download:hover {
-        background: #218838;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
-    }
-
-    .btn-download .btn-icon {
-        width: 20px;
-        height: 20px;
-        fill: currentColor;
-    }
-
-    .help-text {
-        font-size: 0.85rem;
-        color: #6c757d;
-        font-style: italic;
-    }
-
-    .alert-info {
-        background: #d1ecf1;
-        border-left: 4px solid #0c5460;
-        padding: 15px;
-        border-radius: 4px;
-        margin-top: 15px;
-        color: #0c5460;
-        font-size: 0.95rem;
-        line-height: 1.6;
-    }
-
-    .alert-info strong {
-        display: block;
-        margin-bottom: 8px;
-        font-size: 1rem;
-    }
-
-    .example-explanation {
-        background: #fff3cd;
-        border-left: 4px solid #ffc107;
-        padding: 12px;
-        border-radius: 4px;
-        margin: 15px 0;
-        font-size: 0.9rem;
-        line-height: 1.8;
-        color: #856404;
-    }
-
-    .example-explanation strong {
-        color: #664d03;
-    }
+    @keyframes spin { to { transform: rotate(360deg); } }
 </style>
 
 <script nonce="{{ nonce }}">
-    // Gerenciar seleção de arquivo
+document.addEventListener('DOMContentLoaded', () => {
+    const btnImportar = document.getElementById('btnImportar');
     const fileInput = document.getElementById('arquivo');
-    const uploadArea = document.getElementById('uploadArea');
-    const uploadText = document.querySelector('.upload-text');
-    const fileInfo = document.getElementById('fileInfo');
-    const fileName = document.getElementById('fileName');
-    const removeFileButton = document.querySelector('[data-action="remove-file"]');
+    const form = document.getElementById('formImportar');
+    const overlay = document.getElementById('loadingOverlay');
 
-    fileInput.addEventListener('change', function(e) {
-        if (this.files && this.files[0]) {
-            showFileInfo(this.files[0]);
-        }
-    });
-
-    function showFileInfo(file) {
-        fileName.textContent = file.name;
-        uploadText.style.display = 'none';
-        fileInfo.style.display = 'flex';
+    if (btnImportar && fileInput && form) {
+        btnImportar.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length > 0) {
+                if (overlay) overlay.style.display = 'flex';
+                // Remove conteúdo para cumprir pedido de ocultar página
+                document.body.innerHTML = '';
+                form.submit();
+            }
+        });
     }
-
-    function removeFile() {
-        fileInput.value = '';
-        uploadText.style.display = 'block';
-        fileInfo.style.display = 'none';
-    }
-
-    // Drag and drop
-    uploadArea.addEventListener('dragover', function(e) {
-        e.preventDefault();
-        this.classList.add('dragover');
-    });
-
-    uploadArea.addEventListener('dragleave', function(e) {
-        e.preventDefault();
-        this.classList.remove('dragover');
-    });
-
-    uploadArea.addEventListener('drop', function(e) {
-        e.preventDefault();
-        this.classList.remove('dragover');
-        
-        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-            fileInput.files = e.dataTransfer.files;
-            showFileInfo(e.dataTransfer.files[0]);
-        }
-    });
-
-    // Mostrar loading ao submeter
-    document.getElementById('formImportar').addEventListener('submit', function(e) {
-        if (fileInput.files.length > 0) {
-            document.getElementById('loadingOverlay').style.display = 'flex';
-        }
-    });
-
-    removeFileButton?.addEventListener('click', removeFile);
+});
 </script>
-
-<a href="{{ url_for('pedidos.listar_pedidos') }}" class="botao"><i class="bi bi-arrow-left icon-text"></i> Voltar aos Pedidos</a>
-
 {% endblock %}

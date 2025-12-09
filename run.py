@@ -14,11 +14,11 @@ if os.path.exists(dotenv_path):
 if os.getenv('FLASK_ENV') != 'production':
     os.environ.pop('DATABASE_URL', None)
 
-def check_port_available(port):
+def check_port_available(port, host='127.0.0.1'):
     """Verifica se a porta está disponível"""
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.bind(('127.0.0.1', port))
+            s.bind((host, port))
             return True
     except OSError:
         return False
@@ -44,14 +44,15 @@ from meu_app import create_app
 app = create_app(DevelopmentConfig)
 
 if __name__ == "__main__":
-    PORT = 5004
-    HOST = "127.0.0.1"
+    HOST = os.getenv('FLASK_RUN_HOST', '0.0.0.0')
+    PORT = int(os.getenv('FLASK_RUN_PORT', 5004))
+    pid_file = '.flask.pid'
     
     # Verifica se a porta está disponível (apenas no processo principal)
     # O processo filho do reloader não precisa fazer essa verificação
     is_reloader_process = os.environ.get('WERKZEUG_RUN_MAIN') == 'true'
     
-    if not is_reloader_process and not check_port_available(PORT):
+    if not is_reloader_process and not check_port_available(PORT, host=HOST if HOST != '0.0.0.0' else '127.0.0.1'):
         print(f"\n❌ ERRO: Porta {PORT} já está em uso!\n")
         
         pids = get_pid_using_port(PORT)
@@ -75,7 +76,6 @@ if __name__ == "__main__":
     
     # Salva PID em arquivo (apenas no processo principal)
     if not is_reloader_process:
-        pid_file = '.flask.pid'
         try:
             with open(pid_file, 'w') as f:
                 f.write(str(os.getpid()))

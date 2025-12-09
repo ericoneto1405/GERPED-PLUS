@@ -263,11 +263,10 @@
                                     <table class="table table-striped coleta-items-table">
                                         <colgroup>
                                             <col class="col-produto">
-                                            <col class="col-total">
-                                            <col class="col-coletado">
-                                            <col class="col-pendente">
-                                            <col class="col-estoque">
-                                            <col class="col-entrada">
+                                        <col class="col-total">
+                                        <col class="col-coletado">
+                                        <col class="col-pendente">
+                                        <col class="col-entrada">
                                         </colgroup>
                                         <thead>
                                             <tr>
@@ -275,7 +274,6 @@
                                                 <th>Quantidade Total</th>
                                                 <th>Já Coletado</th>
                                                 <th>Pendente</th>
-                                                <th>Estoque Disponível</th>
                                                 <th>Quantidade a Coletar</th>
                                             </tr>
                                         </thead>
@@ -294,12 +292,6 @@
                                                 </td>
                                                 <td>
                                                     <span class="coleta-badge coleta-badge-warning">{{ item.quantidade_pendente }}</span>
-                                                </td>
-                                                <td>
-                                                    <span class="coleta-badge 
-                                                        {% if item.estoque_disponivel > 0 %}coleta-badge-info{% else %}coleta-badge-danger{% endif %}">
-                                                        {{ item.estoque_disponivel }}
-                                                    </span>
                                                 </td>
                                                 <td>
                                                     <div class="input-group">

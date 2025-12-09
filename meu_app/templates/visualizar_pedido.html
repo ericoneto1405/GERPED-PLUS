@@ -3,158 +3,347 @@
 {% block title %}Pedido #{{ pedido.id }}{% endblock %}
 
 {% block content %}
-<style>
-    .dados {
-        margin-bottom: 30px;
-        background: #f8f9fa;
-        padding: 20px;
-        border-radius: 8px;
-        border: 1px solid #e9ecef;
-    }
-    .dados p {
-        margin: 8px 0;
-        font-size: 16px;
-    }
-    .dados strong {
-        color: #2c3e50;
-    }
-    table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-bottom: 30px;
-        background: #fff;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-    }
-    th, td {
-        padding: 12px;
-        border: 1px solid #ddd;
-        text-align: center;
-    }
-    th {
-        background-color: #2c3e50;
-        color: #ffffff;
-        font-weight: bold;
-    }
-    .totais {
-        font-weight: bold;
-        text-align: right;
-        font-size: 18px;
-        margin: 10px 0;
-        padding: 15px;
-        background: #e8f5e8;
-        border-radius: 8px;
-        border: 1px solid #28a745;
-    }
-    .assinatura {
-        margin-top: 50px;
-        text-align: center;
-    }
-    .assinatura p {
-        margin-top: 40px;
-        border-top: 1px solid #000;
-        display: inline-block;
-        padding-top: 5px;
-        width: 300px;
-    }
-    .botao-imprimir {
-        display: inline-block;
-        margin: 10px;
-        padding: 12px 20px;
-        background-color: #2c3e50;
-        color: white;
-        text-decoration: none;
-        border-radius: 8px;
-        font-weight: 600;
-        transition: all 0.2s ease;
-    }
-    .botao-imprimir:hover {
-        background-color: #1a252f;
-        transform: translateY(-1px);
+<style nonce="{{ nonce }}">
+    .pedido-detalhe-wrapper {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
     }
     .page-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 20px;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    .page-header h1 {
+        font-size: 1.6rem;
+        margin: 0;
+    }
+    .acoes-header {
+        display: flex;
         flex-wrap: wrap;
         gap: 10px;
     }
+    .botao-imprimir {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 18px;
+        background: var(--accent-purple, #4f46e5);
+        color: #fff;
+        border-radius: 10px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .botao-imprimir.secondary {
+        background: #e2e8f0;
+        color: #1f2937;
+    }
+    .botao-imprimir:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 16px rgba(79, 70, 229, 0.15);
+    }
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 16px;
+    }
+    .info-card {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        padding: 16px;
+        box-shadow: 0 4px 18px rgba(15, 23, 42, 0.05);
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+    .info-card span {
+        font-size: 0.75rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #64748b;
+    }
+    .info-card strong {
+        font-size: 1.1rem;
+        color: #0f172a;
+    }
+    .info-card small {
+        font-size: 0.85rem;
+        color: #475569;
+    }
+    .status-badge {
+        align-self: flex-start;
+        margin-top: 6px;
+        padding: 4px 12px;
+        border-radius: 999px;
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+    .status-financeiro {
+        background: rgba(34,197,94,0.12);
+        color: #15803d;
+    }
+    .status-coleta {
+        background: rgba(14,165,233,0.12);
+        color: #0369a1;
+    }
+    .status-pendente {
+        background: rgba(248,181,0,0.15);
+        color: #92400e;
+    }
+    .status-cancelado {
+        background: rgba(239,68,68,0.15);
+        color: #b91c1c;
+    }
+    .totais-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 14px;
+    }
+    .total-card {
+        border-radius: 18px;
+        padding: 18px;
+        color: #fff;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+    }
+    .total-card span {
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        opacity: 0.9;
+    }
+    .total-card strong {
+        font-size: 1.4rem;
+    }
+    .total-card.total { background: linear-gradient(135deg, #4c1d95, #7c3aed); }
+    .total-card.pago { background: linear-gradient(135deg, #065f46, #059669); }
+    .total-card.saldo { background: linear-gradient(135deg, #be123c, #e11d48); }
+    .total-card.saldo.positivo { background: linear-gradient(135deg, #0369a1, #0ea5e9); }
+
+    .tabela-secao {
+        background: #fff;
+        border-radius: 16px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+        padding: 18px;
+    }
+    .table-wrapper {
+        overflow-x: auto;
+    }
+    .secao-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        margin-bottom: 12px;
+    }
+    .secao-header h2 {
+        font-size: 1.2rem;
+        margin: 0;
+        color: #0f172a;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+    }
+    .secao-header span {
+        font-size: 0.9rem;
+        color: #64748b;
+    }
+    .excel-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        border: 1px solid #d7e3f7;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    .excel-table th,
+    .excel-table td {
+        border: 1px solid #d7e3f7;
+        padding: 12px 14px;
+        text-align: center;
+        font-size: 0.95rem;
+    }
+    .excel-table thead th {
+        background: #eff6ff;
+        font-weight: 700;
+        color: #475569;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    .excel-table tbody tr:nth-child(even) td {
+        background: #f8fafc;
+    }
+    .excel-table tbody tr:hover td {
+        background: #f1f5f9;
+    }
+    .assinatura-card {
+        margin-top: 10px;
+        text-align: center;
+        padding: 24px;
+        border: 1px dashed #cbd5f5;
+        border-radius: 14px;
+        background: #f8fafc;
+    }
+    .assinatura-card p {
+        margin: 0 auto;
+        margin-top: 30px;
+        width: 280px;
+        border-top: 2px solid #94a3b8;
+        padding-top: 8px;
+        color: #475569;
+        font-weight: 600;
+    }
     @media print {
-        .botao-imprimir, .page-header {
-            display: none;
+        .botao-imprimir, .page-header, .tabela-secao, .assinatura-card {
+            box-shadow: none;
         }
     }
 </style>
-<div class="page-header">
-    <h1><i class="bi bi-file-earmark-text icon-text"></i> Pedido #{{ pedido.id }}</h1>
-    <div>
-        {% if origem == 'financeiro' %}
-            <a class="botao-imprimir" href="{{ url_for('financeiro.listar_financeiro') }}"><i class="bi bi-arrow-left icon-text"></i> Voltar para Financeiro</a>
-        {% elif origem == 'logistica' %}
-            <a class="botao-imprimir" href="{{ url_for('logistica.listar_logistica') }}"><i class="bi bi-arrow-left icon-text"></i> Voltar para Coletas</a>
-        {% else %}
-            <a class="botao-imprimir" href="{{ url_for('pedidos.listar_pedidos', **retorno_params) }}"><i class="bi bi-arrow-left icon-text"></i> Voltar para Pedidos</a>
-        {% endif %}
-        <a class="botao-imprimir" href="#" data-action="print-pedido"><i class="bi bi-printer icon-text"></i> Imprimir Pedido</a>
-    </div>
-</div>
 
-    <div class="dados">
-        <p><strong>Cliente:</strong> {{ pedido.cliente.nome }}</p>
-        <p><strong>Data:</strong> {{ pedido.data.strftime('%d/%m/%Y %H:%M') }}</p>
-    </div>
+{% set raw_status = pedido.status %}
+{% if raw_status is string %}
+    {% set status_label = raw_status %}
+{% else %}
+    {% set status_label = raw_status.value %}
+{% endif %}
+{% set status_classes = {
+    'Pagamento Aprovado': 'status-badge status-financeiro',
+    'Coleta Parcial': 'status-badge status-coleta',
+    'Coleta Concluída': 'status-badge status-coleta',
+    'Cancelado': 'status-badge status-cancelado',
+    'Pendente': 'status-badge status-pendente'
+} %}
+{% set status_class = status_classes.get(status_label, 'status-badge status-pendente') %}
+{% set saldo_class = 'total-card saldo positivo' if saldo <= 0 else 'total-card saldo' %}
 
-    <h2>Itens do Pedido</h2>
-    <table>
-        <thead>
-            <tr>
-                <th>Produto</th>
-                <th>Quantidade</th>
-                <th>Preço Venda</th>
-                <th>Total</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for item in pedido.itens %}
-            <tr>
-                <td>{{ item.produto.nome }}</td>
-                <td>{{ item.quantidade }}</td>
-                <td class="currency-value" data-value="{{ item.preco_venda }}">{{ item.preco_venda | currency_brl }}</td>
-                <td class="currency-value" data-value="{{ item.valor_total_venda }}">{{ item.valor_total_venda | currency_brl }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-
-    <p class="totais"><i class="bi bi-cash-stack icon-text"></i> Total do Pedido: {{ total | currency_brl }}</p>
-    <p class="totais"><i class="bi bi-check-circle-fill text-success icon-text"></i> Total Pago: {{ pago | currency_brl }}</p>
-    <p class="totais"><i class="bi bi-receipt icon-text"></i> Saldo: {{ saldo | currency_brl }}</p>
-
-    <h2>Histórico de Pagamentos</h2>
-    <table>
-        <thead>
-            <tr>
-                <th>Data</th>
-                <th>Valor</th>
-                <th>Método</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for pagamento in pedido.pagamentos %}
-            <tr>
-                <td>{{ pagamento.data_pagamento.strftime('%d/%m/%Y %H:%M') }}</td>
-                <td>{{ pagamento.valor | currency_brl }}</td>
-                <td>{{ pagamento.metodo_pagamento }}</td>
-            </tr>
+<div class="pedido-detalhe-wrapper">
+    <div class="page-header">
+        <h1><i class="bi bi-file-earmark-text icon-text"></i> Pedido #{{ pedido.id }}</h1>
+        <div class="acoes-header">
+            {% if origem == 'financeiro' %}
+                <a class="botao-imprimir secondary" href="{{ url_for('financeiro.listar_financeiro') }}"><i class="bi bi-arrow-left icon-text"></i> Voltar para Financeiro</a>
+            {% elif origem == 'logistica' %}
+                <a class="botao-imprimir secondary" href="{{ url_for('logistica.listar_logistica') }}"><i class="bi bi-arrow-left icon-text"></i> Voltar para Coletas</a>
             {% else %}
-            <tr><td colspan="3">Nenhum pagamento registrado.</td></tr>
-            {% endfor %}
-        </tbody>
-    </table>
+                <a class="botao-imprimir secondary" href="{{ url_for('pedidos.listar_pedidos', **retorno_params) }}"><i class="bi bi-arrow-left icon-text"></i> Voltar para Pedidos</a>
+            {% endif %}
+            <a class="botao-imprimir" href="#" data-action="print-pedido"><i class="bi bi-printer icon-text"></i> Imprimir Pedido</a>
+        </div>
+    </div>
 
-    <div class="assinatura">
+    <div class="info-grid">
+        <div class="info-card">
+            <span>Cliente</span>
+            <strong>{{ pedido.cliente.nome }}</strong>
+            {% if pedido.cliente.fantasia %}
+                <small>Fantasia: {{ pedido.cliente.fantasia }}</small>
+            {% endif %}
+        </div>
+        <div class="info-card">
+            <span>Data do pedido</span>
+            <strong>{{ pedido.data.strftime('%d/%m/%Y %H:%M') }}</strong>
+            <small>ID interno #{{ pedido.id }}</small>
+        </div>
+        <div class="info-card">
+            <span>Status atual</span>
+            <div class="{{ status_class }}">{{ status_label }}</div>
+            {% if pedido.confirmado_comercial %}
+                <small>Confirmado Comercial</small>
+            {% endif %}
+        </div>
+        <div class="info-card">
+            <span>Itens incluídos</span>
+            <strong>{{ pedido.itens|length }} itens</strong>
+            <small>Média {{ (total / (pedido.itens|length)) | currency_brl if pedido.itens|length else '-' }} por item</small>
+        </div>
+    </div>
+
+    <div class="totais-grid">
+        <div class="total-card total">
+            <span>Total do pedido</span>
+            <strong>{{ total | currency_brl }}</strong>
+        </div>
+        <div class="total-card pago">
+            <span>Total pago</span>
+            <strong>{{ pago | currency_brl }}</strong>
+        </div>
+        <div class="{{ saldo_class }}">
+            <span>Saldo</span>
+            <strong>{{ saldo | currency_brl }}</strong>
+        </div>
+    </div>
+
+    <section class="tabela-secao">
+        <div class="secao-header">
+            <h2><i class="bi bi-box-seam icon-text"></i> Itens do Pedido</h2>
+            <span>{{ pedido.itens|length }} produto(s)</span>
+        </div>
+        <div class="table-wrapper">
+            <table class="excel-table">
+                <thead>
+                    <tr>
+                        <th>Produto</th>
+                        <th>Quantidade</th>
+                        <th>Preço Venda</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in pedido.itens %}
+                    <tr>
+                        <td>{{ item.produto.nome }}</td>
+                        <td>{{ item.quantidade }}</td>
+                        <td>{{ item.preco_venda | currency_brl }}</td>
+                        <td>{{ item.valor_total_venda | currency_brl }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="tabela-secao">
+        <div class="secao-header">
+            <h2><i class="bi bi-wallet2 icon-text"></i> Histórico de Pagamentos</h2>
+            <span>{{ pedido.pagamentos|length }} registro(s)</span>
+        </div>
+        <div class="table-wrapper">
+            <table class="excel-table">
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Valor</th>
+                        <th>Método</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pagamento in pedido.pagamentos %}
+                    <tr>
+                        <td>{{ pagamento.data_pagamento.strftime('%d/%m/%Y %H:%M') }}</td>
+                        <td>{{ pagamento.valor | currency_brl }}</td>
+                        <td>{{ pagamento.metodo_pagamento }}</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="3">Nenhum pagamento registrado.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <div class="assinatura-card">
         <p>Assinatura do Cliente</p>
     </div>
+</div>
 {% endblock %}
 
 {% block scripts %}

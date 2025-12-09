@@ -489,7 +489,7 @@ class SecurityAuditor:
 
 if __name__ == '__main__':
     # Caminho base do projeto
-    base_path = Path('/Users/ericobrandao/Projects/GERPED')
+    base_path = Path('/Users/ericobrandao/Downloads/GERPED PLUS')
     
     # Criar auditor
     auditor = SecurityAuditor(base_path)

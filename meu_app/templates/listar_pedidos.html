@@ -3,17 +3,29 @@
 {% block title %}Listar Pedidos{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <h2><i class="bi bi-clipboard icon-text"></i> Todos os Pedidos</h2>
-    <div class="header-buttons">
-        <a href="{{ url_for('pedidos.importar_pedidos') }}" class="btn-secondary"><i class="bi bi-upload icon-text"></i> Importar Histórico</a>
+    <div class="page-header">
+        <div class="header-title">
+            <h2><i class="bi bi-clipboard icon-text"></i> Todos os Pedidos</h2>
+            <div class="page-actions">
+                <form id="formImportarHistorico" method="POST" action="{{ url_for('pedidos.importar_historico') }}" enctype="multipart/form-data">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <label for="arquivoHistorico" class="sr-only">Selecionar arquivo histórico</label>
+                    <input type="file" name="arquivo" id="arquivoHistorico" accept=".csv,.xlsx,.xls" style="display:none">
+                    <button type="button" class="btn-link" id="btnImportarHistorico"><i class="bi bi-upload"></i> Importar Histórico</button>
+                </form>
+                <a href="{{ url_for('pedidos.download_modelo_pedidos') }}" class="btn-link"><i class="bi bi-file-earmark-arrow-down"></i> Baixar modelo</a>
+                <form id="formEstornarImportacao" method="POST" action="{{ url_for('pedidos.estornar_importacao') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn-link danger" id="btnEstornarImportacao"><i class="bi bi-arrow-counterclockwise"></i> Estornar importação</button>
+                </form>
+            </div>
+        </div>
         <a href="{{ url_for('pedidos.novo_pedido') }}" class="btn-primary"><i class="bi bi-plus-lg icon-text"></i> Novo Pedido</a>
-    </div>
 </div>
 
 <form method="get" class="filtro-form">
     <div class="form-group">
-        <label>Status:</label>
+        <label for="filtroStatus">Status:</label>
         <select name="filtro" id="filtroStatus" class="form-control">
             <option value="todos" {% if filtro == 'todos' %}selected{% endif %}>Todos</option>
             <option value="aguardando_financeiro" {% if filtro == 'aguardando_financeiro' %}selected{% endif %}>Aguardando Financeiro</option>
@@ -24,26 +36,27 @@
 
     <div class="date-range">
         <div class="form-group">
-            <label>Data Inicial:</label>
+            <label for="data_inicio">Data Inicial:</label>
             <input type="date" name="data_inicio" value="{{ data_inicio }}" id="data_inicio" class="form-control">
         </div>
 
         <div class="form-group">
-            <label>Data Final:</label>
+            <label for="data_fim">Data Final:</label>
             <input type="date" name="data_fim" value="{{ data_fim }}" id="data_fim" class="form-control">
         </div>
 
         <div class="divider-text">OU</div>
 
         <div class="form-group">
-            <label>Mês/Ano Inteiro:</label>
+            <label for="mes_ano">Mês/Ano Inteiro:</label>
             <input type="month" name="mes_ano" id="mes_ano" value="{{ mes_ano }}" class="form-control">
         </div>
     </div>
 
-    <div class="form-group">
-        <label>&nbsp;</label>
+    <div class="form-group" style="flex-direction: row; gap: 10px; align-items: center;">
+        <span class="sr-only">Filtrar</span>
         <button type="submit" class="btn-primary">Filtrar</button>
+        <button type="button" class="btn-secondary" id="btnLimparFiltros">Limpar filtros</button>
     </div>
 </form>
 
@@ -55,9 +68,51 @@
         margin-bottom: 20px;
     }
 
+    /* Upload histórico inline */
+    #formImportarHistorico {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
     .header-buttons {
         display: flex;
         gap: 10px;
+    }
+    .loading-upload {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.55);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        color: #fff;
+        z-index: 9999;
+    }
+    .loading-upload .spinner {
+        width: 42px;
+        height: 42px;
+        border: 4px solid #fff;
+        border-top-color: transparent;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+    .loading-upload p {
+        margin-top: 12px;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0,0,0,0);
+        border: 0;
     }
 
     .btn-primary {
@@ -132,37 +187,88 @@
         margin-bottom: 16px;
     }
 
-    .pedidos-table thead th {
-        text-align: center;
-    }
-
     .pedidos-table {
         width: 100%;
-        border-collapse: collapse;
+        border-collapse: separate;
+        border-spacing: 0;
         background: #fff;
         box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        table-layout: auto;
         margin-bottom: 30px;
     }
 
     .pedidos-table th,
     .pedidos-table td {
-        padding: 12px 16px;
-        border-bottom: 1px solid #f1f3f4;
+        padding: 10px 12px;
+        border: 1px solid #d7e3f7;
+        font-size: 0.9rem;
         text-align: center;
     }
 
-    .pedidos-table th[data-column-index] {
+    .pedidos-table th:first-child,
+    .pedidos-table td:first-child {
+        border-left-width: 2px;
+    }
+
+    .pedidos-table th:last-child,
+    .pedidos-table td:last-child {
+        border-right-width: 2px;
+    }
+
+    .pedidos-table tbody tr:first-child td {
+        border-top-width: 2px;
+    }
+
+    .pedidos-table tbody tr:last-child td {
+        border-bottom-width: 2px;
+    }
+
+    .pedidos-table thead th {
+        background: #f8fafc;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #64748b;
+        font-weight: 700;
         cursor: pointer;
         user-select: none;
         position: relative;
-        font-weight: 600;
-        background: #f8f9fa;
     }
 
-    .pedidos-table th[data-column-index] .sort-indicator {
+    .pedidos-table thead th .sort-indicator {
         font-size: 0.7rem;
         margin-left: 6px;
         color: #adb5bd;
+    }
+
+    .total-resume-wrapper {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 8px;
+    }
+
+    .valor-total-card {
+        min-width: 240px;
+        padding: 10px 14px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #eef2ff 0%, #dbeafe 100%);
+        border: 1px solid #c7d2fe;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        text-align: right;
+        box-shadow: 0 5px 14px rgba(79,70,229,0.15);
+    }
+
+    .valor-total-card span {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #475569;
+    }
+
+    .valor-total-card strong {
+        font-size: 1.1rem;
+        color: #111827;
     }
 
     .pedidos-table th.sorted-asc,
@@ -170,9 +276,32 @@
         color: #0d6efd;
     }
 
-    /* Animação suave para mudanças de ordenação */
-    tbody tr {
-        transition: all 0.3s ease;
+    .pedidos-table tbody tr:hover td {
+        background: #f8f9fa;
+    }
+
+    .pedidos-table .col-id { width: 8%; }
+    .pedidos-table .col-cliente { width: 26%; }
+    .pedidos-table .col-data { width: 18%; }
+    .pedidos-table .col-valor { width: 14%; }
+    .pedidos-table .col-status { width: 14%; }
+    .pedidos-table .col-ver { width: 10%; }
+    .pedidos-table .col-acoes { width: 10%; }
+
+    .resizable-header {
+        position: relative;
+        padding-right: 14px;
+        user-select: none;
+    }
+
+    .column-resizer {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 6px;
+        height: 100%;
+        cursor: col-resize;
+        user-select: none;
     }
 
     .status-ok {
@@ -452,14 +581,65 @@
     <small class="text-muted">Clique nos cabeçalhos para ordenar e use a busca para filtrar rapidamente.</small>
 </div>
 
-<table class="pedidos-table">
+<div class="total-resume-wrapper">
+    <div class="valor-total-card">
+        <span>Total filtrado</span>
+        <strong>{{ (total_pedidos_filtrados or 0) | currency_brl }}</strong>
+    </div>
+</div>
+
+<table class="pedidos-table auto-fit-table">
+    <colgroup>
+        <col class="col-id">
+        <col class="col-cliente">
+        <col class="col-data">
+        <col class="col-valor">
+        <col class="col-status">
+        <col class="col-ver">
+        <col class="col-acoes">
+    </colgroup>
     <thead>
         <tr>
-            <th data-column-index="0">#</th>
-            <th data-column-index="1">CLIENTE</th>
-            <th data-column-index="2">DATA E HORA</th>
-            <th data-column-index="3">VALOR DO PEDIDO</th>
-            <th data-column-index="4">STATUS</th>
+            <th data-column-index="0" data-sort-field="id" class="{% if current_sort == 'id' %}sorted-{{ current_direction }}{% endif %}">
+                #
+                <span class="sort-indicator">
+                    {% if current_sort == 'id' %}
+                        <i class="bi bi-caret-{{ 'up' if current_direction == 'asc' else 'down' }}-fill"></i>
+                    {% endif %}
+                </span>
+            </th>
+            <th data-column-index="1" data-sort-field="cliente" class="{% if current_sort == 'cliente' %}sorted-{{ current_direction }}{% endif %}">
+                CLIENTE
+                <span class="sort-indicator">
+                    {% if current_sort == 'cliente' %}
+                        <i class="bi bi-caret-{{ 'up' if current_direction == 'asc' else 'down' }}-fill"></i>
+                    {% endif %}
+                </span>
+            </th>
+            <th data-column-index="2" data-sort-field="data" class="{% if current_sort == 'data' %}sorted-{{ current_direction }}{% endif %}">
+                DATA E HORA
+                <span class="sort-indicator">
+                    {% if current_sort == 'data' %}
+                        <i class="bi bi-caret-{{ 'up' if current_direction == 'asc' else 'down' }}-fill"></i>
+                    {% endif %}
+                </span>
+            </th>
+            <th data-column-index="3" data-sort-field="valor" class="{% if current_sort == 'valor' %}sorted-{{ current_direction }}{% endif %}">
+                VALOR DO PEDIDO
+                <span class="sort-indicator">
+                    {% if current_sort == 'valor' %}
+                        <i class="bi bi-caret-{{ 'up' if current_direction == 'asc' else 'down' }}-fill"></i>
+                    {% endif %}
+                </span>
+            </th>
+            <th data-column-index="4" data-sort-field="status" class="{% if current_sort == 'status' %}sorted-{{ current_direction }}{% endif %}">
+                STATUS
+                <span class="sort-indicator">
+                    {% if current_sort == 'status' %}
+                        <i class="bi bi-caret-{{ 'up' if current_direction == 'asc' else 'down' }}-fill"></i>
+                    {% endif %}
+                </span>
+            </th>
             <th>VER PEDIDO</th>
             <th>AÇÕES</th>
         </tr>
@@ -541,9 +721,133 @@
 
 <a href="{{ url_for('main.painel') }}" class="botao"><i class="bi bi-arrow-left icon-text"></i> Voltar ao Painel</a>
 
+<div class="loading-upload" id="loadingUpload">
+    <div class="spinner"></div>
+    <p>Enviando histórico...</p>
+</div>
+
 <script nonce="{{ nonce }}">
 let acaoAtual = '';
 let pedidoId = null;
+
+// Importar histórico direto
+document.addEventListener('DOMContentLoaded', () => {
+    const btnImportarHistorico = document.getElementById('btnImportarHistorico');
+    const inputHistorico = document.getElementById('arquivoHistorico');
+    const formHistorico = document.getElementById('formImportarHistorico');
+    const overlay = document.getElementById('loadingUpload');
+    if (btnImportarHistorico && inputHistorico && formHistorico) {
+        btnImportarHistorico.addEventListener('click', () => inputHistorico.click());
+        inputHistorico.addEventListener('change', () => {
+            if (inputHistorico.files.length > 0) {
+                if (overlay) overlay.style.display = 'flex';
+                formHistorico.submit();
+            }
+        });
+    }
+});
+
+// Persistência de filtros
+document.addEventListener('DOMContentLoaded', () => {
+    const storageKey = 'pedidosFiltros';
+    const filtroStatus = document.getElementById('filtroStatus');
+    const dataInicioInput = document.getElementById('data_inicio');
+    const dataFimInput = document.getElementById('data_fim');
+    const mesAnoInput = document.getElementById('mes_ano');
+    const buscaInput = document.getElementById('filtroPedidos');
+
+    const inputs = [filtroStatus, dataInicioInput, dataFimInput, mesAnoInput, buscaInput];
+
+    function loadFilters() {
+        try {
+            const stored = JSON.parse(localStorage.getItem(storageKey));
+            if (!stored) return;
+            if (filtroStatus && !filtroStatus.value && stored.status) filtroStatus.value = stored.status;
+            if (dataInicioInput && !dataInicioInput.value && stored.data_inicio) dataInicioInput.value = stored.data_inicio;
+            if (dataFimInput && !dataFimInput.value && stored.data_fim) dataFimInput.value = stored.data_fim;
+            if (mesAnoInput && !mesAnoInput.value && stored.mes_ano) mesAnoInput.value = stored.mes_ano;
+            if (buscaInput && !buscaInput.value && stored.busca) buscaInput.value = stored.busca;
+        } catch (err) {
+            console.warn('Não foi possível carregar filtros salvos:', err);
+        }
+    }
+
+    function saveFilters() {
+        const payload = {
+            status: filtroStatus ? filtroStatus.value : '',
+            data_inicio: dataInicioInput ? dataInicioInput.value : '',
+            data_fim: dataFimInput ? dataFimInput.value : '',
+            mes_ano: mesAnoInput ? mesAnoInput.value : '',
+            busca: buscaInput ? buscaInput.value : ''
+        };
+        localStorage.setItem(storageKey, JSON.stringify(payload));
+    }
+
+    loadFilters();
+    saveFilters(); // garante que valores atuais do servidor permaneçam
+
+    inputs.forEach(el => {
+        if (!el) return;
+        const eventName = el.tagName === 'SELECT' ? 'change' : 'input';
+        el.addEventListener(eventName, saveFilters);
+    });
+
+    const filtroForm = document.querySelector('.filtro-form');
+    if (filtroForm) {
+        filtroForm.addEventListener('submit', () => {
+            saveFilters();
+        });
+    }
+
+    const btnLimpar = document.getElementById('btnLimparFiltros');
+    if (btnLimpar) {
+        btnLimpar.addEventListener('click', () => {
+            [filtroStatus, dataInicioInput, dataFimInput, mesAnoInput, buscaInput].forEach(el => {
+                if (!el) return;
+                if (el.tagName === 'SELECT') {
+                    el.selectedIndex = 0;
+                } else {
+                    el.value = '';
+                }
+            });
+            localStorage.removeItem(storageKey);
+            window.location = "{{ url_for('pedidos.listar_pedidos') }}";
+        });
+    }
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    const btnEstornar = document.getElementById('btnEstornarImportacao');
+    if (btnEstornar) {
+        btnEstornar.addEventListener('click', (event) => {
+            if (!confirm('Isso vai remover os pedidos importados. Deseja continuar?')) {
+                event.preventDefault();
+            }
+        });
+    }
+});
+
+// Alternância de ordenação (server-side)
+document.addEventListener('DOMContentLoaded', () => {
+    const headers = document.querySelectorAll('.pedidos-table th[data-sort-field]');
+    const currentSortField = "{{ current_sort }}";
+    const currentDirection = "{{ current_direction }}";
+    headers.forEach(header => {
+        header.addEventListener('click', (e) => {
+            if (e.target.classList.contains('column-resizer')) return;
+            const sortField = header.dataset.sortField;
+            if (!sortField) return;
+            const url = new URL(window.location.href);
+            let newDirection = 'asc';
+            if (sortField === currentSortField) {
+                newDirection = currentDirection === 'asc' ? 'desc' : 'asc';
+            }
+            url.searchParams.set('sort', sortField);
+            url.searchParams.set('direction', newDirection);
+            window.location = url.toString();
+        });
+    });
+});
 
 function abrirModalEditar(id) {
     acaoAtual = 'editar';
@@ -697,92 +1001,86 @@ document.addEventListener('DOMContentLoaded', () => {
     const tabela = document.querySelector('.pedidos-table');
     if (!tabela) return;
 
-    const tbody = tabela.querySelector('tbody');
     const headers = tabela.querySelectorAll('th[data-column-index]');
+    const columns = tabela.querySelectorAll('colgroup col');
     const filtro = document.getElementById('filtroPedidos');
-    let currentSort = { index: null, direction: 'asc' };
 
-    const parseValue = (cell, index) => {
-        if (index === 0) {
-            const numero = parseInt(cell.textContent.replace('#', '').trim(), 10);
-            return Number.isNaN(numero) ? cell.textContent.trim().toLowerCase() : numero;
+    const applyColumnWidth = (columnIndex, width) => {
+        if (columns.length && columns[columnIndex]) {
+            columns[columnIndex].style.width = width + 'px';
         }
-        if (index === 2) {
-            const texto = cell.textContent.trim();
-            const [data, hora] = texto.split(' ');
-            if (!data || !hora) return texto.toLowerCase();
-            const [dia, mes, ano] = data.split('/');
-            return `${ano}-${mes}-${dia} ${hora}`;
-        }
-        if (index === 3) {
-            const normalizado = cell.textContent.replace(/R\$\s*/i, '').replace(/\./g, '').replace(',', '.');
-            const valor = parseFloat(normalizado);
-            return Number.isNaN(valor) ? 0 : valor;
-        }
-        return cell.textContent.trim().toLowerCase();
+        tabela.querySelectorAll('thead th')[columnIndex].style.width = width + 'px';
+        tabela.querySelectorAll('tbody tr').forEach((row) => {
+            const cell = row.children[columnIndex];
+            if (cell) cell.style.width = width + 'px';
+        });
     };
 
-    const applySortIndicators = () => {
-        headers.forEach((header) => {
-            header.classList.remove('sorted-asc', 'sorted-desc');
-            let indicator = header.querySelector('.sort-indicator');
-            if (!indicator) {
-                indicator = document.createElement('span');
-                indicator.className = 'sort-indicator';
-                header.appendChild(indicator);
-            }
-            indicator.innerHTML = '';
+    const autoFitColumn = (columnIndex) => {
+        let maxWidth = 0;
+        tabela.querySelectorAll('tr').forEach((row) => {
+            const cell = row.children[columnIndex];
+            if (!cell) return;
+            const cellWidth = cell.scrollWidth + 20;
+            if (cellWidth > maxWidth) maxWidth = cellWidth;
         });
-
-        const target = headers[currentSort.index];
-        if (!target) return;
-        let indicator = target.querySelector('.sort-indicator');
-        if (!indicator) {
-            indicator = document.createElement('span');
-            indicator.className = 'sort-indicator';
-            target.appendChild(indicator);
-        }
-        target.classList.add(currentSort.direction === 'asc' ? 'sorted-asc' : 'sorted-desc');
-        indicator.innerHTML = currentSort.direction === 'asc'
-            ? '<i class="bi bi-caret-up-fill"></i>'
-            : '<i class="bi bi-caret-down-fill"></i>';
+        const targetWidth = Math.min(Math.max(maxWidth, 80), 600);
+        applyColumnWidth(columnIndex, targetWidth);
     };
 
-    const sortRows = (index, direction) => {
-        const rows = Array.from(tbody.querySelectorAll('tr'));
-        rows.sort((rowA, rowB) => {
-            const a = parseValue(rowA.children[index], index);
-            const b = parseValue(rowB.children[index], index);
+    const startManualResize = (event, columnIndex) => {
+        event.preventDefault();
+        const startX = event.pageX;
+        const header = event.target.parentElement;
+        const startWidth = header.offsetWidth;
 
-            if (typeof a === 'number' && typeof b === 'number') {
-                return direction === 'asc' ? a - b : b - a;
-            }
-            return direction === 'asc'
-                ? String(a).localeCompare(String(b))
-                : String(b).localeCompare(String(a));
-        });
+        function onMouseMove(moveEvent) {
+            const delta = moveEvent.pageX - startX;
+            const newWidth = Math.max(80, startWidth + delta);
+            applyColumnWidth(columnIndex, newWidth);
+        }
 
-        rows.forEach((row) => tbody.appendChild(row));
-        applySortIndicators();
+        function onMouseUp() {
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+        }
+
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
     };
 
     headers.forEach((header, index) => {
-        header.addEventListener('click', () => {
-            const direction = (currentSort.index === index && currentSort.direction === 'asc') ? 'desc' : 'asc';
-            currentSort = { index, direction };
-            sortRows(index, direction);
+        header.classList.add('resizable-header');
+        const handle = document.createElement('span');
+        handle.className = 'column-resizer';
+        header.appendChild(handle);
+
+        handle.addEventListener('mousedown', (e) => {
+            e.stopPropagation();
+            startManualResize(e, index);
+        });
+
+        header.addEventListener('dblclick', (e) => {
+            e.stopPropagation();
+            autoFitColumn(index);
         });
     });
 
     if (filtro) {
-        filtro.addEventListener('input', (event) => {
-            const termo = event.target.value.trim().toLowerCase();
-            const rows = tbody.querySelectorAll('tr');
+        const rows = Array.from(tabela.querySelectorAll('tbody tr'));
+        const aplicarFiltroRapido = (valor) => {
+            const termo = (valor || '').trim().toLowerCase();
             rows.forEach((row) => {
                 const texto = row.textContent.toLowerCase();
                 row.style.display = texto.includes(termo) ? '' : 'none';
             });
+        };
+        filtro.addEventListener('input', (event) => {
+            aplicarFiltroRapido(event.target.value);
         });
+        if (filtro.value) {
+            aplicarFiltroRapido(filtro.value);
+        }
     }
 });
 
@@ -834,7 +1132,8 @@ document.addEventListener('DOMContentLoaded', function() {
             abrirModalConfirmarComercial(pedidoId);
         });
     });
-    
+
+
     const botoesEditar = document.querySelectorAll('[data-action="editar"]');
     console.log('Botões editar encontrados:', botoesEditar.length);
     botoesEditar.forEach(btn => {

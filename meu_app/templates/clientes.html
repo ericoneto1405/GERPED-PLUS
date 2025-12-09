@@ -67,42 +67,48 @@
 
     .clientes-table {
         width: 100%;
-        border-collapse: collapse;
+        border-collapse: separate;
+        border-spacing: 0;
         background: #fff;
         box-shadow: 0 2px 6px rgba(0,0,0,0.05);
         margin-bottom: 30px;
+        table-layout: auto;
     }
 
-    .clientes-table thead {
-        background: #f8f9fa;
-    }
-
-    .clientes-table th {
-        padding: 12px 16px;
-        text-align: left;
-        font-weight: 600;
-        color: #495057;
-        border-bottom: 2px solid #dee2e6;
+    .clientes-table th,
+    .clientes-table td {
+        padding: 10px 12px;
+        border: 1px solid #d7e3f7;
         font-size: 0.9rem;
     }
 
-    .clientes-table td {
-        padding: 12px 16px;
-        border-bottom: 1px solid #f1f3f4;
-        font-size: 0.95rem;
+    .clientes-table th:first-child,
+    .clientes-table td:first-child {
+        border-left-width: 2px;
     }
 
-    .clientes-table tbody tr:hover {
-        background-color: #f8f9fa;
+    .clientes-table th:last-child,
+    .clientes-table td:last-child {
+        border-right-width: 2px;
     }
 
-    .clientes-table th[data-column-index] {
-        cursor: pointer;
-        user-select: none;
-        position: relative;
+    .clientes-table tbody tr:first-child td {
+        border-top-width: 2px;
     }
 
-    .clientes-table th[data-column-index] .sort-indicator {
+    .clientes-table tbody tr:last-child td {
+        border-bottom-width: 2px;
+    }
+
+    .clientes-table thead th {
+        background: #f8fafc;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #64748b;
+        font-weight: 700;
+    }
+
+    .clientes-table thead th .sort-indicator {
         font-size: 0.7rem;
         margin-left: 6px;
         color: #adb5bd;
@@ -111,6 +117,33 @@
     .clientes-table th.sorted-asc,
     .clientes-table th.sorted-desc {
         color: #0d6efd;
+    }
+
+    .clientes-table tr:hover td {
+        background: #f8f9fa;
+    }
+
+    .clientes-table .col-nome { width: 26%; }
+    .clientes-table .col-fantasia { width: 22%; }
+    .clientes-table .col-telefone { width: 15%; }
+    .clientes-table .col-cidade { width: 15%; }
+    .clientes-table .col-cpf { width: 12%; }
+    .clientes-table .col-acoes { width: 10%; }
+
+    .resizable-header {
+        position: relative;
+        padding-right: 14px;
+        user-select: none;
+    }
+
+    .column-resizer {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 6px;
+        height: 100%;
+        cursor: col-resize;
+        user-select: none;
     }
 
     .icon-btn.icon-secondary {
@@ -229,7 +262,15 @@
     <small class="text-muted">Use a busca para filtrar rapidamente e clique nos títulos para ordenar.</small>
 </div>
 
-<table class="clientes-table">
+<table class="clientes-table auto-fit-table">
+    <colgroup>
+        <col class="col-nome">
+        <col class="col-fantasia">
+        <col class="col-telefone">
+        <col class="col-cidade">
+        <col class="col-cpf">
+        <col class="col-acoes">
+    </colgroup>
     <thead>
         <tr>
             <th data-column-index="0">NOME</th>
@@ -275,6 +316,7 @@
         <tr><td colspan="6">Nenhum cliente cadastrado.</td></tr>
         {% endfor %}
     </tbody>
+    <tfoot></tfoot>
 </table>
 
 <a href="{{ url_for('main.painel') }}" class="btn-voltar"><i class="bi bi-arrow-left icon-text"></i> Voltar ao Painel</a>
@@ -285,6 +327,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!tabela) return;
     const tbody = tabela.querySelector('tbody');
     const headers = tabela.querySelectorAll('th[data-column-index]');
+    const columns = tabela.querySelectorAll('colgroup col');
     const filtro = document.getElementById('filtroClientes');
     let currentSort = { index: null, direction: 'asc' };
 
@@ -329,8 +372,69 @@ document.addEventListener('DOMContentLoaded', () => {
         applySortIndicators();
     };
 
+    const applyColumnWidth = (columnIndex, width) => {
+        if (columns.length && columns[columnIndex]) {
+            columns[columnIndex].style.width = width + 'px';
+        }
+        tabela.querySelectorAll('thead th')[columnIndex].style.width = width + 'px';
+        tabela.querySelectorAll('tbody tr').forEach((row) => {
+            const cell = row.children[columnIndex];
+            if (cell) cell.style.width = width + 'px';
+        });
+    };
+
+    const autoFitColumn = (columnIndex) => {
+        let maxWidth = 0;
+        tabela.querySelectorAll('tr').forEach((row) => {
+            const cell = row.children[columnIndex];
+            if (!cell) return;
+            const cellWidth = cell.scrollWidth + 16;
+            if (cellWidth > maxWidth) maxWidth = cellWidth;
+        });
+        applyColumnWidth(columnIndex, maxWidth);
+    };
+
+    const startManualResize = (event, columnIndex) => {
+        event.preventDefault();
+        const startX = event.pageX;
+        const header = event.target.parentElement;
+        const startWidth = header.offsetWidth;
+
+        function onMouseMove(moveEvent) {
+            const delta = moveEvent.pageX - startX;
+            const newWidth = Math.max(60, startWidth + delta);
+            applyColumnWidth(columnIndex, newWidth);
+        }
+
+        function onMouseUp() {
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+        }
+
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+    };
+
     headers.forEach((header, index) => {
-        header.addEventListener('click', () => {
+        header.classList.add('resizable-header');
+        const handle = document.createElement('span');
+        handle.className = 'column-resizer';
+        header.appendChild(handle);
+
+        handle.addEventListener('mousedown', (e) => {
+            e.stopPropagation();
+            startManualResize(e, index);
+        });
+
+        header.addEventListener('dblclick', (e) => {
+            e.stopPropagation();
+            autoFitColumn(index);
+        });
+
+        header.addEventListener('click', (e) => {
+            if (e.target.classList.contains('column-resizer')) {
+                return;
+            }
             const direction = (currentSort.index === index && currentSort.direction === 'asc') ? 'desc' : 'asc';
             currentSort = { index, direction };
             sortRows(index, direction);

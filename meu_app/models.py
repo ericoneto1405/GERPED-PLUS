@@ -35,6 +35,7 @@ class Produto(db.Model):
     categoria = db.Column(db.String(20), default='OUTROS')  # CERVEJA, NAB, OUTROS
     preco_medio_compra = db.Column(db.Numeric(10, 2), default=0.00)
     ean = db.Column(db.String(50))
+    preco_atualizado_em = db.Column(db.DateTime, nullable=True)
 
 # ENUMS PARA COLETAS
 class StatusColeta(enum.Enum):

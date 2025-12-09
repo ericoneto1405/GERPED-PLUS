@@ -1,0 +1,598 @@
+{% extends 'base.html' %}
+
+{% block title %}Simulação de Pedido{% endblock %}
+
+{% block page_title %}Simulação de Pedido{% endblock %}
+
+{% block content %}
+<div class="simulador-header">
+    <div>
+        <h2 class="mb-1">Simulação de Pedido</h2>
+        <p class="text-muted mb-0">Use as verbas previstas da Apuração e o custo médio dos produtos para saber se a negociação fecha no positivo.</p>
+    </div>
+    <span class="badge bg-primary px-3 py-2">Versão Beta</span>
+</div>
+
+<div class="cards-grid">
+    <div class="mini-card">
+        <div class="mini-title">Verbas previstas</div>
+        <div class="mini-value" id="cardVerbas">R$ 0,00</div>
+        <small class="text-muted">Fonte: Apuração (previsão)</small>
+    </div>
+    <div class="mini-card">
+        <div class="mini-title">Receita mês (pago)</div>
+        <div class="mini-value" id="cardReceita">R$ 0,00</div>
+        <small class="text-muted">Pedidos pagos no mês</small>
+    </div>
+    <div class="mini-card">
+        <div class="mini-title">CPV mês</div>
+        <div class="mini-value" id="cardCPV">R$ 0,00</div>
+        <small class="text-muted">Custo dos pedidos pagos</small>
+    </div>
+    <div class="mini-card">
+        <div class="mini-title">Margem mês</div>
+        <div class="mini-value" id="cardMargem">R$ 0,00</div>
+        <small class="text-muted">Receita - CPV</small>
+    </div>
+</div>
+
+<div class="simulador-grid">
+    <div class="simulador-main">
+        <div class="config-card">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <div>
+                    <h5 class="mb-1">Configuração de Verbas</h5>
+                    <p class="text-muted mb-0">Edite se precisar ajustar as verbas previstas gerais e por categoria.</p>
+                </div>
+                <button class="btn btn-outline-secondary btn-sm" id="btnResetVerbas">Restaurar valores</button>
+            </div>
+            <div class="verba-grid">
+                <div>
+                    <label class="form-label mb-1">Verba geral (R$)</label>
+                    <input type="number" step="0.01" class="form-control" id="inputVerbaGeral" value="0">
+                </div>
+                <div>
+                    <label class="form-label mb-1">Verba SCANN</label>
+                    <input type="number" step="0.01" class="form-control verba-extra" data-key="scann" value="0">
+                </div>
+                <div>
+                    <label class="form-label mb-1">Verba Plano Negócios</label>
+                    <input type="number" step="0.01" class="form-control verba-extra" data-key="plano_negocios" value="0">
+                </div>
+                <div>
+                    <label class="form-label mb-1">Verba Time Ambev</label>
+                    <input type="number" step="0.01" class="form-control verba-extra" data-key="time_ambev" value="0">
+                </div>
+                <div>
+                    <label class="form-label mb-1">Outras verbas</label>
+                    <input type="number" step="0.01" class="form-control verba-extra" data-key="outras" value="0">
+                </div>
+            </div>
+            <div class="mt-3">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <h6 class="mb-0">Verbas por categoria (insira se houver)</h6>
+                    <small class="text-muted">Somam com a verba geral</small>
+                </div>
+                <div id="verbasCategorias" class="verbas-categorias"></div>
+            </div>
+        </div>
+
+        <div class="table-card">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h5 class="mb-0">Itens em negociação</h5>
+                <button class="btn btn-primary btn-sm" id="btnAddLinha"><i class="bi bi-plus-lg"></i> Adicionar linha</button>
+            </div>
+            <div class="table-container">
+                <table class="simulacao-table auto-fit-table">
+                    <colgroup>
+                        <col class="col-produto">
+                        <col class="col-cat">
+                        <col class="col-qtd">
+                        <col class="col-preco">
+                        <col class="col-sub">
+                        <col class="col-custo">
+                        <col class="col-margem">
+                        <col class="col-margemp">
+                        <col class="col-acoes">
+                    </colgroup>
+                    <thead>
+                        <tr>
+                            <th data-column-index="0">PRODUTO</th>
+                            <th data-column-index="1">CATEGORIA</th>
+                            <th data-column-index="2">QTDE</th>
+                            <th data-column-index="3">PREÇO NEGOCIADO</th>
+                            <th data-column-index="4">SUBTOTAL</th>
+                            <th data-column-index="5">CUSTO</th>
+                            <th data-column-index="6">MARGEM R$</th>
+                            <th data-column-index="7">MARGEM %</th>
+                            <th>AÇÕES</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbodySimulacao">
+                        <tr class="linha-vazia"><td colspan="9" class="text-center text-muted">Adicione itens para simular</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="categoria-card">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h5 class="mb-0">Resumo por categoria (mês + simulação)</h5>
+                <small class="text-muted">Receita, custo e margem considerando o que já foi pago no mês e esta simulação.</small>
+            </div>
+            <div class="table-container">
+                <table class="simulacao-table resumo-cat">
+                    <thead>
+                        <tr>
+                            <th>CATEGORIA</th>
+                            <th>RECEITA</th>
+                            <th>CPV</th>
+                            <th>MARGEM</th>
+                            <th>BURACO</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbodyCategorias">
+                        <tr><td colspan="5" class="text-center text-muted">Sem dados.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="simulador-side">
+        <div class="painel-resultado" id="painelResultado">
+            <div class="resultado-status bg-secondary text-white">Carregando...</div>
+            <div class="resultado-valores">
+                <div>
+                    <div class="label">Margem total (mês + sim)</div>
+                    <div class="value" id="valorMargemTotal">R$ 0,00</div>
+                </div>
+                <div>
+                    <div class="label">Verbas consideradas</div>
+                    <div class="value" id="valorVerbasConsideradas">R$ 0,00</div>
+                </div>
+                <div>
+                    <div class="label">Saldo após verbas</div>
+                    <div class="value" id="valorSaldo">R$ 0,00</div>
+                </div>
+            </div>
+            <div class="resultado-explicacao" id="textoExplicacao">
+                Avaliando…
+            </div>
+        </div>
+
+        <div class="painel-notas">
+            <h6 class="mb-2">Como calculamos</h6>
+            <ul class="list-unstyled small mb-0">
+                <li>• Receita/CPV do mês: pedidos pagos, conforme Apuração.</li>
+                <li>• Custo do item: preço médio de compra atual.</li>
+                <li>• Margem total = (receita – CPV) + verbas informadas.</li>
+                <li>• Se saldo após verbas &lt; 0, o pedido não compensa.</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<style>
+.simulador-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+}
+.cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin-bottom: 18px;
+}
+.mini-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 14px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+.mini-title { font-size: 13px; color: #6b7280; margin-bottom: 4px; }
+.mini-value { font-size: 22px; font-weight: 700; color: #111827; }
+.simulador-grid {
+    display: grid;
+    grid-template-columns: 2fr 0.9fr;
+    gap: 16px;
+    align-items: start;
+}
+.simulador-main, .simulador-side { display: flex; flex-direction: column; gap: 14px; }
+.config-card, .table-card, .categoria-card, .painel-resultado, .painel-notas {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+.verba-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px;
+}
+.verbas-categorias {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 8px;
+}
+.verba-cat {
+    border: 1px dashed #d1d5db;
+    border-radius: 8px;
+    padding: 8px 10px;
+    background: #f9fafb;
+}
+.verba-cat label { font-size: 12px; margin-bottom: 4px; color: #4b5563; }
+.table-container {
+    background: white;
+    border-radius: 8px;
+    overflow: auto;
+    box-shadow: inset 0 0 0 1px #e5e7eb;
+}
+.simulacao-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: #fff;
+    table-layout: auto;
+}
+.simulacao-table th, .simulacao-table td {
+    padding: 10px 12px;
+    border: 1px solid #d7e3f7;
+    font-size: 0.9rem;
+}
+.simulacao-table thead th {
+    background: #f8fafc;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #64748b;
+    font-weight: 700;
+}
+.simulacao-table tbody tr:hover td { background: #f8f9fa; }
+.simulacao-table .col-produto { width: 30%; }
+.simulacao-table .col-cat { width: 12%; }
+.simulacao-table .col-qtd { width: 8%; }
+.simulacao-table .col-preco { width: 12%; }
+.simulacao-table .col-sub { width: 12%; }
+.simulacao-table .col-custo { width: 12%; }
+.simulacao-table .col-margem { width: 12%; }
+.simulacao-table .col-margemp { width: 10%; }
+.simulacao-table .col-acoes { width: 8%; }
+.input-inline { width: 100%; padding: 6px 8px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; }
+.input-inline:focus { outline: none; border-color: #7c3aed; box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.15); }
+.btn-icon {
+    border: 1px solid #e5e7eb;
+    background: #fff;
+    border-radius: 6px;
+    padding: 6px 10px;
+    cursor: pointer;
+}
+.btn-icon:hover { background: #f3f4f6; }
+.painel-resultado .resultado-status {
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 13px;
+}
+.resultado-valores {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 10px;
+    margin: 12px 0;
+}
+.resultado-valores .label { font-size: 12px; color: #6b7280; }
+.resultado-valores .value { font-size: 18px; font-weight: 700; color: #111827; }
+.resultado-explicacao { font-size: 13px; color: #374151; }
+.painel-notas { font-size: 13px; color: #4b5563; }
+.badge-success { background-color: #22c55e !important; }
+.badge-danger { background-color: #ef4444 !important; }
+.badge-warning { background-color: #f59e0b !important; color: #111827 !important; }
+@media (max-width: 1024px) {
+    .simulador-grid { grid-template-columns: 1fr; }
+}
+</style>
+
+<script nonce="{{ nonce }}">
+const stateSim = {
+    produtos: [],
+    dadosBase: null,
+    verbasCategoria: {},
+    verbaGeral: 0
+};
+
+function formatCurrency(value) {
+    const num = Number(value) || 0;
+    return num.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
+}
+
+function parseNumber(input) {
+    const n = Number(input);
+    return Number.isFinite(n) ? n : 0;
+}
+
+function renderVerbasCategoria() {
+    const container = document.getElementById('verbasCategorias');
+    container.innerHTML = '';
+    const entries = Object.entries(stateSim.verbasCategoria);
+    if (!entries.length) {
+        container.innerHTML = '<div class="text-muted small">Nenhuma categoria configurada ainda.</div>';
+        return;
+    }
+    entries.forEach(([cat, valor]) => {
+        const wrap = document.createElement('div');
+        wrap.className = 'verba-cat';
+        wrap.innerHTML = `
+            <label>${cat}</label>
+            <input type="number" step="0.01" class="form-control form-control-sm input-verba-cat" data-cat="${cat}" value="${valor}">
+        `;
+        container.appendChild(wrap);
+    });
+    container.querySelectorAll('.input-verba-cat').forEach(input => {
+        input.addEventListener('input', () => {
+            stateSim.verbasCategoria[input.dataset.cat] = parseNumber(input.value);
+            calcularSimulacao();
+        });
+    });
+}
+
+function ensureCategoriaConfig(cat) {
+    if (!(cat in stateSim.verbasCategoria)) {
+        stateSim.verbasCategoria[cat] = 0;
+        renderVerbasCategoria();
+    }
+}
+
+function adicionarLinha(produtoId = '') {
+    const tbody = document.getElementById('tbodySimulacao');
+    const row = document.createElement('tr');
+    row.innerHTML = `
+        <td>
+            <select class="input-inline input-produto">
+                <option value="">Selecione</option>
+                ${stateSim.produtos.map(p => `<option value="${p.id}">${p.nome}</option>`).join('')}
+            </select>
+        </td>
+        <td class="cat-cell text-muted">-</td>
+        <td><input type="number" min="0" step="1" class="input-inline input-qtd" value="0"></td>
+        <td><input type="number" min="0" step="0.01" class="input-inline input-preco" value="0"></td>
+        <td class="sub-cell text-end">R$ 0,00</td>
+        <td class="custo-cell text-end">R$ 0,00</td>
+        <td class="margem-cell text-end">R$ 0,00</td>
+        <td class="margemp-cell text-end">0%</td>
+        <td class="text-center">
+            <button class="btn-icon btn-remover" title="Remover linha"><i class="bi bi-trash"></i></button>
+        </td>
+    `;
+    tbody.appendChild(row);
+    tbody.querySelector('.linha-vazia')?.remove();
+
+    const selProd = row.querySelector('.input-produto');
+    const inputQtd = row.querySelector('.input-qtd');
+    const inputPreco = row.querySelector('.input-preco');
+    selProd.value = produtoId;
+
+    selProd.addEventListener('change', () => {
+        const produto = stateSim.produtos.find(p => p.id === Number(selProd.value));
+        row.dataset.custo = produto ? produto.custo : 0;
+        row.dataset.categoria = produto ? produto.categoria : '';
+        row.querySelector('.cat-cell').textContent = produto ? produto.categoria : '-';
+        if (produto) ensureCategoriaConfig(produto.categoria);
+        calcularSimulacao();
+    });
+    [inputQtd, inputPreco].forEach(el => el.addEventListener('input', calcularSimulacao));
+    row.querySelector('.btn-remover').addEventListener('click', () => {
+        row.remove();
+        if (!tbody.children.length) {
+            const vazio = document.createElement('tr');
+            vazio.className = 'linha-vazia';
+            vazio.innerHTML = '<td colspan="9" class="text-center text-muted">Adicione itens para simular</td>';
+            tbody.appendChild(vazio);
+        }
+        calcularSimulacao();
+    });
+
+    if (produtoId) {
+        selProd.dispatchEvent(new Event('change'));
+    }
+}
+
+function calcularSimulacao() {
+    const dados = stateSim.dadosBase;
+    if (!dados) return;
+    const tbody = document.getElementById('tbodySimulacao');
+    const linhas = tbody.querySelectorAll('tr');
+
+    let receitaSim = 0;
+    let custoSim = 0;
+    const catSim = {};
+
+    linhas.forEach(linha => {
+        const sel = linha.querySelector('.input-produto');
+        const qtd = parseNumber(linha.querySelector('.input-qtd').value);
+        const preco = parseNumber(linha.querySelector('.input-preco').value);
+        if (!sel.value || qtd <= 0 || preco < 0) {
+            linha.querySelector('.sub-cell').textContent = 'R$ 0,00';
+            linha.querySelector('.custo-cell').textContent = 'R$ 0,00';
+            linha.querySelector('.margem-cell').textContent = 'R$ 0,00';
+            linha.querySelector('.margemp-cell').textContent = '0%';
+            return;
+        }
+        const produto = stateSim.produtos.find(p => p.id === Number(sel.value));
+        const custoUnit = produto ? produto.custo : 0;
+        const subtotal = qtd * preco;
+        const custo = qtd * custoUnit;
+        const margem = subtotal - custo;
+        const margemPct = subtotal > 0 ? (margem / subtotal) * 100 : 0;
+        const cat = produto ? produto.categoria : 'OUTROS';
+
+        receitaSim += subtotal;
+        custoSim += custo;
+        const catData = catSim[cat] || {receita: 0, custo: 0};
+        catData.receita += subtotal;
+        catData.custo += custo;
+        catSim[cat] = catData;
+        ensureCategoriaConfig(cat);
+
+        linha.querySelector('.sub-cell').textContent = formatCurrency(subtotal);
+        linha.querySelector('.custo-cell').textContent = formatCurrency(custo);
+        linha.querySelector('.margem-cell').textContent = formatCurrency(margem);
+        linha.querySelector('.margemp-cell').textContent = `${margemPct.toFixed(1)}%`;
+    });
+
+    const receitaAtual = dados.desempenho.geral.receita;
+    const cpvAtual = dados.desempenho.geral.cpv;
+    const margemAtual = receitaAtual - cpvAtual;
+
+    const receitaTotal = receitaAtual + receitaSim;
+    const cpvTotal = cpvAtual + custoSim;
+    const margemTotal = receitaTotal - cpvTotal;
+
+    const verbaExtras = Array.from(document.querySelectorAll('.verba-extra')).reduce((acc, el) => acc + parseNumber(el.value), 0);
+    const totalVerbas = parseNumber(document.getElementById('inputVerbaGeral').value) + verbaExtras + Object.values(stateSim.verbasCategoria).reduce((acc, v) => acc + parseNumber(v), 0);
+
+    const margemLiquida = margemTotal + totalVerbas;
+
+    // Montar categorias combinando atuais + simulação
+    const mapaCategorias = {};
+    (dados.desempenho.categorias || []).forEach(cat => {
+        mapaCategorias[cat.categoria] = {
+            categoria: cat.categoria,
+            receitaAtual: cat.receita,
+            custoAtual: cat.custo,
+            receitaSim: 0,
+            custoSim: 0
+        };
+        ensureCategoriaConfig(cat.categoria);
+    });
+    Object.entries(catSim).forEach(([cat, info]) => {
+        const base = mapaCategorias[cat] || {categoria: cat, receitaAtual: 0, custoAtual: 0, receitaSim: 0, custoSim: 0};
+        base.receitaSim += info.receita;
+        base.custoSim += info.custo;
+        mapaCategorias[cat] = base;
+        ensureCategoriaConfig(cat);
+    });
+
+    // Render categorias
+    const corpoCat = document.getElementById('tbodyCategorias');
+    corpoCat.innerHTML = '';
+    if (!Object.keys(mapaCategorias).length) {
+        corpoCat.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Sem dados.</td></tr>';
+    } else {
+        Object.values(mapaCategorias).forEach(cat => {
+            const receita = cat.receitaAtual + cat.receitaSim;
+            const custo = cat.custoAtual + cat.custoSim;
+            const margem = receita - custo;
+            const buraco = margem < 0 ? margem : 0;
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${cat.categoria}</td>
+                <td>${formatCurrency(receita)}</td>
+                <td>${formatCurrency(custo)}</td>
+                <td class="${margem < 0 ? 'text-danger' : ''}">${formatCurrency(margem)}</td>
+                <td class="${buraco < 0 ? 'text-danger' : 'text-muted'}">${formatCurrency(buraco)}</td>
+            `;
+            corpoCat.appendChild(tr);
+        });
+    }
+
+    // Indicador final
+    const painel = document.getElementById('painelResultado');
+    const saldoEl = document.getElementById('valorSaldo');
+    const margemEl = document.getElementById('valorMargemTotal');
+    const verbaEl = document.getElementById('valorVerbasConsideradas');
+    const statusEl = painel.querySelector('.resultado-status');
+    const textoExplicacao = document.getElementById('textoExplicacao');
+
+    margemEl.textContent = formatCurrency(margemTotal);
+    verbaEl.textContent = formatCurrency(totalVerbas);
+    saldoEl.textContent = formatCurrency(margemLiquida);
+
+    let status = 'Atenção';
+    let statusClass = 'badge-warning';
+    if (margemLiquida < 0) {
+        status = 'Não vale a pena';
+        statusClass = 'badge-danger';
+    } else if (margemLiquida >= 0 && margemTotal >= 0) {
+        status = 'Vale a pena';
+        statusClass = 'badge-success';
+    }
+    statusEl.className = `resultado-status ${statusClass} text-white`;
+    statusEl.textContent = status;
+
+    const consumoVerba = totalVerbas > 0 ? Math.max(0, -margemTotal) / totalVerbas : (margemTotal < 0 ? 1 : 0);
+    const consumoPct = (consumoVerba * 100).toFixed(0);
+    let explicacao = `Margem líquida após verbas: ${formatCurrency(margemLiquida)}. `;
+    if (margemLiquida < 0) {
+        explicacao += `Falta ${formatCurrency(-margemLiquida)} para cobrir o desconto.`;
+    } else if (consumoVerba > 0) {
+        explicacao += `Consome cerca de ${consumoPct}% das verbas informadas.`;
+    } else {
+        explicacao += 'Verbas não são necessárias para este pedido.';
+    }
+    textoExplicacao.textContent = explicacao;
+}
+
+function carregarDados() {
+    fetch('/simulacao-pedido/dados')
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success) throw new Error(data.message || 'Erro ao carregar dados');
+            stateSim.dadosBase = data;
+            stateSim.produtos = data.produtos || [];
+            // Popular cards
+            document.getElementById('cardVerbas').textContent = formatCurrency(data.verbas.total || 0);
+            document.getElementById('cardReceita').textContent = formatCurrency(data.desempenho.geral.receita || 0);
+            document.getElementById('cardCPV').textContent = formatCurrency(data.desempenho.geral.cpv || 0);
+            document.getElementById('cardMargem').textContent = formatCurrency((data.desempenho.geral.receita || 0) - (data.desempenho.geral.cpv || 0));
+
+            // Verbas
+            document.getElementById('inputVerbaGeral').value = (data.verbas.total || 0).toFixed(2);
+            document.querySelector('.verba-extra[data-key="scann"]').value = (data.verbas.scann || 0).toFixed(2);
+            document.querySelector('.verba-extra[data-key="plano_negocios"]').value = (data.verbas.plano_negocios || 0).toFixed(2);
+            document.querySelector('.verba-extra[data-key="time_ambev"]').value = (data.verbas.time_ambev || 0).toFixed(2);
+            document.querySelector('.verba-extra[data-key="outras"]').value = (data.verbas.outras || 0).toFixed(2);
+
+            // Categorias existentes no período
+            stateSim.verbasCategoria = {};
+            (data.desempenho.categorias || []).forEach(cat => {
+                stateSim.verbasCategoria[cat.categoria] = 0;
+            });
+            renderVerbasCategoria();
+
+            // Listeners para inputs de verba
+            document.getElementById('inputVerbaGeral').addEventListener('input', calcularSimulacao);
+            document.querySelectorAll('.verba-extra').forEach(el => el.addEventListener('input', calcularSimulacao));
+            document.getElementById('btnResetVerbas').addEventListener('click', () => {
+                document.getElementById('inputVerbaGeral').value = (data.verbas.total || 0).toFixed(2);
+                document.querySelector('.verba-extra[data-key="scann"]').value = (data.verbas.scann || 0).toFixed(2);
+                document.querySelector('.verba-extra[data-key="plano_negocios"]').value = (data.verbas.plano_negocios || 0).toFixed(2);
+                document.querySelector('.verba-extra[data-key="time_ambev"]').value = (data.verbas.time_ambev || 0).toFixed(2);
+                document.querySelector('.verba-extra[data-key="outras"]').value = (data.verbas.outras || 0).toFixed(2);
+                stateSim.verbasCategoria = {};
+                (data.desempenho.categorias || []).forEach(cat => {
+                    stateSim.verbasCategoria[cat.categoria] = 0;
+                });
+                renderVerbasCategoria();
+                calcularSimulacao();
+            });
+
+            document.getElementById('btnAddLinha').addEventListener('click', () => adicionarLinha());
+
+            // Começar com uma linha vazia
+            adicionarLinha();
+            calcularSimulacao();
+        })
+        .catch(err => {
+            console.error(err);
+            alert('Erro ao carregar dados da simulação: ' + err.message);
+        });
+}
+
+document.addEventListener('DOMContentLoaded', carregarDados);
+</script>
+{% endblock %}

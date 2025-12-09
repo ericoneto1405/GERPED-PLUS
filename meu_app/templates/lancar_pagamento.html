@@ -4,321 +4,496 @@
     <meta charset="UTF-8">
     <title>Lançar Pagamento</title>
     <style>
+        :root {
+            --surface: #ffffff;
+            --surface-muted: #f7f9fc;
+            --border: #e2e8f0;
+            --text-primary: #1f2a37;
+            --text-secondary: #5d6d7e;
+            --accent: #2563eb;
+            --success-bg: #e9f8f1;
+            --danger-bg: #fdecea;
+        }
+
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f1f4f9;
-            padding: 40px;
+            font-family: "SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: #f2f5fb;
+            color: var(--text-primary);
+            margin: 0;
+            padding: 32px 16px 60px;
         }
 
-        h1 {
-            color: #2c3e50;
+        .page-shell {
+            max-width: 1100px;
+            margin: 0 auto;
         }
 
-        form {
-            background-color: #fff;
-            padding: 25px;
-            border-radius: 8px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-            max-width: 500px;
-        }
-
-        label {
-            display: block;
-            margin-top: 15px;
-            font-weight: bold;
-        }
-
-        input[type="number"],
-        input[type="text"] {
-            width: 100%;
-            padding: 10px;
-            margin-top: 5px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-
-        button {
-            margin-top: 20px;
-            padding: 10px 20px;
-            background-color: #2c3e50;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        button:hover {
-            background-color: #1a252f;
-        }
-
-        .voltar {
-            display: inline-block;
-            margin-top: 20px;
-            text-decoration: none;
-            color: #2c3e50;
-            font-weight: bold;
-        }
-
-        .voltar:hover {
-            color: #000;
-        }
-
-        ul {
-            background: #fff;
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 30px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-        }
-
-        li {
-            padding: 5px 0;
-        }
-        
-        /* NOVO: Estilos para área de OCR */
-        #ocr-status-principal {
-            background: #fff;
-            padding: 20px;
-            border-radius: 8px;
+        .page-header {
             margin-bottom: 20px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            border-left: 5px solid #3498db;
         }
-        
-        .ocr-loading {
+
+        .page-header h1 {
+            margin: 0;
+            font-size: 1.9rem;
+            color: var(--text-primary);
+        }
+
+        .page-header p {
+            margin: 8px 0 0;
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+
+        .flash-messages {
+            margin-bottom: 20px;
+        }
+
+        .flash-message {
             display: flex;
+            justify-content: space-between;
+            gap: 20px;
+            padding: 16px 18px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            box-shadow: 0px 8px 24px rgba(15, 23, 42, 0.07);
+        }
+
+        .flash-message strong {
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .flash-message button {
+            border: none;
+            background: transparent;
+            color: inherit;
+            cursor: pointer;
+            font-size: 1.1rem;
+        }
+
+        .flash-error {
+            border-color: #f5b7b1;
+            background: var(--danger-bg);
+        }
+
+        .flash-success {
+            border-color: #a3d8b0;
+            background: var(--success-bg);
+        }
+
+        .section-card {
+            background: var(--surface);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            padding: 20px 24px;
+            box-shadow: 0px 12px 30px rgba(15, 23, 42, 0.08);
+        }
+
+        .summary-card {
+            margin-bottom: 18px;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 16px;
+        }
+
+        .summary-item span {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .summary-item strong {
+            display: block;
+            margin-top: 6px;
+            font-size: 1.3rem;
+        }
+
+        .pill {
+            display: inline-flex;
             align-items: center;
-            gap: 15px;
-            padding: 15px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-radius: 8px;
-            font-weight: bold;
-            font-size: 1.1em;
-        }
-        
-        .ocr-spinner {
-            width: 24px;
-            height: 24px;
-            border: 3px solid rgba(255,255,255,0.3);
-            border-top-color: white;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        
-        .validation-box {
-            margin-top: 15px;
-            padding: 15px;
-            border-radius: 8px;
-            border: 2px solid;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 999px;
             font-weight: 600;
-        }
-        
-        .validation-success {
-            background: #d4edda;
-            border-color: #28a745;
-            color: #155724;
-        }
-        
-        .validation-warning {
-            background: #fff3cd;
-            border-color: #ffc107;
-            color: #856404;
-        }
-        
-        .validation-info {
-            background: #e7f3ff;
-            border-color: #2196F3;
-            color: #0c5460;
-        }
-        
-        /* Animação de pulse para alertas */
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.02); }
-        }
-        
-        .validation-warning {
-            animation: pulse 2s ease-in-out 3;
+            font-size: 0.85rem;
         }
 
-        /* Fila de comprovantes */
-        .recibo-queue {
-            margin-top: 25px;
-            background: #fff;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-            padding: 20px;
+        .pill.warning {
+            background: #fff4e5;
+            color: #b54f00;
         }
 
-        .recibo-queue h4 {
-            margin: 0 0 8px;
-            color: #2c3e50;
+        .pill.success {
+            background: #e7f7ef;
+            color: #0f8a4b;
+        }
+
+        .main-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 320px;
+            gap: 20px;
+        }
+
+        .form-card form {
             display: flex;
-            align-items: center;
-            gap: 8px;
+            flex-direction: column;
+            gap: 24px;
         }
 
-        .recibo-queue p {
-            margin: 0 0 16px;
-            color: #6c757d;
-            font-size: 0.9rem;
-        }
-
-        .fila-lista {
+        fieldset {
+            border: none;
+            padding: 0;
+            margin: 0;
             display: flex;
             flex-direction: column;
             gap: 12px;
         }
 
-        .fila-item {
-            border: 1px solid #e4e9f2;
+        fieldset legend {
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 4px;
+            color: var(--text-secondary);
+        }
+
+        label {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+        }
+
+        input[type="text"],
+        input[type="file"] {
+            width: 100%;
             border-radius: 10px;
-            padding: 12px 16px;
-            background: #f8f9fd;
+            border: 1px solid var(--border);
+            padding: 10px 12px;
+            font-size: 1rem;
+            color: var(--text-primary);
+            background: var(--surface-muted);
+        }
+
+        input[type="text"]:focus {
+            outline: 2px solid rgba(37, 99, 235, 0.3);
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .ghost-btn {
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-primary);
+            border-radius: 10px;
+            padding: 10px 14px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        button[type="submit"] {
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        #ocr-status-principal {
+            display: none;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: var(--surface-muted);
+            padding: 16px;
+        }
+
+        .recibo-queue {
+            margin-top: 10px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: var(--surface-muted);
+            padding: 16px;
+        }
+
+        .fila-lista {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 10px;
+        }
+
+        .fila-item {
+            border-radius: 12px;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            padding: 12px 14px;
+            background: #fff;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
         }
 
         .fila-item.processando {
-            border-color: #ffd166;
-            background: #fffaf1;
+            border-color: #f4c26b;
+            background: #fff8ec;
         }
 
         .fila-item.concluido {
-            border-color: #2ecc71;
-            background: #f1fff7;
+            border-color: #8fd19e;
+            background: #f1fff6;
         }
 
         .fila-item.erro {
-            border-color: #e74c3c;
-            background: #fff4f2;
+            border-color: #f5b7b1;
+            background: var(--danger-bg);
+        }
+
+        .fila-item.selecionado {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
         }
 
         .fila-header {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .fila-nome {
             font-weight: 600;
-            color: #2c3e50;
-        }
-
-        .fila-status {
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: #6c757d;
-        }
-
-        .fila-meta {
-            font-size: 0.85rem;
-            color: #6c757d;
         }
 
         .fila-actions {
             display: flex;
             gap: 8px;
-            flex-wrap: wrap;
         }
 
         .fila-actions button {
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: transparent;
+            padding: 6px 10px;
+            cursor: pointer;
+        }
+
+        .side-card h3 {
             margin-top: 0;
-            padding: 6px 12px;
-            border-radius: 6px;
-            font-size: 0.85rem;
         }
 
-        .fila-resumo {
-            font-size: 0.9rem;
-            color: #34495e;
+        .checklist {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 16px;
             display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
+            flex-direction: column;
+            gap: 10px;
         }
 
-        .fila-vazia {
-            text-align: center;
-            color: #95a5a6;
-            font-style: italic;
-            padding: 10px 0;
+        .checklist li {
+            background: var(--surface-muted);
+            border-radius: 10px;
+            padding: 10px 12px;
+            border: 1px dashed var(--border);
+            font-size: 0.95rem;
+        }
+
+        .history-list {
+            margin: 0;
+            padding-left: 18px;
+            max-height: 220px;
+            overflow-y: auto;
+        }
+
+        .history-empty {
+            color: var(--text-secondary);
+            margin: 0;
+        }
+
+        .form-card.error-state {
+            border: 1px solid #f1948a;
+            box-shadow: 0 0 0 3px rgba(241, 148, 138, 0.25);
+        }
+
+        @media (max-width: 960px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
-
-    <h1><i class="bi bi-credit-card icon-text"></i> Lançar Pagamento para Pedido #{{ pedido.id }}</h1>
-    
-    <div style="background: #fff; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.1);">
-        <p><strong>Cliente:</strong> {{ pedido.cliente.nome }}</p>
-        <p><strong>Total do Pedido:</strong> {{ total | currency_brl }}</p>
-        <p><strong>Total já Pago:</strong> {{ pago | currency_brl }}</p>
-        <p><strong>Saldo Restante:</strong> <span style="color: #e67e22; font-weight: bold;">{{ (saldo if saldo > 0 else 0) | currency_brl }}</span></p>
-    </div>
-    
-    <!-- NOVO: Área de status do OCR (VISÍVEL) -->
-    <div id="ocr-status-principal" style="display: none;"></div>
-
-    <form method="POST"
-          id="form-pagamento"
-          data-total="{{ total }}"
-          data-pago="{{ pago }}"
-          data-ocr-url="{{ url_for('financeiro.processar_recibo_ocr') }}"
-          enctype="multipart/form-data">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <label for="valor">Valor a Pagar:</label>
-        <input type="text" id="valor" name="valor" inputmode="decimal" step="0.01" required>
-
-        <label for="metodo_pagamento">Método de Pagamento:</label>
-        <input type="text" id="metodo_pagamento" name="metodo_pagamento" placeholder="ex: Pix, Dinheiro, Cartão" required>
-
-        <label for="observacoes">Observações (opcional):</label>
-        <input type="text" id="observacoes" name="observacoes" placeholder="Observações sobre o pagamento">
-
-        <label for="recibo"><i class="bi bi-file-earmark-text icon-text"></i> Recibos de Pagamento (opcional):</label>
-        <input type="file" id="recibo" name="recibo" multiple>
-        <small class="form-text text-muted">
-            <i class="bi bi-lightbulb icon-text"></i> Selecione vários comprovantes; processaremos cada um em sequência. Clique em "Usar este comprovante" para preencher o formulário.
-        </small>
-
-        <div class="recibo-queue" id="recibo-queue">
-            <h4><i class="bi bi-list-check icon-text"></i> Fila de comprovantes</h4>
-            <p>Enquanto o sistema processa cada arquivo, você pode acompanhar o status aqui.</p>
-            <div id="filaRecibosLista" class="fila-lista">
-                <div class="fila-vazia">Nenhum comprovante enfileirado.</div>
+    <div class="page-shell">
+        {% with messages = get_flashed_messages(with_categories=True) %}
+        {% if messages %}
+        <section class="flash-messages" aria-live="polite">
+            {% for category, message in messages %}
+            {% set normalized = category if category in ['error', 'success', 'info'] else 'info' %}
+            {% set title = 'Erro ao processar pagamento' if normalized == 'error' else ('Operação concluída' if normalized == 'success' else 'Aviso importante') %}
+            <div class="flash-message flash-{{ normalized }}">
+                <div>
+                    <strong>{{ title }}</strong>
+                    <span>{{ message }}</span>
+                </div>
+                <button type="button" class="flash-close" aria-label="Dispensar alerta">&times;</button>
             </div>
+            {% endfor %}
+        </section>
+        {% endif %}
+        {% endwith %}
+
+        <header class="page-header">
+            <h1>Lançar Pagamento para Pedido #{{ pedido.id }}</h1>
+            <p>Revise os dados extraídos automaticamente e registre o pagamento com segurança.</p>
+        </header>
+
+        <section class="section-card summary-card">
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <span>Cliente</span>
+                    <strong>{{ pedido.cliente.nome }}</strong>
+                </div>
+                <div class="summary-item">
+                    <span>Total do Pedido</span>
+                    <strong>{{ total | currency_brl }}</strong>
+                </div>
+                <div class="summary-item">
+                    <span>Total já Pago</span>
+                    <strong>{{ pago | currency_brl }}</strong>
+                </div>
+                {% set saldo_valor = saldo if saldo > 0 else 0 %}
+                <div class="summary-item">
+                    <span>Saldo Restante</span>
+                    <strong>{{ saldo_valor | currency_brl }}</strong>
+                    <span class="pill {{ 'warning' if saldo_valor > 0 else 'success' }}">
+                        {{ 'Pagamento pendente' if saldo_valor > 0 else 'Pedido quitado' }}
+                    </span>
+                </div>
+            </div>
+        </section>
+
+        <div class="main-layout">
+            <section class="section-card form-card">
+                <div id="ocr-status-principal"></div>
+
+                <form method="POST"
+                      id="form-pagamento"
+                      data-total="{{ total }}"
+                      data-pago="{{ pago }}"
+                      data-ocr-url="{{ url_for('financeiro.processar_recibo_ocr') }}"
+                      enctype="multipart/form-data">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    <fieldset>
+                        <legend>1. Informações do pagamento</legend>
+                        <label for="valor">Valor a pagar</label>
+                        <input type="text" id="valor" name="valor" inputmode="decimal" step="0.01" required>
+
+                        <label for="metodo_pagamento">Método</label>
+                        <input type="text" id="metodo_pagamento" name="metodo_pagamento" placeholder="ex: Pix, Dinheiro, Cartão" required>
+
+                        <label for="observacoes">Observações (opcional)</label>
+                        <input type="text" id="observacoes" name="observacoes" placeholder="Observações sobre o pagamento">
+                    </fieldset>
+
+                    <fieldset>
+                        <legend>2. Comprovante</legend>
+                        <label for="recibo">Enviar comprovante (o sistema lê os dados automaticamente)</label>
+                        <input type="file" id="recibo" name="recibo" multiple>
+                        <small style="color: var(--text-secondary);">
+                            Processamos cada arquivo em sequência. Assim que terminar, clique em <strong>“Usar este comprovante”</strong> no cartão correspondente para preencher o formulário com os dados reconhecidos.
+                        </small>
+
+                        <div class="recibo-queue" id="recibo-queue">
+                            <h4>Arquivos enviados</h4>
+                            <p style="margin: 0 0 8px; color: var(--text-secondary); font-size: 0.9rem;">
+                                Cada cartão abaixo representa um comprovante. Após o status “Processado”, confirme os dados clicando em <strong>“Usar este comprovante”</strong>.
+                            </p>
+                            <div id="filaRecibosLista" class="fila-lista">
+                                <div class="fila-vazia">Nenhum comprovante enfileirado.</div>
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <input type="hidden" name="id_transacao">
+                    <input type="hidden" name="data_comprovante" id="data_comprovante">
+                    <input type="hidden" name="banco_emitente" id="banco_emitente">
+                    <input type="hidden" name="agencia_recebedor" id="agencia_recebedor">
+                    <input type="hidden" name="conta_recebedor" id="conta_recebedor">
+                    <input type="hidden" name="chave_pix_recebedor" id="chave_pix_recebedor">
+
+                    <div class="form-actions">
+                        <a href="{{ url_for('financeiro.listar_financeiro') }}" class="ghost-btn">
+                            <i class="bi bi-arrow-left icon-text"></i> Voltar
+                        </a>
+                        <button type="submit">
+                            <i class="bi bi-save icon-text"></i> Confirmar pagamento
+                        </button>
+                    </div>
+                </form>
+            </section>
+
+            <aside class="section-card side-card">
+                <h3>Checklist rápido</h3>
+                <ul class="checklist">
+                    <li>Confirme se o valor reconhecido corresponde ao saldo.</li>
+                    <li>Verifique se o ID/Protocolo não foi usado em outro pedido.</li>
+                    <li>Para PIX, inclua sempre o comprovante para auditoria.</li>
+                    <li>Revise os dados bancários antes de confirmar.</li>
+                </ul>
+
+                <div>
+                    <h3>Histórico de pagamentos</h3>
+                    {% if pedido.pagamentos %}
+                        <ul class="history-list">
+                        {% for p in pedido.pagamentos %}
+                            <li>{{ p.data_pagamento.strftime('%d/%m/%Y %H:%M') }} - {{ p.valor | currency_brl }} - {{ p.metodo_pagamento }}{% if p.observacoes %} - {{ p.observacoes }}{% endif %}{% if p.caminho_recibo %} - <a href="{{ url_for('financeiro.ver_recibo', filename=p.caminho_recibo) }}" target="_blank">Ver Recibo</a>{% endif %}</li>
+                        {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="history-empty">Nenhum pagamento registrado ainda.</p>
+                    {% endif %}
+                </div>
+            </aside>
         </div>
+    </div>
 
-        <input type="hidden" name="id_transacao">
-        <input type="hidden" name="data_comprovante" id="data_comprovante">
-        <input type="hidden" name="banco_emitente" id="banco_emitente">
-        <input type="hidden" name="agencia_recebedor" id="agencia_recebedor">
-        <input type="hidden" name="conta_recebedor" id="conta_recebedor">
-        <input type="hidden" name="chave_pix_recebedor" id="chave_pix_recebedor">
+    <script>
+        (function() {
+            const flashContainer = document.querySelector('.flash-messages');
+            if (!flashContainer) return;
 
-        <button type="submit"><i class="bi bi-save icon-text"></i> Confirmar Pagamento</button>
-    </form>
+            flashContainer.setAttribute('tabindex', '-1');
+            flashContainer.querySelectorAll('.flash-close').forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    const parent = btn.closest('.flash-message');
+                    if (parent) parent.remove();
+                    if (!flashContainer.querySelector('.flash-message')) {
+                        flashContainer.remove();
+                    }
+                });
+            });
 
-    <h3><i class="bi bi-journal-text icon-text"></i> Histórico de Pagamentos</h3>
-    <ul>
-        {% for p in pedido.pagamentos %}
-            <li>{{ p.data_pagamento.strftime('%d/%m/%Y %H:%M') }} - {{ p.valor | currency_brl }} - {{ p.metodo_pagamento }}{% if p.observacoes %} - {{ p.observacoes }}{% endif %}{% if p.caminho_recibo %} - <a href="{{ url_for('financeiro.ver_recibo', filename=p.caminho_recibo) }}" target="_blank">Ver Recibo</a>{% endif %}</li>
-        {% else %}
-            <li>Nenhum pagamento registrado ainda.</li>
-        {% endfor %}
-    </ul>
+            flashContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            flashContainer.focus({ preventScroll: true });
 
-    <a href="{{ url_for('financeiro.listar_financeiro') }}" class="voltar"><i class="bi bi-arrow-left icon-text"></i> Voltar ao Financeiro</a>
-
+            const errorMessage = flashContainer.querySelector('.flash-message.flash-error');
+            if (errorMessage) {
+                const formCard = document.querySelector('.form-card');
+                if (formCard) {
+                    formCard.classList.add('error-state');
+                }
+                const valorInput = document.getElementById('valor');
+                if (valorInput) {
+                    setTimeout(() => valorInput.focus(), 400);
+                }
+            }
+        })();
+    </script>
     <script src="{{ url_for('static', filename='js/financeiro_pagamento.js') }}" nonce="{{ nonce }}" defer></script>
-    
 </body>
 </html>

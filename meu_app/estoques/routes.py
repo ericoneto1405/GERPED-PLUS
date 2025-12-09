@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app, session, jsonify
+from flask_login import current_user
 
 estoques_bp = Blueprint('estoques', __name__, url_prefix='/estoques')
 from .services import EstoqueService
@@ -143,6 +144,52 @@ def excluir_estoque(id):
         flash(mensagem, 'error')
     
     return redirect(url_for('estoques.listar_estoques'))
+
+
+@estoques_bp.route('/confirmar-inventario', methods=['POST'])
+@login_obrigatorio
+@permissao_necessaria('acesso_estoques')
+def confirmar_inventario():
+    """Confirma o inventário após validação de senha."""
+    payload = request.get_json(silent=True) or {}
+    senha = (payload.get('password') or '').strip()
+    estoque_ids = payload.get('estoque_ids') or []
+
+    if not senha:
+        return jsonify({'success': False, 'error': 'Senha obrigatória.'}), 400
+
+    if not current_user or not current_user.is_authenticated:
+        return jsonify({'success': False, 'error': 'Usuário não autenticado.'}), 401
+
+    if not current_user.check_senha(senha):
+        return jsonify({'success': False, 'error': 'Senha inválida.'}), 401
+
+    ids_registrados = [row.id for row in Estoque.query.with_entities(Estoque.id).all()]
+    total_registros = len(ids_registrados)
+
+    ids_enviados = set()
+    for raw_id in estoque_ids:
+        try:
+            ids_enviados.add(int(raw_id))
+        except (TypeError, ValueError):
+            continue
+
+    if total_registros > 0 and ids_enviados != set(ids_registrados):
+        return jsonify({
+            'success': False,
+            'error': 'Todos os itens do estoque devem ser confirmados antes de finalizar.'
+        }), 400
+
+    sucesso, mensagem, total = EstoqueService.confirmar_inventario(current_user.nome)
+    status_code = 200 if sucesso else 400
+    resposta = {
+        'success': sucesso,
+        'message': mensagem,
+        'total_itens': total
+    }
+    if not sucesso:
+        resposta['error'] = mensagem
+    return jsonify(resposta), status_code
 
 @estoques_bp.route('/historico/<int:produto_id>')
 @login_obrigatorio

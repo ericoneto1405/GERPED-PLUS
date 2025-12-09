@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+
+{% block title %}Corrigir Importação{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2><i class="bi bi-pencil-square icon-text"></i> Corrigir linhas com erro</h2>
+    <div class="header-buttons">
+        <a href="{{ url_for('pedidos.listar_pedidos') }}" class="btn-secondary"><i class="bi bi-arrow-left icon-text"></i> Voltar para pedidos</a>
+    </div>
+</div>
+
+{% set linhas = resultado.resultados or [] %}
+<div class="corrigir-container">
+    {% if not linhas %}
+        <p class="sem-erros">Nenhuma linha pendente para correção.</p>
+    {% else %}
+        <p class="descricao">
+            Ajuste os campos com problema e clique em <strong>Reprocessar linhas corrigidas</strong>.
+            Os erros atuais de cada linha aparecem na última coluna.
+        </p>
+        <form method="POST" class="form-corrigir">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="table-responsive">
+                <table class="corrigir-tabela">
+                    <thead>
+                        <tr>
+                            <th>Linha</th>
+                            <th>Nome Cliente *</th>
+                            <th>Nome Fantasia</th>
+                            <th>Nome Produto *</th>
+                            <th>Quantidade *</th>
+                            <th>Preço Venda *</th>
+                            <th>Data *</th>
+                            <th>Pedido ID *</th>
+                            <th>Erros detectados</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for erro in linhas %}
+                        {% set dados = erro.dados or {} %}
+                        <tr>
+                            <td>
+                                {{ erro.linha }}
+                                <input type="hidden" name="linha" value="{{ erro.linha }}">
+                            </td>
+                            <td>
+                                <input type="text" name="cliente_nome" value="{{ dados.get('cliente_nome','') }}" required>
+                            </td>
+                            <td>
+                                <input type="text" name="cliente_fantasia" value="{{ dados.get('cliente_fantasia','') }}">
+                            </td>
+                            <td>
+                                <input type="text" name="produto_nome" value="{{ dados.get('produto_nome','') }}" required>
+                            </td>
+                            <td>
+                                <input type="number" name="quantidade" value="{{ dados.get('quantidade','') }}" min="1" step="1" required>
+                            </td>
+                            <td>
+                                <input type="text" name="preco_venda" value="{{ dados.get('preco_venda','') }}" required placeholder="Ex.: 25,50">
+                            </td>
+                            <td>
+                                <input type="text" name="data" value="{{ dados.get('data','') }}" required placeholder="DD/MM/AAAA">
+                            </td>
+                            <td>
+                                <input type="number" name="pedido_id" value="{{ dados.get('pedido_id','') }}" min="1" step="1" required>
+                            </td>
+                            <td class="lista-erros">
+                                {% if erro.erros %}
+                                <ul>
+                                    {% for mensagem in erro.erros %}
+                                    <li>{{ mensagem }}</li>
+                                    {% endfor %}
+                                </ul>
+                                {% else %}
+                                <span class="text-muted">--</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="acoes">
+                <button type="submit" class="btn-primary"><i class="bi bi-arrow-repeat icon-text"></i> Reprocessar linhas corrigidas</button>
+            </div>
+        </form>
+    {% endif %}
+</div>
+
+<style>
+    .corrigir-container {
+        margin-top: 20px;
+    }
+    .descricao {
+        margin-bottom: 16px;
+        color: #374151;
+    }
+    .corrigir-tabela {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.95rem;
+    }
+    .corrigir-tabela th,
+    .corrigir-tabela td {
+        border: 1px solid #e5e7eb;
+        padding: 8px;
+        vertical-align: top;
+    }
+    .corrigir-tabela th {
+        background: #f3f4f6;
+        text-align: left;
+    }
+    .corrigir-tabela input[type="text"],
+    .corrigir-tabela input[type="number"] {
+        width: 100%;
+        border: 1px solid #d1d5db;
+        border-radius: 4px;
+        padding: 6px;
+        font-size: 0.9rem;
+    }
+    .lista-erros ul {
+        padding-left: 18px;
+        margin: 0;
+    }
+    .acoes {
+        margin-top: 15px;
+        text-align: right;
+    }
+    .sem-erros {
+        padding: 20px;
+        background: #fef3c7;
+        border: 1px solid #fcd34d;
+        border-radius: 8px;
+    }
+</style>
+{% endblock %}

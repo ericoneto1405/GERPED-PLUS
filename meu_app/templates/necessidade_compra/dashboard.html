@@ -1,358 +1,377 @@
 {% extends "base.html" %}
 
-{% block title %}Análise de Necessidade de Compra - Sistema GERPED{% endblock %}
+{% block title %}Análise de Compra{% endblock %}
 
 {% block content %}
-<!-- Tabela de Análise de Necessidade de Compra -->
-<div class="necessidade-compra-section mb-4">
-    <div class="section-header">
-        <h3><i class="bi bi-bar-chart icon-text"></i> Análise de Necessidade de Compra</h3>
-        <p style="color: #6c757d; font-size: 0.9rem; margin-top: 5px;">
-            Baseado nos pedidos liberados pelo Financeiro
-        </p>
-    </div>
-    
-    {% if necessidade_compra %}
-    <!-- Resumo Total -->
-    {% set total_valor_necessidade = necessidade_compra | sum(attribute='valor_total_necessidade') %}
-    {% if total_valor_necessidade > 0 %}
-    <div class="alert alert-warning necessidade-total-banner">
-        <strong><i class="bi bi-cash-stack icon-text"></i> Necessidade Total de Compra:</strong>
-        <span>
-            {{ "R$ {:,.2f}".format(total_valor_necessidade).replace(',', 'X').replace('.', ',').replace('X', '.') }}
+<div class="analise-compra-wrapper">
+    <div class="analise-header card">
+        <div>
+            <h2 class="mb-1">Análise de Compra</h2>
+            <p class="text-muted mb-0">Clientes x Pedidos liberados e resumo geral para suporte à tomada de decisão.</p>
+        </div>
+        <span class="badge bg-warning text-dark px-3 py-2">
+            Necessidade projetada: {{ total_necessidade }} unidades
         </span>
     </div>
-    {% endif %}
-    
-    <div class="table-toolbar mb-3">
-        <div class="input-group shadow-sm" style="max-width: 360px;">
-            <span class="input-group-text bg-white">
-                <i class="fas fa-search text-muted"></i>
-            </span>
-            <input type="search"
-                   id="filtroGlobal"
-                   class="form-control"
-                   placeholder="Buscar por produto, status, valores..." />
-        </div>
-        <small class="text-muted d-block mt-2">
-            Clique nos cabeçalhos para ordenar e use a busca para filtrar rapidamente.
-        </small>
-    </div>
 
-    <div class="table-responsive">
-        <table class="necessidade-table">
-            <thead>
-                <tr>
-                    <th data-column-index="0">PRODUTO</th>
-                    <th data-column-index="1">PEDIDOS<br>LIBERADOS</th>
-                    <th data-column-index="2">ESTOQUE</th>
-                    <th data-column-index="3">SALDO</th>
-                    <th data-column-index="4">NECESSIDADE<br>DE COMPRA</th>
-                    <th data-column-index="5">VALOR<br>UNITÁRIO</th>
-                    <th data-column-index="6">VALOR<br>TOTAL</th>
-                    <th data-column-index="7">STATUS</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for item in necessidade_compra %}
-                <tr class="{% if item.status == 'CRÍTICO' %}row-critico{% elif item.status == 'ZERADO' %}row-zerado{% else %}row-ok{% endif %}">
-                    <td style="text-align: left; font-weight: 600;">{{ item.produto_nome }}</td>
-                    <td>{{ item.quantidade_pedida }}</td>
-                    <td>{{ item.quantidade_estoque }}</td>
-                    <td class="{% if item.saldo < 0 %}text-danger{% elif item.saldo > 0 %}text-success{% else %}text-warning{% endif %}">
-                        {{ item.saldo }}
-                    </td>
-                    <td class="necessidade-cell">
-                        {% if item.necessidade_compra > 0 %}
-                            <span class="badge-compra">{{ item.necessidade_compra }} cxs.</span>
-                        {% else %}
-                            <span style="color: #28a745;">—</span>
-                        {% endif %}
-                    </td>
-                    <td style="text-align: right;">
-                        {{ "R$ {:,.2f}".format(item.valor_compra).replace(',', 'X').replace('.', ',').replace('X', '.') }}
-                    </td>
-                    <td style="text-align: right; font-weight: bold;">
-                        {% if item.valor_total_necessidade > 0 %}
-                            <span style="color: #dc3545;">
-                                {{ "R$ {:,.2f}".format(item.valor_total_necessidade).replace(',', 'X').replace('.', ',').replace('X', '.') }}
-                            </span>
-                        {% else %}
-                            <span style="color: #28a745;">—</span>
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if item.status == 'CRÍTICO' %}
-                            <span class="badge-critico"><i class="bi bi-exclamation-octagon icon-text"></i> CRÍTICO</span>
-                        {% elif item.status == 'ZERADO' %}
-                            <span class="badge-zerado"><i class="bi bi-exclamation-triangle icon-text"></i> ZERADO</span>
-                        {% else %}
-                            <span class="badge-ok"><i class="bi bi-check-circle-fill text-success icon-text"></i> SUFICIENTE</span>
-                        {% endif %}
-                    </td>
-                </tr>
+    <div class="analise-grid">
+        <section class="clientes-bloco" style="padding-right: 10px;">
+            <header class="bloco-header">
+                <div>
+                    <h3>Clientes e Pedidos</h3>
+                    <p class="text-muted mb-0">Rastreie o que já foi coletado e o que falta por cliente.</p>
+                </div>
+            </header>
+
+            {% if clientes_pedidos %}
+                {% for cliente in clientes_pedidos %}
+                <article class="cliente-card">
+                    <div class="cliente-card-header">
+                        <div>
+                            <h4>{{ cliente.cliente_nome }}</h4>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="cliente-table auto-fit-table">
+                            <colgroup>
+                                <col class="col-produto">
+                                <col class="col-pedido">
+                                <col class="col-coletado">
+                                <col class="col-pendente">
+                                <col class="col-paletes">
+                            </colgroup>
+                            <thead>
+                                <tr>
+                                    <th>Produto</th>
+                                    <th class="text-center">Pedido</th>
+                                    <th class="text-center">Coletado</th>
+                                    <th class="text-center">Pendente</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for produto in cliente.produtos %}
+                                <tr class="{% if produto.falta_coletar > 0 %}status-alerta{% else %}status-ok{% endif %}">
+                                    <td class="produto-nome">{{ produto.produto_nome }}</td>
+                                    <td class="text-center fw-semibold">{{ produto.quantidade }}</td>
+                                    <td class="text-center text-success fw-semibold">{{ produto.coletado }}</td>
+                                    <td class="text-center text-dark fw-bold">
+                                        {{ produto.falta_coletar }}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </article>
                 {% endfor %}
-            </tbody>
-        </table>
+            {% else %}
+                <div class="empty-state">
+                    <p>Nenhum pedido liberado pelo Financeiro até o momento.</p>
+                </div>
+            {% endif %}
+        </section>
+
+        <section class="resumo-bloco">
+            <header class="bloco-header">
+                <div>
+                    <h3>Resumo Consolidado</h3>
+                    <p class="text-muted mb-0">Pedidos totais confrontados com estoque e compras/retiradas.</p>
+                </div>
+            </header>
+
+            <div class="resumo-table-wrapper">
+                <table class="resumo-table auto-fit-table">
+                    <colgroup>
+                        <col class="col-produto">
+                        <col class="col-pedido">
+                        <col class="col-estoque">
+                        <col class="col-comprado">
+                        <col class="col-comprar">
+                    </colgroup>
+                    <thead>
+                        <tr>
+                            <th>Produto</th>
+                            <th>Pedidos</th>
+                            <th>Estoque</th>
+                            <th>Comprado</th>
+                            <th>Comprar</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in produtos_resumo %}
+                        <tr>
+                            <td class="produto-nome">{{ item.produto_nome }}</td>
+                            <td class="text-center fw-semibold">{{ item.pedidos }}</td>
+                            <td class="text-center text-info">{{ item.estoque }}</td>
+                            <td class="text-center text-success">{{ item.comprado }}</td>
+                            <td class="text-center text-dark fw-bold">
+                                {{ item.comprar }}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-4">Nenhum produto em acompanhamento.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+        </section>
     </div>
-    
-    {% else %}
-    <div style="padding: 30px; text-align: center; background: #f8f9fa; border-radius: 8px;">
-        <p style="color: #6c757d; margin: 0;">
-            ℹ Nenhum pedido com pagamento aprovado no momento.
-        </p>
-    </div>
-    {% endif %}
 </div>
 
 <style>
-    .necessidade-compra-section {
-        background: white;
-        padding: 25px;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+main.main-content {
+    padding-left: 15px;
+}
+
+.analise-compra-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.analise-header {
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+}
+
+.analise-metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+}
+
+.analise-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.9fr) minmax(0, 2.1fr);
+    gap: 20px;
+    align-items: start;
+}
+
+.clientes-bloco, .resumo-bloco {
+    background: #fff;
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 10px 25px rgba(15,23,42,0.08);
+}
+
+.bloco-header {
+    margin-bottom: 16px;
+}
+
+.cliente-card {
+    border: 1px solid #eef2f7;
+    border-radius: 12px;
+    margin-bottom: 18px;
+    padding: 16px;
+    background: #fdfefe;
+}
+
+.cliente-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.cliente-table, .resumo-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.cliente-table,
+.resumo-table {
+    border-collapse: separate;
+    border-spacing: 0;
+    table-layout: auto;
+}
+
+.cliente-table th,
+.cliente-table td,
+.resumo-table th,
+.resumo-table td {
+    padding: 6px 8px;
+    border: 1px solid #d7e3f7;
+}
+
+.cliente-table td:first-child,
+.resumo-table td:first-child {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.cliente-table th:first-child,
+.cliente-table td:first-child,
+.resumo-table th:first-child,
+.resumo-table td:first-child {
+    border-left-width: 2px;
+}
+
+.cliente-table th:last-child,
+.cliente-table td:last-child,
+.resumo-table th:last-child,
+.resumo-table td:last-child {
+    border-right-width: 2px;
+}
+
+.cliente-table tbody tr:first-child td,
+.resumo-table tbody tr:first-child td {
+    border-top-width: 2px;
+}
+
+.cliente-table tbody tr:last-child td,
+.resumo-table tbody tr:last-child td {
+    border-bottom-width: 2px;
+}
+
+.cliente-table thead th, .resumo-table thead th {
+    background: #f8fafc;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.04em;
+    color: #64748b;
+}
+
+.produto-nome {
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.status-alerta {
+    background: #fff7ed;
+}
+
+.status-ok {
+    background: #f8fffb;
+}
+
+
+.resumo-table-wrapper {
+    max-height: 75vh;
+    overflow: auto;
+}
+
+.empty-state {
+    background: #f8fafc;
+    padding: 32px;
+    text-align: center;
+    border-radius: 12px;
+    color: #6c757d;
+}
+
+.resizable-header {
+    position: relative;
+    padding-right: 14px;
+}
+
+.column-resizer {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 6px;
+    height: 100%;
+    cursor: col-resize;
+    user-select: none;
+}
+
+@media (max-width: 1200px) {
+    .analise-grid {
+        grid-template-columns: 1fr;
     }
-    
-    .table-toolbar {
-        display: flex;
+}
+
+@media (max-width: 768px) {
+    .analise-header {
         flex-direction: column;
-        gap: 4px;
+        gap: 12px;
     }
-
-    .necessidade-total-banner {
-        display: inline-flex !important;
-        align-items: center;
-        gap: 8px;
-        font-size: 1rem;
-        font-weight: 600;
-        color: #dc3545;
-        padding: 10px 16px !important;
-        border-left: 4px solid #dc3545;
-        width: auto;
-        white-space: nowrap;
-    }
-
-    .section-header h3 {
-        color: #2c3e50;
-        margin: 0 0 5px 0;
-        font-size: 1.5rem;
-    }
-    
-    .necessidade-table {
-        width: 100%;
-        border-collapse: collapse;
-        background: #fff;
-        border-radius: 8px;
-        overflow: hidden;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    
-    .necessidade-table thead {
-        background: #f8f9fa;
-    }
-    
-    .necessidade-table th {
-        padding: 12px 16px;
-        text-align: center;
-        font-weight: 600;
-        color: #495057;
-        border-bottom: 2px solid #dee2e6;
-        font-size: 0.9rem;
-    }
-    .necessidade-table th[data-column-index] {
-        cursor: pointer;
-        user-select: none;
-        position: relative;
-    }
-    .necessidade-table th[data-column-index] .sort-indicator {
-        font-size: 0.7rem;
-        margin-left: 6px;
-        color: #adb5bd;
-    }
-    .necessidade-table th.sorted-asc,
-    .necessidade-table th.sorted-desc {
-        color: #0d6efd;
-    }
-    
-    .necessidade-table td {
-        padding: 12px 16px;
-        border-bottom: 1px solid #f1f3f4;
-        text-align: center;
-        font-size: 0.9rem;
-    }
-    
-    .necessidade-table tbody tr:hover {
-        background-color: #f8f9fa;
-    }
-    
-    .row-critico {
-        background-color: #fff5f5 !important;
-    }
-    
-    .row-critico:hover {
-        background-color: #fed7d7 !important;
-    }
-    
-    .row-zerado {
-        background-color: #fffbeb !important;
-    }
-    
-    .row-zerado:hover {
-        background-color: #fef3c7 !important;
-    }
-    
-    .row-ok {
-        background-color: #f0fff4 !important;
-    }
-    
-    .row-ok:hover {
-        background-color: #c6f6d5 !important;
-    }
-    
-    .text-danger {
-        color: #dc3545;
-        font-weight: bold;
-    }
-    
-    .text-success {
-        color: #28a745;
-        font-weight: bold;
-    }
-    
-    .text-warning {
-        color: #ffc107;
-        font-weight: bold;
-    }
-    
-    .badge-compra {
-        background-color: #dc3545;
-        color: white;
-        padding: 6px 12px;
-        border-radius: 6px;
-        font-weight: 600;
-        font-size: 0.9rem;
-    }
-    
-    .badge-critico {
-        background-color: #dc3545;
-        color: white;
-        padding: 6px 12px;
-        border-radius: 6px;
-        font-weight: 600;
-        font-size: 0.85rem;
-    }
-    
-    .badge-zerado {
-        background-color: #ffc107;
-        color: #000;
-        padding: 6px 12px;
-        border-radius: 6px;
-        font-weight: 600;
-        font-size: 0.85rem;
-    }
-    
-    .badge-ok {
-        background-color: #28a745;
-        color: white;
-        padding: 6px 12px;
-        border-radius: 6px;
-        font-weight: 600;
-        font-size: 0.85rem;
-    }
-    
-    .necessidade-cell {
-        text-align: center;
-    }
-    
-    @media (max-width: 768px) {
-        .necessidade-table {
-            font-size: 0.8rem;
-        }
-        
-        .necessidade-table th,
-        .necessidade-table td {
-            padding: 8px 12px;
-        }
-    }
+}
 </style>
 
 <script nonce="{{ nonce }}">
-document.addEventListener('DOMContentLoaded', () => {
-    const tabela = document.querySelector('.necessidade-table');
-    if (!tabela) {
-        return;
-    }
-    const tbody = tabela.querySelector('tbody');
-    const headers = tabela.querySelectorAll('th[data-column-index]');
-    let currentSort = { index: null, direction: 'asc' };
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.auto-fit-table').forEach(function (table) {
+        const columns = table.querySelectorAll('colgroup col');
+        const headers = table.querySelectorAll('thead th');
 
-    const parseCellValue = (cell) => {
-        const text = cell.textContent.trim()
-            .replace(/R\$\s?/i, '')
-            .replace(/\./g, '')
-            .replace(',', '.');
-        const number = parseFloat(text);
-        if (!Number.isNaN(number)) {
-            return number;
-        }
-        return cell.textContent.trim().toLowerCase();
-    };
+        headers.forEach(function (header, index) {
+            header.classList.add('resizable-header');
+            header.title = 'Duplo clique para AutoFit. Arraste para ajustar manualmente.';
 
-    const applySortIndicators = () => {
-        headers.forEach((header) => {
-            header.classList.remove('sorted-asc', 'sorted-desc');
-            const indicator = header.querySelector('.sort-indicator');
-            if (indicator) {
-                indicator.innerHTML = '';
-            }
-        });
-        const target = headers[currentSort.index];
-        if (!target) return;
-        target.classList.add(currentSort.direction === 'asc' ? 'sorted-asc' : 'sorted-desc');
-        let indicator = target.querySelector('.sort-indicator');
-        if (!indicator) {
-            indicator = document.createElement('span');
-            indicator.className = 'sort-indicator';
-            target.appendChild(indicator);
-        }
-        indicator.innerHTML = currentSort.direction === 'asc'
-            ? '<i class="bi bi-caret-up-fill"></i>'
-            : '<i class="bi bi-caret-down-fill"></i>';
-    };
+            const handle = document.createElement('span');
+            handle.className = 'column-resizer';
+            header.appendChild(handle);
 
-    headers.forEach((header, index) => {
-        header.addEventListener('click', () => {
-            const direction = (currentSort.index === index && currentSort.direction === 'asc') ? 'desc' : 'asc';
-            currentSort = { index, direction };
-
-            const rows = Array.from(tbody.querySelectorAll('tr'));
-            rows.sort((rowA, rowB) => {
-                const a = parseCellValue(rowA.children[index]);
-                const b = parseCellValue(rowB.children[index]);
-                if (typeof a === 'number' && typeof b === 'number') {
-                    return direction === 'asc' ? a - b : b - a;
-                }
-                return direction === 'asc'
-                    ? String(a).localeCompare(String(b))
-                    : String(b).localeCompare(String(a));
+            handle.addEventListener('mousedown', function (event) {
+                startManualResize(event, table, columns, index);
             });
 
-            rows.forEach((row) => tbody.appendChild(row));
-            applySortIndicators();
+            header.addEventListener('dblclick', function () {
+                autoFitColumn(table, columns, index);
+            });
         });
     });
-
-    const filtroGlobal = document.getElementById('filtroGlobal');
-    if (filtroGlobal) {
-        filtroGlobal.addEventListener('input', (event) => {
-            const termo = event.target.value.trim().toLowerCase();
-            const rows = tbody.querySelectorAll('tr');
-            rows.forEach((row) => {
-                const texto = row.textContent.toLowerCase();
-                row.style.display = texto.includes(termo) ? '' : 'none';
-            });
-        });
-    }
 });
+
+function startManualResize(event, table, columns, columnIndex) {
+    event.preventDefault();
+    const startX = event.pageX;
+    const header = event.target.parentElement;
+    const startWidth = header.offsetWidth;
+
+    function onMouseMove(moveEvent) {
+        const delta = moveEvent.pageX - startX;
+        const newWidth = Math.max(60, startWidth + delta);
+        applyColumnWidth(table, columns, columnIndex, newWidth);
+    }
+
+    function onMouseUp() {
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+    }
+
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+}
+
+function autoFitColumn(table, columns, columnIndex) {
+    let maxWidth = 0;
+    table.querySelectorAll('tr').forEach(function (row) {
+        const cell = row.children[columnIndex];
+        if (!cell) {
+            return;
+        }
+        const cellWidth = cell.scrollWidth + 16;
+        if (cellWidth > maxWidth) {
+            maxWidth = cellWidth;
+        }
+    });
+    applyColumnWidth(table, columns, columnIndex, maxWidth);
+}
+
+function applyColumnWidth(table, columns, columnIndex, width) {
+    if (columns.length && columns[columnIndex]) {
+        columns[columnIndex].style.width = width + 'px';
+    }
+
+    table.querySelectorAll('thead th')[columnIndex].style.width = width + 'px';
+    table.querySelectorAll('tbody tr').forEach(function (row) {
+        const cell = row.children[columnIndex];
+        if (cell) {
+            cell.style.width = width + 'px';
+        }
+    });
+}
 </script>
 {% endblock %}

@@ -63,74 +63,9 @@ def _register_rollout_event(event_type: str, descricao: str, extras: Optional[Di
 
 def _rollout_allows_access() -> Tuple[bool, Optional[Tuple[Any, int, Dict[str, str]]]]:
     """
-    Controla o acesso enquanto o go-live estiver restrito a um grupo interno.
-    Retorna (permitido, (response_body, status_code, headers_dict)).
+    Controle de rollout desativado (acesso sempre permitido).
     """
-    rollout_cfg = current_app.config.get('ROLLOUT_CONTROL') or {}
-    if not rollout_cfg.get('enabled'):
-        return True, None
-
-    start_at = rollout_cfg.get('start_at')
-    internal_days = rollout_cfg.get('internal_days', 7)
-
-    # Se não houver data configurada, utiliza o primeiro acesso como marco inicial.
-    if start_at is None:
-        start_at = datetime.now(timezone.utc)
-        rollout_cfg['start_at'] = start_at
-        rollout_cfg['start_logged'] = False
-
-    if not rollout_cfg.get('start_logged'):
-        _register_rollout_event(
-            'rollout_iniciado',
-            f"A liberação interna começou em {start_at.strftime('%d/%m/%Y %H:%M')}",
-        )
-        rollout_cfg['start_logged'] = True
-
-    # Desativa controle após janela interna expirar
-    if internal_days is not None and internal_days >= 0:
-        janela_final = start_at + timedelta(days=internal_days)
-        if datetime.now(timezone.utc) >= janela_final:
-            rollout_cfg['enabled'] = False
-            current_app.logger.info("Janela de rollout interno expirou; acesso público liberado automaticamente.")
-            if not rollout_cfg.get('end_logged'):
-                _register_rollout_event(
-                    'rollout_concluido',
-                    'Período interno finalizado. Todos os usuários podem acessar normalmente.',
-                    {'start_at': start_at.isoformat(), 'internal_days': internal_days}
-                )
-                rollout_cfg['end_logged'] = True
-            return True, None
-
-    usuario_nome = (session.get('usuario_nome') or '').lower()
-    usuario_tipo = (session.get('usuario_tipo') or '').lower()
-
-    allowed_roles = {role.lower() for role in rollout_cfg.get('allowed_roles', [])}
-    allowed_users = {user.lower() for user in rollout_cfg.get('allowed_users', [])}
-
-    if usuario_tipo in allowed_roles or usuario_nome in allowed_users:
-        return True, None
-
-    mensagem = rollout_cfg.get(
-        'blocked_message',
-        'Liberaremos o acesso para todos assim que a implantação terminar.'
-    )
-
-    current_app.logger.warning(
-        "Acesso bloqueado durante rollout: usuário=%s, role=%s, rota=%s",
-        session.get('usuario_nome', 'desconhecido'),
-        session.get('usuario_tipo', 'desconhecido'),
-        request.path,
-    )
-
-    payload = {
-        'error': True,
-        'message': mensagem,
-        'type': 'RolloutRestrictedAccess',
-        'timestamp': datetime.now(timezone.utc).isoformat(),
-    }
-
-    body = jsonify(payload)
-    return False, (body, 403, {'Retry-After': '3600'})
+    return True, None
 
 
 def login_obrigatorio(f):

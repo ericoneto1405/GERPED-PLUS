@@ -2,7 +2,7 @@
 Serviços para o módulo de produtos
 Contém toda a lógica de negócio separada das rotas
 """
-from ..models import db, Produto, MovimentacaoEstoque, Estoque
+from ..models import db, Produto, MovimentacaoEstoque, Estoque, utcnow
 from flask import current_app
 import pandas as pd
 from io import BytesIO
@@ -16,6 +16,34 @@ class ProdutoService:
     def __init__(self):
         """Inicializa o serviço com seu repository"""
         self.repository = ProdutoRepository()
+
+    @staticmethod
+    def normalizar_categoria(categoria: Optional[str]) -> str:
+        """Normaliza categoria para maiúsculas e mapeia aliases internos."""
+        if not categoria:
+            return 'OUTROS'
+        cat = str(categoria).strip().upper()
+        if not cat:
+            return 'OUTROS'
+        aliases = {
+            'CERVEJA': 'CERVEJAS',
+            'CERVEJA PREMIUM': 'CERVEJAS PREMIUM',
+            'CERVEJAS PREMIUM': 'CERVEJAS PREMIUM',
+            'CERVEJA OUTROS': 'CERVEJA OUTROS',
+            'CERVEJAS': 'CERVEJAS',
+            'HIGH END': 'HIGH END',
+            'NAB': 'NAB OUTROS',
+            'NAB OUTROS': 'NAB OUTROS',
+            'NAB/OUTROS': 'NAB OUTROS',
+            'NÃO ALCOÓLICOS': 'NÃO ALCOÓLICOS',
+            'NAO ALCOÓLICOS': 'NÃO ALCOÓLICOS',
+            'NAO ALCOOLICOS': 'NÃO ALCOÓLICOS',
+            'NÃO ALCOOLICOS': 'NÃO ALCOÓLICOS',
+            'REFRI ZERO + SINGLE': 'REFRI ZERO + SINGLE',
+            'REFRI ZERO E SINGLE': 'REFRI ZERO + SINGLE',
+            'OUTROS': 'OUTROS',
+        }
+        return aliases.get(cat, 'OUTROS')
     
     def criar_produto(self, nome: str, categoria: str = 'OUTROS', codigo_interno: Optional[str] = None, ean: Optional[str] = None) -> Tuple[bool, str, Optional[Produto]]:
         """
@@ -35,20 +63,30 @@ class ProdutoService:
             if not nome or not nome.strip():
                 return False, "Nome do produto é obrigatório", None
             
-            # Verificar se já existe produto com mesmo nome (usando repository)
-            if self.repository.verificar_nome_existe(nome.strip()):
-                return False, f"Já existe um produto com o nome '{nome}'", None
-            
             # Verificar se já existe produto com mesmo código interno
             if codigo_interno and codigo_interno.strip():
                 produto_existente = self.repository.buscar_por_codigo(codigo_interno.strip())
                 if produto_existente:
-                    return False, f"Já existe um produto com o código interno '{codigo_interno}'", None
+                    produto_existente.nome = nome.strip()
+                    produto_existente.categoria = self.normalizar_categoria(categoria)
+                    produto_existente.ean = ean.strip() if ean else None
+                    produto_existente.codigo_interno = codigo_interno.strip()
+                    self.repository.atualizar(produto_existente)
+                    current_app.logger.info(
+                        "Produto atualizado via código interno existente: %s (ID: %s)",
+                        produto_existente.nome,
+                        produto_existente.id,
+                    )
+                    return True, "Produto atualizado a partir do código interno", produto_existente
+            
+            # Verificar se já existe produto com mesmo nome (usando repository)
+            if self.repository.verificar_nome_existe(nome.strip()):
+                return False, f"Já existe um produto com o nome '{nome}'", None
             
             # Criar produto
             novo_produto = Produto(
                 nome=nome.strip(),
-                categoria=categoria.strip() if categoria else 'OUTROS',
+                categoria=self.normalizar_categoria(categoria),
                 codigo_interno=codigo_interno.strip() if codigo_interno else None,
                 ean=ean.strip() if ean else None
             )
@@ -100,7 +138,7 @@ class ProdutoService:
             
             # Atualizar produto
             produto.nome = nome.strip()
-            produto.categoria = categoria.strip() if categoria else 'OUTROS'
+            produto.categoria = self.normalizar_categoria(categoria)
             produto.codigo_interno = codigo_interno.strip() if codigo_interno else None
             produto.ean = ean.strip() if ean else None
             
@@ -176,6 +214,7 @@ class ProdutoService:
             
             preco_anterior = produto.preco_medio_compra
             produto.preco_medio_compra = preco_medio
+            produto.preco_atualizado_em = utcnow()
             db.session.commit()
             
             current_app.logger.info(f"Preço atualizado para produto {produto.nome}: R$ {preco_anterior} -> R$ {preco_medio}")
@@ -272,7 +311,13 @@ class ImportacaoService:
             
             current_app.logger.info(f"Importação de produtos: {produtos_importados} importados, {len(produtos_duplicados)} duplicados")
             
-            return True, f"Importação concluída. {produtos_importados} produtos importados.", dados_resultado
+            mensagem = f"Importação concluída: {produtos_importados} produto(s) criado(s)"
+            if produtos_duplicados:
+                mensagem += f", {len(produtos_duplicados)} duplicado(s) ignorado(s)"
+            if produtos_invalidos:
+                mensagem += f", {len(produtos_invalidos)} linha(s) com erro"
+            
+            return True, mensagem, dados_resultado
             
         except Exception as e:
             db.session.rollback()
@@ -321,6 +366,7 @@ class ImportacaoService:
                     produto = Produto.query.filter_by(codigo_interno=codigo_interno).first()
                     if produto:
                         produto.preco_medio_compra = preco_medio
+                        produto.preco_atualizado_em = utcnow()
                         produtos_atualizados += 1
                     else:
                         produtos_nao_encontrados.append({
@@ -452,24 +498,43 @@ class ImportacaoServiceSeguro:
             produtos_existentes = set()
             codigos_existentes = set()
             eans_existentes = set()
+            mapa_produtos_nome: Dict[str, Produto] = {}
+            mapa_produtos_codigo: Dict[str, Produto] = {}
+            mapa_produtos_ean: Dict[str, Produto] = {}
             
             for produto in Produto.query.all():
-                produtos_existentes.add(produto.nome.lower().strip())
+                nome_key = produto.nome.lower().strip()
+                produtos_existentes.add(nome_key)
+                mapa_produtos_nome[nome_key] = produto
+                
                 if produto.codigo_interno:
-                    codigos_existentes.add(produto.codigo_interno.strip())
+                    codigo_key = produto.codigo_interno.strip()
+                    codigos_existentes.add(codigo_key)
+                    mapa_produtos_codigo[codigo_key] = produto
                 if produto.ean:
-                    eans_existentes.add(produto.ean.strip())
+                    ean_key = produto.ean.strip()
+                    eans_existentes.add(ean_key)
+                    mapa_produtos_ean[ean_key] = produto
             
             # Processar produtos
             produtos_criados = 0
             produtos_duplicados = []
             erros = []
+            produtos_atualizados = []
+            categorias_alteradas = []
+            novos_nomes = set()
+            novos_codigos = set()
+            novos_eans = set()
             produtos_para_criar = []
             
             for index, row in df.iterrows():
                 try:
                     nome = str(row['NOME']).strip()
-                    categoria = str(row['CATEGORIA']).strip().upper()
+                    raw_categoria = row.get('CATEGORIA')
+                    if raw_categoria is None or (isinstance(raw_categoria, float) and pd.isna(raw_categoria)):
+                        categoria = None
+                    else:
+                        categoria = ProdutoService.normalizar_categoria(str(raw_categoria))
                     codigo_interno = str(row.get('CÓDIGO INTERNO', '')).strip() if pd.notna(row.get('CÓDIGO INTERNO')) else None
                     ean = str(row.get('EAN', '')).strip() if pd.notna(row.get('EAN')) else None
                     
@@ -478,9 +543,67 @@ class ImportacaoServiceSeguro:
                         erros.append(f"Linha {index + 2}: Nome do produto é obrigatório")
                         continue
                     
-                    # Verificar duplicatas usando sets em memória (muito mais rápido)
                     nome_lower = nome.lower().strip()
-                    if nome_lower in produtos_existentes:
+                    
+                    # Verificar se produto já existe (prioridade: código interno, nome, EAN)
+                    produto_existente = None
+                    motivo_atualizacao = None
+                    
+                    if codigo_interno and codigo_interno in mapa_produtos_codigo:
+                        produto_existente = mapa_produtos_codigo[codigo_interno]
+                        motivo_atualizacao = 'Código interno'
+                    elif nome_lower in mapa_produtos_nome:
+                        produto_existente = mapa_produtos_nome[nome_lower]
+                        motivo_atualizacao = 'Nome'
+                    elif ean and ean in mapa_produtos_ean:
+                        produto_existente = mapa_produtos_ean[ean]
+                        motivo_atualizacao = 'EAN'
+                    
+                    if produto_existente:
+                        categoria_anterior = produto_existente.categoria or 'OUTROS'
+                        produto_existente.nome = nome
+                        if categoria:
+                            current_app.logger.debug(
+                                "Categoria atualizada: %s (linha %s) -> %s",
+                                produto_existente.nome,
+                                index + 2,
+                                categoria,
+                            )
+                            nova_categoria = ProdutoService.normalizar_categoria(categoria)
+                            produto_existente.categoria = nova_categoria
+                            if nova_categoria != categoria_anterior:
+                                categorias_alteradas.append({
+                                    'linha': index + 2,
+                                    'nome': nome,
+                                    'de': categoria_anterior,
+                                    'para': nova_categoria
+                                })
+                        produto_existente.codigo_interno = codigo_interno if codigo_interno else produto_existente.codigo_interno
+                        produto_existente.ean = ean if ean else produto_existente.ean
+                        
+                        produtos_atualizados.append({
+                            'linha': index + 2,
+                            'nome': nome,
+                            'codigo_interno': codigo_interno,
+                            'motivo': f'Atualizado via {motivo_atualizacao}',
+                            'categoria_de': categoria_anterior,
+                            'categoria_para': produto_existente.categoria
+                        })
+                        
+                        mapa_produtos_nome[nome_lower] = produto_existente
+                        produtos_existentes.add(nome_lower)
+                        if produto_existente.codigo_interno:
+                            codigo_chave = produto_existente.codigo_interno.strip()
+                            mapa_produtos_codigo[codigo_chave] = produto_existente
+                            codigos_existentes.add(codigo_chave)
+                        if produto_existente.ean:
+                            ean_chave = produto_existente.ean.strip()
+                            mapa_produtos_ean[ean_chave] = produto_existente
+                            eans_existentes.add(ean_chave)
+                        continue
+                    
+                    # Verificar duplicatas dentro da própria planilha
+                    if nome_lower in produtos_existentes or nome_lower in novos_nomes:
                         produtos_duplicados.append({
                             'linha': index + 2,
                             'nome': nome,
@@ -489,7 +612,7 @@ class ImportacaoServiceSeguro:
                         continue
                     
                     # Verificar código interno duplicado
-                    if codigo_interno and codigo_interno in codigos_existentes:
+                    if codigo_interno and (codigo_interno in codigos_existentes or codigo_interno in novos_codigos):
                         produtos_duplicados.append({
                             'linha': index + 2,
                             'nome': nome,
@@ -498,7 +621,7 @@ class ImportacaoServiceSeguro:
                         continue
                     
                     # Verificar EAN duplicado
-                    if ean and ean in eans_existentes:
+                    if ean and (ean in eans_existentes or ean in novos_eans):
                         produtos_duplicados.append({
                             'linha': index + 2,
                             'nome': nome,
@@ -509,17 +632,20 @@ class ImportacaoServiceSeguro:
                     # Adicionar à lista de produtos para criar
                     produtos_para_criar.append({
                         'nome': nome,
-                        'categoria': categoria,
+                        'categoria': ProdutoService.normalizar_categoria(categoria),
                         'codigo_interno': codigo_interno,
                         'ean': ean
                     })
                     
                     # Atualizar sets para evitar duplicatas dentro da mesma importação
                     produtos_existentes.add(nome_lower)
+                    novos_nomes.add(nome_lower)
                     if codigo_interno:
                         codigos_existentes.add(codigo_interno)
+                        novos_codigos.add(codigo_interno)
                     if ean:
                         eans_existentes.add(ean)
+                        novos_eans.add(ean)
                     
                 except Exception as e:
                     erros.append(f"Linha {index + 2}: Erro ao processar - {str(e)}")
@@ -550,6 +676,15 @@ class ImportacaoServiceSeguro:
                             db.session.rollback()
                             erros.append(f"Erro ao criar produto {produto_data['nome']}: {str(e2)}")
             
+            # Se houve apenas atualizações (sem novos produtos), garantir commit
+            if produtos_atualizados and not produtos_para_criar:
+                try:
+                    db.session.commit()
+                except Exception as e:
+                    db.session.rollback()
+                    current_app.logger.error(f"Erro ao salvar atualizações de produtos: {str(e)}")
+                    erros.append(f"Erro ao atualizar produtos existentes: {str(e)}")
+            
             # Limpar arquivo temporário
             try:
                 os.remove(file_path)
@@ -559,12 +694,17 @@ class ImportacaoServiceSeguro:
             # Preparar resultado
             dados = {
                 'produtos_criados': produtos_criados,
+                'produtos_atualizados': produtos_atualizados,
                 'produtos_duplicados': produtos_duplicados,
-                'erros': erros
+                'erros': erros,
+                'categorias_alteradas': categorias_alteradas
             }
             
-            if produtos_criados > 0:
+            total_processados = produtos_criados + len(produtos_atualizados)
+            if total_processados > 0:
                 mensagem = f"Importação concluída: {produtos_criados} produto(s) criado(s)"
+                if produtos_atualizados:
+                    mensagem += f", {len(produtos_atualizados)} atualizado(s)"
                 if produtos_duplicados:
                     mensagem += f", {len(produtos_duplicados)} duplicado(s) ignorado(s)"
                 if erros:

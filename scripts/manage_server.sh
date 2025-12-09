@@ -20,8 +20,6 @@ set -euo pipefail
 PORT=5004
 PID_FILE="/tmp/flask_server.pid" # Usar /tmp para evitar poluir o projeto
 LOG_FILE="instance/logs/server.log"
-# Usar o python3 do ambiente virtual, se disponível, ou do PATH
-PYTHON_CMD="${VIRTUAL_ENV:-./venv}/bin/python3"
 RUN_SCRIPT="run.py"
 
 # Cores
@@ -30,6 +28,18 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
+
+# Resolve o binário do Python a ser usado
+if [ -n "${VIRTUAL_ENV:-}" ] && [ -x "$VIRTUAL_ENV/bin/python3" ]; then
+    PYTHON_CMD="$VIRTUAL_ENV/bin/python3"
+elif [ -x "./venv/bin/python3" ]; then
+    PYTHON_CMD="./venv/bin/python3"
+elif command -v python3 >/dev/null 2>&1; then
+    PYTHON_CMD="$(command -v python3)"
+else
+    echo -e "${RED}❌ Python3 não encontrado. Crie o ambiente com 'python3 -m venv venv'.${NC}"
+    exit 1
+fi
 
 # Utilitário para limpar PID inválido
 cleanup_stale_pid() {

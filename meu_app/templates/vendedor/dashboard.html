@@ -81,7 +81,7 @@
                 </div>
                 <div class="ranking-list">
                     {% for cliente in ranking_faturamento %}
-                    <div class="ranking-item" onclick="abrirModalCliente({{ cliente.id }}, '{{ cliente.nome|escapejs }}')">
+                    <div class="ranking-item" data-cliente-id="{{ cliente.id }}" data-cliente-nome="{{ cliente.nome|e }}">
                         <span class="ranking-pos">{{ loop.index }}º</span>
                         <span class="ranking-nome">{{ cliente.nome }}</span>
                         <span class="ranking-valor">R$ {{ "%.2f"|format(cliente.valor_total) }}</span>
@@ -97,7 +97,7 @@
                 </div>
                 <div class="ranking-list">
                     {% for cliente in ranking_margem %}
-                    <div class="ranking-item" onclick="abrirModalCliente({{ cliente.id }}, '{{ cliente.nome|escapejs }}')">
+                    <div class="ranking-item" data-cliente-id="{{ cliente.id }}" data-cliente-nome="{{ cliente.nome|e }}">
                         <span class="ranking-pos">{{ loop.index }}º</span>
                         <span class="ranking-nome">{{ cliente.nome }}</span>
                         <span class="ranking-valor">{{ "%.1f"|format(cliente.margem_media) }}%</span>
@@ -763,6 +763,19 @@ document.addEventListener('keydown', function(e) {
             modal.classList.remove('active');
         });
     }
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    const rankingItems = document.querySelectorAll('.ranking-item[data-cliente-id]');
+    rankingItems.forEach(item => {
+        item.addEventListener('click', () => {
+            const clienteId = parseInt(item.dataset.clienteId, 10);
+            const clienteNome = item.dataset.clienteNome;
+            if (!Number.isNaN(clienteId) && clienteNome) {
+                abrirModalCliente(clienteId, clienteNome);
+            }
+        });
+    });
 });
 </script>
 {% endblock %}

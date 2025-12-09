@@ -206,6 +206,24 @@ class FinanceiroService:
 
             # Converter valor para Decimal para consistência com o banco
             valor_decimal = Decimal(str(valor))
+
+            # Verificar se o novo pagamento ultrapassa o total do pedido
+            totais_atuais = pedido.calcular_totais()
+            total_pedido_decimal = Decimal(str(totais_atuais['total_pedido']))
+            total_pago_decimal = Decimal(str(totais_atuais['total_pago']))
+            saldo_restante = total_pedido_decimal - total_pago_decimal
+            if saldo_restante < Decimal('0'):
+                saldo_restante = Decimal('0')
+
+            if saldo_restante == Decimal('0'):
+                raise FinanceiroValidationError(
+                    "O valor somado dos comprovantes é maior do que o pedido. Verifique com o Admin."
+                )
+
+            if valor_decimal > saldo_restante:
+                raise FinanceiroValidationError(
+                    "O valor somado dos comprovantes é maior do que o pedido. Verifique com o Admin."
+                )
             
             # Processar data do comprovante se fornecida
             data_comprovante_parsed = None

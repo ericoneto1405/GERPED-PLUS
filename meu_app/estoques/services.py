@@ -23,7 +23,7 @@ class EstoqueService:
             quantidade: Quantidade em estoque
             data_entrada: Data de entrada
             conferente: Nome do conferente
-            status: Status do estoque (Contagem, Entrada por NF, Saída por coleta)
+            status: Status do estoque (ENTRADA DE NF DO FORNECEDOR ou TRANSFERÊNCIA ENTRE LOJAS)
             
         Returns:
             Tuple[bool, str, Optional[Estoque]]: (sucesso, mensagem, estoque)
@@ -336,6 +336,44 @@ class EstoqueService:
             db.session.rollback()
             current_app.logger.error(f"Erro ao atualizar estoque: {str(e)}")
             return False, f"Erro ao atualizar estoque: {str(e)}", None
+
+    @staticmethod
+    def confirmar_inventario(usuario_nome: str) -> Tuple[bool, str, int]:
+        """Confirma o inventário de todos os estoques registrando o responsável."""
+        try:
+            estoques = Estoque.query.all()
+            if not estoques:
+                return False, "Nenhum estoque disponível para confirmação.", 0
+
+            responsavel = usuario_nome or session.get('usuario_nome', 'Sistema')
+            agora = datetime.now(timezone.utc)
+
+            for estoque in estoques:
+                estoque.data_modificacao = agora
+                estoque.data_conferencia = agora
+                estoque.conferente = responsavel
+
+            db.session.commit()
+
+            EstoqueService._registrar_atividade(
+                tipo_atividade="Inventário Confirmado",
+                titulo="Inventário normalizado",
+                descricao=f"Inventário confirmado por {responsavel} para {len(estoques)} itens",
+                modulo="Estoques",
+                dados_extras={"total_itens": len(estoques), "responsavel": responsavel}
+            )
+
+            current_app.logger.info(
+                "Inventário confirmado por %s para %s itens",
+                responsavel,
+                len(estoques)
+            )
+
+            return True, "Inventário confirmado com sucesso.", len(estoques)
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Erro ao confirmar inventário: {str(e)}")
+            return False, f"Erro ao confirmar inventário: {str(e)}", 0
     
     @staticmethod
     def _registrar_movimentacao(produto_id: int, tipo_movimentacao: str, quantidade_anterior: int, 

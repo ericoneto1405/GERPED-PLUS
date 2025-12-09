@@ -57,10 +57,7 @@
             <div class="form-group">
                 <label for="status">Status</label>
                 <select name="status" id="status" class="form-control" required>
-                    <option value="">Selecione o status</option>
-                    <option value="Contagem" {% if estoque.status == 'Contagem' %}selected{% endif %}>Contagem</option>
-                    <option value="Entrada por NF" {% if estoque.status == 'Entrada por NF' %}selected{% endif %}>Entrada por NF</option>
-                    <option value="Saída por coleta" {% if estoque.status == 'Saída por coleta' %}selected{% endif %}>Saída por coleta</option>
+                    <option value="INVENTÁRIO DO ITEM" {% if estoque.status == 'INVENTÁRIO DO ITEM' %}selected{% endif %}>INVENTÁRIO DO ITEM</option>
                 </select>
             </div>
 

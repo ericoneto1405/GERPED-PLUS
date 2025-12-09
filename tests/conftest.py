@@ -13,3 +13,10 @@ def app():
     """Instância da aplicação Flask usada pelos testes de integração."""
     app = create_app(PytestConfig)
     yield app
+
+
+@pytest.fixture
+def client(app):
+    """Cliente HTTP padrão compartilhado."""
+    with app.test_client() as client:
+        yield client

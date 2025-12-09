@@ -1,7 +1,8 @@
 from datetime import datetime
 from io import BytesIO
+from pathlib import Path
 
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session, current_app, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session, current_app, jsonify, abort
 from sqlalchemy.exc import SQLAlchemyError
 
 from meu_app.models import Pedido, Cliente, Produto, ItemPedido, db
@@ -50,6 +51,7 @@ def listar_pedidos():
             direcao = 'desc'
         
         pedidos = PedidoService.listar_pedidos(filtro_status, data_inicio, data_fim, ordenar_por, direcao)
+        total_pedidos_filtrados = sum((item.get('total_venda') or 0) for item in pedidos)
         
         current_app.logger.info(f"Listagem de pedidos acessada por {session.get('usuario_nome', 'N/A')} - Ordenado por: {ordenar_por} ({direcao})")
         
@@ -61,13 +63,227 @@ def listar_pedidos():
             data_fim=data_fim or '',
             mes_ano=mes_ano or '',
             current_sort=ordenar_por,
-            current_direction=direcao
+            current_direction=direcao,
+            total_pedidos_filtrados=total_pedidos_filtrados
         )
         
     except Exception as e:
         current_app.logger.error(f"Erro ao listar pedidos: {str(e)}")
         flash(f"Erro ao carregar pedidos: {str(e)}", 'error')
-        return render_template('listar_pedidos.html', pedidos=[], filtro='todos')
+        return render_template('listar_pedidos.html', pedidos=[], filtro='todos', total_pedidos_filtrados=0)
+
+@pedidos_bp.route('/importar-historico', methods=['POST'])
+@login_obrigatorio
+@permissao_necessaria('acesso_pedidos')
+def importar_historico():
+    """Importa pedidos históricos; não há página separada, apenas upload direto."""
+    if 'arquivo' not in request.files or not request.files['arquivo'].filename:
+        flash('Nenhum arquivo selecionado.', 'error')
+        return redirect(url_for('pedidos.listar_pedidos'))
+    arquivo = request.files['arquivo']
+    extensao = arquivo.filename.rsplit('.', 1)[1].lower() if '.' in arquivo.filename else ''
+    if extensao not in ['csv', 'xlsx', 'xls']:
+        flash('Formato inválido. Use CSV ou Excel (.xlsx, .xls).', 'error')
+        return redirect(url_for('pedidos.listar_pedidos'))
+    try:
+        import pandas as pd
+        conteudo = arquivo.read()
+        if not conteudo:
+            flash('Arquivo vazio.', 'error')
+            return redirect(url_for('pedidos.listar_pedidos'))
+        
+        uploads_dir = Path(current_app.root_path).parent / 'uploads' / 'excel'
+        uploads_dir.mkdir(parents=True, exist_ok=True)
+        nome_limpo = arquivo.filename.replace(' ', '_')
+        destino = uploads_dir / nome_limpo
+        with open(destino, 'wb') as out_file:
+            out_file.write(conteudo)
+        
+        df = pd.read_csv(BytesIO(conteudo)) if extensao == 'csv' else pd.read_excel(BytesIO(conteudo))
+        if df.empty:
+            flash('Arquivo sem linhas.', 'warning')
+            return redirect(url_for('pedidos.listar_pedidos'))
+        # Mapear colunas esperadas
+        col_map = {
+            'nome cliente': 'cliente_nome',
+            'nome produto': 'produto_nome',
+            'pedido id': 'pedido_id',
+            'quantidade': 'quantidade',
+            'preço venda': 'preco_venda',
+            'preco venda': 'preco_venda',
+            'data': 'data'
+        }
+        df.columns = [str(c).strip().lower() for c in df.columns]
+        df = df.rename(columns=col_map)
+        colunas_obrig = {'cliente_nome', 'produto_nome', 'quantidade', 'preco_venda', 'data', 'pedido_id'}
+        if not colunas_obrig.issubset(set(df.columns)):
+            flash('Colunas obrigatórias: Nome Cliente, Nome Produto, Pedido ID, Quantidade, Preço Venda, Data.', 'error')
+            return redirect(url_for('pedidos.listar_pedidos'))
+        
+        # Garantir que os IDs de pedido formam a sequência esperada para evitar divergências
+        pedido_ids_series = pd.to_numeric(df['pedido_id'], errors='coerce')
+        if pedido_ids_series.isna().any():
+            flash('Existem Pedido ID inválidos ou vazios na planilha. Corrija antes de importar.', 'error')
+            return redirect(url_for('pedidos.listar_pedidos'))
+        
+        pedido_ids_unicos = sorted(set(int(x) for x in pedido_ids_series.tolist()))
+        if not pedido_ids_unicos:
+            flash('Planilha sem IDs de pedido válidos.', 'error')
+            return redirect(url_for('pedidos.listar_pedidos'))
+        
+        total_pedidos_planilha = len(pedido_ids_unicos)
+        colunas_para_processar = [c for c in ['cliente_nome','cliente_fantasia','produto_nome','quantidade','preco_venda','data','pedido_id'] if c in df.columns]
+        # Resetar dados operacionais antes de importar o novo histórico
+        PedidoService.resetar_dados_operacionais()
+        resultado = PedidoService.processar_planilha_importacao(df[colunas_para_processar])
+        resumo = resultado.get('resumo', {})
+        erros_resultado = resultado.get('resultados', [])
+        falhas = resumo.get('falha', 0)
+        pedidos_criados = resumo.get('pedidos_criados', 0)
+        
+        if pedidos_criados != total_pedidos_planilha:
+            flash(
+                f"Atenção: a planilha possui {total_pedidos_planilha} pedidos únicos "
+                f"mas o sistema criou {pedidos_criados}. Verifique a integridade do arquivo e tente novamente.",
+                'warning'
+            )
+        elif pedidos_criados > 0:
+            flash(f"{pedidos_criados} pedido(s) importado(s), espelhando o total da planilha.", 'success')
+
+        if falhas > 0:
+            exemplos = []
+            for linha in erros_resultado[:3]:
+                if linha.get('erros'):
+                    exemplos.append(f"Linha {linha['linha']}: {linha['erros'][0]}")
+            resumo_erros = ' | '.join(exemplos)
+            if len(erros_resultado) > 3:
+                resumo_erros = (resumo_erros + ' ...') if resumo_erros else '...'
+            msg = f"{falhas} linha(s) precisam de correção manual."
+            if resumo_erros:
+                msg += f" Ex.: {resumo_erros}"
+            flash(msg, 'warning')
+            session['erros_importacao_pedidos'] = {
+                'resumo': resumo,
+                'resultados': erros_resultado
+            }
+            return redirect(url_for('pedidos.corrigir_importacao'))
+
+        session.pop('erros_importacao_pedidos', None)
+        return redirect(url_for('pedidos.listar_pedidos'))
+    except ImportError:
+        flash('Dependência ausente para processar planilhas.', 'error')
+        return redirect(url_for('pedidos.listar_pedidos'))
+    except Exception as e:
+        current_app.logger.error(f"Erro ao importar histórico: {e}", exc_info=True)
+        flash(f"Erro ao importar: {e}", 'error')
+        return redirect(url_for('pedidos.listar_pedidos'))
+
+
+@pedidos_bp.route('/importar/estornar', methods=['POST'])
+@login_obrigatorio
+@permissao_necessaria('acesso_pedidos')
+def estornar_importacao():
+    """Remove pedidos importados para permitir novo upload."""
+    try:
+        PedidoService.resetar_dados_operacionais()
+        session.pop('erros_importacao_pedidos', None)
+        
+        uploads_dir = Path(current_app.root_path).parent / 'uploads' / 'excel'
+        if uploads_dir.is_dir():
+            arquivos_removidos = 0
+            for arquivo in uploads_dir.iterdir():
+                if arquivo.is_file():
+                    try:
+                        arquivo.unlink()
+                        arquivos_removidos += 1
+                    except Exception as rm_err:
+                        current_app.logger.warning(f"Não foi possível remover arquivo {arquivo}: {rm_err}")
+            if arquivos_removidos:
+                current_app.logger.info(f"{arquivos_removidos} arquivo(s) de planilha removidos após estorno.")
+        else:
+            current_app.logger.info(f"Pasta de uploads não encontrada em {uploads_dir}")
+        
+        flash('Importação estornada. Todos os dados transacionais foram limpos.', 'success')
+    except Exception as e:
+        current_app.logger.error(f"Erro ao estornar importação: {e}", exc_info=True)
+        flash('Erro ao estornar importação. Verifique os logs.', 'error')
+    return redirect(url_for('pedidos.listar_pedidos'))
+
+
+@pedidos_bp.route('/importar/corrigir', methods=['GET', 'POST'])
+@login_obrigatorio
+@permissao_necessaria('acesso_pedidos')
+def corrigir_importacao():
+    """Exibe e processa correções manuais das linhas com erro."""
+    if request.method == 'POST':
+        try:
+            linhas = request.form.getlist('linha')
+            if not linhas:
+                flash('Nenhuma linha enviada para correção.', 'warning')
+                return redirect(url_for('pedidos.corrigir_importacao'))
+
+            campos = {
+                'cliente_nome': request.form.getlist('cliente_nome'),
+                'cliente_fantasia': request.form.getlist('cliente_fantasia'),
+                'produto_nome': request.form.getlist('produto_nome'),
+                'quantidade': request.form.getlist('quantidade'),
+                'preco_venda': request.form.getlist('preco_venda'),
+                'data': request.form.getlist('data'),
+                'pedido_id': request.form.getlist('pedido_id')
+            }
+
+            def obter_valor(lista, idx):
+                if idx < len(lista):
+                    valor = lista[idx]
+                else:
+                    valor = ''
+                return valor.strip() if isinstance(valor, str) else valor
+
+            registros = []
+            for idx in range(len(linhas)):
+                registros.append({
+                    'cliente_nome': obter_valor(campos['cliente_nome'], idx),
+                    'cliente_fantasia': obter_valor(campos['cliente_fantasia'], idx),
+                    'produto_nome': obter_valor(campos['produto_nome'], idx),
+                    'quantidade': obter_valor(campos['quantidade'], idx),
+                    'preco_venda': obter_valor(campos['preco_venda'], idx),
+                    'data': obter_valor(campos['data'], idx),
+                    'pedido_id': obter_valor(campos['pedido_id'], idx)
+                })
+
+            import pandas as pd
+            df_corrigido = pd.DataFrame(registros)
+            resultado = PedidoService.processar_planilha_importacao(df_corrigido)
+            resumo = resultado.get('resumo', {})
+            falhas = resumo.get('falha', 0)
+            pedidos_criados = resumo.get('pedidos_criados', 0)
+
+            if pedidos_criados > 0:
+                flash(f"{pedidos_criados} linha(s) corrigida(s) foram importadas.", 'success')
+
+            if falhas > 0:
+                session['erros_importacao_pedidos'] = {
+                    'resumo': resumo,
+                    'resultados': resultado.get('resultados', [])
+                }
+                flash('Ainda existem linhas com erro. Revise os campos destacados.', 'warning')
+                return redirect(url_for('pedidos.corrigir_importacao'))
+
+            session.pop('erros_importacao_pedidos', None)
+            flash('Todas as linhas foram importadas com sucesso.', 'success')
+            return redirect(url_for('pedidos.listar_pedidos'))
+
+        except Exception as e:
+            current_app.logger.error(f"Erro ao corrigir importação: {e}", exc_info=True)
+            flash('Erro ao processar correções. Tente novamente.', 'error')
+            return redirect(url_for('pedidos.corrigir_importacao'))
+
+    dados = session.get('erros_importacao_pedidos')
+    if not dados or not dados.get('resultados'):
+        flash('Nenhuma importação pendente para correção.', 'info')
+        return redirect(url_for('pedidos.listar_pedidos'))
+
+    return render_template('corrigir_importacao_pedidos.html', resultado=dados)
 
 @pedidos_bp.route('/novo', methods=['GET', 'POST'])
 @login_obrigatorio
@@ -344,94 +560,6 @@ def visualizar_pedido(id):
         flash("Erro ao carregar pedido", "error")
         return redirect(url_for("pedidos.listar_pedidos"))
 
-@pedidos_bp.route('/importar', methods=['GET', 'POST'])
-@login_obrigatorio
-@permissao_necessaria('acesso_pedidos')
-def importar_pedidos():
-    """Importa pedidos históricos de arquivo CSV ou Excel"""
-    resultado_importacao = session.pop('resultado_importacao_pedidos', None)
-
-    if request.method == 'POST':
-        if 'arquivo' not in request.files or not request.files['arquivo'].filename:
-            flash('Nenhum arquivo foi selecionado.', 'error')
-            return redirect(url_for('pedidos.importar_pedidos'))
-
-        arquivo = request.files['arquivo']
-        extensao = arquivo.filename.rsplit('.', 1)[1].lower() if '.' in arquivo.filename else ''
-
-        if extensao not in ['csv', 'xlsx', 'xls']:
-            flash('Formato de arquivo inválido. Use CSV ou Excel (.xlsx, .xls).', 'error')
-            return redirect(url_for('pedidos.importar_pedidos'))
-
-        try:
-            import pandas as pd
-            conteudo = arquivo.read()
-            if not conteudo:
-                flash('O arquivo enviado está vazio.', 'error')
-                return redirect(url_for('pedidos.importar_pedidos'))
-
-            df = pd.read_csv(BytesIO(conteudo)) if extensao == 'csv' else pd.read_excel(BytesIO(conteudo))
-
-            if df.empty:
-                flash('O arquivo não contém linhas para importar.', 'warning')
-                return redirect(url_for('pedidos.importar_pedidos'))
-
-            df.columns = [str(col).strip().lower() for col in df.columns]
-
-            colunas_base = {'produto_nome', 'quantidade', 'preco_venda', 'data'}
-            faltantes_base = [col for col in colunas_base if col not in df.columns]
-            if faltantes_base:
-                flash(f'Colunas faltantes no arquivo: {", ".join(faltantes_base)}.', 'error')
-                return redirect(url_for('pedidos.importar_pedidos'))
-
-            possui_nome = 'cliente_nome' in df.columns
-            possui_fantasia = 'cliente_fantasia' in df.columns
-            if not possui_nome and not possui_fantasia:
-                flash('Inclua a coluna "cliente_nome" ou "cliente_fantasia" na planilha.', 'error')
-                return redirect(url_for('pedidos.importar_pedidos'))
-
-            colunas_para_processar = ['produto_nome', 'quantidade', 'preco_venda', 'data']
-            if possui_nome:
-                colunas_para_processar.append('cliente_nome')
-            if possui_fantasia:
-                colunas_para_processar.append('cliente_fantasia')
-
-            resultado = PedidoService.processar_planilha_importacao(df[colunas_para_processar])
-            
-            resumo = resultado.get('resumo', {})
-            erros_resultado = resultado.get('resultados', [])
-
-            if resumo.get('pedidos_criados', 0) > 0:
-                flash(f"{resumo['pedidos_criados']} pedido(s) importado(s) com sucesso!", 'success')
-
-            if resumo.get('falha', 0) > 0:
-                exemplos = []
-                for linha in erros_resultado[:3]:
-                    if linha.get('erros'):
-                        exemplos.append(f"Linha {linha['linha']}: {linha['erros'][0]}")
-                resumo_erros = ' | '.join(exemplos)
-                if len(erros_resultado) > 3:
-                    resumo_erros = (resumo_erros + ' ...') if resumo_erros else '...'
-
-                mensagem = f"{resumo['falha']} linha(s) apresentaram erro e foram ignoradas."
-                if resumo_erros:
-                    mensagem += f" Ex.: {resumo_erros}"
-
-                flash(mensagem, 'warning')
-
-            session['resultado_importacao_pedidos'] = resultado
-            return redirect(url_for('pedidos.importar_pedidos'))
-
-        except ImportError:
-            current_app.logger.error("Pandas ou openpyxl não estão instalados.")
-            flash('Dependência ausente para processar planilhas. Contate o suporte.', 'error')
-            return redirect(url_for('pedidos.importar_pedidos'))
-        except Exception as e:
-            current_app.logger.error(f"Erro inesperado ao importar pedidos: {e}", exc_info=True)
-            flash(f'Ocorreu um erro inesperado ao processar o arquivo: {e}', 'error')
-            return redirect(url_for('pedidos.importar_pedidos'))
-
-    return render_template('importar_pedidos.html', resultado_importacao=resultado_importacao)
 
 @pedidos_bp.route('/importar/exemplo')
 @login_obrigatorio
@@ -592,3 +720,90 @@ def download_exemplo():
         current_app.logger.error(f"Erro ao gerar arquivo de exemplo: {str(e)}")
         flash('Erro ao gerar arquivo de exemplo', 'error')
         return redirect(url_for('pedidos.importar_pedidos'))
+
+# Modelo simplificado (.xlsx) para importação em massa
+@pedidos_bp.route('/download_modelo_pedidos')
+@login_obrigatorio
+@permissao_necessaria('acesso_pedidos')
+def download_modelo_pedidos():
+    """Gera planilha-modelo com cabeçalhos solicitados e data em padrão brasileiro."""
+    from datetime import datetime
+    from flask import send_file
+    from openpyxl import Workbook
+    from openpyxl.styles import Alignment, Font, PatternFill, Border, Side
+    from openpyxl.utils import get_column_letter
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = 'Modelo Pedidos'
+
+    headers = [
+        'Nome Cliente',
+        'Nome Produto',
+        'Pedido ID',
+        'Quantidade',
+        'Preço Venda',
+        'Data'
+    ]
+
+    header_font = Font(bold=True, color='FFFFFF')
+    header_fill = PatternFill(start_color='366092', end_color='366092', fill_type='solid')
+    header_alignment = Alignment(horizontal='center')
+    border = Border(
+        left=Side(style='thin'),
+        right=Side(style='thin'),
+        top=Side(style='thin'),
+        bottom=Side(style='thin')
+    )
+
+    for col, header in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=col, value=header)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = header_alignment
+        cell.border = border
+
+    exemplo = [
+        'Ex: João da Silva',
+        'Ex: SKOL LATA 350ML',
+        'Ex: 12345',
+        10,
+        25.50,
+        datetime(2024, 1, 15)
+    ]
+
+    for col, value in enumerate(exemplo, 1):
+        cell = ws.cell(row=2, column=col, value=value)
+        cell.border = border
+        if col in (4, 5):
+            cell.alignment = Alignment(horizontal='center')
+            if col == 5:
+                cell.number_format = 'R$ #.##0,00'
+        if col == 6:
+            cell.number_format = 'DD/MM/YYYY'
+
+    ws['A3'] = ''
+    ws['A4'] = 'Observações:'
+    ws['A4'].font = Font(bold=True, color='366092')
+    ws.merge_cells('A4:F4')
+    ws['A5'] = '• Preencha SEMPRE o Pedido ID (mesmo identificador usado no sistema antigo).'
+    ws.merge_cells('A5:F5')
+    ws['A6'] = '• Informe a data no formato DD/MM/AAAA (Padrão Brasil) para coincidir com o novo layout.'
+    ws.merge_cells('A6:F6')
+    ws['A7'] = '• Informe o preço com vírgula como separador decimal (ex.: 25,50).'
+    ws.merge_cells('A7:F7')
+
+    column_widths = [25, 30, 18, 15, 15, 18]
+    for idx, width in enumerate(column_widths, 1):
+        ws.column_dimensions[get_column_letter(idx)].width = width
+
+    buffer = BytesIO()
+    wb.save(buffer)
+    buffer.seek(0)
+
+    return send_file(
+        buffer,
+        as_attachment=True,
+        download_name='modelo_pedidos.xlsx',
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )

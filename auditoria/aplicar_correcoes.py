@@ -181,7 +181,7 @@ class SecurityPatcher:
             return False
 
 def main():
-    base_path = Path('/Users/ericobrandao/Projects/GERPED')
+    base_path = Path('/Users/ericobrandao/Downloads/GERPED PLUS')
     
     print("╔═══════════════════════════════════════════════════════════════╗")
     print("║     🔒 ANÁLISE DE CORREÇÕES DE SEGURANÇA - Sistema GERPED       ║")

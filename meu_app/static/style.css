@@ -74,6 +74,51 @@ body {
     gap: 16px;
 }
 
+.header-alert {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-left: 16px;
+    border-left: 1px solid var(--border-color);
+    min-height: 40px;
+    min-width: 0;
+}
+
+.alert-icon {
+    font-size: 1.25rem;
+    color: var(--text-secondary);
+    transition: color 0.2s ease;
+}
+
+.header-alert-message {
+    display: none;
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    flex: 0 1 auto;
+    max-width: clamp(240px, 45vw, 640px);
+    min-width: 0;
+    white-space: normal;
+    line-height: 1.25;
+}
+
+.header-alert.alert-active .header-alert-message {
+    display: block;
+}
+
+.header-alert.alert-active .alert-icon {
+    animation: headerAlertBlink 1s linear infinite;
+}
+
+@keyframes headerAlertBlink {
+    0%,
+    100% {
+        color: var(--text-secondary);
+    }
+    50% {
+        color: var(--danger-color);
+    }
+}
+
 .header-left h1 {
     color: var(--text-primary);
     font-size: 1.25rem;
@@ -1337,24 +1382,53 @@ table tbody tr:last-child td {
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    color: white;
+    color: #1f2937;
+    background: #f1f5f9;
     text-align: center;
     min-width: 80px;
 }
 
 .categoria-cerveja {
-    background: linear-gradient(135deg, #ff6b35, #f7931e);
-    box-shadow: 0 2px 4px rgba(255, 107, 53, 0.3);
+    background: #EBBB40;
+    color: #1f1f1f;
+    box-shadow: 0 2px 4px rgba(235, 187, 64, 0.4);
+}
+
+.categoria-cervejas {
+    background: #EBBB40;
+    color: #1f1f1f;
+    box-shadow: 0 2px 4px rgba(235, 187, 64, 0.4);
 }
 
 .categoria-nab {
     background: linear-gradient(135deg, #4CAF50, #45a049);
     box-shadow: 0 2px 4px rgba(76, 175, 80, 0.3);
+    color: #fff;
 }
 
 .categoria-outros {
     background: linear-gradient(135deg, #9C27B0, #7B1FA2);
     box-shadow: 0 2px 4px rgba(156, 39, 176, 0.3);
+    color: #fff;
+}
+
+.categoria-high-end {
+    background: #c62828;
+    color: #fff;
+    font-weight: 700;
+    box-shadow: 0 2px 4px rgba(198, 40, 40, 0.4);
+}
+
+.upload-overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.55);
+    z-index: 2000;
+    backdrop-filter: blur(2px);
 }
 
 .kpi-pedidos .kpi-icon {
@@ -2865,6 +2939,24 @@ table tbody tr:last-child td {
     border: 1px solid #fcd34d;
 }
 
+.status-entrada-de-nf-do-fornecedor {
+    background-color: #dcfce7;
+    color: #166534;
+    border: 1px solid #86efac;
+}
+
+.status-transferência-entre-lojas {
+    background-color: #e0f2fe;
+    color: #1d4ed8;
+    border: 1px solid #93c5fd;
+}
+
+.status-inventário-do-item {
+    background-color: #f3e8ff;
+    color: #6d28d9;
+    border: 1px solid #d8b4fe;
+}
+
 /* Estilos para Abas - Módulo Apuração */
 .tabs-container {
     background: white;
@@ -3481,6 +3573,10 @@ html body .login-container .login-card {
     
     .coletas-dashboard .stat-value {
         font-size: 1.5rem !important;
+    }
+
+    .coletas-table thead th {
+        text-align: center !important;
     }
     
     /* Detalhes do pedido coletas */

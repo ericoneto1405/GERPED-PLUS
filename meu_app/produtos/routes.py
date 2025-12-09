@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, jsonif
 
 produtos_bp = Blueprint('produtos', __name__, url_prefix='/produtos')
 from ..models import Produto
+from .. import db
 from .services import ProdutoService, ImportacaoService, ExportacaoService, ImportacaoServiceSeguro
 from functools import wraps
 from ..decorators import login_obrigatorio, permissao_necessaria
@@ -15,14 +16,38 @@ def registrar_atividade(tipo_atividade, titulo, descricao, modulo, dados_extras=
 @login_obrigatorio
 @permissao_necessaria('acesso_produtos')
 def listar_produtos():
+    # Normalizar categorias antigas (CERVEJA -> CERVEJAS)
+    from .services import ProdutoService
+    db.session.query(Produto).filter(Produto.categoria == 'CERVEJA').update(
+        {Produto.categoria: 'CERVEJAS'}, synchronize_session=False
+    )
+    db.session.commit()
+
     produtos = Produto.query.all()
+    categorias = [
+        row[0]
+        for row in db.session.query(Produto.categoria)
+        .distinct()
+        .filter(Produto.categoria.isnot(None))
+        .order_by(Produto.categoria)
+    ]
     current_app.logger.info(f"Listagem de produtos acessada por {session.get('usuario_nome', 'N/A')}")
-    return render_template('produtos.html', produtos=produtos)
+    return render_template('produtos.html', produtos=produtos, categorias=categorias)
 
 @produtos_bp.route('/novo', methods=['GET', 'POST'])
 @login_obrigatorio
 @permissao_necessaria('acesso_produtos')
 def novo_produto():
+    categorias = [
+        row[0]
+        for row in db.session.query(Produto.categoria)
+        .distinct()
+        .filter(Produto.categoria.isnot(None))
+        .order_by(Produto.categoria)
+    ]
+    if not categorias:
+        categorias = ['CERVEJA', 'NAB', 'OUTROS']
+    
     if request.method == 'POST':
         nome = request.form['nome']
         categoria = request.form.get('categoria', 'OUTROS')
@@ -48,9 +73,9 @@ def novo_produto():
             return redirect(url_for('produtos.listar_produtos'))
         else:
             flash(mensagem, 'error')
-            return render_template('novo_produto.html', erro=mensagem)
+            return render_template('novo_produto.html', erro=mensagem, categorias=categorias)
     
-    return render_template('novo_produto.html')
+    return render_template('novo_produto.html', categorias=categorias)
 
 @produtos_bp.route('/editar/<int:id>', methods=['GET', 'POST'])
 @login_obrigatorio
@@ -77,9 +102,13 @@ def editar_produto(id):
             return redirect(url_for('produtos.listar_produtos'))
         else:
             flash(mensagem, 'error')
-            return render_template('novo_produto.html', produto=produto, erro=mensagem)
+            return render_template('novo_produto.html', produto=produto, erro=mensagem, categorias=categorias)
     
-    return render_template('novo_produto.html', produto=produto)
+    # Garantir que a categoria atual apareça na lista mesmo se não existir no conjunto
+    categorias_set = set(categorias)
+    if produto.categoria and produto.categoria not in categorias_set:
+        categorias.insert(0, produto.categoria)
+    return render_template('novo_produto.html', produto=produto, categorias=categorias)
 
 @produtos_bp.route('/excluir/<int:id>')
 @login_obrigatorio
@@ -122,22 +151,27 @@ def upload_produtos():
         if sucesso:
             current_app.logger.info(f"Upload de produtos por {session.get('usuario_nome', 'N/A')}")
             
-            # Se há duplicados, retornar informações detalhadas
-            if dados.get('produtos_duplicados'):
-                return jsonify({
-                    'success': False,
-                    'message': mensagem,
-                    'duplicados': dados['produtos_duplicados']
-                })
-            else:
-                return jsonify({
-                    'success': True,
-                    'message': mensagem
-                })
+            resposta = {
+                'success': True,
+                'message': mensagem,
+                'duplicados': dados.get('produtos_duplicados', []),
+                'invalidos': dados.get('produtos_invalidos', []),
+                'atualizados': dados.get('produtos_atualizados', []),
+                'categorias_alteradas': dados.get('categorias_alteradas', []),
+                'criados': dados.get('produtos_criados', 0),
+                'erros': dados.get('erros', [])
+            }
+            return jsonify(resposta)
         else:
             return jsonify({
                 'success': False,
-                'message': mensagem
+                'message': mensagem,
+                'duplicados': dados.get('produtos_duplicados', []),
+                'invalidos': dados.get('produtos_invalidos', []),
+                'atualizados': dados.get('produtos_atualizados', []),
+                'categorias_alteradas': dados.get('categorias_alteradas', []),
+                'criados': dados.get('produtos_criados', 0),
+                'erros': dados.get('erros', [])
             })
             
     except Exception as e:
@@ -214,7 +248,15 @@ def upload_precos_produtos():
             if dados.get('produtos_nao_encontrados'):
                 mensagem += f" {len(dados['produtos_nao_encontrados'])} produtos não foram encontrados."
             
-            return jsonify({'success': True, 'message': mensagem})
+            resposta = {
+                'success': True,
+                'message': mensagem,
+                'atualizados': dados.get('produtos_atualizados', 0),
+                'nao_encontrados': dados.get('produtos_nao_encontrados', []),
+                'invalidos': dados.get('produtos_invalidos', [])
+            }
+            
+            return jsonify(resposta)
         else:
             return jsonify({'success': False, 'message': mensagem})
         

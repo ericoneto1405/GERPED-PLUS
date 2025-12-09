@@ -352,6 +352,33 @@ class ColetaService:
         return agrupados
 
     @staticmethod
+    def listar_pendencias_por_pedidos(pedido_ids: List[int]) -> List[Dict]:
+        """Agrupa quantidades pendentes por produto para os pedidos informados."""
+        if not pedido_ids:
+            return []
+
+        pendencias: Dict[str, Dict[str, object]] = {}
+
+        for pedido_id in pedido_ids:
+            detalhes = ColetaService.buscar_detalhes_pedido(pedido_id)
+            if not detalhes:
+                continue
+
+            for item in detalhes.get('itens', []):
+                pendente = getattr(item, 'quantidade_pendente', 0) or 0
+                if pendente <= 0:
+                    continue
+
+                produto = getattr(getattr(item, 'produto', None), 'nome', None) or getattr(item, 'descricao', 'Produto sem descrição')
+                chave = f"{getattr(item, 'produto_id', '')}-{produto}"
+                registro = pendencias.setdefault(chave, {'produto': produto, 'quantidade': 0})
+                registro['quantidade'] = int(registro['quantidade']) + int(pendente)
+
+        itens = list(pendencias.values())
+        itens.sort(key=lambda registro: registro['produto'])
+        return itens
+
+    @staticmethod
     def buscar_detalhes_pedido(pedido_id: int) -> Optional[Dict]:
         """
         Busca detalhes completos de um pedido para coleta

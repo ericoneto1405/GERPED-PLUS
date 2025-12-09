@@ -13,6 +13,10 @@ from ..models import (
     LogAtividade,
     Usuario,
     StatusPedido,
+    Pagamento,
+    Estoque,
+    MovimentacaoEstoque,
+    Apuracao,
 )
 from flask import current_app, session
 from typing import Dict, List, Tuple, Optional
@@ -22,6 +26,7 @@ from collections import defaultdict
 from decimal import Decimal, InvalidOperation
 import pandas as pd
 import unicodedata
+from sqlalchemy import text
 
 class PedidoService:
     """Serviço para operações relacionadas a pedidos"""
@@ -562,6 +567,68 @@ class PedidoService:
         except Exception as e:
             current_app.logger.error(f"Erro ao verificar senha admin: {str(e)}")
             return False
+
+    @staticmethod
+    def resetar_dados_operacionais() -> None:
+        """
+        Remove dados transacionais (pedidos, itens, pagamentos, coletas, estoques, apurações),
+        preservando cadastros de clientes/produtos/categorias.
+        """
+        modelos_em_ordem = [
+            ItemColetado,
+            Coleta,
+            Pagamento,
+            ItemPedido,
+            Pedido,
+            MovimentacaoEstoque,
+            Estoque,
+            Apuracao,
+            LogAtividade,
+        ]
+        tabelas_seq = [
+            'item_coletado',
+            'coleta',
+            'pagamento',
+            'item_pedido',
+            'pedido',
+            'movimentacao_estoque',
+            'estoque',
+            'apuracao',
+            'log_atividade',
+        ]
+        try:
+            for modelo in modelos_em_ordem:
+                apagados = db.session.query(modelo).delete(synchronize_session=False)
+                current_app.logger.info(f"Reset: removidas {apagados} linhas de {modelo.__tablename__}")
+            PedidoService._resetar_sequencias(tabelas_seq)
+            db.session.commit()
+            current_app.logger.info("Base transacional resetada com sucesso antes da nova importação.")
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Erro ao resetar base transacional: {e}", exc_info=True)
+            raise
+
+    @staticmethod
+    def _resetar_sequencias(tabelas: List[str]) -> None:
+        """
+        Reinicia contadores de autoincremento conforme o banco utilizado.
+        """
+        try:
+            engine_name = db.engine.url.get_backend_name()
+        except Exception:
+            engine_name = ''
+        if engine_name == 'sqlite':
+            for tabela in tabelas:
+                db.session.execute(text("DELETE FROM sqlite_sequence WHERE name = :name"), {'name': tabela})
+        elif engine_name in ('postgresql', 'postgres'):
+            for tabela in tabelas:
+                seq = f"{tabela}_id_seq"
+                try:
+                    db.session.execute(text(f'ALTER SEQUENCE {seq} RESTART WITH 1'))
+                except Exception as seq_err:
+                    current_app.logger.warning(f"Não foi possível reiniciar sequência {seq}: {seq_err}")
+        else:
+            current_app.logger.info(f"Reset de sequência não implementado para engine '{engine_name}'.")
     
     @staticmethod
     def processar_planilha_importacao(df):
@@ -602,7 +669,23 @@ class PedidoService:
             return dados_limpos
 
         resultados = []
-        pedidos_para_criar = defaultdict(list)
+        pedidos_para_criar = {}
+        mapeamentos_produto = []
+        # Aliases manuais para nomes próximos aos do cadastro
+        aliases_produto = {
+            normalizar_nome('BRAHMA DUPLO MALTE 350ML'): normalizar_nome('BRAHMA DUPLO MALTE 350 ML'),
+            normalizar_nome('SODA LATA 350ML'): normalizar_nome('SODA LIMONADA LATA 350 ML'),
+            normalizar_nome('SKOL 600ML'): normalizar_nome('SKOL PILSEN RETORNAVEL 600 ML'),
+            normalizar_nome('PEPSI 2L'): normalizar_nome('PEPSI PET 2L'),
+            normalizar_nome('BRAHMA CHOPP LITRINHO 300ML RET'): normalizar_nome('BRAHMA CHOPP LITRINHO 300 ML'),
+            normalizar_nome('H2OH LIMAO 500ML'): normalizar_nome('H2OH LIMAO 500 ML'),
+            normalizar_nome('RED BULL SUGAR FEEE 250 ML'): normalizar_nome('RED BULL SUGARFREE 250 ML'),
+            normalizar_nome('RED BULL TROPICAL 250 ML'): normalizar_nome('RED BULL TROPICAL EDITION 250 ML'),
+            normalizar_nome('RED BULL SUMER MARAJUJA MELAO 250 ML'): normalizar_nome('RED BULL SUMER MARAJUJA MELAO 250ML'),
+            normalizar_nome('CORONA LONG NECK 330ML'): normalizar_nome('CORONA EXTRA LONG NECK 330ML'),
+            normalizar_nome('CORONA ZERO LONG NECK 330ML'): normalizar_nome('CORONA ZERO ALCOOL LONG NECK 330ML'),
+            normalizar_nome('STELLA PURE GOLD LN 330ML'): normalizar_nome('STELLA ARTOIS PURE GOLD LONG NECK 330ML'),
+        }
 
         for index, row in df.iterrows():
             linha = index + 2  # Linha da planilha para o usuário
@@ -616,6 +699,20 @@ class PedidoService:
             preco_venda = row.get('preco_venda')
             data = row.get('data')
             data_normalizada = None
+            pedido_id_legado = None
+
+            if 'pedido_id' in df.columns:
+                pedido_bruto = row.get('pedido_id')
+                if pd.isna(pedido_bruto) or not str(pedido_bruto).strip():
+                    erros_linha.append("Coluna 'pedido_id' está vazia.")
+                else:
+                    pedido_texto = str(pedido_bruto).strip()
+                    try:
+                        pedido_id_legado = int(Decimal(pedido_texto))
+                        if pedido_id_legado <= 0:
+                            erros_linha.append(f"Pedido ID '{pedido_texto}' deve ser maior que zero.")
+                    except (ValueError, TypeError, InvalidOperation):
+                        erros_linha.append(f"Pedido ID '{pedido_texto}' é inválido.")
 
             cliente_nome_str = str(cliente_nome).strip() if cliente_nome is not None else ''
             cliente_fantasia_str = str(cliente_fantasia).strip() if cliente_fantasia is not None else ''
@@ -685,9 +782,29 @@ class PedidoService:
             else:
                 cliente = clientes_unicos[0]
 
-            produto_lista = produtos_map.get(normalizar_nome(produto_nome), [])
+            produto = None
+            nome_norm = normalizar_nome(produto_nome)
+            if nome_norm in aliases_produto:
+                nome_norm = aliases_produto[nome_norm]
+            produto_lista = produtos_map.get(nome_norm, [])
             if not produto_lista:
-                erros_linha.append(f"Produto '{produto_nome}' não encontrado.")
+                # Tentativa de sugestão: buscar por substring aproximada
+                alvo = nome_norm
+                candidatos = []
+                for nome_norm, lista_prod in produtos_map.items():
+                    if alvo in nome_norm or nome_norm in alvo:
+                        candidatos.extend(lista_prod)
+                candidatos_unicos = list({p.id: p for p in candidatos}.values())
+                if len(candidatos_unicos) == 1:
+                    produto = candidatos_unicos[0]
+                    mapeamentos_produto.append({
+                        'linha': linha,
+                        'informado': produto_nome,
+                        'usado': produto.nome,
+                        'codigo_interno': produto.codigo_interno
+                    })
+                else:
+                    erros_linha.append(f"Produto '{produto_nome}' não encontrado.")
             elif len(produto_lista) > 1:
                 ids = ', '.join(str(prod.id) for prod in produto_lista[:5])
                 if len(produto_lista) > 5:
@@ -698,19 +815,43 @@ class PedidoService:
             else:
                 produto = produto_lista[0]
 
-            if erros_linha:
+            grupo = None
+            if not erros_linha:
+                if pedido_id_legado is not None:
+                    chave_pedido = ('LEGADO', pedido_id_legado)
+                else:
+                    chave_pedido = ('CLIENTE_DATA', cliente.id, data_normalizada.date())
+                grupo = pedidos_para_criar.get(chave_pedido)
+                if grupo:
+                    if grupo['cliente_id'] != cliente.id:
+                        erros_linha.append(
+                            f"Pedido ID {pedido_id_legado} está associado a clientes diferentes."
+                        )
+                    else:
+                        if pedido_id_legado is not None and data_normalizada > grupo['data']:
+                            grupo['data'] = data_normalizada
+                else:
+                    grupo = {
+                        'cliente_id': cliente.id,
+                        'data': data_normalizada,
+                        'pedido_id_legado': pedido_id_legado,
+                        'itens': []
+                    }
+                    pedidos_para_criar[chave_pedido] = grupo
+
+            if erros_linha or grupo is None:
                 resultados.append({
                     'linha': linha,
                     'status': 'Falha',
-                    'erros': erros_linha,
+                    'erros': erros_linha if erros_linha else ["Não foi possível agrupar o pedido."],
                     'dados': preparar_dados_para_log(row.to_dict())
                 })
+                if grupo is not None and chave_pedido in pedidos_para_criar and not grupo['itens']:
+                    pedidos_para_criar.pop(chave_pedido, None)
                 continue
+
             dados_linha = preparar_dados_para_log(row.to_dict())
-            
-            # Agrupamento para criação de pedido
-            chave_pedido = (cliente.id, data_normalizada.date())
-            pedidos_para_criar[chave_pedido].append({
+            grupo['itens'].append({
                 'produto': produto,
                 'quantidade': quantidade,
                 'preco_venda': preco_venda
@@ -721,13 +862,23 @@ class PedidoService:
         pedidos_criados = 0
         if any(r['status'] == 'Sucesso' for r in resultados):
             try:
-                for (cliente_id, data_pedido), itens_data in pedidos_para_criar.items():
-                    datetime_pedido = datetime.combine(data_pedido, datetime.min.time())
-                    novo_pedido = Pedido(cliente_id=cliente_id, data=datetime_pedido)
+                for grupo in pedidos_para_criar.values():
+                    data_pedido = grupo['data']
+                    if isinstance(data_pedido, datetime):
+                        datetime_pedido = data_pedido
+                    else:
+                        datetime_pedido = datetime.combine(data_pedido, datetime.min.time())
+                    pedido_kwargs = {
+                        'cliente_id': grupo['cliente_id'],
+                        'data': datetime_pedido
+                    }
+                    pedido_id_legado = grupo.get('pedido_id_legado')
+                    if pedido_id_legado:
+                        pedido_kwargs['id'] = int(pedido_id_legado)
+                    novo_pedido = Pedido(**pedido_kwargs)
                     db.session.add(novo_pedido)
                     db.session.flush() # Obter ID do pedido
-
-                    for item_data in itens_data:
+                    for item_data in grupo['itens']:
                         produto = item_data['produto']
                         preco_compra = produto.preco_medio_compra or Decimal(0)
                         item = ItemPedido(
@@ -770,7 +921,8 @@ class PedidoService:
                 'falha': len([r for r in resultados if r['status'] == 'Falha']),
                 'pedidos_criados': pedidos_criados
             },
-            'resultados': [r for r in resultados if r['status'] == 'Falha'] # Retornar apenas as linhas com falha
+            'resultados': [r for r in resultados if r['status'] == 'Falha'], # Retornar apenas as linhas com falha
+            'mapeamentos_produto': mapeamentos_produto
         }
 
     @staticmethod

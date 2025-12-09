@@ -7,12 +7,12 @@
     
     <key>ProgramArguments</key>
     <array>
-        <string>/Users/ericobrandao/Projects/GERPED/venv/bin/python3</string>
-        <string>/Users/ericobrandao/Projects/GERPED/auto_git_commit.py</string>
+        <string>/Users/ericobrandao/Downloads/GERPED PLUS/venv/bin/python3</string>
+        <string>/Users/ericobrandao/Downloads/GERPED PLUS/auto_git_commit.py</string>
     </array>
     
     <key>WorkingDirectory</key>
-    <string>/Users/ericobrandao/Projects/GERPED</string>
+    <string>/Users/ericobrandao/Downloads/GERPED PLUS</string>
     
     <key>RunAtLoad</key>
     <true/>
@@ -21,10 +21,10 @@
     <true/>
     
     <key>StandardOutPath</key>
-    <string>/Users/ericobrandao/Projects/GERPED/.git-auto-commit.log</string>
+    <string>/Users/ericobrandao/Downloads/GERPED PLUS/.git-auto-commit.log</string>
     
     <key>StandardErrorPath</key>
-    <string>/Users/ericobrandao/Projects/GERPED/.git-auto-commit.log</string>
+    <string>/Users/ericobrandao/Downloads/GERPED PLUS/.git-auto-commit.log</string>
     
     <key>EnvironmentVariables</key>
     <dict>

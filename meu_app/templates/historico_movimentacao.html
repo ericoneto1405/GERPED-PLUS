@@ -40,7 +40,11 @@
                     <tr class="movimentacao-row movimentacao-{{ mov.tipo_movimentacao.lower() }}">
                         <td>{{ mov.data_movimentacao.strftime('%d/%m/%Y %H:%M') }}</td>
                         <td>
-                            {% if 'Contagem' in mov.motivo %}
+                            {% if 'ENTRADA DE NF DO FORNECEDOR' in mov.motivo %}
+                                <span class="movimentacao-badge movimentacao-entrada-fornecedor">ENTRADA DE NF DO FORNECEDOR</span>
+                            {% elif 'TRANSFERÊNCIA ENTRE LOJAS' in mov.motivo %}
+                                <span class="movimentacao-badge movimentacao-transferencia-lojas">TRANSFERÊNCIA ENTRE LOJAS</span>
+                            {% elif 'Contagem' in mov.motivo %}
                                 <span class="movimentacao-badge movimentacao-contagem">Contagem</span>
                             {% elif 'Entrada por NF' in mov.motivo %}
                                 <span class="movimentacao-badge movimentacao-entrada-nf">Entrada por NF</span>
@@ -154,9 +158,15 @@
     color: #0c5460;
 }
 
-.movimentacao-entrada-nf {
+.movimentacao-entrada-nf,
+.movimentacao-entrada-fornecedor {
     background-color: #d4edda;
     color: #155724;
+}
+
+.movimentacao-transferencia-lojas {
+    background-color: #e0e7ff;
+    color: #1e3a8a;
 }
 
 .quantidade-movimentada {

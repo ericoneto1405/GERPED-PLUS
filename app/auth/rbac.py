@@ -18,7 +18,14 @@ Data: Outubro 2025
 from functools import wraps
 from typing import List, Set
 
-from flask import abort, current_app, jsonify, render_template, request, session
+from flask import (
+    abort,
+    current_app,
+    jsonify,
+    request,
+    session,
+    has_request_context,
+)
 
 
 # Definição de papéis e mapeamento para permissões
@@ -51,6 +58,8 @@ def get_user_roles() -> Set[str]:
     Returns:
         Set[str]: Conjunto de papéis do usuário
     """
+    if not has_request_context():
+        return set()
     if 'usuario_id' not in session:
         return set()
     

@@ -11,15 +11,16 @@ Data: Outubro 2025
 import logging
 import os
 import traceback
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from logging.handlers import RotatingFileHandler
 
 from dotenv import load_dotenv
-from flask import Flask, jsonify, request, render_template, session, redirect, url_for
+from flask import Flask, jsonify, request, render_template, session, redirect, url_for, g
 from flask_caching import Cache as FlaskCache
 from flask_login import LoginManager
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import func
 
 from .security import csrf, limiter, setup_security
 
@@ -80,6 +81,9 @@ def create_app(config_class=None):
     
     # Registrar filtros personalizados
     register_custom_filters(app)
+
+    # Contextos globais para templates
+    register_template_context(app)
     
     # Registrar blueprints
     register_blueprints(app)
@@ -383,6 +387,51 @@ def register_custom_filters(app):
             return '0,00'
 
 
+def register_template_context(app):
+    """Registra dados globais que devem estar disponíveis nos templates."""
+
+    @app.context_processor
+    def inject_inventory_alert():
+        payload = getattr(g, '_estoque_alert_payload', None)
+        if payload is not None:
+            return payload
+
+        message = None
+        outdated_count = 0
+
+        try:
+            from flask_login import current_user
+            if getattr(current_user, 'is_authenticated', False):
+                from .models import Estoque
+
+                limite_atualizacao = datetime.now(timezone.utc) - timedelta(days=3)
+
+                outdated_count = (
+                    db.session.query(func.count(Estoque.id))
+                    .filter(
+                        func.coalesce(
+                            Estoque.data_modificacao,
+                            Estoque.data_conferencia,
+                            Estoque.data_entrada
+                        ) < limite_atualizacao
+                    )
+                    .scalar()
+                    or 0
+                )
+
+                if outdated_count > 0:
+                    message = "ESTOQUE SEM ATUALIZAÇÃO ACIMA DE 3 DIAS. (VERIFIQUE O MÓDULO DE ESTOQUES.)"
+        except Exception as exc:
+            app.logger.error('Falha ao calcular alerta de estoque: %s', exc)
+
+        payload = {
+            'estoque_alert_message': message,
+            'estoque_alert_count': outdated_count
+        }
+        g._estoque_alert_payload = payload
+        return payload
+
+
 def register_blueprints(app):
     """
     Registra todos os blueprints da aplicação (por domínio)
@@ -399,7 +448,6 @@ def register_blueprints(app):
     - apuracao          → /apuracao
     - log_atividades    → /log_atividades
     - vendedor          → /vendedor
-    - leitura_notas     → /leitura-notas
     
     Garantia: prefixos definidos nos módulos (única fonte de verdade)
     """
@@ -419,8 +467,8 @@ def register_blueprints(app):
     from .log_atividades import log_atividades_bp
     from .vendedor import vendedor_bp
     from .jobs.routes import bp as jobs_bp  # Fase 7
-    from .leitura_notas import leitura_notas_bp
     from .necessidade_compra import necessidade_compra_bp
+    from .simulacao_pedido import simulacao_pedido_bp
     
     # Registrar blueprints (ordem não importa, prefixos evitam colisão)
     app.register_blueprint(produtos_bp)
@@ -433,9 +481,9 @@ def register_blueprints(app):
     app.register_blueprint(apuracao_bp)
     app.register_blueprint(log_atividades_bp)
     app.register_blueprint(vendedor_bp)
-    app.register_blueprint(leitura_notas_bp)
     app.register_blueprint(jobs_bp)  # Fase 7
     app.register_blueprint(necessidade_compra_bp)  # Análise de Compra
+    app.register_blueprint(simulacao_pedido_bp)
     
     app.logger.info(f'Blueprints registrados: {len(app.blueprints)}')
 

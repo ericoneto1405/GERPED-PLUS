@@ -51,7 +51,17 @@
                 <small class="text-muted">Clique nos títulos para ordenar e utilize a busca para filtrar rapidamente.</small>
             </div>
             <div class="table-container">
-                <table class="produtos-table">
+                <table class="produtos-table auto-fit-table">
+                    <colgroup>
+                        <col class="col-id">
+                        <col class="col-nome">
+                        <col class="col-categoria">
+                        <col class="col-codigo">
+                        <col class="col-preco">
+                        <col class="col-atualizado">
+                        <col class="col-ean">
+                        <col class="col-acoes">
+                    </colgroup>
                     <thead>
                         <tr>
                             <th data-column-index="0">#</th>
@@ -59,8 +69,9 @@
                             <th data-column-index="2">CATEGORIA</th>
                             <th data-column-index="3">CÓDIGO INTERNO</th>
                             <th data-column-index="4">PREÇO MÉDIO DE COMPRA</th>
-                            <th data-column-index="5">EAN</th>
-                            <th>AÇÕES</th>
+                            <th data-column-index="5">ATUALIZADO EM:</th>
+                            <th data-column-index="6">EAN</th>
+                            <th data-column-index="7">AÇÕES</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -69,12 +80,21 @@
                             <td>#{{ produto.id }}</td>
                             <td>{{ produto.nome }}</td>
                             <td>
-                                <span class="categoria-badge categoria-{{ produto.categoria.lower() }}">
-                                    {{ produto.categoria }}
+                                {% set categoria = produto.categoria or 'OUTROS' %}
+                                {% set categoria_slug = categoria.lower().replace(' ', '-').replace('/', '-') %}
+                                <span class="categoria-badge categoria-{{ categoria_slug }}">
+                                    {{ categoria }}
                                 </span>
                             </td>
                             <td>{{ produto.codigo_interno or '-' }}</td>
                             <td class="currency-value" data-value="{{ produto.preco_medio_compra or 0 }}">{{ produto.preco_medio_compra | currency_brl }}</td>
+                            <td class="atualizado-em" data-atualizado="{{ produto.preco_atualizado_em.isoformat() if produto.preco_atualizado_em else '' }}">
+                                {% if produto.preco_atualizado_em %}
+                                    {{ produto.preco_atualizado_em.strftime('%d/%m/%Y %H:%M') }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
                             <td>{{ produto.ean or '-' }}</td>
                             <td>
                                 <div class="action-icons">
@@ -153,6 +173,50 @@
 <!-- Input files ocultos -->
 <input type="file" id="fileInput" accept=".xlsx" style="display: none;">
 <input type="file" id="fileInputPreco" accept=".xlsx" style="display: none;">
+
+<!-- Overlay de carregamento -->
+<div id="uploadOverlay" class="upload-overlay" style="display: none;">
+    <div class="spinner-border text-primary" role="status" aria-label="Carregando"></div>
+    <div class="mt-2 text-white fw-bold">Enviando e processando...</div>
+</div>
+
+<!-- Modal resultado importação -->
+<div class="modal fade" id="importResultModal" tabindex="-1" aria-labelledby="importResultLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="importResultLabel">Resultado da Importação</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+      </div>
+      <div class="modal-body">
+        <div id="importResultSummary" class="mb-3"></div>
+        <div id="importResultDetails"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal resultado importação de preços -->
+<div class="modal fade" id="priceImportModal" tabindex="-1" aria-labelledby="priceImportLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="priceImportLabel">Resultado do Upload de Preços</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+      </div>
+      <div class="modal-body">
+        <div id="priceImportSummary" class="mb-3"></div>
+        <div id="priceImportDetails"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- Modal de Erro -->
 <div id="errorModal" class="modal" style="display: none;">
@@ -277,39 +341,48 @@
 
 .produtos-table {
     width: 100%;
-    border-collapse: collapse;
+    border-collapse: separate;
+    border-spacing: 0;
     background: #fff;
-    border-radius: 8px;
-    overflow: hidden;
     box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    table-layout: auto;
 }
 
-.produtos-table th {
-    padding: 12px 16px;
-    text-align: left;
-    font-weight: 600;
-    color: #495057;
-    border-bottom: 2px solid #dee2e6;
-    font-size: 0.9rem;
-}
-
+.produtos-table th,
 .produtos-table td {
-    padding: 12px 16px;
-    border-bottom: 1px solid #f1f3f4;
-    font-size: 0.95rem;
+    padding: 10px 12px;
+    border: 1px solid #d7e3f7;
+    font-size: 0.9rem;
+    text-align: center;
 }
 
-.produtos-table tbody tr:hover {
-    background-color: #f8f9fa;
+.produtos-table th:first-child,
+.produtos-table td:first-child {
+    border-left-width: 2px;
 }
 
-.produtos-table th[data-column-index] {
-    cursor: pointer;
-    user-select: none;
-    position: relative;
+.produtos-table th:last-child,
+.produtos-table td:last-child {
+    border-right-width: 2px;
 }
 
-.produtos-table th[data-column-index] .sort-indicator {
+.produtos-table tbody tr:first-child td {
+    border-top-width: 2px;
+}
+
+.produtos-table tbody tr:last-child td {
+    border-bottom-width: 2px;
+}
+
+.produtos-table thead th {
+    background: #f8fafc;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #64748b;
+    font-weight: 700;
+}
+
+.produtos-table thead th .sort-indicator {
     font-size: 0.7rem;
     margin-left: 6px;
     color: #adb5bd;
@@ -318,6 +391,35 @@
 .produtos-table th.sorted-asc,
 .produtos-table th.sorted-desc {
     color: #0d6efd;
+}
+
+.produtos-table tbody tr:hover td {
+    background: #f8f9fa;
+}
+
+.produtos-table .col-id { width: 8%; }
+.produtos-table .col-nome { width: 26%; }
+.produtos-table .col-categoria { width: 14%; }
+.produtos-table .col-codigo { width: 14%; }
+.produtos-table .col-preco { width: 14%; }
+.produtos-table .col-atualizado { width: 14%; }
+.produtos-table .col-ean { width: 14%; }
+.produtos-table .col-acoes { width: 10%; }
+
+.resizable-header {
+    position: relative;
+    padding-right: 14px;
+    user-select: none;
+}
+
+.column-resizer {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 6px;
+    height: 100%;
+    cursor: col-resize;
+    user-select: none;
 }
 
 .action-card:hover {
@@ -440,7 +542,7 @@
 .table-container {
     background: white;
     border-radius: 8px;
-    overflow: hidden;
+    overflow: auto;
     box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 
@@ -569,7 +671,7 @@
 
 .modal-content {
     background-color: #fefefe;
-    margin: 15% auto;
+    margin: 5% auto;
     padding: 0;
     border-radius: 8px;
     width: 80%;
@@ -605,6 +707,8 @@
 
 .modal-body {
     padding: 20px;
+    max-height: 70vh;
+    overflow-y: auto;
 }
 
 .modal-footer {
@@ -667,6 +771,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const tbody = tabela.querySelector('tbody');
     const headers = tabela.querySelectorAll('th[data-column-index]');
+    const columns = tabela.querySelectorAll('colgroup col');
     const filtro = document.getElementById('filtroProdutos');
     let currentSort = { index: null, direction: 'asc' };
 
@@ -683,6 +788,11 @@ document.addEventListener('DOMContentLoaded', () => {
                                   .trim();
             const value = parseFloat(normalized);
             return Number.isNaN(value) ? 0 : value;
+        }
+        if (index === 5) {
+            const raw = cell.dataset.atualizado || cell.textContent;
+            const parsed = Date.parse(raw);
+            return Number.isNaN(parsed) ? 0 : parsed;
         }
         return cell.textContent.trim().toLowerCase();
     };
@@ -731,13 +841,77 @@ document.addEventListener('DOMContentLoaded', () => {
         applySortIndicators();
     };
 
+    const applyColumnWidth = (columnIndex, width) => {
+        if (columns.length && columns[columnIndex]) {
+            columns[columnIndex].style.width = width + 'px';
+        }
+        const headCell = tabela.querySelectorAll('thead th')[columnIndex];
+        if (headCell) headCell.style.width = width + 'px';
+        tabela.querySelectorAll('tbody tr').forEach((row) => {
+            const cell = row.children[columnIndex];
+            if (cell) cell.style.width = width + 'px';
+        });
+    };
+
+    const autoFitColumn = (columnIndex) => {
+        let maxWidth = 0;
+        tabela.querySelectorAll('tr').forEach((row) => {
+            const cell = row.children[columnIndex];
+            if (!cell) return;
+            const cellWidth = cell.scrollWidth + 16;
+            if (cellWidth > maxWidth) maxWidth = cellWidth;
+        });
+        const targetWidth = Math.min(Math.max(maxWidth, 70), 600);
+        applyColumnWidth(columnIndex, targetWidth);
+    };
+
+    const startManualResize = (event, columnIndex) => {
+        event.preventDefault();
+        const startX = event.pageX;
+        const header = event.target.parentElement;
+        const startWidth = header.offsetWidth;
+
+        function onMouseMove(moveEvent) {
+            const delta = moveEvent.pageX - startX;
+            const newWidth = Math.max(70, startWidth + delta);
+            applyColumnWidth(columnIndex, newWidth);
+        }
+
+        function onMouseUp() {
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+        }
+
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+    };
+
     headers.forEach((header, index) => {
-        header.addEventListener('click', () => {
+        header.classList.add('resizable-header');
+        const handle = document.createElement('span');
+        handle.className = 'column-resizer';
+        header.appendChild(handle);
+
+        handle.addEventListener('mousedown', (e) => {
+            e.stopPropagation();
+            startManualResize(e, index);
+        });
+
+        header.addEventListener('dblclick', (e) => {
+            e.stopPropagation();
+            autoFitColumn(index);
+        });
+
+        header.addEventListener('click', (e) => {
+            if (e.target.classList.contains('column-resizer')) {
+                return;
+            }
             const direction = (currentSort.index === index && currentSort.direction === 'asc') ? 'desc' : 'asc';
             currentSort = { index, direction };
             sortRows(index, direction);
         });
     });
+    applySortIndicators();
 
     if (filtro) {
         filtro.addEventListener('input', (event) => {
@@ -839,6 +1013,8 @@ function uploadPlanilha(input) {
         const originalText = btn.textContent;
         btn.textContent = 'Processando...';
         btn.disabled = true;
+        const overlay = document.getElementById('uploadOverlay');
+        if (overlay) overlay.style.display = 'flex';
         
         const formData = new FormData();
         formData.append('file', file);
@@ -863,26 +1039,18 @@ function uploadPlanilha(input) {
             console.log('Dados:', data);
             btn.textContent = originalText;
             btn.disabled = false;
+            if (overlay) overlay.style.display = 'none';
             
-            if (data.success) {
-                alert('Produtos importados com sucesso!');
-                location.reload();
-            } else {
-                if (data.duplicados && data.duplicados.length > 0) {
-                    if (data.message && data.message.includes('Importados') && data.message.includes('produtos')) {
-                        showErrorModal(data.duplicados, true);
-                    } else {
-                        showErrorModal(data.duplicados, false);
-                    }
-                } else {
-                    alert('Erro ao importar produtos: ' + data.message);
-                }
+            renderImportResult(data);
+            if (data.success && !(data.duplicados && data.duplicados.length)) {
+                setTimeout(() => location.reload(), 2500);
             }
         })
         .catch(error => {
             console.error('Erro:', error);
             btn.textContent = originalText;
             btn.disabled = false;
+            if (overlay) overlay.style.display = 'none';
             alert('Erro ao fazer upload da planilha: ' + error.message);
         });
         
@@ -890,6 +1058,141 @@ function uploadPlanilha(input) {
         input.value = '';
     } else {
         console.log('Nenhum arquivo selecionado');
+    }
+}
+
+function renderImportResult(data) {
+    const summary = document.getElementById('importResultSummary');
+    const details = document.getElementById('importResultDetails');
+    if (!summary || !details) return;
+
+    const criados = data.criados || data.produtos_criados || 0;
+    const atualizados = (data.atualizados && data.atualizados.length) ? data.atualizados.length : (data.produtos_atualizados || 0);
+    const duplicados = data.duplicados || [];
+    const erros = data.erros || data.invalidos || [];
+    const catChanges = data.categorias_alteradas || [];
+    const nenhumProcessado = !criados && !atualizados && !catChanges.length && !duplicados.length && !erros.length;
+
+    summary.innerHTML = `
+        <div><strong>Status:</strong> ${data.success ? 'Sucesso' : 'Falha'}</div>
+        <div><strong>Criados:</strong> ${criados}</div>
+        <div><strong>Atualizados:</strong> ${atualizados}</div>
+        <div><strong>Categorias alteradas:</strong> ${catChanges.length}</div>
+        <div><strong>Duplicados ignorados:</strong> ${duplicados.length}</div>
+        <div><strong>Erros:</strong> ${erros.length}</div>
+        <div class="mt-2">${data.message || ''}</div>
+    `;
+
+    const parts = [];
+    if (nenhumProcessado) {
+        parts.push(`<div class="alert alert-warning" role="alert">
+            Nenhuma linha foi criada ou atualizada. Possíveis motivos:
+            <ul class="mb-0">
+                <li>Todas as linhas já existem com os mesmos dados (nome/código/EAN/categoria).</li>
+                <li>Colunas obrigatórias ausentes (NOME, CATEGORIA, CÓDIGO INTERNO, EAN).</li>
+                <li>Linhas vazias ou sem nome.</li>
+            </ul>
+        </div>`);
+    }
+    if (atualizados) {
+        parts.push('<h6>Atualizados</h6><ul>' + (data.atualizados || []).map(item => {
+            if (typeof item === 'string') return `<li>${item}</li>`;
+            return `<li>${item.nome || 'Produto'} (linha ${item.linha || '?'})</li>`;
+        }).join('') + '</ul>');
+    }
+    if (duplicados.length) {
+        parts.push('<h6>Duplicados</h6><ul>' + duplicados.map(item => {
+            if (typeof item === 'string') return `<li>${item}</li>`;
+            const campos = [];
+            if (item.nome) campos.push(`Nome: ${item.nome}`);
+            if (item.codigo_interno) campos.push(`Código: ${item.codigo_interno}`);
+            if (item.linha) campos.push(`Linha: ${item.linha}`);
+            return `<li>${campos.join(' | ') || 'Duplicado'}</li>`;
+        }).join('') + '</ul>');
+    }
+    if (catChanges.length) {
+        const rows = catChanges.map(item => {
+            return `<tr>
+                <td>${item.nome || '-'}</td>
+                <td>${item.de || item.categoria_de || '-'}</td>
+                <td>${item.para || item.categoria_para || '-'}</td>
+                <td>${item.linha || '-'}</td>
+            </tr>`;
+        }).join('');
+        parts.push(`<h6>Produtos com categoria alterada</h6>
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead><tr><th>Produto</th><th>De</th><th>Para</th><th>Linha</th></tr></thead>
+                    <tbody>${rows}</tbody>
+                </table>
+            </div>`);
+    }
+    if (erros.length) {
+        parts.push('<h6>Erros</h6><ul>' + erros.map(err => {
+            if (typeof err === 'string') return `<li>${err}</li>`;
+            if (err.linha || err.erro) {
+                return `<li>Linha ${err.linha || '?'}: ${err.erro || 'Erro ao processar'}</li>`;
+            }
+            return `<li>${JSON.stringify(err)}</li>`;
+        }).join('') + '</ul>');
+    }
+    details.innerHTML = parts.join('');
+
+    const modalEl = document.getElementById('importResultModal');
+    if (modalEl && window.bootstrap) {
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+    }
+}
+
+function renderPriceImportResult(data) {
+    const summary = document.getElementById('priceImportSummary');
+    const details = document.getElementById('priceImportDetails');
+
+    if (!summary || !details) {
+        if (data.message) {
+            alert(data.message);
+        }
+        return;
+    }
+
+    const naoEncontrados = data.nao_encontrados || [];
+    const invalidos = data.invalidos || [];
+    const atualizados = data.atualizados || 0;
+
+    summary.innerHTML = `
+        <div><strong>Status:</strong> ${data.success ? 'Sucesso' : 'Falha'}</div>
+        <div><strong>Atualizados:</strong> ${atualizados}</div>
+        <div><strong>Não encontrados:</strong> ${naoEncontrados.length}</div>
+        <div><strong>Linhas inválidas:</strong> ${invalidos.length}</div>
+        <div class="mt-2">${data.message || ''}</div>
+    `;
+
+    const parts = [];
+    if (naoEncontrados.length) {
+        parts.push('<h6>Itens não encontrados</h6><ul>' + naoEncontrados.map(item => {
+            const partsItem = [];
+            if (item.codigo_interno) partsItem.push(`Código: ${item.codigo_interno}`);
+            if (item.linha) partsItem.push(`Linha: ${item.linha}`);
+            return `<li>${partsItem.join(' | ') || 'Produto não encontrado'}</li>`;
+        }).join('') + '</ul>');
+    }
+    if (invalidos.length) {
+        parts.push('<h6>Linhas inválidas</h6><ul>' + invalidos.map(item => {
+            const msg = item.erro ? `${item.erro}` : 'Erro ao processar linha';
+            const linha = item.linha ? `Linha: ${item.linha} - ` : '';
+            return `<li>${linha}${msg}</li>`;
+        }).join('') + '</ul>');
+    }
+
+    details.innerHTML = parts.join('') || '<div>Nenhum detalhe adicional.</div>';
+
+    const modalEl = document.getElementById('priceImportModal');
+    if (modalEl && window.bootstrap) {
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+    } else if (data.message) {
+        alert(data.message);
     }
 }
 
@@ -902,6 +1205,8 @@ function uploadPrecos(input) {
         const originalText = btn.textContent;
         btn.textContent = 'Processando...';
         btn.disabled = true;
+        const overlay = document.getElementById('uploadOverlay');
+        if (overlay) overlay.style.display = 'flex';
         
         const formData = new FormData();
         formData.append('file', file);
@@ -926,18 +1231,22 @@ function uploadPrecos(input) {
             console.log('Dados:', data);
             btn.textContent = originalText;
             btn.disabled = false;
-            
-            if (data.success) {
-                alert(data.message);
-                location.reload();
+            if (overlay) overlay.style.display = 'none';
+            renderPriceImportResult(data);
+            const hasMissing = data.nao_encontrados && data.nao_encontrados.length;
+            if (data.success && !hasMissing) {
+                setTimeout(() => location.reload(), 2000);
             } else {
-                alert('Erro ao importar preços: ' + data.message);
+                if (!data.success && data.message) {
+                    alert('Erro ao importar preços: ' + data.message);
+                }
             }
         })
         .catch(error => {
             console.error('Erro:', error);
             btn.textContent = originalText;
             btn.disabled = false;
+            if (overlay) overlay.style.display = 'none';
             alert('Erro ao fazer upload da planilha de preços: ' + error.message);
         });
         
@@ -952,7 +1261,17 @@ function showErrorModal(duplicados, recarregar) {
     const modal = document.getElementById('errorModal');
     const produtosDiv = document.getElementById('produtosDuplicados');
     
-    produtosDiv.innerHTML = '<ul>' + duplicados.map(p => '<li>' + p + '</li>').join('') + '</ul>';
+    const itens = duplicados.map(item => {
+        if (typeof item === 'string') {
+            return `<li>${item}</li>`;
+        }
+        const partes = [];
+        if (item.nome) partes.push(`Nome: ${item.nome}`);
+        if (item.codigo_interno) partes.push(`Código: ${item.codigo_interno}`);
+        if (item.linha) partes.push(`Linha: ${item.linha}`);
+        return `<li>${partes.join(' | ')}</li>`;
+    }).join('');
+    produtosDiv.innerHTML = `<ul>${itens}</ul>`;
     modal.style.display = 'block';
     
     if (recarregar) {

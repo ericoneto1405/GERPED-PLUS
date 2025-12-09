@@ -16,7 +16,7 @@
                 <span class="input-group-text bg-white">
                     <i class="fas fa-search text-muted"></i>
                 </span>
-                <input type="search" id="filtroColetas" class="form-control" placeholder="Buscar por cliente, status, pedido..." />
+                <input type="search" id="filtroColetas" class="form-control" placeholder="Buscar por cliente ou pedido..." />
             </div>
             <small class="text-muted">Clique nos cabeçalhos para ordenar e use a busca para filtrar rapidamente.</small>
         </div>
@@ -24,18 +24,14 @@
             <table class="coletas-table">
                 <thead>
                     <tr>
-                        <th data-column-index="0">Cliente</th>
-                        <th data-column-index="1">Pedidos</th>
-                        <th data-column-index="2">Data mais recente</th>
-                        <th data-column-index="3">Status</th>
-                        <th data-column-index="4">Itens</th>
-                        <th data-column-index="5">Progresso</th>
-                        <th>Ações</th>
+                        <th data-column-index="0" class="text-center">Cliente</th>
+                        <th data-column-index="1" class="text-center">Pedidos</th>
+                        <th data-column-index="2" class="text-center">Data da última coleta</th>
+                        <th class="text-center">Ações</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for item in pedidos %}
-                        {% set percentual = item.percentual if item.percentual is defined else ((item.itens_coletados / item.total_itens * 100) if item.total_itens > 0 else 0) %}
                         <tr class="coleta-row" data-details-id="">
                             <td>{{ item.cliente_nome }}</td>
                             <td>
@@ -50,53 +46,29 @@
                                 {{ data_ref.strftime('%d/%m/%Y') if data_ref else '-' }}
                             </td>
                             <td>
-                                <span class="badge 
-                                    {% if item.status_badge is defined %}{{ item.status_badge }}{% else %}
-                                        {% if item.coletado_completo %}bg-success
-                                        {% elif item.itens_coletados > 0 %}bg-info
-                                        {% else %}bg-warning{% endif %}
-                                    {% endif %}">
-                                    {{ item.status_label if item.status_label is defined else ( 'Coleta concluída' if item.coletado_completo else ('Coleta parcial' if item.itens_coletados > 0 else 'Aguardando coleta')) }}
-                                </span>
-                            </td>
-                            <td>
-                                <small class="text-muted">
-                                    {{ item.itens_coletados }}/{{ item.total_itens }} itens
-                                </small>
-                            </td>
-                            <td>
-                                <div class="progress" style="height: 20px;">
-                                    <div class="progress-bar 
-                                        {% if percentual == 100 %}bg-success
-                                        {% elif percentual > 0 %}bg-info
-                                        {% else %}bg-secondary{% endif %}" 
-                                         style="width: {{ percentual }}%">
-                                        {{ "%.0f"|format(percentual) }}%
-                                    </div>
-                                </div>
-                            </td>
-                            <td>
                                 <div class="action-buttons">
                                     {% for pedido_id in item.pedidos_ids %}
                                     <div class="d-flex flex-wrap gap-1 justify-content-center">
-                                        <a href="{{ url_for('coletas.detalhes_pedido', pedido_id=pedido_id) }}" 
-                                           class="btn btn-sm btn-outline-secondary" title="Ver detalhes do pedido #{{ pedido_id }}">
-                                            <i class="fas fa-eye me-1"></i>#{{ pedido_id }}
-                                        </a>
                                         {% if not item.coletado_completo %}
                                             <a href="{{ url_for('coletas.processar_coleta', pedido_id=pedido_id) }}" 
                                                class="btn btn-sm btn-primary" title="Processar coleta do pedido #{{ pedido_id }}">
-                                                <i class="fas fa-box me-1"></i>Coletar
+                                                <i class="bi bi-box-seam"></i> COLETAR
                                             </a>
                                         {% endif %}
                                         {% if item.itens_coletados > 0 %}
                                             <a href="{{ url_for('coletas.historico_coletas', pedido_id=pedido_id) }}" 
                                                class="btn btn-sm btn-outline-success" title="Histórico do pedido #{{ pedido_id }}">
-                                                <i class="fas fa-history me-1"></i>Histórico
+                                                <i class="bi bi-clock-history"></i> HISTÓRICO
                                             </a>
                                         {% endif %}
                                     </div>
                                     {% endfor %}
+                                    <button type="button"
+                                            class="btn btn-sm btn-dark btn-quant-pendente"
+                                            data-pedidos="{{ item.pedidos_ids | join(',') }}"
+                                            data-cliente="{{ item.cliente_nome }}">
+                                        <i class="bi bi-exclamation-circle"></i> QUANT. PENDENTE
+                                    </button>
                                 </div>
                             </td>
                         </tr>
@@ -125,6 +97,35 @@
             </p>
         </div>
     {% endif %}
+</div>
+
+<div class="modal fade" id="modalPendencias" tabindex="-1" aria-labelledby="modalPendenciasLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalPendenciasLabel">Pendências de Produtos</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted" id="modalPendenciasCliente"></p>
+                <div id="pendenciasFeedback" class="alert alert-info d-none"></div>
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead>
+                            <tr>
+                                <th>Produto</th>
+                                <th class="text-center">Quantidade pendente</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pendenciasBody"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 {% endblock %}
@@ -208,6 +209,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const tbody = tabela.querySelector('tbody');
     const headers = tabela.querySelectorAll('th[data-column-index]');
     const filtro = document.getElementById('filtroColetas');
+    const pendenciasModalEl = document.getElementById('modalPendencias');
+    const bootstrapLib = (typeof window !== 'undefined' && window.bootstrap)
+        ? window.bootstrap
+        : (typeof bootstrap !== 'undefined' ? bootstrap : null);
+    const pendenciasModal = pendenciasModalEl && bootstrapLib ? new bootstrapLib.Modal(pendenciasModalEl) : null;
+    const pendenciasBody = document.getElementById('pendenciasBody');
+    const pendenciasFeedback = document.getElementById('pendenciasFeedback');
+    const pendenciasCliente = document.getElementById('modalPendenciasCliente');
+    const pendenciasEndpoint = "{{ url_for('coletas.pendencias_itens') }}";
     let currentSort = { index: null, direction: 'asc' };
 
     const parseValue = (cell, index) => {
@@ -217,14 +227,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const [dia, mes, ano] = text.split('/');
             if (!dia || !mes || !ano) return text.toLowerCase();
             return `${ano}-${mes}-${dia}`;
-        }
-        if (index === 4) {
-            const match = text.match(/(\d+)/);
-            return match ? parseInt(match[0], 10) : 0;
-        }
-        if (index === 5) {
-            const percent = parseFloat(text.replace('%', '').trim());
-            return Number.isNaN(percent) ? 0 : percent;
         }
         return text.toLowerCase();
     };
@@ -289,6 +291,97 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
     }
+
+    const setPendenciasFeedback = (message = '', type = 'info') => {
+        if (!pendenciasFeedback) return;
+        pendenciasFeedback.classList.remove('alert-info', 'alert-warning', 'alert-danger', 'alert-success');
+        if (!message) {
+            pendenciasFeedback.classList.add('d-none');
+            pendenciasFeedback.textContent = '';
+            return;
+        }
+        pendenciasFeedback.textContent = message;
+        pendenciasFeedback.classList.remove('d-none');
+        pendenciasFeedback.classList.add(`alert-${type}`);
+    };
+
+    const renderPendencias = (itens) => {
+        if (!pendenciasBody) {
+            return;
+        }
+        pendenciasBody.innerHTML = '';
+        if (!Array.isArray(itens) || itens.length === 0) {
+            setPendenciasFeedback('Nenhum item pendente encontrado.', 'info');
+            return;
+        }
+        setPendenciasFeedback('');
+        itens.forEach((item) => {
+            const row = document.createElement('tr');
+            const produtoCell = document.createElement('td');
+            produtoCell.textContent = item.produto;
+            const quantidadeCell = document.createElement('td');
+            quantidadeCell.className = 'text-center fw-bold';
+            quantidadeCell.textContent = item.quantidade;
+            row.appendChild(produtoCell);
+            row.appendChild(quantidadeCell);
+            pendenciasBody.appendChild(row);
+        });
+    };
+
+    tabela.addEventListener('click', async (event) => {
+        const button = event.target.closest('.btn-quant-pendente');
+        if (!button) {
+            return;
+        }
+
+        const pedidosRaw = (button.dataset.pedidos || '').split(',').map((value) => value.trim()).filter(Boolean);
+        if (!pedidosRaw.length) {
+            return;
+        }
+        const pedidoIds = [...new Set(pedidosRaw.map((id) => parseInt(id, 10)).filter((id) => !Number.isNaN(id)))];
+        if (!pedidoIds.length) {
+            return;
+        }
+
+        if (pendenciasCliente) {
+            pendenciasCliente.textContent = `Cliente: ${button.dataset.cliente || 'N/A'}`;
+        }
+        setPendenciasFeedback('Carregando itens pendentes...', 'info');
+        renderPendencias([]);
+
+        try {
+                const response = await fetch(pendenciasEndpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': window.CSRF_TOKEN,
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({ pedido_ids: pedidoIds })
+                });
+
+            const result = await response.json();
+            if (!response.ok || !result.success) {
+                throw new Error(result.error || 'Não foi possível carregar as pendências.');
+            }
+
+            renderPendencias(result.pendencias || []);
+        } catch (error) {
+            setPendenciasFeedback(error.message, 'danger');
+            if (pendenciasBody) {
+                pendenciasBody.innerHTML = '';
+            }
+        }
+
+        if (pendenciasModal) {
+            pendenciasModal.show();
+        } else if (pendenciasModalEl) {
+            pendenciasModalEl.classList.add('show');
+            pendenciasModalEl.style.display = 'block';
+            pendenciasModalEl.removeAttribute('aria-hidden');
+        }
+    });
 });
 </script>
 {% endblock %}

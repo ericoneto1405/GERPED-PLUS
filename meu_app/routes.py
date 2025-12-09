@@ -296,11 +296,7 @@ def painel():
             .filter(
                 Pagamento.data_pagamento >= data_inicio,
                 Pagamento.data_pagamento < proximo_mes,
-                Pedido.status.in_([
-                    StatusPedido.PAGAMENTO_APROVADO,
-                    StatusPedido.COLETA_PARCIAL,
-                    StatusPedido.COLETA_CONCLUIDA
-                ])
+                Pedido.status == StatusPedido.PAGAMENTO_APROVADO
             )
             .all()
         )
@@ -403,11 +399,7 @@ def painel():
             .filter(
                 Pagamento.data_pagamento >= data_30_dias_atras,
                 Pagamento.data_pagamento <= datetime.now(),
-                Pedido.status.in_([
-                    StatusPedido.PAGAMENTO_APROVADO,
-                    StatusPedido.COLETA_PARCIAL,
-                    StatusPedido.COLETA_CONCLUIDA
-                ])
+                Pedido.status == StatusPedido.PAGAMENTO_APROVADO
             )
             .group_by(func.date(Pagamento.data_pagamento))
             .order_by(func.date(Pagamento.data_pagamento))

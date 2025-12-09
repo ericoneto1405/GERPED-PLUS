@@ -2,11 +2,11 @@
 Rotas consolidadas do módulo de coletas
 Integra funcionalidades do módulo logística
 """
-from flask import Blueprint, render_template, current_app, flash, request, redirect, url_for, session, send_file, abort
+from flask import Blueprint, render_template, current_app, flash, request, redirect, url_for, session, send_file, abort, jsonify
 from ..decorators import login_obrigatorio
 from app.auth.rbac import requires_logistica
 import re
-from typing import Optional
+from typing import Optional, List
 from pathlib import Path
 
 coletas_bp = Blueprint('coletas', __name__, url_prefix='/coletas')
@@ -108,6 +108,30 @@ def index():
         current_app.logger.error(f"Erro ao carregar dashboard: {str(e)}")
         flash(f"Erro ao carregar dashboard: {str(e)}", 'error')
         return render_template('coletas/dashboard.html', pedidos=[], filtro='pendentes')
+
+
+@coletas_bp.route('/pendencias-itens', methods=['POST'])
+@login_obrigatorio
+@requires_logistica
+def pendencias_itens():
+    """Retorna lista consolidada de itens pendentes para os pedidos informados."""
+    payload = request.get_json(silent=True) or {}
+    pedido_ids_raw = payload.get('pedido_ids') or []
+
+    pedido_ids = []
+    for raw_id in pedido_ids_raw:
+        try:
+            value = int(raw_id)
+        except (TypeError, ValueError):
+            continue
+        if value not in pedido_ids:
+            pedido_ids.append(value)
+
+    if not pedido_ids:
+        return jsonify({'success': False, 'error': 'Nenhum pedido informado.'}), 400
+
+    pendencias = ColetaService.listar_pendencias_por_pedidos(pedido_ids)
+    return jsonify({'success': True, 'pendencias': pendencias})
 
 
 @coletas_bp.route('/processar/<int:pedido_id>', methods=['GET', 'POST'])
@@ -434,21 +458,6 @@ def historico_coletas(pedido_id):
         return redirect(url_for('coletas.dashboard'))
 
 
-@coletas_bp.route('/coletados')
-@login_obrigatorio
-@requires_logistica
-def pedidos_coletados():
-    """Lista pedidos coletados (funcionalidade do logística)"""
-    try:
-        pedidos = ColetaService.listar_pedidos_coletados()
-        return render_template('coletas/pedidos_coletados.html', pedidos=pedidos)
-    except Exception as e:
-        current_app.logger.error(f"Erro ao listar pedidos coletados: {str(e)}")
-        flash('Erro ao carregar pedidos coletados', 'error')
-        return render_template('coletas/pedidos_coletados.html', pedidos=[])
-
-
-# Rota de compatibilidade com logística
 @coletas_bp.route('/coletar/<int:pedido_id>', methods=['GET', 'POST'])
 @login_obrigatorio
 @requires_logistica

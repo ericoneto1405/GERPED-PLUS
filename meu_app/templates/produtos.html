@@ -257,7 +257,10 @@
                     <select id="produtoSelect" name="produto_id" required>
                         <option value="">Selecione um produto</option>
                         {% for produto in produtos %}
-                        <option value="{{ produto.id }}">{{ produto.nome }} {% if produto.codigo_interno %}({{ produto.codigo_interno }}){% endif %}</option>
+                        <option value="{{ produto.id }}"
+                                data-search="{{ (produto.nome ~ ' ' ~ (produto.codigo_interno or '') ~ ' ' ~ (produto.ean or '')) | trim }}">
+                            {{ produto.nome }} {% if produto.codigo_interno %}({{ produto.codigo_interno }}){% endif %}
+                        </option>
                         {% endfor %}
                     </select>
                 </div>
@@ -1010,7 +1013,36 @@ document.addEventListener('DOMContentLoaded', function() {
     if (btnSalvarPreco) {
         btnSalvarPreco.addEventListener('click', salvarPrecoManual);
     }
+
+    configurarFiltroProdutosPreco();
 });
+
+function configurarFiltroProdutosPreco() {
+    const buscaInput = document.getElementById('buscaProdutoPreco');
+    const selectProduto = document.getElementById('produtoSelect');
+    if (!buscaInput || !selectProduto) {
+        return;
+    }
+
+    const opcoesProduto = Array.from(selectProduto.options).filter(option => option.value);
+
+    buscaInput.addEventListener('input', function() {
+        const termo = this.value.trim().toLowerCase();
+        opcoesProduto.forEach(option => {
+            const textoComparacao = (option.dataset.search || option.textContent || '').toLowerCase();
+            const deveMostrar = !termo || textoComparacao.includes(termo);
+            option.hidden = !deveMostrar;
+        });
+
+        const indiceSelecionado = selectProduto.selectedIndex;
+        if (indiceSelecionado >= 0) {
+            const selecionada = selectProduto.options[indiceSelecionado];
+            if (selecionada && selecionada.hidden) {
+                selectProduto.value = '';
+            }
+        }
+    });
+}
 
 function uploadPlanilha(input) {
     if (input.files && input.files[0]) {

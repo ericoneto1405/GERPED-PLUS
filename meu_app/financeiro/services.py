@@ -18,7 +18,7 @@ from sqlalchemy.orm import joinedload
 from sqlalchemy import inspect as sa_inspect
 from sqlalchemy.exc import SQLAlchemyError
 
-from ..models import db, Pedido, Pagamento, StatusPedido, PagamentoAnexo
+from ..models import db, Pedido, Pagamento, StatusPedido, PagamentoAnexo, CarteiraCredito
 from .config import FinanceiroConfig
 from .exceptions import (
     FinanceiroValidationError, 

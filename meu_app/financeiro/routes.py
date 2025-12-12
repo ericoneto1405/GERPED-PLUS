@@ -95,6 +95,10 @@ def registrar_pagamento(pedido_id):
         id_transacao = request.form.get('id_transacao') # Captura o ID da transação do campo oculto
         disponibilizar_para_outro_pedido = request.form.get('disponibilizar_comprovante') == 'on'
         comprovante_compartilhado_id = request.form.get('comprovante_compartilhado_id')
+        compartilhar_item_id = request.form.get('compartilhar_item_id')
+        compartilhar_item_valor = request.form.get('compartilhar_item_valor')
+        compartilhar_item_filename = request.form.get('compartilhar_item_filename')
+        carteira_credito_id = request.form.get('carteira_credito_id')
         comprovante_origem = None
         recibos = request.files.getlist('recibo') if not comprovante_compartilhado_id else []
         recibos = [r for r in recibos if r and r.filename]
@@ -102,6 +106,43 @@ def registrar_pagamento(pedido_id):
         anexos_payload = []
         uploads_salvos = []
         hashes_vistos = set()
+        pedido = Pedido.query.get(pedido_id)
+        if not pedido:
+            flash('Pedido não encontrado', 'error')
+            return redirect(url_for('financeiro.listar_financeiro'))
+        cliente_id = pedido.cliente_id
+        carteira_credito = None
+        compartilhar_meta = None
+        compartilhar_item_valor_num = None
+        if compartilhar_item_valor:
+            try:
+                compartilhar_item_valor_num = float(str(compartilhar_item_valor).replace(',', '.'))
+            except (ValueError, TypeError):
+                compartilhar_item_valor_num = None
+        carteira_meta = None
+        if carteira_credito_id:
+            try:
+                carteira_credito = FinanceiroService.obter_credito_disponivel(int(carteira_credito_id))
+            except (ValueError, TypeError):
+                carteira_credito = None
+            if not carteira_credito or carteira_credito.cliente_id != cliente_id:
+                flash('Crédito selecionado indisponível para este cliente.', 'error')
+                return redirect(url_for('financeiro.registrar_pagamento', pedido_id=pedido_id))
+            try:
+                carteira_meta = FinanceiroService.preparar_credito_para_pagamento(
+                    carteira_credito,
+                    session.get('usuario_nome')
+                )
+                caminho_recibo = carteira_meta['caminho']
+                request.recibo_meta = {
+                    'recibo_mime': carteira_meta.get('mime'),
+                    'recibo_tamanho': carteira_meta.get('tamanho'),
+                    'recibo_sha256': carteira_meta.get('sha256')
+                }
+                anexos_payload.append(carteira_meta)
+            except FinanceiroValidationError as err:
+                flash(str(err), 'error')
+                return redirect(url_for('financeiro.registrar_pagamento', pedido_id=pedido_id))
         
         try:
             valor = float(valor)
@@ -201,10 +242,11 @@ def registrar_pagamento(pedido_id):
                         'mime': metadata.get('mime_type') if metadata else None,
                         'tamanho': tamanho,
                         'sha256': sha256,
-                        'principal': idx == 0
+                        'principal': idx == 0 and not carteira_meta,
+                        'original_name': recibo.filename
                     }
 
-                    if idx == 0:
+                    if idx == 0 and not carteira_meta:
                         caminho_recibo = secure_name
                         request.recibo_meta = {
                             'recibo_mime': meta.get('mime'),
@@ -212,6 +254,12 @@ def registrar_pagamento(pedido_id):
                             'recibo_sha256': sha256
                         }
                     anexos_payload.append(meta)
+                    if compartilhar_item_filename and compartilhar_item_filename == recibo.filename:
+                        compartilhar_meta = {
+                            **meta,
+                            'valor': compartilhar_item_valor,
+                            'original_name': recibo.filename
+                        }
             except (ArquivoInvalidoError, FinanceiroValidationError, PagamentoDuplicadoError) as err:
                 for path in uploads_salvos:
                     try:
@@ -265,10 +313,24 @@ def registrar_pagamento(pedido_id):
             if sucesso:
                 if comprovante_origem:
                     FinanceiroService.marcar_comprovante_compartilhado_usado(comprovante_origem, pedido_id)
-                if disponibilizar_para_outro_pedido and pagamento and pagamento.caminho_recibo:
-                    FinanceiroService.disponibilizar_pagamento_para_outro_pedido(
-                        pagamento,
-                        session.get('usuario_nome')
+                if compartilhar_meta and pagamento:
+                    try:
+                        FinanceiroService.criar_credito_carteira(
+                            cliente_id=cliente_id,
+                            pedido_origem_id=pedido_id,
+                            pagamento=pagamento,
+                            caminho_anexo=compartilhar_meta.get('caminho'),
+                            valor=compartilhar_item_valor_num or valor,
+                            usuario_nome=session.get('usuario_nome'),
+                            original_name=compartilhar_meta.get('original_name')
+                        )
+                    except Exception as err:
+                        current_app.logger.error(f"Erro ao registrar crédito na carteira: {err}")
+                if carteira_credito and pagamento:
+                    FinanceiroService.consumir_credito_carteira(
+                        carteira_credito,
+                        pedido_destino_id=pedido_id,
+                        pagamento_destino=pagamento
                     )
                 current_app.logger.info(f"Pagamento registrado por {session.get('usuario_nome', 'N/A')}")
                 flash(mensagem, 'success')
@@ -294,11 +356,13 @@ def registrar_pagamento(pedido_id):
         # Usar método centralizado do modelo
         totais = pedido.calcular_totais()
         
+        carteira_creditos = FinanceiroService.listar_creditos_cliente(pedido.cliente_id)
         return render_template('lancar_pagamento.html', 
                              pedido=pedido, 
                              total=totais['total_pedido'], 
                              pago=totais['total_pago'], 
-                             saldo=totais['saldo'])
+                             saldo=totais['saldo'],
+                             carteira_creditos=carteira_creditos)
     except Exception as e:
         current_app.logger.error(f"Erro ao carregar formulário de pagamento: {str(e)}")
         flash('Erro ao carregar dados do pedido', 'error')

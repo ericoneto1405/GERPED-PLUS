@@ -245,14 +245,6 @@
         <div class="modal-body">
             <form id="formPrecoManual">
                 <div class="form-group">
-                    <label for="buscaProdutoPreco">Buscar produto</label>
-                    <input type="search"
-                           id="buscaProdutoPreco"
-                           class="form-control"
-                           placeholder="Digite parte do nome, código interno ou EAN">
-                    <small class="text-muted">O filtro é aplicado na lista abaixo para facilitar a seleção.</small>
-                </div>
-                <div class="form-group">
                     <label for="produtoSelect">Produto:</label>
                     <select id="produtoSelect" name="produto_id" required>
                         <option value="">Selecione um produto</option>
@@ -263,6 +255,7 @@
                         </option>
                         {% endfor %}
                     </select>
+                    <small class="text-muted">Digite para buscar por nome, código interno ou EAN.</small>
                 </div>
                 <div class="form-group">
                     <label for="precoMedio">Preço Médio de Compra (R$):</label>
@@ -278,6 +271,8 @@
 </div>
 
 <style>
+@import url('https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css');
+
 /* Estilos das Abas */
 .tabs-container {
     background: white;
@@ -775,6 +770,8 @@ table tbody tr:hover {
 }
 </style>
 
+<script nonce="{{ nonce }}" src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
 <script nonce="{{ nonce }}">
 document.addEventListener('DOMContentLoaded', () => {
     const tabela = document.querySelector('.produtos-table');
@@ -1014,32 +1011,35 @@ document.addEventListener('DOMContentLoaded', function() {
         btnSalvarPreco.addEventListener('click', salvarPrecoManual);
     }
 
-    configurarFiltroProdutosPreco();
+    inicializarSelectProduto();
 });
 
-function configurarFiltroProdutosPreco() {
-    const buscaInput = document.getElementById('buscaProdutoPreco');
+function inicializarSelectProduto() {
     const selectProduto = document.getElementById('produtoSelect');
-    if (!buscaInput || !selectProduto) {
+    if (!selectProduto) {
+        return;
+    }
+    if (!window.jQuery || !jQuery.fn.select2) {
+        console.error('Select2 não está disponível nesta página.');
         return;
     }
 
-    const opcoesProduto = Array.from(selectProduto.options).filter(option => option.value);
-
-    buscaInput.addEventListener('input', function() {
-        const termo = this.value.trim().toLowerCase();
-        opcoesProduto.forEach(option => {
-            const textoComparacao = (option.dataset.search || option.textContent || '').toLowerCase();
-            const deveMostrar = !termo || textoComparacao.includes(termo);
-            option.hidden = !deveMostrar;
-        });
-
-        const indiceSelecionado = selectProduto.selectedIndex;
-        if (indiceSelecionado >= 0) {
-            const selecionada = selectProduto.options[indiceSelecionado];
-            if (selecionada && selecionada.hidden) {
-                selectProduto.value = '';
+    const $select = jQuery(selectProduto);
+    $select.select2({
+        placeholder: 'Digite para buscar um produto...',
+        dropdownParent: jQuery('#modalPrecoManual .modal-content'),
+        width: '100%',
+        language: {
+            noResults: () => 'Nenhum produto encontrado'
+        },
+        matcher: (params, data) => {
+            const termo = (params.term || '').trim().toLowerCase();
+            if (!termo) {
+                return data;
             }
+            const texto = (data.text || '').toLowerCase();
+            const extra = (data.element && data.element.dataset.search) ? data.element.dataset.search.toLowerCase() : '';
+            return (texto.includes(termo) || extra.includes(termo)) ? data : null;
         }
     });
 }
@@ -1326,13 +1326,29 @@ function closeModal() {
 }
 
 function abrirModalPrecoManual() {
-    document.getElementById('modalPrecoManual').style.display = 'block';
-    document.getElementById('produtoSelect').focus();
+    const modal = document.getElementById('modalPrecoManual');
+    if (!modal) return;
+    modal.style.display = 'block';
+    const select = document.getElementById('produtoSelect');
+    if (select && window.jQuery && jQuery(select).data('select2')) {
+        setTimeout(() => jQuery(select).select2('open'), 80);
+    } else if (select) {
+        select.focus();
+    }
 }
 
 function fecharModalPrecoManual() {
-    document.getElementById('modalPrecoManual').style.display = 'none';
-    document.getElementById('formPrecoManual').reset();
+    const modal = document.getElementById('modalPrecoManual');
+    if (!modal) return;
+    modal.style.display = 'none';
+    const form = document.getElementById('formPrecoManual');
+    if (form) {
+        form.reset();
+    }
+    const select = document.getElementById('produtoSelect');
+    if (select && window.jQuery && jQuery(select).data('select2')) {
+        jQuery(select).val('').trigger('change');
+    }
 }
 
 function salvarPrecoManual() {

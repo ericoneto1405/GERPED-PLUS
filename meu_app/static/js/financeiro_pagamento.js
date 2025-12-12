@@ -921,7 +921,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             if (action === 'ver-comprovante') {
                 event.preventDefault();
-                abrirModalComprovante(item);
+                abrirComprovante(item);
                 return;
             }
 

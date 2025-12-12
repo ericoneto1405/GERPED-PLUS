@@ -246,14 +246,8 @@
             <form id="formPrecoManual">
                 <div class="form-group">
                     <label for="produtoSelect">Produto:</label>
-                    <select id="produtoSelect" name="produto_id" required>
+                    <select id="produtoSelect" name="produto_id" class="form-select" required>
                         <option value="">Selecione um produto</option>
-                        {% for produto in produtos %}
-                        <option value="{{ produto.id }}"
-                                data-search="{{ (produto.nome ~ ' ' ~ (produto.codigo_interno or '') ~ ' ' ~ (produto.ean or '')) | trim }}">
-                            {{ produto.nome }} {% if produto.codigo_interno %}({{ produto.codigo_interno }}){% endif %}
-                        </option>
-                        {% endfor %}
                     </select>
                     <small class="text-muted">Digite para buscar por nome, código interno ou EAN.</small>
                 </div>
@@ -1025,21 +1019,27 @@ function inicializarSelectProduto() {
     }
 
     const $select = jQuery(selectProduto);
+    if ($select.hasClass('select2-hidden-accessible')) {
+        $select.select2('destroy');
+    }
+
     $select.select2({
         placeholder: 'Digite para buscar um produto...',
         dropdownParent: jQuery('#modalPrecoManual .modal-content'),
         width: '100%',
-        language: {
-            noResults: () => 'Nenhum produto encontrado'
+        ajax: {
+            url: "{{ url_for('produtos.api_produtos') }}",
+            dataType: 'json',
+            delay: 250,
+            data: params => ({ q: params.term }),
+            processResults: data => ({ results: data.results || [] }),
+            cache: true
         },
-        matcher: (params, data) => {
-            const termo = (params.term || '').trim().toLowerCase();
-            if (!termo) {
-                return data;
-            }
-            const texto = (data.text || '').toLowerCase();
-            const extra = (data.element && data.element.dataset.search) ? data.element.dataset.search.toLowerCase() : '';
-            return (texto.includes(termo) || extra.includes(termo)) ? data : null;
+        minimumInputLength: 1,
+        language: {
+            inputTooShort: () => 'Digite pelo menos 1 caractere',
+            searching: () => 'Buscando...',
+            noResults: () => 'Nenhum produto encontrado'
         }
     });
 }

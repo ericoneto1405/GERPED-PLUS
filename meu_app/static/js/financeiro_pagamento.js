@@ -384,6 +384,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const falhaCard = baseState === 'fail';
             const adminShareUnlocked = !!item.adminShareUnlocked;
+            const podeSelecionar = !falhaCard || adminShareUnlocked;
             const shareValorAttr = valorNumericoReconhecido !== null ? valorNumericoReconhecido.toFixed(2) : '';
             const shareCheckedAttr = shareSelecionadoId && shareSelecionadoId === item.id ? 'checked' : '';
             const shareDisabledAttr = falhaCard && !adminShareUnlocked ? 'disabled' : '';
@@ -396,14 +397,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const encodedFileName = item.file && item.file.name ? encodeURIComponent(item.file.name) : '';
 
             wrapper.innerHTML = `
-                <div class="fila-header">
-                    <div>
-                        <div class="fila-nome">${item.file.name}</div>
-                        <div class="fila-meta"></div>
-                    </div>
-                    <div class="fila-header-actions">
-                        <span class="fila-status ${badgeClass}">${statusLabel}</span>
-                        ${!falhaCard ? `
+                    <div class="fila-header">
+                        <div>
+                            <div class="fila-nome">${item.file.name}</div>
+                            <div class="fila-meta"></div>
+                        </div>
+                        <div class="fila-header-actions">
+                            <span class="fila-status ${badgeClass}">${statusLabel}</span>
+                        ${podeSelecionar ? `
                         <label class="fila-checkbox">
                             <input type="checkbox" data-action="selecionar" data-id="${item.id}" data-valor="${valorNumericoReconhecido !== null ? valorNumericoReconhecido : ''}">
                             Selecionar

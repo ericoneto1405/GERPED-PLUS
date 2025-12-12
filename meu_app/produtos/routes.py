@@ -16,13 +16,6 @@ def registrar_atividade(tipo_atividade, titulo, descricao, modulo, dados_extras=
 @login_obrigatorio
 @permissao_necessaria('acesso_produtos')
 def listar_produtos():
-    # Normalizar categorias antigas (CERVEJA -> CERVEJAS)
-    from .services import ProdutoService
-    db.session.query(Produto).filter(Produto.categoria == 'CERVEJA').update(
-        {Produto.categoria: 'CERVEJAS'}, synchronize_session=False
-    )
-    db.session.commit()
-
     produtos = Produto.query.all()
     categorias = [
         row[0]
@@ -79,11 +72,8 @@ def novo_produto():
 
 @produtos_bp.route('/editar/<int:id>', methods=['GET', 'POST'])
 @login_obrigatorio
+@permissao_necessaria('acesso_produtos')
 def editar_produto(id):
-    if not session.get('acesso_produtos'):
-        flash('Acesso negado!', 'error')
-        return redirect(url_for('main.painel'))
-    
     produto = Produto.query.get_or_404(id)
     
     if request.method == 'POST':
@@ -112,11 +102,8 @@ def editar_produto(id):
 
 @produtos_bp.route('/excluir/<int:id>')
 @login_obrigatorio
+@permissao_necessaria('acesso_produtos')
 def excluir_produto(id):
-    if not session.get('acesso_produtos'):
-        flash('Acesso negado!', 'error')
-        return redirect(url_for('main.painel'))
-    
     # Usar o serviço para excluir o produto
     service = ProdutoService()
     sucesso, mensagem = service.excluir_produto(id)
@@ -135,7 +122,7 @@ def excluir_produto(id):
 def upload_produtos():
     try:
         if 'file' not in request.files:
-            return jsonify({'success': False, 'message': 'Nenhum arquivo enviado'})
+            return jsonify({'success': False, 'message': 'Nenhum arquivo enviado'}), 400
         
         file = request.files['file']
         
@@ -143,7 +130,7 @@ def upload_produtos():
         sucesso_upload, mensagem_upload, file_path = validate_excel_upload(file)
         
         if not sucesso_upload:
-            return jsonify({'success': False, 'message': f'Erro no upload: {mensagem_upload}'})
+            return jsonify({'success': False, 'message': f'Erro no upload: {mensagem_upload}'}), 400
         
         # Usar o serviço para importar produtos com arquivo seguro
         sucesso, mensagem, dados = ImportacaoServiceSeguro.importar_produtos_planilha_seguro(file_path)
@@ -172,11 +159,11 @@ def upload_produtos():
                 'categorias_alteradas': dados.get('categorias_alteradas', []),
                 'criados': dados.get('produtos_criados', 0),
                 'erros': dados.get('erros', [])
-            })
+            }), 400
             
     except Exception as e:
         current_app.logger.error(f"Erro no upload de produtos: {str(e)}")
-        return jsonify({'success': False, 'message': f'Erro ao processar arquivo: {str(e)}'})
+        return jsonify({'success': False, 'message': f'Erro ao processar arquivo: {str(e)}'}), 500
 
 @produtos_bp.route('/atualizar_preco', methods=['POST'])
 @login_obrigatorio

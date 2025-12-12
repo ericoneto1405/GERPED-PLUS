@@ -160,12 +160,13 @@
         <div class="modal-body">
             <!-- Abas -->
             <div class="tabs">
-                <button class="tab-btn active" onclick="trocarAba('pedidos')"><i class="bi bi-box-seam icon-text"></i> Pedidos</button>
-                <button class="tab-btn" onclick="trocarAba('produtos')"><i class="bi bi-tag icon-text"></i> Produtos Compilados</button>
+                <button class="tab-btn" data-aba="pedidos" onclick="trocarAba('pedidos', this)"><i class="bi bi-box-seam icon-text"></i> Pedidos</button>
+                <button class="tab-btn" data-aba="produtos" onclick="trocarAba('produtos', this)"><i class="bi bi-tag icon-text"></i> Produtos Compilados</button>
+                <button class="tab-btn active" data-aba="precos" onclick="trocarAba('precos', this)"><i class="bi bi-currency-exchange icon-text"></i> Últimos preços</button>
             </div>
 
             <!-- Conteúdo: Pedidos -->
-            <div id="abaPedidos" class="tab-content active">
+            <div id="abaPedidos" class="tab-content">
                 <div id="loadingPedidos" class="loading">Carregando pedidos...</div>
                 <table id="tabelaPedidos" class="tabela-modal" style="display: none;">
                     <thead>
@@ -193,6 +194,24 @@
                         </tr>
                     </thead>
                     <tbody id="corpoTabelaProdutos"></tbody>
+                </table>
+            </div>
+
+            <!-- Conteúdo: Últimos preços -->
+            <div id="abaPrecos" class="tab-content active">
+                <div class="kpi-hint">
+                    <strong>KPI:</strong> os últimos preços negociados por produto ajudam a garantir que o próximo pedido respeite o histórico desse cliente.
+                </div>
+                <div id="loadingPrecos" class="loading">Carregando histórico...</div>
+                <table id="tabelaPrecos" class="tabela-modal" style="display: none;">
+                    <thead>
+                        <tr>
+                            <th>Produto</th>
+                            <th>Preço negociado</th>
+                            <th>Data</th>
+                        </tr>
+                    </thead>
+                    <tbody id="corpoTabelaPrecos"></tbody>
                 </table>
             </div>
         </div>
@@ -578,6 +597,16 @@
     display: block;
 }
 
+.kpi-hint {
+    background: #f8f9fa;
+    border-left: 4px solid #667eea;
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    color: #495057;
+    font-size: 0.95rem;
+}
+
 /* Responsivo */
 @media (max-width: 768px) {
     .cards-resumo {
@@ -663,8 +692,8 @@ function abrirModalCliente(clienteId, clienteNome) {
     titulo.textContent = clienteNome;
     modal.classList.add('active');
     
-    // Carregar pedidos por padrão
-    carregarPedidos(clienteId);
+    // KPI abre inicialmente na aba de preços negociados
+    trocarAba('precos');
 }
 
 // Carregar pedidos do cliente
@@ -674,7 +703,9 @@ function carregarPedidos(clienteId) {
     const tbody = document.getElementById('corpoTabelaPedidos');
     
     loading.style.display = 'block';
+    loading.textContent = 'Carregando pedidos...';
     tabela.style.display = 'none';
+    tbody.innerHTML = '';
     
     fetch(`/vendedor/api/cliente/${clienteId}/pedidos`)
         .then(response => response.json())
@@ -707,7 +738,9 @@ function carregarProdutos(clienteId) {
     const tbody = document.getElementById('corpoTabelaProdutos');
     
     loading.style.display = 'block';
+    loading.textContent = 'Carregando produtos...';
     tabela.style.display = 'none';
+    tbody.innerHTML = '';
     
     fetch(`/vendedor/api/cliente/${clienteId}/produtos`)
         .then(response => response.json())
@@ -733,11 +766,58 @@ function carregarProdutos(clienteId) {
         });
 }
 
+// KPI de últimos preços negociados
+function carregarPrecos(clienteId) {
+    const loading = document.getElementById('loadingPrecos');
+    const tabela = document.getElementById('tabelaPrecos');
+    const tbody = document.getElementById('corpoTabelaPrecos');
+    
+    loading.style.display = 'block';
+    loading.textContent = 'Carregando histórico...';
+    tabela.style.display = 'none';
+    tbody.innerHTML = '';
+
+    fetch(`/vendedor/api/cliente/${clienteId}/precos`)
+        .then(response => response.json())
+        .then(data => {
+            if (!data.precos.length) {
+                loading.style.display = 'block';
+                loading.textContent = 'Nenhum histórico encontrado para este cliente.';
+                tabela.style.display = 'none';
+                return;
+            }
+
+            loading.style.display = 'none';
+            tabela.style.display = 'table';
+
+            data.precos.forEach(registro => {
+                const preco = Number(registro.preco || 0);
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${registro.produto}</td>
+                    <td>R$ ${preco.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                    <td>${registro.data}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        })
+        .catch(error => {
+            loading.style.display = 'block';
+            loading.textContent = 'Erro ao carregar histórico';
+            console.error('Erro:', error);
+        });
+}
+
 // Trocar aba
-function trocarAba(aba) {
+function trocarAba(aba, botao = null) {
     // Atualizar botões
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-    event.target.classList.add('active');
+    if (botao) {
+        botao.classList.add('active');
+    } else {
+        const btnAlvo = document.querySelector(`.tab-btn[data-aba="${aba}"]`);
+        if (btnAlvo) btnAlvo.classList.add('active');
+    }
     
     // Atualizar conteúdo
     document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
@@ -748,6 +828,9 @@ function trocarAba(aba) {
     } else if (aba === 'produtos') {
         document.getElementById('abaProdutos').classList.add('active');
         if (clienteAtualId) carregarProdutos(clienteAtualId);
+    } else if (aba === 'precos') {
+        document.getElementById('abaPrecos').classList.add('active');
+        if (clienteAtualId) carregarPrecos(clienteAtualId);
     }
 }
 

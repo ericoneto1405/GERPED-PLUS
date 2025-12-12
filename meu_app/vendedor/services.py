@@ -628,3 +628,33 @@ class VendedorService:
             'preco_medio': float(p.preco_medio),
             'ultima_compra': p.ultima_compra.strftime('%d/%m/%Y')
         } for p in produtos]
+
+    @staticmethod
+    def get_precos_negociados(cliente_id, limite=30):
+        """
+        Retorna os últimos preços negociados por produto para um cliente
+        """
+        from meu_app.models import StatusPedido
+        itens = db.session.query(
+            Produto.nome.label('produto'),
+            ItemPedido.preco_venda.label('preco'),
+            Pedido.data.label('data')
+        ).join(Produto, ItemPedido.produto_id == Produto.id)\
+         .join(Pedido, ItemPedido.pedido_id == Pedido.id)\
+         .filter(
+            Pedido.cliente_id == cliente_id,
+            Pedido.status.in_([
+                StatusPedido.PAGAMENTO_APROVADO,
+                StatusPedido.COLETA_PARCIAL,
+                StatusPedido.COLETA_CONCLUIDA
+            ])
+         )\
+         .order_by(desc(Pedido.data), desc(ItemPedido.id))\
+         .limit(limite)\
+         .all()
+
+        return [{
+            'produto': item.produto,
+            'preco': float(item.preco or 0),
+            'data': item.data.strftime('%d/%m/%Y')
+        } for item in itens]

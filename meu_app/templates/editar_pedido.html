@@ -31,31 +31,44 @@
 
         <hr>
 
-        <h5><i class="bi bi-box-seam icon-text"></i>Itens do Pedido</h5>
-        <div id="items" class="mb-3">
-            {% for item in pedido.itens %}
-            <div class="d-flex gap-2 mb-2 align-items-center" data-item-row>
-                <div class="flex-grow-1">
-                    <select name="produto_id[]" class="form-control select2-ajax" required>
-                        <option value="{{ item.produto.id }}" selected>{{ item.produto.nome }} {% if item.produto.codigo_interno %}({{ item.produto.codigo_interno }}){% endif %}</option>
-                    </select>
-                </div>
-                <div style="width: 100px;">
-                    <input type="number" name="quantidade[]" class="form-control" placeholder="Qtd" value="{{ item.quantidade }}" min="1" required>
-                </div>
-                <div style="width: 150px;">
-                    <input type="text" name="preco_venda" class="form-control currency-input" placeholder="Preço Venda" value="{{ item.preco_venda|string|replace(',', '.') }}" required>
-                </div>
-                <button type="button" class="btn btn-danger btn-sm" data-action="remove-item" aria-label="Remover item"><i class="bi bi-trash icon-text"></i></button>
+    <h5><i class="bi bi-box-seam icon-text"></i>Itens do Pedido</h5>
+    <div class="d-flex gap-2 mb-2 text-secondary small fw-semibold" aria-hidden="true">
+        <div class="flex-grow-1">Produto</div>
+        <div style="width: 110px;">Qtd.</div>
+        <div style="width: 160px;">Preço de venda</div>
+        <div style="width: 160px;">Total item</div>
+        <div style="width: 42px;"></div>
+    </div>
+    <div id="items" class="mb-3">
+        {% for item in pedido.itens %}
+        <div class="d-flex gap-2 mb-2 align-items-center" data-item-row>
+            <div class="flex-grow-1">
+                <select name="produto_id" class="form-control select2-ajax" required>
+                    <option value="{{ item.produto.id }}" selected>{{ item.produto.nome }} {% if item.produto.codigo_interno %}({{ item.produto.codigo_interno }}){% endif %}</option>
+                </select>
             </div>
-            {% endfor %}
+            <div style="width: 110px;">
+                <input type="number" name="quantidade" class="form-control" placeholder="Qtd" value="{{ item.quantidade }}" min="1" required>
+            </div>
+            <div style="width: 160px;">
+                <input type="number" name="preco_venda" class="form-control preco-input" placeholder="Preço venda" inputmode="decimal" step="0.01" value="{{ item.preco_venda|string|replace(',', '.') }}" required>
+            </div>
+            <div style="width: 160px;">
+                <input type="text" class="form-control total-item" placeholder="0,00" value="" readonly>
+            </div>
+            <button type="button" class="btn btn-danger btn-sm" data-action="remove-item" aria-label="Remover item"><i class="bi bi-trash icon-text"></i></button>
         </div>
+        {% endfor %}
+    </div>
         <button type="button" class="btn btn-info btn-sm" data-action="add-item"><i class="bi bi-plus-lg icon-text"></i>Adicionar Item</button>
 
         <hr class="mt-4">
 
-        <div class="text-end">
-            <button type="submit" class="btn btn-primary btn-lg"><i class="bi bi-save icon-text"></i>Salvar Alterações</button>
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="fw-bold fs-5">Total do pedido: <span id="pedido-total">R$ 0,00</span></div>
+            <div class="text-end">
+                <button type="submit" class="btn btn-primary btn-lg"><i class="bi bi-save icon-text"></i>Salvar Alterações</button>
+            </div>
         </div>
     </form>
 </div>
@@ -107,13 +120,16 @@
             
             itemBox.innerHTML = `
                 <div class="flex-grow-1">
-                    <select name="produto_id[]" class="form-control select2-ajax" required></select>
+                    <select name="produto_id" class="form-control select2-ajax" required></select>
                 </div>
-                <div style="width: 100px;">
-                    <input type="number" name="quantidade[]" class="form-control" placeholder="Qtd" min="1" required>
+                <div style="width: 110px;">
+                    <input type="number" name="quantidade" class="form-control" placeholder="Qtd" min="1" required>
                 </div>
-                <div style="width: 150px;">
-                    <input type="text" name="preco_venda" class="form-control currency-input" placeholder="Preço Venda" required>
+                <div style="width: 160px;">
+                    <input type="number" name="preco_venda" class="form-control preco-input" placeholder="Preço venda" inputmode="decimal" step="0.01" required>
+                </div>
+                <div style="width: 160px;">
+                    <input type="text" class="form-control total-item" placeholder="0,00" value="" readonly>
                 </div>
                 <button type="button" class="btn btn-danger btn-sm" data-action="remove-item" aria-label="Remover item"><i class="bi bi-trash icon-text"></i></button>
             `;
@@ -122,12 +138,35 @@
             
             setupSelect2Ajax($(itemBox).find('.select2-ajax'));
 
-            if (typeof CurrencyFormatter !== 'undefined') {
-                CurrencyFormatter.initializeInputs();
-            }
         } catch (error) {
             console.error('Erro ao adicionar item:', error);
             alert('Ocorreu um erro ao adicionar o produto. Verifique o console para detalhes.');
+        }
+    }
+
+    function formatBRL(number) {
+        if (number === null || number === undefined || isNaN(number)) return 'R$ 0,00';
+        return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(number);
+    }
+
+    function calcularTotais() {
+        const rows = document.querySelectorAll('[data-item-row]');
+        let totalPedido = 0;
+        rows.forEach(row => {
+            const qtdInput = row.querySelector('input[name="quantidade"]');
+            const precoInput = row.querySelector('input[name="preco_venda"]');
+            const totalField = row.querySelector('.total-item');
+            const qtd = parseFloat(qtdInput?.value || 0);
+            const preco = parseFloat(precoInput?.value || 0);
+            const totalItem = (isNaN(qtd) || isNaN(preco)) ? 0 : qtd * preco;
+            totalPedido += totalItem;
+            if (totalField) {
+                totalField.value = formatBRL(totalItem);
+            }
+        });
+        const totalLabel = document.getElementById('pedido-total');
+        if (totalLabel) {
+            totalLabel.textContent = formatBRL(totalPedido);
         }
     }
 
@@ -143,6 +182,15 @@
             const removeBtn = event.target.closest('[data-action="remove-item"]');
             if (removeBtn) {
                 removeBtn.closest('[data-item-row]')?.remove();
+                calcularTotais();
+            }
+        });
+
+        calcularTotais();
+
+        itemsContainer?.addEventListener('input', (e) => {
+            if (e.target.matches('input[name="quantidade"], input[name="preco_venda"]')) {
+                calcularTotais();
             }
         });
     });

@@ -44,6 +44,7 @@ def dashboard():
 @vendedor_bp.route('/cliente/<int:cliente_id>')
 @login_obrigatorio
 @permissao_necessaria('acesso_clientes')
+@requires_vendedor
 @cached_with_invalidation(
     timeout=300,  # 5 minutos
     key_prefix='cliente_detalhes',
@@ -64,6 +65,7 @@ def detalhes_cliente(cliente_id):
 @vendedor_bp.route('/rankings')
 @login_obrigatorio
 @permissao_necessaria('acesso_clientes')
+@requires_vendedor
 @cached_with_invalidation(
     timeout=900,  # 15 minutos
     key_prefix='vendedor_rankings',
@@ -91,6 +93,7 @@ def rankings():
 @vendedor_bp.route('/api/buscar-cliente')
 @login_obrigatorio
 @permissao_necessaria('acesso_clientes')
+@requires_vendedor
 def buscar_cliente():
     """
     API para busca de clientes
@@ -132,6 +135,7 @@ def buscar_cliente():
 @vendedor_bp.route('/api/clientes-por-periodo/<periodo>')
 @login_obrigatorio
 @permissao_necessaria('acesso_clientes')
+@requires_vendedor
 def api_clientes_por_periodo(periodo):
     """API para buscar clientes por período"""
     clientes = VendedorService.get_clientes_por_periodo(periodo)
@@ -140,6 +144,7 @@ def api_clientes_por_periodo(periodo):
 @vendedor_bp.route('/api/cliente/<int:cliente_id>/pedidos')
 @login_obrigatorio
 @permissao_necessaria('acesso_clientes')
+@requires_vendedor
 def api_pedidos_cliente(cliente_id):
     """API para buscar pedidos de um cliente"""
     pedidos = VendedorService.get_pedidos_cliente(cliente_id)
@@ -148,7 +153,17 @@ def api_pedidos_cliente(cliente_id):
 @vendedor_bp.route('/api/cliente/<int:cliente_id>/produtos')
 @login_obrigatorio
 @permissao_necessaria('acesso_clientes')
+@requires_vendedor
 def api_produtos_cliente(cliente_id):
     """API para buscar produtos compilados de um cliente"""
     produtos = VendedorService.get_produtos_cliente(cliente_id)
     return jsonify({'produtos': produtos})
+
+@vendedor_bp.route('/api/cliente/<int:cliente_id>/precos')
+@login_obrigatorio
+@permissao_necessaria('acesso_clientes')
+@requires_vendedor
+def api_precos_cliente(cliente_id):
+    """API para buscar últimos preços negociados por cliente"""
+    precos = VendedorService.get_precos_negociados(cliente_id)
+    return jsonify({'precos': precos})

@@ -19,6 +19,10 @@ if [[ ! -f "${BANCO_SRC}" ]]; then
     exit 1
 fi
 
+# Limpeza de backups antigos (retenção de 14 dias)
+find "${BACKUP_ROOT}" -mindepth 1 -maxdepth 1 -type d -mtime +14 -exec rm -rf {} +
+find "${BANCO_DEST_DIR}" -type f -name 'sistema_backup_*.db' -mtime +14 -delete
+
 # Backup do banco (mantém também a rotina existente em instance/backups)
 cp "${BANCO_SRC}" "${BANCO_DEST_DIR}/sistema_backup_${TIMESTAMP}.db"
 cp "${BANCO_SRC}" "${DEST_DIR}/sistema.db"

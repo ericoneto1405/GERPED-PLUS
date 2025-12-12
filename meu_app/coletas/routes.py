@@ -142,9 +142,15 @@ def processar_coleta(pedido_id):
     if request.method == 'POST':
         is_ajax = _is_ajax_request()
 
+        def respond_json(success: bool, message: str, status: int = 200, **extra):
+            """Envelopa respostas JSON de forma consistente."""
+            payload = {'success': success, 'message': message}
+            payload.update(extra)
+            return jsonify(payload), status
+
         def respond_error(message: str, category: str = 'error', status: int = 400):
             if is_ajax:
-                return {'success': False, 'message': message}, status
+                return respond_json(False, message, status=status, type='ValidationError')
             flash(message, category)
             return redirect(url_for('coletas.processar_coleta', pedido_id=pedido_id))
 
@@ -289,7 +295,7 @@ def processar_coleta(pedido_id):
                         status_url = url_for('coletas.status_recibo', job_id=job_id, pedido_id=pedido_id)
                         msg = f'{mensagem} Recibo em processamento. O download será liberado em instantes.'
                         if is_ajax:
-                            return {'success': True, 'message': msg, 'status_url': status_url}
+                            return respond_json(True, msg, status_url=status_url)
                         flash(msg, 'info')
                         return redirect(status_url)
                     
@@ -307,11 +313,7 @@ def processar_coleta(pedido_id):
                         flash(alerta_autorizacao, 'warning')
 
                     if is_ajax:
-                        return {
-                            'success': True,
-                            'message': sucesso_msg,
-                            'download_url': download_url,
-                        }
+                        return respond_json(True, sucesso_msg, download_url=download_url)
                     
                     flash(sucesso_msg, 'success')
                     return send_file(
@@ -332,11 +334,11 @@ def processar_coleta(pedido_id):
             except Exception as e:
                 current_app.logger.error(f"Erro ao preparar dados do recibo: {str(e)}", exc_info=e)
                 return respond_error(f'{mensagem} (Erro ao preparar recibo)', category='warning', status=500)
-                
+        
         except Exception as e:
             current_app.logger.error(f"Erro ao processar coleta: {str(e)}")
             if is_ajax:
-                return {'success': False, 'message': 'Erro interno do servidor ao processar a coleta.'}, 500
+                return respond_json(False, 'Erro interno do servidor ao processar a coleta.', status=500, type='ServerError')
             flash('Erro interno do servidor ao processar a coleta.', 'error')
             return redirect(url_for('coletas.processar_coleta', pedido_id=pedido_id))
     

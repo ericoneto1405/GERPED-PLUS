@@ -222,6 +222,16 @@ body {
     margin: 0;
 }
 
+.nav-section {
+    display: block;
+    padding: 18px 24px 6px;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    color: #222222;
+    text-transform: uppercase;
+    font-weight: 700;
+}
+
 .nav-item {
     margin-bottom: 8px;
 }

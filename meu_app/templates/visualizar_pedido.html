@@ -1,13 +1,25 @@
 {% extends 'base.html' %}
 
-{% block title %}Pedido #{{ pedido.id }}{% endblock %}
+{% set nomes_cliente = (pedido.cliente.nome or '').split() %}
+{% set nomes_para_titulo = nomes_cliente[:2] %}
+{% set nome_compacto = nomes_para_titulo | join(' ') %}
+{% set data_para_titulo = pedido.data.strftime('%d-%m-%Y') if pedido.data else '' %}
+{% set titulo_pdf = ('pedido ' ~ nome_compacto ~ ' ' ~ data_para_titulo).strip() %}
+
+{% block title %}
+    {{ titulo_pdf if titulo_pdf|length else ('Pedido #' ~ pedido.id) }}
+{% endblock %}
 
 {% block content %}
 <style nonce="{{ nonce }}">
+    @page {
+        size: auto;
+        margin: 0;
+    }
     .pedido-detalhe-wrapper {
         display: flex;
         flex-direction: column;
-        gap: 18px;
+        gap: 14px;
     }
     .page-header {
         display: flex;
@@ -54,8 +66,8 @@
     .info-card {
         background: #fff;
         border: 1px solid #e2e8f0;
-        border-radius: 14px;
-        padding: 16px;
+        border-radius: 12px;
+        padding: 12px;
         box-shadow: 0 4px 18px rgba(15, 23, 42, 0.05);
         display: flex;
         flex-direction: column;
@@ -102,16 +114,17 @@
     .totais-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-        gap: 14px;
+        gap: 10px;
     }
     .total-card {
-        border-radius: 18px;
-        padding: 18px;
+        border-radius: 14px;
+        padding: 12px 14px;
         color: #fff;
         display: flex;
         flex-direction: column;
         gap: 6px;
-        box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+        box-shadow: 0 5px 16px rgba(0,0,0,0.12);
+        min-height: 80px;
     }
     .total-card span {
         font-size: 0.78rem;
@@ -129,10 +142,10 @@
 
     .tabela-secao {
         background: #fff;
-        border-radius: 16px;
+        border-radius: 14px;
         border: 1px solid #e2e8f0;
-        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
-        padding: 18px;
+        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+        padding: 14px;
     }
     .table-wrapper {
         overflow-x: auto;
@@ -168,7 +181,7 @@
     .excel-table th,
     .excel-table td {
         border: 1px solid #d7e3f7;
-        padding: 12px 14px;
+        padding: 10px 12px;
         text-align: center;
         font-size: 0.95rem;
     }
@@ -188,7 +201,7 @@
     .assinatura-card {
         margin-top: 10px;
         text-align: center;
-        padding: 24px;
+        padding: 18px;
         border: 1px dashed #cbd5f5;
         border-radius: 14px;
         background: #f8fafc;
@@ -203,6 +216,62 @@
         font-weight: 600;
     }
     @media print {
+        * {
+            color: #000 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+        }
+        html, body {
+            margin: 0;
+            padding: 0;
+            background: #fff;
+        }
+        .main-header,
+        .sidebar,
+        .header-alert,
+        .header-right {
+            display: none !important;
+            visibility: hidden !important;
+        }
+        .main-content,
+        .content-wrapper {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+        }
+        .pedido-detalhe-wrapper {
+            padding: 12mm 10mm;
+            gap: 10px;
+        }
+        .info-card,
+        .tabela-secao,
+        .assinatura-card,
+        .total-card,
+        .excel-table th,
+        .excel-table td {
+            border-color: #000 !important;
+        }
+        .total-card,
+        .info-card,
+        .tabela-secao,
+        .assinatura-card {
+            background: #fff !important;
+            padding: 10px !important;
+        }
+        .total-card.total,
+        .total-card.pago,
+        .total-card.saldo,
+        .total-card.saldo.positivo {
+            background: #fff !important;
+        }
+        .status-badge {
+            border: 1px solid #000;
+            background: #fff !important;
+            color: #000 !important;
+        }
+        .botao-imprimir {
+            display: none !important;
+        }
         .botao-imprimir, .page-header, .tabela-secao, .assinatura-card {
             box-shadow: none;
         }
@@ -262,7 +331,10 @@
         </div>
         <div class="info-card">
             <span>Itens incluídos</span>
-            <strong>{{ pedido.itens|length }} itens</strong>
+            <strong>
+                {{ pedido.itens|length }}
+                {{ 'item' if pedido.itens|length == 1 else 'itens' }}
+            </strong>
             <small>Média {{ (total / (pedido.itens|length)) | currency_brl if pedido.itens|length else '-' }} por item</small>
         </div>
     </div>
@@ -285,7 +357,10 @@
     <section class="tabela-secao">
         <div class="secao-header">
             <h2><i class="bi bi-box-seam icon-text"></i> Itens do Pedido</h2>
-            <span>{{ pedido.itens|length }} produto(s)</span>
+            <span>
+                {{ pedido.itens|length }}
+                {{ 'produto' if pedido.itens|length == 1 else 'produtos' }}
+            </span>
         </div>
         <div class="table-wrapper">
             <table class="excel-table">
@@ -323,6 +398,7 @@
                         <th>Data</th>
                         <th>Valor</th>
                         <th>Método</th>
+                        <th>Comprovantes</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -331,9 +407,26 @@
                         <td>{{ pagamento.data_pagamento.strftime('%d/%m/%Y %H:%M') }}</td>
                         <td>{{ pagamento.valor | currency_brl }}</td>
                         <td>{{ pagamento.metodo_pagamento }}</td>
+                        <td>
+                            {% set principal = pagamento.anexo_principal %}
+                            {% if principal %}
+                                <a href="{{ url_for('financeiro.ver_recibo', filename=principal.caminho) }}" target="_blank" class="btn btn-sm btn-outline-primary">Principal</a>
+                            {% elif pagamento.caminho_recibo %}
+                                <a href="{{ url_for('financeiro.ver_recibo', filename=pagamento.caminho_recibo) }}" target="_blank" class="btn btn-sm btn-outline-primary">Principal</a>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                            {% if pagamento.anexos_extra %}
+                                <div style="display:flex; flex-direction:column; gap:4px; margin-top:6px;">
+                                    {% for anexo in pagamento.anexos_extra %}
+                                        <a href="{{ url_for('financeiro.ver_recibo', filename=anexo.caminho) }}" target="_blank" class="btn btn-sm btn-outline-secondary">Anexo extra {{ loop.index }}</a>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </td>
                     </tr>
                     {% else %}
-                    <tr><td colspan="3">Nenhum pagamento registrado.</td></tr>
+                    <tr><td colspan="4">Nenhum pagamento registrado.</td></tr>
                     {% endfor %}
                 </tbody>
             </table>

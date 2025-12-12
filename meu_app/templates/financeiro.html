@@ -151,10 +151,20 @@
                                                 {% endif %}
                                             </td>
                                             <td>
-                                                {% if pagamento.caminho_recibo %}
-                                                    <a href="{{ url_for('financeiro.ver_recibo', filename=pagamento.caminho_recibo) }}" class="btn btn-sm btn-outline-primary" target="_blank" title="Ver Comprovante"><i class="bi bi-file-earmark-text icon-text"></i></a>
+                                                {% set principal = pagamento.anexo_principal %}
+                                                {% if principal %}
+                                                    <a href="{{ url_for('financeiro.ver_recibo', filename=principal.caminho) }}" class="btn btn-sm btn-outline-primary" target="_blank" title="Ver comprovante principal"><i class="bi bi-file-earmark-text icon-text"></i></a>
+                                                {% elif pagamento.caminho_recibo %}
+                                                    <a href="{{ url_for('financeiro.ver_recibo', filename=pagamento.caminho_recibo) }}" class="btn btn-sm btn-outline-primary" target="_blank" title="Ver comprovante"><i class="bi bi-file-earmark-text icon-text"></i></a>
                                                 {% else %}
                                                     <span class="text-muted">-</span>
+                                                {% endif %}
+                                                {% if pagamento.anexos_extra %}
+                                                    <div class="mt-1" style="display:flex; flex-direction:column; gap:2px;">
+                                                        {% for anexo in pagamento.anexos_extra %}
+                                                            <a href="{{ url_for('financeiro.ver_recibo', filename=anexo.caminho) }}" class="btn btn-sm btn-outline-secondary" target="_blank">Anexo extra {{ loop.index }}</a>
+                                                        {% endfor %}
+                                                    </div>
                                                 {% endif %}
                                             </td>
                                         </tr>

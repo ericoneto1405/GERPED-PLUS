@@ -1,10 +1,12 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app, session, jsonify, send_from_directory
+import hashlib
 import os
 
 financeiro_bp = Blueprint('financeiro', __name__, url_prefix='/financeiro')
 from .services import FinanceiroService
 from functools import wraps
 from ..decorators import login_obrigatorio, permissao_necessaria, admin_necessario
+from ..models import Pagamento, PagamentoAnexo
 from app.auth.rbac import requires_financeiro
 from ..upload_security import FileUploadValidator
 from .ocr_service import OcrService
@@ -19,6 +21,7 @@ from .exceptions import (
     ArquivoInvalidoError,
     OcrProcessingError
 )
+from sqlalchemy.exc import SQLAlchemyError
 
 # Decorador login_obrigatorio movido para meu_app/decorators.py
 @financeiro_bp.route('/', methods=['GET'])
@@ -60,6 +63,7 @@ def listar_financeiro():
 
 @financeiro_bp.route('/exportar', methods=['GET'])
 @login_obrigatorio
+@requires_financeiro
 @permissao_necessaria('acesso_financeiro')
 def exportar_financeiro():
     """Exporta dados financeiros"""
@@ -78,18 +82,27 @@ def exportar_financeiro():
 
 @financeiro_bp.route('/pagamento/<int:pedido_id>', methods=['GET', 'POST'])
 @login_obrigatorio
+@requires_financeiro
 @permissao_necessaria('acesso_financeiro')
 def registrar_pagamento(pedido_id):
     """Registra um pagamento"""
+    FinanceiroService._ensure_pagamento_anexo_table()
     if request.method == 'POST':
         # Extrair dados do formulário
         valor = request.form.get('valor')
         forma_pagamento = request.form.get('metodo_pagamento')
         observacoes = request.form.get('observacoes', '')
         id_transacao = request.form.get('id_transacao') # Captura o ID da transação do campo oculto
-        recibo = request.files.get('recibo')
+        disponibilizar_para_outro_pedido = request.form.get('disponibilizar_comprovante') == 'on'
+        comprovante_compartilhado_id = request.form.get('comprovante_compartilhado_id')
+        comprovante_origem = None
+        recibos = request.files.getlist('recibo') if not comprovante_compartilhado_id else []
+        recibos = [r for r in recibos if r and r.filename]
         caminho_recibo = None
-
+        anexos_payload = []
+        uploads_salvos = []
+        hashes_vistos = set()
+        
         try:
             valor = float(valor)
             if valor <= 0:
@@ -99,55 +112,126 @@ def registrar_pagamento(pedido_id):
             return redirect(url_for('financeiro.registrar_pagamento', pedido_id=pedido_id))
 
         # Lógica de upload do recibo
-        if recibo and recibo.filename:
-            file_type = None
-            # Tenta validar como documento ou imagem
-            is_valid, error_msg, metadata = FileUploadValidator.validate_file(recibo, 'document')
-            if is_valid:
-                file_type = 'document'
-            else:
-                # Se falhar, tenta como imagem
-                is_valid, error_msg, metadata = FileUploadValidator.validate_file(recibo, 'image')
-                if is_valid:
-                    file_type = 'image'
-
-            if not is_valid or not file_type:
-                flash(f"Erro no upload do recibo: {error_msg}", 'error')
-                return redirect(url_for('financeiro.registrar_pagamento', pedido_id=pedido_id))
-
-            # Gera nome seguro e salva usando configuração centralizada
-            secure_name = FileUploadValidator.generate_secure_filename(recibo.filename, file_type)
-            upload_dir = FinanceiroConfig.get_upload_directory('recibos')
-            file_path = os.path.join(upload_dir, secure_name)
-            
+        if comprovante_compartilhado_id:
             try:
-                # Salvar temporariamente em memória para calcular hash e tamanho
-                file_bytes = recibo.read()
-                recibo.seek(0)
-                import hashlib
-                sha256 = hashlib.sha256(file_bytes).hexdigest()
-                tamanho = len(file_bytes)
-
-                # Evitar duplicidade pelo hash
-                from ..models import Pagamento
-                existente = Pagamento.query.filter_by(recibo_sha256=sha256).first()
-                if existente:
-                    flash(f"Este comprovante já foi enviado (ID pagamento #{existente.id}).", 'error')
-                    return redirect(url_for('financeiro.registrar_pagamento', pedido_id=pedido_id))
-
-                # Salvar arquivo em disco
-                recibo.save(file_path)
-                caminho_recibo = secure_name # Salva apenas o nome do arquivo
-
-                # Anexar metadados na sessão (usaremos ao chamar o serviço)
-                request.recibo_meta = {
-                    'recibo_mime': metadata.get('mime_type') if metadata else None,
-                    'recibo_tamanho': tamanho,
-                    'recibo_sha256': sha256
-                }
-            except Exception as e:
-                flash(f"Erro ao salvar o arquivo de recibo: {str(e)}", 'error')
+                comprovante_origem = Pagamento.query.get(int(comprovante_compartilhado_id))
+            except (ValueError, TypeError):
+                comprovante_origem = None
+            if not comprovante_origem or not comprovante_origem.compartilhado_disponivel:
+                flash('Comprovante compartilhado não disponível. Recarregue a página e tente novamente.', 'error')
                 return redirect(url_for('financeiro.registrar_pagamento', pedido_id=pedido_id))
+            try:
+                novo_nome, mime_type, tamanho, sha256 = FinanceiroService.duplicar_recibo_compartilhado(
+                    comprovante_origem.caminho_recibo
+                )
+            except PagamentoDuplicadoError as err:
+                flash(str(err), 'error')
+                return redirect(url_for('financeiro.registrar_pagamento', pedido_id=pedido_id))
+            except FinanceiroValidationError as err:
+                flash(str(err), 'error')
+                return redirect(url_for('financeiro.registrar_pagamento', pedido_id=pedido_id))
+            except FileNotFoundError as err:
+                current_app.logger.error(f'Falha ao copiar comprovante compartilhado: {err}')
+                flash('Arquivo original do comprovante não foi encontrado. Solicite o envio novamente.', 'error')
+                return redirect(url_for('financeiro.registrar_pagamento', pedido_id=pedido_id))
+            caminho_recibo = novo_nome
+            request.recibo_meta = {
+                'recibo_mime': mime_type,
+                'recibo_tamanho': tamanho,
+                'recibo_sha256': sha256
+            }
+            anexos_payload.append({
+                'caminho': novo_nome,
+                'mime': mime_type,
+                'tamanho': tamanho,
+                'sha256': sha256,
+                'principal': True
+            })
+        elif recibos:
+            upload_dir = FinanceiroConfig.get_upload_directory('recibos')
+            os.makedirs(upload_dir, exist_ok=True)
+            try:
+                for idx, recibo in enumerate(recibos):
+                    file_type = None
+                    # Tenta validar como documento ou imagem
+                    is_valid, error_msg, metadata = FileUploadValidator.validate_file(recibo, 'document')
+                    if is_valid:
+                        file_type = 'document'
+                    else:
+                        # Se falhar, tenta como imagem
+                        is_valid, error_msg, metadata = FileUploadValidator.validate_file(recibo, 'image')
+                        if is_valid:
+                            file_type = 'image'
+
+                    if not is_valid or not file_type:
+                        raise ArquivoInvalidoError(f"Erro no upload do recibo: {error_msg}")
+
+                    secure_name = FileUploadValidator.generate_secure_filename(recibo.filename, file_type)
+                    file_path = os.path.join(upload_dir, secure_name)
+
+                    file_bytes = recibo.read()
+                    recibo.seek(0)
+                    sha256 = hashlib.sha256(file_bytes).hexdigest()
+                    tamanho = len(file_bytes)
+
+                    if not sha256:
+                        raise FinanceiroValidationError('Não foi possível calcular a assinatura do comprovante.')
+
+                    if sha256 in hashes_vistos:
+                        raise PagamentoDuplicadoError('Arquivos duplicados foram selecionados na fila de comprovantes.')
+                    hashes_vistos.add(sha256)
+
+                    existente = None
+                    try:
+                        existente_anexo = PagamentoAnexo.query.filter_by(sha256=sha256).first()
+                        if existente_anexo:
+                            existente = existente_anexo.pagamento
+                    except SQLAlchemyError:
+                        existente = None
+                    if not existente:
+                        existente = Pagamento.query.filter_by(recibo_sha256=sha256).first()
+                    if existente:
+                        raise PagamentoDuplicadoError(f"Este comprovante já foi enviado (ID pagamento #{existente.id}).")
+
+                    recibo.save(file_path)
+                    uploads_salvos.append(file_path)
+
+                    meta = {
+                        'caminho': secure_name,
+                        'mime': metadata.get('mime_type') if metadata else None,
+                        'tamanho': tamanho,
+                        'sha256': sha256,
+                        'principal': idx == 0
+                    }
+
+                    if idx == 0:
+                        caminho_recibo = secure_name
+                        request.recibo_meta = {
+                            'recibo_mime': meta.get('mime'),
+                            'recibo_tamanho': tamanho,
+                            'recibo_sha256': sha256
+                        }
+                    anexos_payload.append(meta)
+            except (ArquivoInvalidoError, FinanceiroValidationError, PagamentoDuplicadoError) as err:
+                for path in uploads_salvos:
+                    try:
+                        if os.path.exists(path):
+                            os.remove(path)
+                    except OSError:
+                        current_app.logger.warning(f'Falha ao remover upload temporário {path}')
+                flash(str(err), 'error')
+                return redirect(url_for('financeiro.registrar_pagamento', pedido_id=pedido_id))
+            except Exception as e:
+                for path in uploads_salvos:
+                    try:
+                        if os.path.exists(path):
+                            os.remove(path)
+                    except OSError:
+                        current_app.logger.warning(f'Falha ao remover upload temporário {path}')
+                flash(f"Erro ao salvar os arquivos de recibo: {str(e)}", 'error')
+                return redirect(url_for('financeiro.registrar_pagamento', pedido_id=pedido_id))
+        elif not comprovante_origem:
+            request.recibo_meta = {}
 
         # Extrair dados extras do formulário (se fornecidos via OCR)
         data_comprovante = request.form.get('data_comprovante', '')
@@ -173,10 +257,19 @@ def registrar_pagamento(pedido_id):
                 banco_emitente=banco_emitente if banco_emitente else None,
                 agencia_recebedor=agencia_recebedor if agencia_recebedor else None,
                 conta_recebedor=conta_recebedor if conta_recebedor else None,
-                chave_pix_recebedor=chave_pix_recebedor if chave_pix_recebedor else None
+                chave_pix_recebedor=chave_pix_recebedor if chave_pix_recebedor else None,
+                comprovante_compartilhado_origem_id=comprovante_origem.id if comprovante_origem else None,
+                anexos_detalhes=anexos_payload if anexos_payload else None
             )
             
             if sucesso:
+                if comprovante_origem:
+                    FinanceiroService.marcar_comprovante_compartilhado_usado(comprovante_origem, pedido_id)
+                if disponibilizar_para_outro_pedido and pagamento and pagamento.caminho_recibo:
+                    FinanceiroService.disponibilizar_pagamento_para_outro_pedido(
+                        pagamento,
+                        session.get('usuario_nome')
+                    )
                 current_app.logger.info(f"Pagamento registrado por {session.get('usuario_nome', 'N/A')}")
                 flash(mensagem, 'success')
                 return redirect(url_for('financeiro.listar_financeiro'))
@@ -218,6 +311,30 @@ def ver_recibo(filename):
     # Usar configuração centralizada
     directory = FinanceiroConfig.get_upload_directory('recibos')
     return send_from_directory(directory, filename, as_attachment=False)
+
+
+@financeiro_bp.route('/api/comprovantes-compartilhados', methods=['GET'])
+@login_obrigatorio
+@permissao_necessaria('acesso_financeiro')
+def api_comprovantes_compartilhados():
+    """Lista comprovantes compartilhados disponíveis."""
+    dados = FinanceiroService.listar_comprovantes_compartilhados()
+    for item in dados:
+        if item.get('caminho_recibo'):
+            item['recibo_url'] = url_for('financeiro.ver_recibo', filename=item['caminho_recibo'])
+    return jsonify({'comprovantes': dados})
+
+
+@financeiro_bp.route('/api/comprovantes-compartilhados/descartar', methods=['POST'])
+@login_obrigatorio
+@permissao_necessaria('acesso_financeiro')
+def api_descartar_comprovante_compartilhado():
+    payload = request.get_json(silent=True) or {}
+    comp_id = payload.get('id')
+    if not comp_id:
+        return jsonify({'success': False, 'message': 'ID não informado'}), 400
+    sucesso = FinanceiroService.descartar_comprovante_compartilhado(comp_id)
+    return jsonify({'success': sucesso})
 
 @financeiro_bp.route('/processar-recibo-ocr', methods=['POST'])
 @login_obrigatorio
@@ -340,6 +457,7 @@ def editar_pagamento(pedido_id):
     """Edita um pagamento existente"""
     from ..models import Pedido, Pagamento
     from .. import db
+    FinanceiroService._ensure_pagamento_anexo_table()
     
     if request.method == 'POST':
         try:

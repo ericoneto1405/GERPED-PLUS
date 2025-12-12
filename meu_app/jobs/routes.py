@@ -3,13 +3,13 @@ Rotas para consulta de status de jobs RQ
 """
 
 from flask import Blueprint, jsonify, current_app
-from flask_login import login_required
+from meu_app.decorators import login_obrigatorio
 
 bp = Blueprint('jobs', __name__, url_prefix='/jobs')
 
 
 @bp.route('/<job_id>/status', methods=['GET'])
-@login_required
+@login_obrigatorio
 def get_job_status(job_id):
     """
     Consulta o status de um job assíncrono

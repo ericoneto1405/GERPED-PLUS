@@ -6,6 +6,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy import Enum as EnumType
 
 from . import db
+from sqlalchemy.exc import SQLAlchemyError
 
 
 def utcnow():
@@ -149,7 +150,108 @@ class Pagamento(db.Model):
     # Campos OCR existentes (manter compatibilidade)
     ocr_json = db.Column(db.Text, nullable=True)
     ocr_confidence = db.Column(db.Numeric(5, 2), nullable=True)
+
+    @property
+    def anexos_extra(self):
+        anexos_rel = self._safe_anexos_rel()
+        if anexos_rel:
+            extras = [anexo.to_dict() for anexo in anexos_rel if not anexo.principal]
+            if extras:
+                return extras
+        try:
+            import json
+            data = json.loads(self.ocr_json or "{}")
+            return data.get("anexos_extra") or []
+        except Exception:
+            return []
+
+    @property
+    def anexo_principal(self):
+        anexos_rel = self._safe_anexos_rel()
+        if anexos_rel:
+            for anexo in anexos_rel:
+                if anexo.principal:
+                    return anexo.to_dict()
+            if anexos_rel:
+                return anexos_rel[0].to_dict()
+        if self.caminho_recibo:
+            return {
+                'caminho': self.caminho_recibo,
+                'mime': self.recibo_mime,
+                'tamanho': self.recibo_tamanho,
+                'sha256': self.recibo_sha256,
+                'principal': True
+            }
+        return None
+
+    @property
+    def todos_anexos(self):
+        anexos_rel = self._safe_anexos_rel()
+        if anexos_rel:
+            return [anexo.to_dict() for anexo in anexos_rel]
+        principal = self.anexo_principal
+        extras = self.anexos_extra
+        resultado = []
+        if principal:
+            resultado.append(principal)
+        resultado.extend(extras)
+        return resultado
+
+    def _safe_anexos_rel(self):
+        try:
+            return list(self.anexos)
+        except SQLAlchemyError:
+            return []
+        except Exception:
+            return []
+
+    # Compartilhamento de comprovante
+    compartilhado_disponivel = db.Column(db.Boolean, default=False, nullable=False)
+    compartilhado_por = db.Column(db.String(120), nullable=True)
+    compartilhado_em = db.Column(db.DateTime, nullable=True)
+    compartilhado_usado_em = db.Column(db.DateTime, nullable=True)
+    compartilhado_destino_pedido_id = db.Column(db.Integer, nullable=True)
+    comprovante_compartilhado_origem_id = db.Column(db.Integer, db.ForeignKey('pagamento.id'), nullable=True)
+    comprovante_compartilhado_origem = db.relationship(
+        'Pagamento',
+        remote_side=[id],
+        backref='copias_compartilhadas',
+        foreign_keys=[comprovante_compartilhado_origem_id]
+    )
     pedido = db.relationship('Pedido', backref=db.backref('pagamentos', lazy=True))
+    anexos = db.relationship(
+        'PagamentoAnexo',
+        back_populates='pagamento',
+        cascade='all, delete-orphan',
+        order_by='PagamentoAnexo.id'
+    )
+
+
+class PagamentoAnexo(db.Model):
+    __tablename__ = 'pagamento_anexo'
+
+    id = db.Column(db.Integer, primary_key=True)
+    pagamento_id = db.Column(db.Integer, db.ForeignKey('pagamento.id', ondelete='CASCADE'), nullable=False, index=True)
+    caminho = db.Column(db.String(255), nullable=False)
+    mime = db.Column(db.String(50), nullable=True)
+    tamanho = db.Column(db.Integer, nullable=True)
+    sha256 = db.Column(db.String(64), unique=True, nullable=True)
+    principal = db.Column(db.Boolean, default=False, nullable=False)
+    criado_em = db.Column(db.DateTime, default=utcnow, nullable=False)
+    atualizado_em = db.Column(db.DateTime, default=utcnow, onupdate=utcnow, nullable=False)
+
+    pagamento = db.relationship('Pagamento', back_populates='anexos')
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'pagamento_id': self.pagamento_id,
+            'caminho': self.caminho,
+            'mime': self.mime,
+            'tamanho': self.tamanho,
+            'sha256': self.sha256,
+            'principal': self.principal
+        }
 
 
 class ClienteRetiranteAutorizado(db.Model):

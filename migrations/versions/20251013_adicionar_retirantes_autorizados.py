@@ -1,22 +1,28 @@
 """Adicionar tabela de retirantes autorizados por cliente
 
-Revision ID: 20251013_adicionar_retirantes
+Revision ID: 20251013_adicionar_retirantes_autorizados
 Revises: 20251012_corrigir_foreign_key_log_atividade
 Create Date: 2025-10-13 16:45:00.000000
 """
 
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import inspect
 from sqlalchemy.dialects import sqlite
 
 # revision identifiers, used by Alembic.
-revision = "20251013_adicionar_retirantes"
+revision = "20251013_adicionar_retirantes_autorizados"
 down_revision = "20251012_corrigir_foreign_key_log_atividade"
 branch_labels = None
 depends_on = None
 
 
 def upgrade() -> None:
+    bind = op.get_bind()
+    inspector = inspect(bind)
+    if "cliente_retirante_autorizado" in inspector.get_table_names():
+        return
+
     op.create_table(
         "cliente_retirante_autorizado",
         sa.Column("id", sa.Integer(), primary_key=True, nullable=False),
@@ -33,4 +39,9 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    bind = op.get_bind()
+    inspector = inspect(bind)
+    if "cliente_retirante_autorizado" not in inspector.get_table_names():
+        return
+
     op.drop_table("cliente_retirante_autorizado")

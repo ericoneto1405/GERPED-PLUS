@@ -2,13 +2,23 @@
 Serviços para o módulo de financeiro
 Contém toda a lógica de negócio separada das rotas
 """
-from ..models import db, Pedido, Pagamento, StatusPedido
-from flask import current_app
-from typing import Dict, List, Tuple, Optional
-from datetime import datetime, timedelta
-from sqlalchemy.orm import joinedload
 import calendar
+import hashlib
+import mimetypes
+import os
+import shutil
+import json
 from decimal import Decimal
+from datetime import datetime, timedelta
+from typing import Dict, List, Tuple, Optional
+from uuid import uuid4
+
+from flask import current_app
+from sqlalchemy.orm import joinedload
+from sqlalchemy import inspect as sa_inspect
+from sqlalchemy.exc import SQLAlchemyError
+
+from ..models import db, Pedido, Pagamento, StatusPedido, PagamentoAnexo
 from .config import FinanceiroConfig
 from .exceptions import (
     FinanceiroValidationError, 
@@ -20,6 +30,27 @@ from .exceptions import (
 
 class FinanceiroService:
     """Serviço para operações relacionadas ao financeiro"""
+    
+    _anexo_table_ready = False
+
+    @staticmethod
+    def _ensure_pagamento_anexo_table() -> bool:
+        if FinanceiroService._anexo_table_ready:
+            return True
+        try:
+            bind = db.session.get_bind()
+            inspector = sa_inspect(bind)
+            if not inspector.has_table('pagamento_anexo'):
+                PagamentoAnexo.__table__.create(bind, checkfirst=True)
+            FinanceiroService._anexo_table_ready = True
+            return True
+        except Exception as exc:
+            current_app.logger.warning(f"Não foi possível garantir tabela pagamento_anexo: {exc}")
+            return False
+    
+    @staticmethod
+    def _supports_pagamento_anexo_table() -> bool:
+        return FinanceiroService._ensure_pagamento_anexo_table()
     
     @staticmethod
     def _get_date_range(mes: str, ano: str) -> Tuple[Optional[datetime], Optional[datetime]]:
@@ -164,12 +195,14 @@ class FinanceiroService:
         recibo_mime: Optional[str] = None, 
         recibo_tamanho: Optional[int] = None, 
         recibo_sha256: Optional[str] = None,
+        anexos_detalhes: Optional[List[dict]] = None,
         # NOVOS PARÂMETROS - dados extraídos do comprovante
         data_comprovante: Optional[str] = None,
         banco_emitente: Optional[str] = None,
         agencia_recebedor: Optional[str] = None,
         conta_recebedor: Optional[str] = None,
-        chave_pix_recebedor: Optional[str] = None
+        chave_pix_recebedor: Optional[str] = None,
+        comprovante_compartilhado_origem_id: Optional[int] = None
     ) -> Tuple[bool, str, Optional[Pagamento]]:
         """
         Registra um pagamento com dados completos extraídos do comprovante.
@@ -255,8 +288,46 @@ class FinanceiroService:
                 banco_emitente=banco_emitente.strip() if banco_emitente else None,
                 agencia_recebedor=agencia_recebedor.strip() if agencia_recebedor else None,
                 conta_recebedor=conta_recebedor.strip() if conta_recebedor else None,
-                chave_pix_recebedor=chave_pix_recebedor.strip() if chave_pix_recebedor else None
+                chave_pix_recebedor=chave_pix_recebedor.strip() if chave_pix_recebedor else None,
+                comprovante_compartilhado_origem_id=comprovante_compartilhado_origem_id
             )
+
+            anexos_para_salvar = []
+            if anexos_detalhes:
+                anexos_para_salvar = anexos_detalhes
+            elif caminho_recibo:
+                anexos_para_salvar = [{
+                    'caminho': caminho_recibo,
+                    'mime': recibo_mime,
+                    'tamanho': recibo_tamanho,
+                    'sha256': recibo_sha256,
+                    'principal': True
+                }]
+
+            suportar_anexos = FinanceiroService._supports_pagamento_anexo_table()
+            if suportar_anexos:
+                for info in anexos_para_salvar:
+                    caminho = info.get('caminho')
+                    if not caminho:
+                        continue
+                    novo_pagamento.anexos.append(
+                        PagamentoAnexo(
+                            caminho=caminho,
+                            mime=info.get('mime'),
+                            tamanho=info.get('tamanho'),
+                            sha256=info.get('sha256'),
+                            principal=bool(info.get('principal'))
+                        )
+                    )
+            else:
+                extras = [info for info in anexos_para_salvar if not info.get('principal')]
+                if extras:
+                    try:
+                        existing = json.loads(novo_pagamento.ocr_json or "{}")
+                    except ValueError:
+                        existing = {}
+                    existing['anexos_extra'] = extras
+                    novo_pagamento.ocr_json = json.dumps(existing, ensure_ascii=False)
             
             db.session.add(novo_pagamento)
             db.session.flush() # Garante que o novo pagamento esteja na sessão para o cálculo abaixo
@@ -331,4 +402,129 @@ class FinanceiroService:
                 'mes': mes,
                 'ano': ano
             }
+
+    # --- Compartilhamento de comprovantes ---
+    @staticmethod
+    def duplicar_recibo_compartilhado(caminho_relativo: str) -> Tuple[str, str, int, str]:
+        """Copia um recibo existente para um novo arquivo e retorna metadados.
+
+        Recalcula hash para deduplicação e rejeita cópias de comprovantes já utilizados.
+        """
+        if not caminho_relativo:
+            raise FileNotFoundError('Comprovante original não encontrado')
+        origem_dir = FinanceiroConfig.get_upload_directory('recibos')
+        origem_path = os.path.join(origem_dir, caminho_relativo)
+        if not os.path.exists(origem_path):
+            raise FileNotFoundError(f'Arquivo original {caminho_relativo} não existe mais no servidor')
+
+        novo_nome = f"compartilhado_{uuid4().hex}_{os.path.basename(caminho_relativo)}"
+        destino_path = os.path.join(origem_dir, novo_nome)
+        shutil.copyfile(origem_path, destino_path)
+
+        mime_type = mimetypes.guess_type(destino_path)[0] or 'application/octet-stream'
+        tamanho = os.path.getsize(destino_path)
+        sha256 = FinanceiroService._calcular_sha256(destino_path)
+
+        if not sha256:
+            os.remove(destino_path)
+            raise FinanceiroValidationError('Não foi possível calcular a assinatura do comprovante compartilhado.')
+
+        anexo_existente = None
+        try:
+            anexo_existente = PagamentoAnexo.query.filter_by(sha256=sha256).first()
+        except SQLAlchemyError as exc:
+            current_app.logger.debug(f"Não foi possível verificar anexos por hash: {exc}")
+        if anexo_existente or Pagamento.query.filter_by(recibo_sha256=sha256).first():
+            os.remove(destino_path)
+            raise PagamentoDuplicadoError('Este comprovante já foi utilizado em outro pagamento.')
+
+        return novo_nome, mime_type, tamanho, sha256
+
+    @staticmethod
+    def _calcular_sha256(path: str) -> Optional[str]:
+        try:
+            hasher = hashlib.sha256()
+            with open(path, 'rb') as arquivo:
+                for chunk in iter(lambda: arquivo.read(8192), b''):
+                    hasher.update(chunk)
+            return hasher.hexdigest()
+        except OSError:
+            return None
+
+    @staticmethod
+    def disponibilizar_pagamento_para_outro_pedido(pagamento: Pagamento, usuario_nome: Optional[str] = None) -> bool:
+        if not pagamento or not pagamento.caminho_recibo:
+            return False
+        pagamento.compartilhado_disponivel = True
+        pagamento.compartilhado_por = usuario_nome or 'Sistema'
+        pagamento.compartilhado_em = datetime.utcnow()
+        pagamento.compartilhado_usado_em = None
+        pagamento.compartilhado_destino_pedido_id = None
+        try:
+            db.session.commit()
+            return True
+        except Exception as exc:
+            db.session.rollback()
+            current_app.logger.error(f'Erro ao disponibilizar comprovante #{pagamento.id}: {exc}')
+            return False
+
+    @staticmethod
+    def listar_comprovantes_compartilhados() -> List[Dict]:
+        try:
+            comprovantes = Pagamento.query.options(joinedload(Pagamento.pedido).joinedload(Pedido.cliente))\
+                .filter(Pagamento.compartilhado_disponivel.is_(True))\
+                .order_by(Pagamento.compartilhado_em.desc())\
+                .limit(50).all()
+            resultado = []
+            for comp in comprovantes:
+                principal = comp.anexo_principal
+                caminho = principal['caminho'] if principal else comp.caminho_recibo
+                resultado.append({
+                    'id': comp.id,
+                    'pedido_id': comp.pedido_id,
+                    'cliente': comp.pedido.cliente.nome if comp.pedido and comp.pedido.cliente else 'Cliente',
+                    'valor_sugerido': float(comp.valor),
+                    'id_transacao': comp.id_transacao,
+                    'data_pagamento': comp.data_pagamento.strftime('%d/%m/%Y %H:%M') if comp.data_pagamento else '-',
+                    'data_comprovante': comp.data_comprovante.strftime('%d/%m/%Y') if comp.data_comprovante else None,
+                    'compartilhado_por': comp.compartilhado_por,
+                    'compartilhado_em': comp.compartilhado_em.strftime('%d/%m/%Y %H:%M') if comp.compartilhado_em else None,
+                    'banco_emitente': comp.banco_emitente,
+                    'caminho_recibo': caminho
+                })
+            return resultado
+        except Exception as exc:
+            current_app.logger.error(f'Erro ao listar comprovantes compartilhados: {exc}')
+            return []
+
+    @staticmethod
+    def descartar_comprovante_compartilhado(pagamento_id: int) -> bool:
+        if not pagamento_id:
+            return False
+        pagamento = Pagamento.query.get(pagamento_id)
+        if not pagamento:
+            return False
+        pagamento.compartilhado_disponivel = False
+        pagamento.compartilhado_por = None
+        pagamento.compartilhado_em = None
+        try:
+            db.session.commit()
+            return True
+        except Exception as exc:
+            db.session.rollback()
+            current_app.logger.error(f'Erro ao descartar comprovante compartilhado #{pagamento_id}: {exc}')
+            return False
+
+    @staticmethod
+    def marcar_comprovante_compartilhado_usado(pagamento: Pagamento, pedido_destino_id: int) -> None:
+        if not pagamento:
+            return
+        pagamento.compartilhado_disponivel = False
+        pagamento.compartilhado_usado_em = datetime.utcnow()
+        pagamento.compartilhado_destino_pedido_id = pedido_destino_id
+        try:
+            db.session.commit()
+        except Exception as exc:
+            db.session.rollback()
+            current_app.logger.error(f'Erro ao marcar comprovante compartilhado #{pagamento.id} como usado: {exc}')
     

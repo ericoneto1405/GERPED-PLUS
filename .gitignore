@@ -54,3 +54,10 @@ __pycache__/
 *.backup
 arquivos_removidos/
 BACKUP_LOG.txt
+
+# Relatórios de segurança (arquivos grandes)
+bandit_report.html
+bandit-report.html
+*bandit*.html
+zap_report.html
+*.security-report.html

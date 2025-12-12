@@ -3,330 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <title>Lançar Pagamento</title>
-    <style>
-        :root {
-            --surface: #ffffff;
-            --surface-muted: #f7f9fc;
-            --border: #e2e8f0;
-            --text-primary: #1f2a37;
-            --text-secondary: #5d6d7e;
-            --accent: #2563eb;
-            --success-bg: #e9f8f1;
-            --danger-bg: #fdecea;
-        }
-
-        body {
-            font-family: "SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-            background: #f2f5fb;
-            color: var(--text-primary);
-            margin: 0;
-            padding: 32px 16px 60px;
-        }
-
-        .page-shell {
-            max-width: 1100px;
-            margin: 0 auto;
-        }
-
-        .page-header {
-            margin-bottom: 20px;
-        }
-
-        .page-header h1 {
-            margin: 0;
-            font-size: 1.9rem;
-            color: var(--text-primary);
-        }
-
-        .page-header p {
-            margin: 8px 0 0;
-            color: var(--text-secondary);
-            font-size: 1rem;
-        }
-
-        .flash-messages {
-            margin-bottom: 20px;
-        }
-
-        .flash-message {
-            display: flex;
-            justify-content: space-between;
-            gap: 20px;
-            padding: 16px 18px;
-            border-radius: 12px;
-            border: 1px solid var(--border);
-            background: var(--surface);
-            box-shadow: 0px 8px 24px rgba(15, 23, 42, 0.07);
-        }
-
-        .flash-message strong {
-            display: block;
-            margin-bottom: 4px;
-        }
-
-        .flash-message button {
-            border: none;
-            background: transparent;
-            color: inherit;
-            cursor: pointer;
-            font-size: 1.1rem;
-        }
-
-        .flash-error {
-            border-color: #f5b7b1;
-            background: var(--danger-bg);
-        }
-
-        .flash-success {
-            border-color: #a3d8b0;
-            background: var(--success-bg);
-        }
-
-        .section-card {
-            background: var(--surface);
-            border-radius: 16px;
-            border: 1px solid var(--border);
-            padding: 20px 24px;
-            box-shadow: 0px 12px 30px rgba(15, 23, 42, 0.08);
-        }
-
-        .summary-card {
-            margin-bottom: 18px;
-        }
-
-        .summary-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-            gap: 16px;
-        }
-
-        .summary-item span {
-            display: block;
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-        }
-
-        .summary-item strong {
-            display: block;
-            margin-top: 6px;
-            font-size: 1.3rem;
-        }
-
-        .pill {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 4px 10px;
-            border-radius: 999px;
-            font-weight: 600;
-            font-size: 0.85rem;
-        }
-
-        .pill.warning {
-            background: #fff4e5;
-            color: #b54f00;
-        }
-
-        .pill.success {
-            background: #e7f7ef;
-            color: #0f8a4b;
-        }
-
-        .main-layout {
-            display: grid;
-            grid-template-columns: minmax(0, 1fr) 320px;
-            gap: 20px;
-        }
-
-        .form-card form {
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
-        }
-
-        fieldset {
-            border: none;
-            padding: 0;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        fieldset legend {
-            font-weight: 600;
-            font-size: 1.1rem;
-            margin-bottom: 4px;
-            color: var(--text-secondary);
-        }
-
-        label {
-            font-weight: 600;
-            color: var(--text-primary);
-            font-size: 0.95rem;
-        }
-
-        input[type="text"],
-        input[type="file"] {
-            width: 100%;
-            border-radius: 10px;
-            border: 1px solid var(--border);
-            padding: 10px 12px;
-            font-size: 1rem;
-            color: var(--text-primary);
-            background: var(--surface-muted);
-        }
-
-        input[type="text"]:focus {
-            outline: 2px solid rgba(37, 99, 235, 0.3);
-        }
-
-        .form-actions {
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        .ghost-btn {
-            border: 1px solid var(--border);
-            background: transparent;
-            color: var(--text-primary);
-            border-radius: 10px;
-            padding: 10px 14px;
-            cursor: pointer;
-            text-decoration: none;
-        }
-
-        button[type="submit"] {
-            background: var(--accent);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            padding: 10px 20px;
-            cursor: pointer;
-            font-weight: 600;
-        }
-
-        #ocr-status-principal {
-            display: none;
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            background: var(--surface-muted);
-            padding: 16px;
-        }
-
-        .recibo-queue {
-            margin-top: 10px;
-            border-radius: 12px;
-            border: 1px solid var(--border);
-            background: var(--surface-muted);
-            padding: 16px;
-        }
-
-        .fila-lista {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .fila-item {
-            border-radius: 12px;
-            border: 1px solid rgba(0, 0, 0, 0.08);
-            padding: 12px 14px;
-            background: #fff;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .fila-item.processando {
-            border-color: #f4c26b;
-            background: #fff8ec;
-        }
-
-        .fila-item.concluido {
-            border-color: #8fd19e;
-            background: #f1fff6;
-        }
-
-        .fila-item.erro {
-            border-color: #f5b7b1;
-            background: var(--danger-bg);
-        }
-
-        .fila-item.selecionado {
-            border-color: var(--accent);
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
-        }
-
-        .fila-header {
-            display: flex;
-            justify-content: space-between;
-            font-weight: 600;
-        }
-
-        .fila-actions {
-            display: flex;
-            gap: 8px;
-        }
-
-        .fila-actions button {
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            background: transparent;
-            padding: 6px 10px;
-            cursor: pointer;
-        }
-
-        .side-card h3 {
-            margin-top: 0;
-        }
-
-        .checklist {
-            list-style: none;
-            padding: 0;
-            margin: 0 0 16px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .checklist li {
-            background: var(--surface-muted);
-            border-radius: 10px;
-            padding: 10px 12px;
-            border: 1px dashed var(--border);
-            font-size: 0.95rem;
-        }
-
-        .history-list {
-            margin: 0;
-            padding-left: 18px;
-            max-height: 220px;
-            overflow-y: auto;
-        }
-
-        .history-empty {
-            color: var(--text-secondary);
-            margin: 0;
-        }
-
-        .form-card.error-state {
-            border: 1px solid #f1948a;
-            box-shadow: 0 0 0 3px rgba(241, 148, 138, 0.25);
-        }
-
-        @media (max-width: 960px) {
-            .main-layout {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/financeiro_pagamento.css') }}">
 </head>
 <body>
+    <div class="drop-overlay" id="dropOverlay"></div>
     <div class="page-shell">
         {% with messages = get_flashed_messages(with_categories=True) %}
         {% if messages %}
@@ -347,8 +27,7 @@
         {% endwith %}
 
         <header class="page-header">
-            <h1>Lançar Pagamento para Pedido #{{ pedido.id }}</h1>
-            <p>Revise os dados extraídos automaticamente e registre o pagamento com segurança.</p>
+            <h1>Pagamento do Pedido #{{ pedido.id }}</h1>
         </header>
 
         <section class="section-card summary-card">
@@ -378,45 +57,66 @@
 
         <div class="main-layout">
             <section class="section-card form-card">
-                <div id="ocr-status-principal"></div>
-
                 <form method="POST"
                       id="form-pagamento"
                       data-total="{{ total }}"
                       data-pago="{{ pago }}"
                       data-ocr-url="{{ url_for('financeiro.processar_recibo_ocr') }}"
+                      data-compartilhados-url="{{ url_for('financeiro.api_comprovantes_compartilhados') }}"
+                      data-descartar-comp-url="{{ url_for('financeiro.api_descartar_comprovante_compartilhado') }}"
                       enctype="multipart/form-data">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
                     <fieldset>
-                        <legend>1. Informações do pagamento</legend>
-                        <label for="valor">Valor a pagar</label>
-                        <input type="text" id="valor" name="valor" inputmode="decimal" step="0.01" required>
-
-                        <label for="metodo_pagamento">Método</label>
-                        <input type="text" id="metodo_pagamento" name="metodo_pagamento" placeholder="ex: Pix, Dinheiro, Cartão" required>
-
-                        <label for="observacoes">Observações (opcional)</label>
-                        <input type="text" id="observacoes" name="observacoes" placeholder="Observações sobre o pagamento">
+                        <legend>Pagamento</legend>
+                        <div class="input-grid">
+                            <div class="form-field">
+                                <label for="valor">Valor a pagar</label>
+                                <input type="text" id="valor" name="valor" inputmode="decimal" step="0.01" required>
+                            </div>
+                            <div class="form-field">
+                                <label for="metodo_pagamento">Método</label>
+                                <input type="text" id="metodo_pagamento" name="metodo_pagamento" placeholder="Pix, Dinheiro, Cartão..." required>
+                            </div>
+                            <div class="form-field observacoes-field">
+                                <label for="observacoes">Observações (opcional)</label>
+                                <input type="text" id="observacoes" name="observacoes" placeholder="Número do recibo, observação interna">
+                            </div>
+                        </div>
                     </fieldset>
 
                     <fieldset>
-                        <legend>2. Comprovante</legend>
-                        <label for="recibo">Enviar comprovante (o sistema lê os dados automaticamente)</label>
-                        <input type="file" id="recibo" name="recibo" multiple>
-                        <small style="color: var(--text-secondary);">
-                            Processamos cada arquivo em sequência. Assim que terminar, clique em <strong>“Usar este comprovante”</strong> no cartão correspondente para preencher o formulário com os dados reconhecidos.
-                        </small>
+                        <legend>Comprovante</legend>
+                        <div class="comprovante-grid">
+                            <div>
+                                <label class="dropzone" for="recibo">
+                                    <span class="dropzone-icon">📄</span>
+                                    <strong>Arraste ou clique para anexar</strong>
+                                    <small>PDF, JPG e PNG até 10 MB cada</small>
+                                </label>
+                                <input type="file" id="recibo" name="recibo" multiple>
+                            </div>
+                        </div>
 
                         <div class="recibo-queue" id="recibo-queue">
-                            <h4>Arquivos enviados</h4>
-                            <p style="margin: 0 0 8px; color: var(--text-secondary); font-size: 0.9rem;">
-                                Cada cartão abaixo representa um comprovante. Após o status “Processado”, confirme os dados clicando em <strong>“Usar este comprovante”</strong>.
-                            </p>
-                            <div id="filaRecibosLista" class="fila-lista">
+                            <div class="queue-header">
+                                <div>
+                                    <h4 style="margin:0;">Fila de comprovantes</h4>
+                                    <p style="margin: 4px 0 0; color: var(--text-secondary); font-size: 0.9rem;"></p>
+                                </div>
+                                <button type="button" class="ghost-btn" id="limparFilaBtn">Limpar fila</button>
+                            </div>
+                            <div class="master-select">
+                                <label>
+                                    <input type="checkbox" id="selecionar_todos">
+                                    Selecionar todos
+                                </label>
+                            </div>
+                            <div id="filaRecibosLista" class="fila-lista" style="margin-top:12px;" aria-live="polite">
                                 <div class="fila-vazia">Nenhum comprovante enfileirado.</div>
                             </div>
                         </div>
+
                     </fieldset>
 
                     <input type="hidden" name="id_transacao">
@@ -425,6 +125,10 @@
                     <input type="hidden" name="agencia_recebedor" id="agencia_recebedor">
                     <input type="hidden" name="conta_recebedor" id="conta_recebedor">
                     <input type="hidden" name="chave_pix_recebedor" id="chave_pix_recebedor">
+                    <input type="hidden" name="comprovante_compartilhado_id" id="comprovante_compartilhado_id">
+                    <div class="share-alert" id="avisoComprovanteCompartilhado">
+                        Utilizando comprovante compartilhado. <button type="button" id="cancelarCompartilhado">Cancelar</button>
+                    </div>
 
                     <div class="form-actions">
                         <a href="{{ url_for('financeiro.listar_financeiro') }}" class="ghost-btn">
@@ -437,28 +141,19 @@
                 </form>
             </section>
 
-            <aside class="section-card side-card">
-                <h3>Checklist rápido</h3>
-                <ul class="checklist">
-                    <li>Confirme se o valor reconhecido corresponde ao saldo.</li>
-                    <li>Verifique se o ID/Protocolo não foi usado em outro pedido.</li>
-                    <li>Para PIX, inclua sempre o comprovante para auditoria.</li>
-                    <li>Revise os dados bancários antes de confirmar.</li>
-                </ul>
+        </div>
+    </div>
 
-                <div>
-                    <h3>Histórico de pagamentos</h3>
-                    {% if pedido.pagamentos %}
-                        <ul class="history-list">
-                        {% for p in pedido.pagamentos %}
-                            <li>{{ p.data_pagamento.strftime('%d/%m/%Y %H:%M') }} - {{ p.valor | currency_brl }} - {{ p.metodo_pagamento }}{% if p.observacoes %} - {{ p.observacoes }}{% endif %}{% if p.caminho_recibo %} - <a href="{{ url_for('financeiro.ver_recibo', filename=p.caminho_recibo) }}" target="_blank">Ver Recibo</a>{% endif %}</li>
-                        {% endfor %}
-                        </ul>
-                    {% else %}
-                        <p class="history-empty">Nenhum pagamento registrado ainda.</p>
-                    {% endif %}
-                </div>
-            </aside>
+    <div class="modal" id="comprovanteModal" aria-hidden="true">
+        <div class="modal-backdrop" data-modal-close></div>
+        <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="comprovanteModalTitulo">
+            <div class="modal-header">
+                <h3 id="comprovanteModalTitulo">Comprovante</h3>
+                <button type="button" class="btn-close" data-modal-close aria-label="Fechar">&times;</button>
+            </div>
+            <div class="modal-body" id="comprovanteModalBody">
+                <p class="empty-state">Selecione um comprovante para visualizar.</p>
+            </div>
         </div>
     </div>
 

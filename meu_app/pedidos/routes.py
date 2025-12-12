@@ -342,7 +342,7 @@ def editar_pedido(id):
     if not pedido:
         flash('Pedido não encontrado', 'error')
         return redirect(url_for('pedidos.listar_pedidos'))
-    
+
     if request.method == 'POST':
         # Extrair dados do formulário
         cliente_id = request.form.get('cliente_id')
@@ -355,21 +355,20 @@ def editar_pedido(id):
             request.form.getlist('preco_venda')
         ):
             if produto_id and qtd and pv:
-                # Limpar formatação do preço (R$ 32,00 -> 32.00)
                 preco_limpo = pv.replace('R$', '').replace(' ', '').replace('.', '').replace(',', '.')
                 try:
                     preco_float = float(preco_limpo)
-                    itens_data.append({
-                        'produto_id': produto_id,
-                        'quantidade': qtd,
-                        'preco_venda': preco_float
-                    })
                 except ValueError:
                     current_app.logger.error(f"Erro ao converter preço: {pv}")
                     continue
+                itens_data.append({
+                    'produto_id': produto_id,
+                    'quantidade': qtd,
+                    'preco_venda': preco_float
+                })
         
         # Usar o serviço para atualizar o pedido
-        sucesso, mensagem = PedidoService.atualizar_pedido(id, cliente_id, itens_data)
+        sucesso, mensagem, _pedido = PedidoService.editar_pedido(id, cliente_id, itens_data)
         
         if sucesso:
             current_app.logger.info(f"Pedido editado por {session.get('usuario_nome', 'N/A')}")
@@ -380,7 +379,7 @@ def editar_pedido(id):
             # Retornar dados para o formulário em caso de erro
             clientes = Cliente.query.all()
             produtos = Produto.query.all()
-            return render_template('editar_pedido.html', pedido=pedido, clientes=clientes, produtos=produtos)
+        return render_template('editar_pedido.html', pedido=pedido, clientes=clientes, produtos=produtos)
     
     clientes = Cliente.query.all()
     produtos = Produto.query.all()
@@ -404,40 +403,21 @@ def confirmar_pedido(id):
 @login_obrigatorio
 @permissao_necessaria('acesso_pedidos')
 def confirmar_edicao_pedido(id):
-    """Confirma a edição de um pedido"""
+    """Valida senha admin e libera edição de pedido."""
     try:
-        # Extrair dados do formulário
-        cliente_id = request.form.get('cliente_id')
-        
-        # Processar itens do pedido
-        itens_data = []
-        for produto_id, qtd, pv in zip(
-            request.form.getlist('produto_id'),
-            request.form.getlist('quantidade'),
-            request.form.getlist('preco_venda')
-        ):
-            if produto_id and qtd and pv:
-                # Limpar formatação do preço (R$ 32,00 -> 32.00)
-                preco_limpo = pv.replace('R$', '').replace(' ', '').replace('.', '').replace(',', '.')
-                try:
-                    preco_float = float(preco_limpo)
-                    itens_data.append({
-                        'produto_id': produto_id,
-                        'quantidade': qtd,
-                        'preco_venda': preco_float
-                    })
-                except ValueError:
-                    current_app.logger.error(f"Erro ao converter preço: {pv}")
-                    continue
-        
-        # Usar o serviço para editar o pedido
-        sucesso, mensagem, pedido = PedidoService.editar_pedido(id, cliente_id, itens_data)
-        
-        if sucesso:
-            return jsonify({'success': True, 'message': mensagem})
-        else:
-            return jsonify({'success': False, 'message': mensagem}), 400
-            
+        senha_admin = request.form.get('senha')
+        if not senha_admin:
+            return jsonify({'success': False, 'message': 'Senha é obrigatória'}), 400
+
+        # Validar senha do administrador
+        from meu_app.models import Usuario
+        admin = Usuario.query.filter_by(tipo='admin').first()
+        if not admin or not admin.check_senha(senha_admin):
+            return jsonify({'success': False, 'message': 'Senha incorreta'}), 403
+
+        edit_url = url_for('pedidos.editar_pedido', id=id)
+        return jsonify({'success': True, 'message': 'Senha validada. Redirecionando para edição.', 'redirect': edit_url})
+
     except Exception as e:
         current_app.logger.error(f"Erro ao confirmar edição do pedido: {str(e)}")
         return jsonify({'success': False, 'message': f'Erro ao salvar alterações: {str(e)}'}), 500

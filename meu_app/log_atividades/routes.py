@@ -110,6 +110,7 @@ def listar_atividades():
 
 @log_atividades_bp.route('/atividade/<int:atividade_id>', methods=['GET'])
 @login_obrigatorio
+@admin_necessario
 def visualizar_atividade(atividade_id):
     """Visualiza detalhes de uma atividade específica"""
     try:
@@ -149,15 +150,16 @@ def limpar_logs():
         
         if sucesso:
             current_app.logger.info(f"Logs limpos por {session.get('usuario_nome', 'N/A')}: {quantidade} registros")
-        
-        return jsonify({'success': sucesso, 'message': mensagem, 'quantidade': quantidade})
+        status_code = 200 if sucesso else 400
+        return jsonify({'success': sucesso, 'message': mensagem, 'quantidade': quantidade}), status_code
         
     except Exception as e:
         current_app.logger.error(f"Erro ao limpar logs: {str(e)}")
-        return jsonify({'success': False, 'message': f'Erro ao limpar logs: {str(e)}'})
+        return jsonify({'success': False, 'message': f'Erro ao limpar logs: {str(e)}'}), 500
 
 @log_atividades_bp.route('/estatisticas', methods=['GET'])
 @login_obrigatorio
+@admin_necessario
 def obter_estatisticas():
     """Obtém estatísticas dos logs de atividades"""
     try:
@@ -174,6 +176,7 @@ def obter_estatisticas():
 
 @log_atividades_bp.route('/exportar', methods=['GET'])
 @login_obrigatorio
+@admin_necessario
 def exportar_logs():
     """Exporta logs de atividades"""
     try:

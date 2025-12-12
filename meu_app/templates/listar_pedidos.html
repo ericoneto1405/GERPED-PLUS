@@ -7,16 +7,25 @@
         <div class="header-title">
             <h2><i class="bi bi-clipboard icon-text"></i> Todos os Pedidos</h2>
             <div class="page-actions">
-                <form id="formImportarHistorico" method="POST" action="{{ url_for('pedidos.importar_historico') }}" enctype="multipart/form-data">
+                <form id="formImportarHistorico" class="action-form" method="POST" action="{{ url_for('pedidos.importar_historico') }}" enctype="multipart/form-data">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <label for="arquivoHistorico" class="sr-only">Selecionar arquivo histórico</label>
                     <input type="file" name="arquivo" id="arquivoHistorico" accept=".csv,.xlsx,.xls" style="display:none">
-                    <button type="button" class="btn-link" id="btnImportarHistorico"><i class="bi bi-upload"></i> Importar Histórico</button>
+                    <button type="button" class="action-chip action-chip-primary" id="btnImportarHistorico">
+                        <i class="bi bi-upload"></i>
+                        <span>Importar Histórico</span>
+                    </button>
                 </form>
-                <a href="{{ url_for('pedidos.download_modelo_pedidos') }}" class="btn-link"><i class="bi bi-file-earmark-arrow-down"></i> Baixar modelo</a>
-                <form id="formEstornarImportacao" method="POST" action="{{ url_for('pedidos.estornar_importacao') }}">
+                <a href="{{ url_for('pedidos.download_modelo_pedidos') }}" class="action-chip action-chip-ghost">
+                    <i class="bi bi-file-earmark-arrow-down"></i>
+                    <span>Baixar modelo</span>
+                </a>
+                <form id="formEstornarImportacao" class="action-form" method="POST" action="{{ url_for('pedidos.estornar_importacao') }}">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button type="submit" class="btn-link danger" id="btnEstornarImportacao"><i class="bi bi-arrow-counterclockwise"></i> Estornar importação</button>
+                    <button type="submit" class="action-chip action-chip-danger" id="btnEstornarImportacao">
+                        <i class="bi bi-arrow-counterclockwise"></i>
+                        <span>Estornar importação</span>
+                    </button>
                 </form>
             </div>
         </div>
@@ -68,17 +77,71 @@
         margin-bottom: 20px;
     }
 
-    /* Upload histórico inline */
-    #formImportarHistorico {
-        display: inline-flex;
+    .page-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
         align-items: center;
-        gap: 8px;
     }
 
-    .header-buttons {
-        display: flex;
-        gap: 10px;
+    .action-form {
+        display: inline-flex;
+        margin: 0;
     }
+
+    .action-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 16px;
+        border-radius: 999px;
+        border: 1px solid var(--border-color);
+        background: #fff;
+        color: var(--text-primary);
+        font-size: 0.9rem;
+        font-weight: 600;
+        text-decoration: none;
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+
+    .action-chip:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12);
+        text-decoration: none;
+    }
+
+    .action-chip-primary {
+        background: var(--accent-purple);
+        border-color: transparent;
+        color: #fff;
+    }
+
+    .action-chip-primary:hover {
+        background: var(--accent-purple-light);
+    }
+
+    .action-chip-ghost {
+        color: var(--text-primary);
+    }
+
+    .action-chip-ghost:hover {
+        color: var(--accent-purple);
+        border-color: var(--accent-purple);
+    }
+
+    .action-chip-danger {
+        background: #fff8f7;
+        border-color: rgba(239, 68, 68, 0.4);
+        color: var(--danger-color);
+    }
+
+    .action-chip-danger:hover {
+        background: #fee2e2;
+        border-color: var(--danger-color);
+    }
+
     .loading-upload {
         position: fixed;
         inset: 0;
@@ -942,12 +1005,8 @@ function confirmarAcao() {
         if (data.success) {
             if (acaoAtual === 'editar') {
                 fecharModal();
-                if (typeof notificationSystem !== 'undefined') {
-                    notificationSystem.success('Pedido editado', data.message || 'Pedido editado com sucesso!', 4000);
-                }
-                setTimeout(() => {
-                    window.location.reload();
-                }, 500);
+                const destino = data.redirect || `/pedidos/editar/${pedidoId}`;
+                window.location.href = destino;
             } else if (acaoAtual === 'excluir') {
                 fecharModal();
                 const linha = document.getElementById(`linha-pedido-${pedidoId}`);

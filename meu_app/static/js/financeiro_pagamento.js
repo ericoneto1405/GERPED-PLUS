@@ -15,10 +15,39 @@ document.addEventListener('DOMContentLoaded', () => {
     const ocrStatus = document.getElementById('ocr-status-principal');
     const filaLista = document.getElementById('filaRecibosLista');
     const ocrUrl = form.dataset.ocrUrl;
+    const limparFilaBtn = document.getElementById('limparFilaBtn');
+    const painelEmptyState = document.querySelector('.comprovante-panel .empty-state');
+    const compartilhadosUrl = form.dataset.compartilhadosUrl;
+    const descartarCompartilhadoUrl = form.dataset.descartarCompUrl;
+    const listaCompartilhados = document.getElementById('listaComprovantesDisponiveis');
+    const contadorCompartilhados = document.getElementById('contadorComprovantesDisponiveis');
+    const campoCompartilhadoId = document.getElementById('comprovante_compartilhado_id');
+    const avisoCompartilhado = document.getElementById('avisoComprovanteCompartilhado');
+    const cancelarCompartilhadoBtn = document.getElementById('cancelarCompartilhado');
+    const masterSelectCheckbox = document.getElementById('selecionar_todos');
+    const getSelecionarCheckboxes = () => Array.from(document.querySelectorAll('input[data-action="selecionar"]'));
+    const getShareCheckboxes = () => Array.from(document.querySelectorAll('input[data-share-checkbox]'));
+    const uncheckShareCheckboxes = () => {
+        getShareCheckboxes().forEach((cb) => {
+            cb.checked = false;
+        });
+    };
+    const dropOverlay = document.getElementById('dropOverlay');
+    const dropzone = document.querySelector('.dropzone');
+    const filaRecibosLista = document.getElementById('filaRecibosLista');
+    const modal = document.getElementById('comprovanteModal');
+    const modalBody = document.getElementById('comprovanteModalBody');
+    const modalTitle = document.getElementById('comprovanteModalTitulo');
+
+    if (ocrStatus) {
+        ocrStatus.style.display = 'none';
+    }
 
     const fila = [];
     let processando = false;
     let itemSelecionadoId = null;
+    let comprovantesDisponiveis = [];
+    let bulkSelecting = false;
 
     const formatBRL = (valor) => {
         try {
@@ -34,6 +63,35 @@ document.addEventListener('DOMContentLoaded', () => {
         const sizes = ['B', 'KB', 'MB', 'GB'];
         const i = Math.floor(Math.log(bytes) / Math.log(k));
         return `${(bytes / Math.pow(k, i)).toFixed(2)} ${sizes[i]}`;
+    };
+
+    const togglePainelEmptyState = (hasContent) => {
+        if (painelEmptyState) {
+            painelEmptyState.style.display = hasContent ? 'none' : 'block';
+        }
+        if (!ocrStatus) return;
+        ocrStatus.style.display = hasContent ? 'flex' : 'none';
+        if (!hasContent) {
+            ocrStatus.innerHTML = '';
+        }
+    };
+
+    const getStatusBadgeClass = (status) => ({
+        aguardando: 'status-aguardando',
+        processando: 'status-processando',
+        concluido: 'status-concluido',
+        erro: 'status-erro',
+    }[status] || '');
+
+    const updateLimparFilaState = () => {
+        if (!limparFilaBtn) return;
+        limparFilaBtn.disabled = fila.length === 0;
+    };
+
+    const atualizarContadorCompartilhados = (quantidade) => {
+        if (contadorCompartilhados) {
+            contadorCompartilhados.textContent = `${quantidade} ativos`;
+        }
     };
 
     const setValorFormatado = (numero) => {
@@ -77,6 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const updateQueueUI = () => {
         if (!filaLista) return;
         filaLista.innerHTML = '';
+        updateLimparFilaState();
         if (!fila.length) {
             filaLista.innerHTML = '<div class="fila-vazia">Nenhum comprovante enfileirado.</div>';
             return;
@@ -92,6 +151,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 concluido: 'Processado',
                 erro: 'Falhou',
             }[item.status] || 'Indefinido';
+            const badgeClass = getStatusBadgeClass(item.status);
 
             const highlights = [];
             if (item.result) {
@@ -106,31 +166,187 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
+        const valorReconhecido = item.result && item.result.valor_encontrado !== undefined && item.result.valor_encontrado !== null
+            ? formatBRL(parseValor(item.result.valor_encontrado) || item.result.valor_encontrado)
+            : '—';
+        const valorNumericoReconhecido = item.result && item.result.valor_encontrado !== undefined && item.result.valor_encontrado !== null
+            ? parseValor(item.result.valor_encontrado)
+            : null;
+        const idReconhecido = item.result && item.result.id_transacao_encontrado ? item.result.id_transacao_encontrado : '—';
+        const dataReconhecida = item.result && item.result.data_encontrada ? item.result.data_encontrada : '—';
+
+            const validacao = item.result && item.result.validacao_recebedor ? item.result.validacao_recebedor : null;
+            const baseState = validacao ? (validacao.valido === true ? 'ok' : 'fail') : 'unknown';
+
+            const pixValor = (item.result && item.result.chave_pix_recebedor) ? item.result.chave_pix_recebedor : '—';
+            const cnpjValor = (item.result && item.result.cnpj_recebedor) ? item.result.cnpj_recebedor : '—';
+        const idValor = (item.result && item.result.id_transacao_encontrado) ? item.result.id_transacao_encontrado : '—';
+        const idState = (item.result && item.result.id_transacao_encontrado) ? 'ok' : 'unknown';
+
+            const statusIcon = (state) => (state === 'ok' ? '🟢' : state === 'fail' ? '🔴' : '⚪');
+
+            const falhaCard = baseState === 'fail';
+
             wrapper.innerHTML = `
                 <div class="fila-header">
                     <div>
                         <div class="fila-nome">${item.file.name}</div>
-                        <div class="fila-meta">${formatBytes(item.file.size)}</div>
+                        <div class="fila-meta"></div>
                     </div>
-                    <span class="fila-status">${statusLabel}</span>
+                    <div class="fila-header-actions">
+                        <span class="fila-status ${badgeClass}">${statusLabel}</span>
+                        ${!falhaCard ? `
+                        <label class="fila-checkbox">
+                            <input type="checkbox" data-action="selecionar" data-id="${item.id}" data-valor="${valorNumericoReconhecido !== null ? valorNumericoReconhecido : ''}">
+                            Selecionar
+                        </label>` : ''}
+                        <button type="button" class="btn btn-secondary" data-action="remover" ${item.status === 'processando' ? 'disabled' : ''}>
+                            Remover
+                        </button>
+                    </div>
                 </div>
-                <div class="fila-meta">${item.statusMessage || ''}</div>
-                ${
-                    highlights.length
-                        ? `<div class="fila-resumo">${highlights.map((h) => `<span>${h}</span>`).join('')}</div>`
-                        : ''
-                }
-                <div class="fila-actions">
-                    <button type="button" class="btn btn-secondary" data-action="usar" ${item.status !== 'concluido' ? 'disabled' : ''}>
-                        Usar este comprovante
-                    </button>
-                    <button type="button" class="btn btn-secondary" data-action="remover" ${item.status === 'processando' ? 'disabled' : ''}>
-                        Remover
+                <div class="fila-resumo">
+                    <div><strong>Valor do Comprovante:</strong> ${valorReconhecido}</div>
+                    <div><strong>ID.:</strong> ${idReconhecido} ${statusIcon(idState)} ${idState === 'ok' ? '(ID VALIDADO)' : ''}</div>
+                    <div><strong>DATA:</strong> ${dataReconhecida}</div>
+                </div>
+                <div class="highlight-list">
+                    <div>PIX RECEBEDOR: ${pixValor} ${statusIcon(baseState)}</div>
+                    <div>CNPJ RECEBEDOR: ${cnpjValor} ${statusIcon(baseState)}</div>
+                </div>
+                <div class="share-inline">
+                    <label>
+                        <input type="checkbox" name="disponibilizar_comprovante" value="on" data-share-checkbox data-id="${item.id}">
+                        Disponibilizar este comprovante para outro pedido após salvar
+                    </label>
+                </div>
+                <div class="fila-footer">
+                    <button type="button" class="btn btn-secondary" data-action="ver-comprovante" data-id="${item.id}">
+                        Ver comprovante
                     </button>
                 </div>
             `;
+            if (falhaCard) {
+                wrapper.classList.add('error-state');
+            }
             filaLista.appendChild(wrapper);
         });
+    };
+
+    const enqueueFiles = (fileList) => {
+        const files = Array.from(fileList || []);
+        if (!files.length || !ocrUrl) return;
+        files.forEach((file) => {
+            fila.push({
+                id: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`,
+                file,
+                status: 'aguardando',
+                statusMessage: 'Aguardando na fila',
+                result: null,
+            });
+        });
+        updateQueueUI();
+        processarFila();
+    };
+
+    const toggleDropOverlay = (show) => {
+        if (dropOverlay) {
+            dropOverlay.style.display = show ? 'block' : 'none';
+        }
+        if (dropzone) {
+            dropzone.classList.toggle('active', !!show);
+        }
+    };
+
+    const renderComprovantesCompartilhados = (lista = []) => {
+        if (!listaCompartilhados) return;
+        comprovantesDisponiveis = lista;
+        listaCompartilhados.innerHTML = '';
+        atualizarContadorCompartilhados(lista.length);
+        if (!lista.length) {
+            listaCompartilhados.innerHTML = '<div class="fila-vazia">Nenhum comprovante compartilhado no momento.</div>';
+            return;
+        }
+
+        lista.forEach((item) => {
+            const card = document.createElement('div');
+            const ativo = Number(campoCompartilhadoId?.value || 0) === item.id;
+            card.className = `shared-card${ativo ? ' selecionado' : ''}`;
+            card.dataset.id = item.id;
+            card.innerHTML = `
+                <strong>Pedido #${item.pedido_id} · ${item.cliente}</strong>
+                <span>Valor sugerido: <strong>${formatBRL(item.valor_sugerido || 0)}</strong></span>
+                <span>Data do comprovante: ${item.data_comprovante || '—'}</span>
+                ${item.id_transacao ? `<span>ID: ${item.id_transacao}</span>` : ''}
+                <span>Disponibilizado por ${item.compartilhado_por || 'Financeiro'} em ${item.compartilhado_em || '-'}</span>
+                <div class="fila-actions">
+                    <button type="button" class="btn btn-secondary" data-action="usar" data-id="${item.id}">Usar</button>
+                    <button type="button" class="btn btn-secondary" data-action="descartar" data-id="${item.id}">Descartar</button>
+                    ${item.recibo_url ? `<a class="btn btn-secondary" href="${item.recibo_url}" target="_blank">Ver recibo</a>` : ''}
+                </div>
+            `;
+            listaCompartilhados.appendChild(card);
+        });
+    };
+
+    const carregarComprovantesCompartilhados = () => {
+        if (!compartilhadosUrl) return;
+        fetch(compartilhadosUrl)
+            .then((resp) => resp.json())
+            .then((data) => {
+                renderComprovantesCompartilhados(data.comprovantes || []);
+            })
+            .catch((error) => {
+                console.error('Erro ao carregar comprovantes compartilhados', error);
+            });
+    };
+
+    const aplicarComprovanteCompartilhado = (item) => {
+        if (!item) return;
+        campoCompartilhadoId.value = item.id;
+        if (valorInput && item.valor_sugerido) {
+            setValorFormatado(Number(item.valor_sugerido));
+        }
+        if (idTransacaoInput) {
+            idTransacaoInput.value = item.id_transacao || '';
+        }
+        if (dataComprovanteInput) {
+            dataComprovanteInput.value = item.data_comprovante || '';
+        }
+        if (bancoEmitenteInput) bancoEmitenteInput.value = item.banco_emitente || '';
+        if (avisoCompartilhado) {
+            avisoCompartilhado.style.display = 'block';
+        }
+        if (reciboInput) {
+            reciboInput.disabled = true;
+        }
+        uncheckShareCheckboxes();
+        renderComprovantesCompartilhados(comprovantesDisponiveis);
+    };
+
+    const cancelarUsoCompartilhado = () => {
+        campoCompartilhadoId.value = '';
+        if (reciboInput) {
+            reciboInput.disabled = false;
+        }
+        if (avisoCompartilhado) {
+            avisoCompartilhado.style.display = 'none';
+        }
+        renderComprovantesCompartilhados(comprovantesDisponiveis);
+    };
+
+    const descartarComprovanteCompartilhado = (id) => {
+        if (!descartarCompartilhadoUrl) return;
+        fetch(descartarCompartilhadoUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfTokenInput ? csrfTokenInput.value : '',
+            },
+            body: JSON.stringify({ id }),
+        })
+            .then(() => carregarComprovantesCompartilhados())
+            .catch((error) => console.error('Erro ao descartar comprovante compartilhado', error));
     };
 
     const processarFila = () => {
@@ -181,9 +397,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const limparCampoStatus = () => {
-        if (!ocrStatus) return;
-        ocrStatus.innerHTML = '';
-        ocrStatus.style.display = 'block';
+        togglePainelEmptyState(false);
     };
 
     const aplicarResultadoNoFormulario = (item) => {
@@ -228,105 +442,69 @@ document.addEventListener('DOMContentLoaded', () => {
         return encontrouInformacao;
     };
 
+
     const renderPainelPrincipal = (data, fileName) => {
         if (!ocrStatus) return;
         const treatedAsSuccess = ['success', 'fallback'];
         const ocrStatusText = data.ocr_status || 'unknown';
-        const ocrMessage = data.ocr_message || '';
+        const ocrMessage = data.ocr_message || 'Dados disponíveis para revisão.';
         const isSuccessState = treatedAsSuccess.includes(ocrStatusText);
-        let foundSomething = false;
-        if (data.valor_encontrado !== undefined && data.valor_encontrado !== null) foundSomething = true;
-        if (data.id_transacao_encontrado) foundSomething = true;
+        const icon = ocrStatusText === 'failed' ? '⚠️' : (ocrStatusText === 'fallback' ? '🛠️' : '🤖');
 
-        ocrStatus.innerHTML = `
-            <div class="ocr-loading" style="background: ${isSuccessState ? '#e4fff2' : '#fff5e1'}; color: ${isSuccessState ? '#145a32' : '#7d5100'};">
-                <div>
-                    <div style="font-size: 1.05em; font-weight: 600;">
-                        ${fileName ? `📄 ${fileName}` : 'Resultados do OCR'}
-                    </div>
-                    <div style="font-size: 0.9em; font-weight: normal; margin-top: 5px;">
-                        ${ocrMessage}
-                    </div>
-                </div>
-            </div>
+        togglePainelEmptyState(true);
+        ocrStatus.innerHTML = '';
+
+        const infoBox = document.createElement('div');
+        infoBox.className = 'painel-info';
+        infoBox.style.borderLeftColor = isSuccessState ? (ocrStatusText === 'fallback' ? '#1f618d' : '#0f8a4b') : '#b54f00';
+        infoBox.innerHTML = `
+            <div style="font-weight:600;">${icon} ${fileName ? fileName : 'Comprovante processado'}</div>
+            <div style="font-size:0.9rem; margin-top:4px;">${ocrMessage}</div>
         `;
-
-        const statusDiv = document.createElement('div');
-        statusDiv.style.marginTop = '10px';
-        statusDiv.style.fontWeight = 'bold';
-        statusDiv.style.color = isSuccessState ? (ocrStatusText === 'fallback' ? '#1f618d' : 'green') : 'orange';
-        const icon = isSuccessState ? (ocrStatusText === 'fallback' ? '🛠️' : '🤖') : '⚠️';
-        statusDiv.textContent = `${icon} ${ocrMessage}`;
-        ocrStatus.appendChild(statusDiv);
+        ocrStatus.appendChild(infoBox);
 
         if (ocrStatusText === 'fallback') {
             const fallbackInfo = document.createElement('div');
-            fallbackInfo.style.marginTop = '6px';
-            fallbackInfo.style.fontSize = '0.9em';
-            fallbackInfo.style.color = '#1f618d';
-            fallbackInfo.textContent = 'Modo offline ativado: confira os valores manualmente.';
+            fallbackInfo.className = 'painel-info';
+            fallbackInfo.style.borderLeftColor = '#1f618d';
+            fallbackInfo.innerHTML = 'Modo offline ativado: confira os valores manualmente.';
             ocrStatus.appendChild(fallbackInfo);
         }
 
-        if (data.ml_status || data.ml_confidence !== undefined) {
-            const mlBox = document.createElement('div');
-            mlBox.style.marginTop = '8px';
-            mlBox.style.padding = '10px';
-            mlBox.style.borderRadius = '6px';
-            mlBox.style.background = '#f5f7fb';
-            mlBox.style.border = '1px dashed #cfd6e6';
-            const conf = data.ml_confidence !== undefined && data.ml_confidence !== null
-                ? (Number(data.ml_confidence) * 100).toFixed(2) + '%'
-                : '—';
-            mlBox.innerHTML = `
-                <div style="font-weight: 600; color: #34495e;">
-                    🤖 ML (beta) – apenas para consulta
-                </div>
-                <div style="font-size: 0.95em; color: #5a6b7b; margin-top: 4px;">
-                    Status: <strong>${data.ml_status || 'indefinido'}</strong> | Confiança: <strong>${conf}</strong><br>
-                    Este resultado não bloqueia o fluxo até o modelo estar 100% treinado.
-                </div>
-            `;
-            ocrStatus.appendChild(mlBox);
-        }
-
+        const dataPoints = [];
         if (data.valor_encontrado !== undefined && data.valor_encontrado !== null) {
             const valorNumerico = parseValor(data.valor_encontrado);
-            const valorStatus = document.createElement('div');
-            valorStatus.style.marginTop = '5px';
-            if (valorNumerico !== null) {
-                valorStatus.textContent = '✅ Valor preenchido automaticamente!';
-                valorStatus.style.color = 'green';
-            } else {
-                valorStatus.textContent =
-                    '⚠️ OCR encontrou possível valor, mas não foi possível converter. Verifique manualmente.';
-                valorStatus.style.color = 'orange';
-            }
-            ocrStatus.appendChild(valorStatus);
+            dataPoints.push({
+                label: 'Valor reconhecido',
+                value: valorNumerico !== null ? formatBRL(valorNumerico) : data.valor_encontrado,
+            });
         }
-
         if (data.id_transacao_encontrado) {
-            const idStatus = document.createElement('div');
-            idStatus.innerHTML = `✅ ID da Transação: <strong>${data.id_transacao_encontrado}</strong>`;
-            idStatus.style.color = 'green';
-            idStatus.style.marginTop = '5px';
-            ocrStatus.appendChild(idStatus);
+            dataPoints.push({ label: 'Protocolo / ID', value: data.id_transacao_encontrado });
         }
-
         if (data.data_encontrada) {
-            const dataStatus = document.createElement('div');
-            dataStatus.innerHTML = `📅 Data: <strong>${data.data_encontrada}</strong>`;
-            dataStatus.style.color = 'blue';
-            dataStatus.style.marginTop = '5px';
-            ocrStatus.appendChild(dataStatus);
+            dataPoints.push({ label: 'Data do comprovante', value: data.data_encontrada });
+        }
+        if (data.banco_emitente) {
+            dataPoints.push({ label: 'Banco remetente', value: data.banco_emitente });
         }
 
-        if (data.banco_emitente) {
-            const bancoStatus = document.createElement('div');
-            bancoStatus.innerHTML = `🏦 Banco: <strong>${data.banco_emitente}</strong>`;
-            bancoStatus.style.color = 'blue';
-            bancoStatus.style.marginTop = '5px';
-            ocrStatus.appendChild(bancoStatus);
+        if (dataPoints.length) {
+            const grid = document.createElement('div');
+            grid.className = 'comprovante-resumo';
+            dataPoints.forEach((point) => {
+                const card = document.createElement('div');
+                card.className = 'resumo-card';
+                card.innerHTML = `<span>${point.label}</span><strong>${point.value}</strong>`;
+                grid.appendChild(card);
+            });
+            ocrStatus.appendChild(grid);
+        } else {
+            const noDataDiv = document.createElement('div');
+            noDataDiv.className = 'painel-info';
+            noDataDiv.style.borderLeftColor = '#b54f00';
+            noDataDiv.innerHTML = 'Nenhum dado confiável encontrado neste comprovante. Digite manualmente.';
+            ocrStatus.appendChild(noDataDiv);
         }
 
         if (data.validacao_recebedor) {
@@ -388,21 +566,16 @@ document.addEventListener('DOMContentLoaded', () => {
             ocrStatus.appendChild(validacaoDiv);
         }
 
-        if (data.ocr_status === 'failed') {
+        if (ocrStatusText === 'failed' && !dataPoints.length) {
             const manualDiv = document.createElement('div');
             manualDiv.textContent = '💡 Digite os dados manualmente nos campos abaixo';
             manualDiv.style.color = 'gray';
             manualDiv.style.marginTop = '10px';
             manualDiv.style.fontStyle = 'italic';
             ocrStatus.appendChild(manualDiv);
-        } else if (!foundSomething && treatedAsSuccess.includes(ocrStatusText)) {
-            const noDataDiv = document.createElement('div');
-            noDataDiv.textContent = '⚠️ Nenhum dado encontrado no recibo. Digite manualmente.';
-            noDataDiv.style.color = 'orange';
-            noDataDiv.style.marginTop = '5px';
-            ocrStatus.appendChild(noDataDiv);
         }
     };
+
 
     if (metodoPagamentoInput && reciboInput) {
         metodoPagamentoInput.addEventListener('input', function () {
@@ -418,22 +591,101 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (reciboInput) {
         reciboInput.addEventListener('change', (event) => {
-            const files = Array.from(event.target.files || []);
-            if (!files.length || !ocrUrl) return;
-            files.forEach((file) => {
-                fila.push({
-                    id: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`,
-                    file,
-                    status: 'aguardando',
-                    statusMessage: 'Aguardando na fila',
-                    result: null,
-                });
-            });
+            enqueueFiles(event.target.files);
             reciboInput.value = '';
-            updateQueueUI();
-            processarFila();
         });
     }
+
+    if (dropzone) {
+        ['dragenter', 'dragover'].forEach((evt) => {
+            dropzone.addEventListener(evt, (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                toggleDropOverlay(true);
+            });
+        });
+
+        ['dragleave', 'dragend', 'drop'].forEach((evt) => {
+            dropzone.addEventListener(evt, (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                toggleDropOverlay(false);
+            });
+        });
+
+        dropzone.addEventListener('drop', (event) => {
+            if (!event.dataTransfer) return;
+            enqueueFiles(event.dataTransfer.files);
+        });
+
+        dropzone.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                dropzone.click();
+            }
+        });
+    }
+
+    if (filaRecibosLista) {
+        filaRecibosLista.setAttribute('role', 'region');
+        filaRecibosLista.setAttribute('aria-live', 'polite');
+    }
+
+    const abrirModalComprovante = (item) => {
+        if (!item || !item.file) return;
+        const url = URL.createObjectURL(item.file);
+        const tipo = item.file.type || '';
+
+        if (!modal || !modalBody || !modalTitle) {
+            window.open(url, '_blank', 'noopener');
+            return;
+        }
+
+        modalTitle.textContent = `Comprovante: ${item.file.name}`;
+        modalBody.innerHTML = '';
+
+        if (tipo.startsWith('image/')) {
+            const img = document.createElement('img');
+            img.src = url;
+            img.alt = item.file.name;
+            modalBody.appendChild(img);
+        } else {
+            const frame = document.createElement('iframe');
+            frame.src = url;
+            frame.title = item.file.name;
+            modalBody.appendChild(frame);
+        }
+        modal.setAttribute('aria-hidden', 'false');
+        modal.dataset.url = url;
+    };
+
+    const fecharModalComprovante = () => {
+        if (!modal) return;
+        const url = modal.dataset.url;
+        if (url) {
+            URL.revokeObjectURL(url);
+            delete modal.dataset.url;
+        }
+        modal.setAttribute('aria-hidden', 'true');
+        if (modalBody) {
+            modalBody.innerHTML = '<p class="empty-state">Selecione um comprovante para visualizar.</p>';
+        }
+    };
+
+    if (modal) {
+        modal.addEventListener('click', (event) => {
+            if (event.target.dataset.modalClose !== undefined || event.target.classList.contains('modal-backdrop')) {
+                fecharModalComprovante();
+            }
+        });
+        window.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                fecharModalComprovante();
+            }
+        });
+    }
+
+    updateLimparFilaState();
 
     if (filaLista) {
         filaLista.addEventListener('click', (event) => {
@@ -453,10 +705,107 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (index >= 0) fila.splice(index, 1);
                 if (itemSelecionadoId === item.id) {
                     itemSelecionadoId = null;
-                    if (ocrStatus) ocrStatus.innerHTML = '';
+                    limparCampoStatus();
                 }
                 updateQueueUI();
             }
+            if (action === 'ver-comprovante') {
+                event.preventDefault();
+                abrirModalComprovante(item);
+            }
+        });
+    }
+
+    if (filaLista) {
+        filaLista.addEventListener('change', (event) => {
+            const checkbox = event.target.closest('input[data-action="selecionar"]');
+            if (!checkbox || !valorInput) return;
+            const rawValor = checkbox.dataset.valor;
+            const valorNumero = rawValor ? Number(rawValor) : null;
+            if (valorNumero === null || Number.isNaN(valorNumero)) return;
+
+            const atual = parseValor(valorInput.value) || 0;
+            const novo = checkbox.checked ? atual + valorNumero : Math.max(0, atual - valorNumero);
+            setValorFormatado(novo);
+
+            if (masterSelectCheckbox && !bulkSelecting) {
+                const todos = getSelecionarCheckboxes();
+                const todosMarcados = todos.length > 0 && todos.every((cb) => cb.checked);
+                masterSelectCheckbox.checked = todosMarcados;
+            }
+        });
+    }
+
+    if (filaLista) {
+        filaLista.addEventListener('change', (event) => {
+            const shareBox = event.target.closest('input[data-share-checkbox]');
+            if (!shareBox) return;
+            if (shareBox.checked) {
+                getShareCheckboxes().forEach((cb) => {
+                    if (cb !== shareBox) cb.checked = false;
+                });
+            }
+        });
+    }
+
+    if (masterSelectCheckbox && filaLista) {
+        masterSelectCheckbox.addEventListener('change', () => {
+            bulkSelecting = true;
+            const marcar = masterSelectCheckbox.checked;
+            let atual = parseValor(valorInput.value) || 0;
+            let delta = 0;
+            const todos = getSelecionarCheckboxes();
+            todos.forEach((cb) => {
+                const rawValor = cb.dataset.valor;
+                const valorNumero = rawValor ? Number(rawValor) : null;
+                const estava = cb.checked;
+                cb.checked = marcar;
+                if (valorNumero !== null && !Number.isNaN(valorNumero)) {
+                    if (marcar && !estava) delta += valorNumero;
+                    if (!marcar && estava) delta -= valorNumero;
+                }
+            });
+            if (valorInput && delta !== 0) {
+                const novo = Math.max(0, atual + delta);
+                setValorFormatado(novo);
+            }
+            bulkSelecting = false;
+        });
+    }
+
+    if (listaCompartilhados) {
+        listaCompartilhados.addEventListener('click', (event) => {
+            const btn = event.target.closest('[data-action]');
+            if (!btn) return;
+            const id = Number(btn.dataset.id);
+            if (!id) return;
+            if (btn.dataset.action === 'usar') {
+                const item = comprovantesDisponiveis.find((comp) => comp.id === id);
+                aplicarComprovanteCompartilhado(item);
+            }
+            if (btn.dataset.action === 'descartar') {
+                const confirmar = window.confirm('Deseja remover este comprovante compartilhado da lista?');
+                if (confirmar) descartarComprovanteCompartilhado(id);
+            }
+        });
+    }
+
+    if (cancelarCompartilhadoBtn) {
+        cancelarCompartilhadoBtn.addEventListener('click', (event) => {
+            event.preventDefault();
+            cancelarUsoCompartilhado();
+        });
+    }
+
+    if (limparFilaBtn) {
+        limparFilaBtn.addEventListener('click', () => {
+            if (!fila.length) return;
+            const confirmar = window.confirm('Remover todos os comprovantes da fila?');
+            if (!confirmar) return;
+            fila.length = 0;
+            itemSelecionadoId = null;
+            limparCampoStatus();
+            updateQueueUI();
         });
     }
 
@@ -470,6 +819,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     form.addEventListener('submit', (event) => {
+        if (reciboInput && (!campoCompartilhadoId || !campoCompartilhadoId.value)) {
+            const selecionados = getSelecionarCheckboxes().filter((cb) => cb.checked);
+            if (selecionados.length) {
+                const dt = new DataTransfer();
+                selecionados.forEach((cb) => {
+                    const item = fila.find((i) => i.id === cb.dataset.id);
+                    if (item && item.file) {
+                        dt.items.add(item.file);
+                    }
+                });
+                if (dt.files.length) {
+                    reciboInput.files = dt.files;
+                }
+            }
+        }
+
         const totalPedido = parseFloat(form.dataset.total) || 0;
         const totalPago = parseFloat(form.dataset.pago) || 0;
         const novoValor = parseValor(valorInput.value) || 0;
@@ -480,4 +845,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!confirmar) event.preventDefault();
         }
     });
+
+    carregarComprovantesCompartilhados();
 });

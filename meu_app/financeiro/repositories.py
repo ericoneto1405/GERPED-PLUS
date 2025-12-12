@@ -7,7 +7,7 @@ Implementa o padrão Repository para acesso a dados financeiros.
 from typing import List, Optional
 from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime
-from ..models import db, Pagamento, OcrQuota
+from ..models import db, Pagamento, OcrQuota, PagamentoAnexo
 
 
 class PagamentoFinanceiroRepository:
@@ -33,6 +33,12 @@ class PagamentoFinanceiroRepository:
     def buscar_por_sha256(self, sha256: str) -> Optional[Pagamento]:
         """Busca pagamento por hash SHA256 do recibo."""
         try:
+            try:
+                anexo = PagamentoAnexo.query.filter_by(sha256=sha256).first()
+            except SQLAlchemyError:
+                anexo = None
+            if anexo:
+                return anexo.pagamento
             return Pagamento.query.filter_by(recibo_sha256=sha256).first()
         except SQLAlchemyError as e:
             print(f"Erro ao buscar pagamento por SHA256: {str(e)}")
@@ -163,4 +169,3 @@ class OcrQuotaRepository:
         except Exception as e:
             print(f"Erro ao obter contador OCR: {str(e)}")
             return 0
-

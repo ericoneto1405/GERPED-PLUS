@@ -27,163 +27,6 @@
         <div id="itens" class="item-container"></div>
 
         <button type="button" class="btn btn-info btn-sm mt-2" data-action="add-item" tabindex="-1"><i class="bi bi-plus-lg icon-text"></i> Adicionar Produto</button>
-        
-        
-        <script nonce="{{ nonce }}">
-            function adicionarItem() {
-                console.log('[Pedidos] Adicionando produto...');
-                
-                const container = document.getElementById('itens');
-                if (!container) {
-                    alert('Erro: Container não encontrado');
-                    return;
-                }
-                
-                // Contar itens existentes
-                const itemIndex = container.children.length;
-                
-                // Criar HTML do produto com select simples
-                const produtoHTML = `
-                    <div class="d-flex gap-2 mb-2 align-items-center" data-item-index="${itemIndex}" data-item-row>
-                        <div class="flex-grow-1">
-                            <select name="produto_id" class="form-control" required>
-                                <option value="">Selecione um produto...</option>
-                            </select>
-                        </div>
-                        <div style="width: 100px;">
-                            <input type="number" name="quantidade" class="form-control" placeholder="Qtd" min="1" required>
-                        </div>
-                        <div style="width: 150px;">
-                            <input type="text" name="preco_venda" class="form-control currency-input" placeholder="Preço Venda" data-currency="true" required>
-                        </div>
-                        <button type="button" class="btn btn-danger btn-sm" data-action="remove-item" aria-label="Remover item" tabindex="-1"><i class="bi bi-trash icon-text"></i></button>
-                    </div>
-                `;
-                
-                // Adicionar ao container
-                container.insertAdjacentHTML('beforeend', produtoHTML);
-                
-                console.log('[Pedidos] Produto adicionado. Total:', container.children.length);
-                
-                // Carregar produtos via AJAX
-                carregarProdutosNoSelect(container.lastElementChild.querySelector('select'));
-                
-                // Aplicar formatação de moeda ao novo campo de preço
-                const newPriceInput = container.lastElementChild.querySelector('input[name="preco_venda"]');
-                if (newPriceInput && typeof CurrencyFormatter !== 'undefined') {
-                    // Adicionar eventos de formatação
-                    newPriceInput.addEventListener('input', () => {
-                        CurrencyFormatter.formatInput(newPriceInput);
-                    });
-                }
-            }
-            
-            // Função para carregar produtos via AJAX
-            function carregarProdutosNoSelect(selectElement) {
-                if (!selectElement) return;
-                
-                // Mostrar loading
-                selectElement.innerHTML = '<option value="">Carregando produtos...</option>';
-                
-                // Fazer requisição AJAX
-                fetch("{{ url_for('produtos.api_produtos') }}")
-                    .then(response => response.json())
-                    .then(data => {
-                        // Limpar select
-                        selectElement.innerHTML = '<option value="">Selecione um produto...</option>';
-                        
-                        // Adicionar produtos
-                        if (data.results && data.results.length > 0) {
-                            data.results.forEach(produto => {
-                                const option = document.createElement('option');
-                                option.value = produto.id;
-                                option.textContent = produto.text;
-                                selectElement.appendChild(option);
-                            });
-                        } else {
-                            selectElement.innerHTML = '<option value="">Nenhum produto encontrado</option>';
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Erro ao carregar produtos:', error);
-                        selectElement.innerHTML = '<option value="">Erro ao carregar produtos</option>';
-                    });
-            }
-            
-            // Função para confirmar pedido
-            window.confirmarPedido = function() {
-                console.log('[Pedidos] Função confirmarPedido executada!');
-                try {
-                    let resumo = "";
-                    const cliente = document.querySelector('select[name="cliente_id"]');
-                    console.log('[Pedidos] Cliente selecionado:', cliente ? cliente.options[cliente.selectedIndex].text : 'Nenhum');
-                    resumo += `<p><strong>Cliente:</strong> ${cliente.options[cliente.selectedIndex].text}</p>`;
-
-                    const itens = document.querySelectorAll('#itens > div');
-                    if (itens.length === 0) {
-                        alert('Adicione ao menos um produto antes de salvar o pedido.');
-                        return;
-                    }
-
-                    resumo += "<h6>Itens:</h6><ul>";
-                    let formValido = true;
-                    itens.forEach(item => {
-                        const produtoSelect = item.querySelector('select');
-                        const quantidadeInput = item.querySelector('input[type="number"]');
-                        const precoVendaInput = item.querySelector('input[type="text"]');
-
-                        if (!produtoSelect.value || !quantidadeInput.value || !precoVendaInput.value) {
-                            formValido = false;
-                        }
-
-                        let produtoNome = produtoSelect.options[produtoSelect.selectedIndex]?.text || 'Produto não selecionado';
-                        const quantidade = quantidadeInput.value;
-                        let precoFormatado = precoVendaInput.value;
-                        
-                        resumo += `<li>${produtoNome} - ${quantidade} un. - ${precoFormatado}</li>`;
-                    });
-                    resumo += "</ul>";
-
-                    if (!formValido) {
-                        alert('Preencha todos os campos de todos os itens.');
-                        return;
-                    }
-
-                    document.getElementById('resumoPedido').innerHTML = resumo;
-                    document.getElementById('modalConfirmacao').style.display = 'flex';
-                } catch (error) {
-                    console.error('Erro ao confirmar pedido:', error);
-                    alert('Ocorreu um erro ao confirmar o pedido.');
-                }
-            }
-            
-            // Função para fechar modal
-            window.fecharModal = function() {
-                document.getElementById('modalConfirmacao').style.display = 'none';
-            }
-            
-            // Função para iniciar envio do pedido
-            window.iniciarEnvioPedido = function() {
-                console.log('[Pedidos] Iniciando envio do pedido...');
-                fecharModal();
-                document.getElementById('modalLoading').style.display = 'flex';
-                
-                // Debug: verificar se o formulário existe
-                const form = document.getElementById('formPedido');
-                console.log('[Pedidos] Formulário encontrado:', form);
-                console.log('[Pedidos] Action do formulário:', form.action);
-                
-                setTimeout(() => {
-                    console.log('[Pedidos] Enviando formulário...');
-                    form.submit();
-                }, 500);
-            }
-            
-            console.log('Função adicionarItem definida inline:', typeof adicionarItem);
-            console.log('Função confirmarPedido definida inline:', typeof window.confirmarPedido);
-        </script>
-        
-        
         <hr class="mt-4">
 
         <div class="text-end">
@@ -218,83 +61,206 @@
 {% endblock %}
 
 {% block scripts %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
+<script nonce="{{ nonce }}" src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script nonce="{{ nonce }}">
-    document.addEventListener('DOMContentLoaded', () => {
-        try {
-            const itemsContainer = document.getElementById('itens');
-            const addItemButton = document.querySelector('[data-action="add-item"]');
-            const submitButton = document.querySelector('[data-action="submit-pedido"]');
-            const cancelConfirmationButton = document.querySelector('[data-action="cancel-confirmation"]');
-            const confirmSubmitButton = document.querySelector('[data-action="confirm-submit"]');
-            const formPedido = document.getElementById('formPedido');
-
-            if (addItemButton && typeof adicionarItem === 'function') {
-                addItemButton.addEventListener('click', adicionarItem);
+    (function() {
+        function setupSelect2(element) {
+            if (!window.jQuery || !jQuery.fn.select2 || !element) {
+                console.error('Select2 não está disponível.');
+                return;
             }
-
-            itemsContainer?.addEventListener('click', (event) => {
-                const removeButton = event.target.closest('[data-action="remove-item"]');
-                if (removeButton) {
-                    removeButton.closest('[data-item-index], [data-item-row]')?.remove();
-                }
+            jQuery(element).select2({
+                placeholder: 'Digite para buscar um produto...',
+                width: '100%',
+                ajax: {
+                    url: "{{ url_for('produtos.api_produtos') }}",
+                    dataType: 'json',
+                    delay: 250,
+                    data: params => ({ q: params.term }),
+                    processResults: data => ({ results: data.results }),
+                    cache: true
+                },
+                minimumInputLength: 1,
             });
+        }
 
-            if (submitButton && typeof window.confirmarPedido === 'function') {
-                submitButton.addEventListener('click', window.confirmarPedido);
+        function adicionarItem(abrirBusca = false) {
+            const container = document.getElementById('itens');
+            if (!container) {
+                alert('Não foi possível localizar a lista de itens.');
+                return;
             }
 
-            if (cancelConfirmationButton && typeof window.fecharModal === 'function') {
-                cancelConfirmationButton.addEventListener('click', window.fecharModal);
+            const linha = document.createElement('div');
+            linha.className = 'd-flex gap-2 mb-2 align-items-center';
+            linha.setAttribute('data-item-row', '');
+            linha.innerHTML = `
+                <div class="flex-grow-1">
+                    <select name="produto_id" class="form-control select2-produto" required></select>
+                </div>
+                <div style="width: 100px;">
+                    <input type="number" name="quantidade" class="form-control" placeholder="Qtd" min="1" required>
+                </div>
+                <div style="width: 150px;">
+                    <input type="text" name="preco_venda" class="form-control currency-input" placeholder="Preço Venda" required>
+                </div>
+                <button type="button" class="btn btn-danger btn-sm" data-action="remove-item" aria-label="Remover item"><i class="bi bi-trash icon-text"></i></button>
+            `;
+
+            container.appendChild(linha);
+
+            setupSelect2(linha.querySelector('.select2-produto'));
+
+            if (typeof CurrencyFormatter !== 'undefined') {
+                CurrencyFormatter.initializeInputs();
             }
 
-            if (confirmSubmitButton && typeof window.iniciarEnvioPedido === 'function') {
-                confirmSubmitButton.addEventListener('click', window.iniciarEnvioPedido);
+            if (abrirBusca) {
+                setTimeout(() => {
+                    const select = linha.querySelector('.select2-produto');
+                    if (select && jQuery(select).data('select2')) {
+                        jQuery(select).select2('open');
+                    } else {
+                        select?.focus();
+                    }
+                }, 50);
             }
+        }
 
-            if (formPedido) {
-                const selector = '#itens select[name=\"produto_id\"], #itens input[name=\"quantidade\"], #itens input[name=\"preco_venda\"]';
+        function listarItens() {
+            return Array.from(document.querySelectorAll('#itens > [data-item-row]'));
+        }
 
-                const avancarOuAdicionar = () => {
-                    const campos = Array.from(formPedido.querySelectorAll(selector));
-                    const ativo = document.activeElement;
-                    const indiceAtual = campos.indexOf(ativo);
-                    if (indiceAtual > -1 && indiceAtual < campos.length - 1) {
-                        campos[indiceAtual + 1].focus();
-                        return;
+        window.confirmarPedido = function() {
+            try {
+                const clienteSelect = document.querySelector('select[name="cliente_id"]');
+                const itens = listarItens();
+
+                if (!itens.length) {
+                    alert('Adicione ao menos um produto.');
+                    return;
+                }
+
+                let resumo = '';
+                if (clienteSelect) {
+                    const clienteNome = clienteSelect.options[clienteSelect.selectedIndex]?.text || 'Cliente não selecionado';
+                    resumo += `<p><strong>Cliente:</strong> ${clienteNome}</p>`;
+                }
+
+                let valido = true;
+                resumo += '<h6>Itens:</h6><ul>';
+                itens.forEach(item => {
+                    const select = item.querySelector('select[name="produto_id"]');
+                    const quantidade = item.querySelector('input[name="quantidade"]');
+                    const preco = item.querySelector('input[name="preco_venda"]');
+
+                    if (!select?.value || !quantidade?.value || !preco?.value) {
+                        valido = false;
                     }
-                    if (typeof adicionarItem === 'function') {
-                        adicionarItem();
-                        setTimeout(() => {
-                            const novoUltimo = formPedido.querySelector('#itens > div:last-child select');
-                            novoUltimo?.focus();
-                        }, 50);
-                    }
-                };
 
-                formPedido.addEventListener('keydown', (event) => {
-                    const alvo = event.target;
-                    if (!alvo.matches(selector)) {
-                        return;
-                    }
+                    const nomeProduto = select?.selectedOptions[0]?.text || select?.dataset.currentLabel || 'Produto não selecionado';
+                    resumo += `<li>${nomeProduto} - ${quantidade?.value || 0} un. - ${preco?.value || '-'}</li>`;
+                });
+                resumo += '</ul>';
 
-                    if (event.key === 'Enter') {
-                        event.preventDefault();
-                        avancarOuAdicionar();
-                        return;
-                    }
+                if (!valido) {
+                    alert('Preencha todos os campos antes de confirmar.');
+                    return;
+                }
 
-                    if (event.key === 'Tab' && !event.shiftKey) {
-                        const campos = Array.from(formPedido.querySelectorAll(selector));
-                        if (campos.length && campos[campos.length - 1] === alvo) {
-                            event.preventDefault();
-                            avancarOuAdicionar();
+                document.getElementById('resumoPedido').innerHTML = resumo;
+                document.getElementById('modalConfirmacao').style.display = 'flex';
+            } catch (error) {
+                console.error('Erro ao montar resumo do pedido:', error);
+                alert('Não foi possível confirmar o pedido. Tente novamente.');
+            }
+        };
+
+        window.fecharModal = function() {
+            document.getElementById('modalConfirmacao').style.display = 'none';
+        };
+
+        window.iniciarEnvioPedido = function() {
+            fecharModal();
+            document.getElementById('modalLoading').style.display = 'flex';
+            const form = document.getElementById('formPedido');
+            setTimeout(() => form?.submit(), 400);
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            try {
+                const itemsContainer = document.getElementById('itens');
+                const addItemButton = document.querySelector('[data-action="add-item"]');
+                const submitButton = document.querySelector('[data-action="submit-pedido"]');
+                const cancelConfirmationButton = document.querySelector('[data-action="cancel-confirmation"]');
+                const confirmSubmitButton = document.querySelector('[data-action="confirm-submit"]');
+                const formPedido = document.getElementById('formPedido');
+
+                if (addItemButton) {
+                    addItemButton.addEventListener('click', () => adicionarItem(true));
+                }
+
+                itemsContainer?.addEventListener('click', (event) => {
+                    const removeButton = event.target.closest('[data-action="remove-item"]');
+                    if (removeButton) {
+                        const row = removeButton.closest('[data-item-row]');
+                        const select = row?.querySelector('.select2-produto');
+                        if (select && window.jQuery && jQuery(select).data('select2')) {
+                            jQuery(select).select2('destroy');
                         }
+                        row?.remove();
                     }
                 });
+                itemsContainer?.addEventListener('change', (event) => {
+                    const select = event.target.closest('select[name="produto_id"]');
+                    if (select) {
+                        const option = select.selectedOptions[0];
+                        select.dataset.currentLabel = option ? option.text : '';
+                    }
+                });
+
+                submitButton?.addEventListener('click', window.confirmarPedido);
+                cancelConfirmationButton?.addEventListener('click', window.fecharModal);
+                confirmSubmitButton?.addEventListener('click', window.iniciarEnvioPedido);
+
+                if (formPedido) {
+                    const selector = '#itens select[name="produto_id"], #itens input[name="quantidade"], #itens input[name="preco_venda"]';
+                    const avancarOuAdicionar = () => {
+                        const campos = Array.from(formPedido.querySelectorAll(selector));
+                        const ativo = document.activeElement;
+                        const indice = campos.indexOf(ativo);
+                        if (indice > -1 && indice < campos.length - 1) {
+                            campos[indice + 1].focus();
+                            return;
+                        }
+                        adicionarItem(true);
+                    };
+
+                    formPedido.addEventListener('keydown', (event) => {
+                        const alvo = event.target;
+                        if (!alvo.matches(selector)) return;
+
+                        if (event.key === 'Enter') {
+                            event.preventDefault();
+                            avancarOuAdicionar();
+                        } else if (event.key === 'Tab' && !event.shiftKey) {
+                            const campos = Array.from(formPedido.querySelectorAll(selector));
+                            if (campos.length && campos[campos.length - 1] === alvo) {
+                                event.preventDefault();
+                                avancarOuAdicionar();
+                            }
+                        }
+                    });
+                }
+
+                if (typeof CurrencyFormatter !== 'undefined') {
+                    CurrencyFormatter.initializeInputs();
+                }
+            } catch (error) {
+                console.error('Erro na inicialização do formulário de pedido:', error);
             }
-        } catch (error) {
-            console.error('Erro na inicialização do formulário de pedido:', error);
-        }
-    });
+        });
+    })();
 </script>
 {% endblock %}

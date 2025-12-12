@@ -61,6 +61,7 @@ def listar_apuracao():
 
 @apuracao_bp.route('/nova', methods=['GET', 'POST'])
 @login_obrigatorio
+@requires_financeiro
 def nova_apuracao():
     """Cria uma nova apuração"""
     if request.method == 'POST':
@@ -101,6 +102,7 @@ def nova_apuracao():
 
 @apuracao_bp.route('/tornar_definitiva/<int:id>', methods=['POST'])
 @login_obrigatorio
+@requires_financeiro
 def tornar_definitiva(id):
     """Torna uma apuração definitiva"""
     # Usar o serviço para tornar a apuração definitiva
@@ -116,6 +118,7 @@ def tornar_definitiva(id):
 
 @apuracao_bp.route('/excluir/<int:id>')
 @login_obrigatorio
+@requires_financeiro
 def excluir_apuracao(id):
     """Exclui uma apuração"""
     # Usar o serviço para excluir a apuração

@@ -345,8 +345,6 @@ def registrar_pagamento(pedido_id):
     
     # GET: Mostrar formulário
     try:
-        from ..models import Pedido
-        
         # Buscar pedido
         pedido = Pedido.query.get(pedido_id)
         if not pedido:

@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 import enum
 import secrets
+from decimal import Decimal
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy import Enum as EnumType
@@ -112,6 +113,37 @@ class Pedido(db.Model):
                 return 'Pendente'
         else:
             return 'Sem Valor'
+
+    def sincronizar_status_financeiro(self, total_pedido=None, total_pago=None):
+        """
+        Ajusta automaticamente o status financeiro do pedido
+        com base nos valores pagos vs. valor total.
+        Retorna True se o status foi alterado.
+        """
+        def _as_decimal(valor):
+            if isinstance(valor, Decimal):
+                return valor
+            if valor is None:
+                return Decimal('0')
+            return Decimal(str(valor))
+
+        if total_pedido is None or total_pago is None:
+            totais = self.calcular_totais()
+            total_pedido = _as_decimal(totais['total_pedido'])
+            total_pago = _as_decimal(totais['total_pago'])
+        else:
+            total_pedido = _as_decimal(total_pedido)
+            total_pago = _as_decimal(total_pago)
+
+        status_original = self.status
+        if self.status == StatusPedido.PENDENTE:
+            if total_pedido > Decimal('0') and total_pago >= total_pedido:
+                self.status = StatusPedido.PAGAMENTO_APROVADO
+        elif self.status == StatusPedido.PAGAMENTO_APROVADO:
+            if total_pago < total_pedido:
+                self.status = StatusPedido.PENDENTE
+
+        return self.status != status_original
 
 
 class ItemPedido(db.Model):

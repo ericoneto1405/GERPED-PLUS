@@ -362,11 +362,20 @@ class PedidoService:
             ).all()
             
             resultado = []
+            correcoes_status = False
             
             # Processar todos os pedidos e calcular campos
             for pedido in pedidos:
                 total_venda = sum(i.valor_total_venda for i in pedido.itens)
                 total_pago = sum(p.valor for p in pedido.pagamentos)
+
+                try:
+                    if pedido.sincronizar_status_financeiro(total_venda, total_pago):
+                        correcoes_status = True
+                except Exception as sync_err:
+                    current_app.logger.warning(
+                        f"Falha ao sincronizar status financeiro do pedido #{pedido.id}: {sync_err}"
+                    )
 
                 # Determinar status exibido e código de fase (usado para filtros)
                 fase_status = 'AGUARDANDO FINANCEIRO'
@@ -427,6 +436,13 @@ class PedidoService:
                     reverse=(direcao == 'desc')
                 )
             
+            if correcoes_status:
+                try:
+                    db.session.commit()
+                except Exception as commit_err:
+                    db.session.rollback()
+                    current_app.logger.error(f"Erro ao salvar correções de status financeiro: {commit_err}")
+
             return resultado
             
         except Exception as e:

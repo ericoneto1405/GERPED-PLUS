@@ -804,6 +804,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     itemSelecionadoId = null;
                     limparCampoStatus();
                 }
+                if (getShareSelectionId() === item.id) {
+                    clearShareHiddenFields(true);
+                }
                 updateQueueUI();
             }
             if (action === 'ver-comprovante') {
@@ -833,6 +836,22 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    if (carteiraPanel) {
+        carteiraPanel.addEventListener('click', (event) => {
+            const botao = event.target.closest('button[data-action]');
+            if (!botao) return;
+            const action = botao.dataset.action;
+            if (action === 'usar-credito') {
+                event.preventDefault();
+                aplicarCreditoCarteira(botao);
+            }
+            if (action === 'remover-credito') {
+                event.preventDefault();
+                removerCreditoSelecionado();
+            }
+        });
+    }
+
     if (filaLista) {
         filaLista.addEventListener('change', (event) => {
             const shareBox = event.target.closest('input[data-share-checkbox]');
@@ -841,6 +860,38 @@ document.addEventListener('DOMContentLoaded', () => {
                 getShareCheckboxes().forEach((cb) => {
                     if (cb !== shareBox) cb.checked = false;
                 });
+                let valorShare = shareBox.dataset.valor ? Number(shareBox.dataset.valor) : null;
+                if (valorShare === null || Number.isNaN(valorShare)) {
+                    const manualValor = window.prompt('Informe o valor deste comprovante (use vírgula para os centavos):', '');
+                    if (manualValor === null) {
+                        shareBox.checked = false;
+                        return;
+                    }
+                    const parsedManual = parseValor(manualValor);
+                    if (parsedManual === null) {
+                        window.alert('Valor inválido. Operação cancelada.');
+                        shareBox.checked = false;
+                        return;
+                    }
+                    valorShare = parsedManual;
+                    shareBox.dataset.valor = parsedManual.toFixed(2);
+                }
+                let decodedName = '';
+                if (shareBox.dataset.filename) {
+                    try {
+                        decodedName = decodeURIComponent(shareBox.dataset.filename);
+                    } catch (_) {
+                        decodedName = shareBox.dataset.filename;
+                    }
+                }
+                setShareHiddenFields(shareBox.dataset.id || '', valorShare, decodedName);
+                const selectCheckbox = filaLista.querySelector(`input[data-action="selecionar"][data-id="${shareBox.dataset.id}"]`);
+                if (selectCheckbox && !selectCheckbox.checked) {
+                    selectCheckbox.checked = true;
+                    selectCheckbox.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+            } else if (getShareSelectionId() === shareBox.dataset.id) {
+                clearShareHiddenFields(false);
             }
         });
     }
@@ -902,6 +953,7 @@ document.addEventListener('DOMContentLoaded', () => {
             fila.length = 0;
             itemSelecionadoId = null;
             limparCampoStatus();
+            clearShareHiddenFields(true);
             updateQueueUI();
         });
     }

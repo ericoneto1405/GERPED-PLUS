@@ -468,6 +468,32 @@ def painel():
             dados_evolucao['cpv_total'].append(cpv_dia)
             dados_evolucao['margem'].append(margem_dia)
 
+        # Totais de pedidos liberados pelo comercial (pipeline)
+        liberados_query = (
+            db.session.query(
+                func.coalesce(func.sum(ItemPedido.valor_total_venda), 0).label('total_venda'),
+                func.coalesce(func.sum(ItemPedido.valor_total_compra), 0).label('total_compra'),
+                func.count(func.distinct(Pedido.id)).label('qtd_pedidos')
+            )
+            .select_from(Pedido)
+            .outerjoin(ItemPedido, ItemPedido.pedido_id == Pedido.id)
+            .filter(
+                Pedido.data >= data_inicio,
+                Pedido.data < proximo_mes,
+                Pedido.confirmado_comercial == True  # noqa: E712
+            )
+            .one()
+        )
+
+        faturamento_liberados = float(liberados_query.total_venda or 0)
+        cpv_liberados = float(liberados_query.total_compra or 0)
+        pedidos_liberados = int(liberados_query.qtd_pedidos or 0)
+        margem_liberados = (faturamento_liberados + total_verbas) - cpv_liberados
+        percentual_margem_liberados = (
+            (margem_liberados / faturamento_liberados) * 100
+            if faturamento_liberados > 0 else 0
+        )
+
         # Calcular necessidade de compra
         from .pedidos.services import PedidoService
         necessidade_compra = PedidoService.calcular_necessidade_compra()
@@ -492,6 +518,11 @@ def painel():
             pedidos_recentes=pedidos_recentes,
             dados_grafico=dados_grafico,
             dados_evolucao=dados_evolucao,
+            faturamento_liberados=faturamento_liberados,
+            cpv_liberados=cpv_liberados,
+            margem_liberados=margem_liberados,
+            percentual_margem_liberados=percentual_margem_liberados,
+            pedidos_liberados=pedidos_liberados,
             necessidade_compra=necessidade_compra,
             mes=mes,
             ano=ano,
@@ -518,6 +549,11 @@ def painel():
             pedidos_recentes=[],
             dados_grafico={'labels': [], 'data': []},
             dados_evolucao={'labels': [], 'receita_verbas': [], 'cpv_total': [], 'margem': []},
+            faturamento_liberados=0.0,
+            cpv_liberados=0.0,
+            margem_liberados=0.0,
+            percentual_margem_liberados=0.0,
+            pedidos_liberados=0,
             mes=mes,
             ano=ano,
         )

@@ -164,6 +164,83 @@ fieldset legend {
     color: var(--text-primary);
 }
 
+.wallet-panel {
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px;
+    background: var(--surface-muted);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.wallet-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.wallet-header h4 {
+    margin: 0;
+    font-size: 1rem;
+}
+
+.wallet-header p {
+    margin: 4px 0 0;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.wallet-count {
+    background: #fff;
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-size: 0.85rem;
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+}
+
+.wallet-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.wallet-item {
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 12px;
+    padding: 10px 14px;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.wallet-item strong {
+    font-size: 1.1rem;
+}
+
+.wallet-item span {
+    display: block;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.wallet-item button {
+    white-space: nowrap;
+}
+
+.wallet-alert {
+    border: 1px dashed var(--accent);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 0.9rem;
+    color: var(--accent-strong);
+    background: rgba(15, 139, 141, 0.08);
+}
+
 .legend-hint {
     color: var(--text-secondary);
     font-size: 0.9rem;

@@ -67,9 +67,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const dropOverlay = document.getElementById('dropOverlay');
     const dropzone = document.querySelector('.dropzone');
     const filaRecibosLista = document.getElementById('filaRecibosLista');
-    const modal = document.getElementById('comprovanteModal');
-    const modalBody = document.getElementById('comprovanteModalBody');
-    const modalTitle = document.getElementById('comprovanteModalTitulo');
 
     if (ocrStatus) {
         ocrStatus.style.display = 'none';
@@ -123,6 +120,47 @@ document.addEventListener('DOMContentLoaded', () => {
         const sizes = ['B', 'KB', 'MB', 'GB'];
         const i = Math.floor(Math.log(bytes) / Math.log(k));
         return `${(bytes / Math.pow(k, i)).toFixed(2)} ${sizes[i]}`;
+    };
+
+    const abrirComprovanteEmNovaAba = (url, temporario) => {
+        if (!url) return;
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.target = '_blank';
+        anchor.rel = 'noopener';
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+        if (temporario) {
+            setTimeout(() => {
+                try {
+                    URL.revokeObjectURL(url);
+                } catch (error) {
+                    console.warn('Não foi possível liberar a visualização temporária:', error);
+                }
+            }, 120000);
+        }
+    };
+
+    const abrirComprovante = (item) => {
+        if (!item) return;
+        let url = null;
+        let temporario = false;
+        if (item.file instanceof File) {
+            try {
+                url = URL.createObjectURL(item.file);
+                temporario = true;
+            } catch (error) {
+                console.error('Erro ao preparar comprovante temporário:', error);
+            }
+        } else if (item.serverUrl) {
+            url = item.serverUrl;
+        }
+        if (!url) {
+            window.alert('Não foi possível abrir este comprovante.');
+            return;
+        }
+        abrirComprovanteEmNovaAba(url, temporario);
     };
 
     const atualizarCarteiraUI = () => {
@@ -299,6 +337,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 const metaPartes = [];
                 if (persistido.pagamentoId) metaPartes.push(`Pagamento #${persistido.pagamentoId}`);
                 if (persistido.metodo) metaPartes.push(persistido.metodo);
+                const linkPersistido = persistido.serverUrl
+                    ? `<a class="btn btn-secondary" href="${persistido.serverUrl}" target="_blank" rel="noopener">
+                            Ver comprovante
+                       </a>`
+                    : '<span class="text-muted">Arquivo indisponível</span>';
                 wrapperPersistido.innerHTML = `
                     <div class="fila-header">
                         <div>
@@ -314,9 +357,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div><strong>Data:</strong> ${persistido.data || '—'}</div>
                     </div>
                     <div class="fila-footer">
-                        <button type="button" class="btn btn-secondary" data-action="ver-comprovante" data-origin="persistido" data-id="${persistido.id}">
-                            Ver comprovante
-                        </button>
+                        ${linkPersistido}
                     </div>
                 `;
                 fragment.appendChild(wrapperPersistido);
@@ -851,83 +892,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (filaRecibosLista) {
         filaRecibosLista.setAttribute('role', 'region');
         filaRecibosLista.setAttribute('aria-live', 'polite');
-    }
-
-    const abrirModalComprovante = (item) => {
-        if (!item) return;
-        let url = null;
-        let tipo = '';
-        let nomeArquivo = item.nome || 'Comprovante';
-        let temporario = false;
-
-        if (item.file instanceof File) {
-            url = URL.createObjectURL(item.file);
-            tipo = item.file.type || '';
-            nomeArquivo = item.file.name || nomeArquivo;
-            temporario = true;
-        } else if (item.serverUrl) {
-            url = item.serverUrl;
-            tipo = item.mime || '';
-        }
-
-        if (!url) {
-            window.alert('Não foi possível localizar este comprovante.');
-            return;
-        }
-
-        if (!modal || !modalBody || !modalTitle) {
-            window.open(url, '_blank', 'noopener');
-            if (temporario) {
-                setTimeout(() => URL.revokeObjectURL(url), 1000);
-            }
-            return;
-        }
-
-        modalTitle.textContent = `Comprovante: ${nomeArquivo}`;
-        modalBody.innerHTML = '';
-
-        const isImagem = tipo.startsWith('image/') || /\.(png|jpe?g|gif|bmp|webp)$/i.test(nomeArquivo);
-        if (isImagem) {
-            const img = document.createElement('img');
-            img.src = url;
-            img.alt = nomeArquivo;
-            modalBody.appendChild(img);
-        } else {
-            const frame = document.createElement('iframe');
-            frame.src = url;
-            frame.title = nomeArquivo;
-            modalBody.appendChild(frame);
-        }
-        modal.setAttribute('aria-hidden', 'false');
-        modal.dataset.previewUrl = url;
-        modal.dataset.previewTemporary = temporario ? 'true' : 'false';
-    };
-
-    const fecharModalComprovante = () => {
-        if (!modal) return;
-        const url = modal.dataset.previewUrl;
-        if (url && modal.dataset.previewTemporary === 'true') {
-            URL.revokeObjectURL(url);
-        }
-        delete modal.dataset.previewUrl;
-        delete modal.dataset.previewTemporary;
-        modal.setAttribute('aria-hidden', 'true');
-        if (modalBody) {
-            modalBody.innerHTML = '<p class="empty-state">Selecione um comprovante para visualizar.</p>';
-        }
-    };
-
-    if (modal) {
-        modal.addEventListener('click', (event) => {
-            if (event.target.dataset.modalClose !== undefined || event.target.classList.contains('modal-backdrop')) {
-                fecharModalComprovante();
-            }
-        });
-        window.addEventListener('keydown', (event) => {
-            if (event.key === 'Escape') {
-                fecharModalComprovante();
-            }
-        });
     }
 
     updateQueueUI();

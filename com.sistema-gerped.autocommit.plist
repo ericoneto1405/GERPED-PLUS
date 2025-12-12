@@ -7,8 +7,8 @@
     
     <key>ProgramArguments</key>
     <array>
-        <string>/bin/bash</string>
-        <string>/Users/ericobrandao/Downloads/GERPED PLUS/run_autocommit.sh</string>
+        <string>/Users/ericobrandao/Downloads/GERPED PLUS/.venv/bin/python3</string>
+        <string>/Users/ericobrandao/Downloads/GERPED PLUS/auto_git_commit.py</string>
     </array>
     
     <key>WorkingDirectory</key>

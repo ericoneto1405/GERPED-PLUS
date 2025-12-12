@@ -176,13 +176,19 @@ def atualizar_preco_produto():
     try:
         produto_id = request.form.get('produto_id')
         preco_medio = request.form.get('preco_medio')
+        preco_bruto = request.form.get('preco_medio_raw', preco_medio)
         
-        if not produto_id or not preco_medio:
+        if not produto_id or not preco_bruto:
             return jsonify({'success': False, 'message': 'Dados incompletos'})
+        
+        try:
+            preco_convertido = normalizar_preco_brl(preco_bruto, exigir_virgula=True)
+        except PrecoInvalidoError as exc:
+            return jsonify({'success': False, 'message': str(exc)})
         
         # Usar o serviço para atualizar o preço
         service = ProdutoService()
-        sucesso, mensagem, preco_anterior = service.atualizar_preco_produto(int(produto_id), float(preco_medio))
+        sucesso, mensagem, preco_anterior = service.atualizar_preco_produto(int(produto_id), float(preco_convertido))
         
         if sucesso:
             # Registrar atividade
@@ -190,9 +196,14 @@ def atualizar_preco_produto():
             registrar_atividade(
                 tipo_atividade="Atualização de Preço",
                 titulo=f"Preço atualizado para {produto.nome}",
-                descricao=f"Preço médio alterado para R$ {float(preco_medio):.2f}",
+                descricao=f"Preço médio alterado para R$ {float(preco_convertido):.2f}",
                 modulo="Produtos",
-                dados_extras={"produto_id": produto_id, "produto_nome": produto.nome, "preco_anterior": preco_anterior, "preco_novo": float(preco_medio)}
+                dados_extras={
+                    "produto_id": produto_id,
+                    "produto_nome": produto.nome,
+                    "preco_anterior": preco_anterior,
+                    "preco_novo": float(preco_convertido)
+                }
             )
             
             current_app.logger.info(f"Preço atualizado para produto {produto.nome} por {session.get('usuario_nome', 'N/A')}")

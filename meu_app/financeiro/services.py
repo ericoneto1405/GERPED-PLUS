@@ -527,4 +527,116 @@ class FinanceiroService:
         except Exception as exc:
             db.session.rollback()
             current_app.logger.error(f'Erro ao marcar comprovante compartilhado #{pagamento.id} como usado: {exc}')
+
+    @staticmethod
+    def listar_creditos_cliente(cliente_id: int) -> List[Dict]:
+        if not cliente_id:
+            return []
+        try:
+            creditos = CarteiraCredito.query.filter(
+                CarteiraCredito.cliente_id == cliente_id,
+                CarteiraCredito.status == 'disponivel',
+                CarteiraCredito.saldo_disponivel > 0
+            ).order_by(CarteiraCredito.criado_em.asc()).all()
+            resultado = []
+            for credito in creditos:
+                valor = float(credito.saldo_disponivel or 0)
+                resultado.append({
+                    'id': credito.id,
+                    'valor': valor,
+                    'valor_formatado': f"R$ {valor:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'),
+                    'data': credito.criado_em.strftime('%d/%m/%Y %H:%M') if credito.criado_em else '-',
+                    'pedido_origem': credito.pedido_origem_id,
+                    'observacao': f"Crédito do pedido #{credito.pedido_origem_id}" if credito.pedido_origem_id else 'Crédito disponível'
+                })
+            return resultado
+        except Exception as exc:
+            current_app.logger.error(f'Erro ao listar créditos da carteira: {exc}')
+            return []
+
+    @staticmethod
+    def obter_credito_disponivel(credito_id: int) -> Optional[CarteiraCredito]:
+        if not credito_id:
+            return None
+        credito = CarteiraCredito.query.get(credito_id)
+        if not credito or credito.status != 'disponivel' or not credito.saldo_disponivel or credito.saldo_disponivel <= 0:
+            return None
+        return credito
+
+    @staticmethod
+    def preparar_credito_para_pagamento(credito: CarteiraCredito, usuario_nome: Optional[str] = None) -> dict:
+        if not credito or credito.status != 'disponivel' or credito.saldo_disponivel <= 0:
+            raise FinanceiroValidationError('Crédito selecionado não está disponível.')
+        origem_dir = FinanceiroConfig.get_upload_directory('recibos')
+        origem_path = os.path.join(origem_dir, credito.caminho_anexo)
+        if not os.path.exists(origem_path):
+            raise FinanceiroValidationError('Arquivo do crédito não foi encontrado. Contate o administrador.')
+        novo_nome = f"carteira_{uuid4().hex}_{os.path.basename(credito.caminho_anexo)}"
+        destino_path = os.path.join(origem_dir, novo_nome)
+        shutil.copyfile(origem_path, destino_path)
+        sha256 = FinanceiroService._calcular_sha256(destino_path)
+        if not sha256:
+            os.remove(destino_path)
+            raise FinanceiroValidationError('Não foi possível validar o arquivo do crédito.')
+        return {
+            'caminho': novo_nome,
+            'mime': credito.mime,
+            'tamanho': credito.tamanho,
+            'sha256': sha256,
+            'principal': True,
+            'origem_credito_id': credito.id,
+            'original_name': credito.caminho_anexo
+        }
+
+    @staticmethod
+    def criar_credito_carteira(cliente_id: int, pedido_origem_id: int, pagamento: Pagamento,
+                               caminho_anexo: str, valor: float, usuario_nome: Optional[str] = None,
+                               original_name: Optional[str] = None) -> Optional[CarteiraCredito]:
+        if not cliente_id or not pagamento or not caminho_anexo or not valor:
+            return None
+        try:
+            anexo = next((a for a in pagamento.anexos if a.caminho == caminho_anexo), None)
+        except Exception:
+            anexo = None
+        valor_decimal = Decimal(str(valor))
+        try:
+            credito = CarteiraCredito(
+                cliente_id=cliente_id,
+                pedido_origem_id=pedido_origem_id,
+                pagamento_origem_id=pagamento.id,
+                pagamento_anexo_id=anexo.id if anexo else None,
+                caminho_anexo=caminho_anexo,
+                mime=(anexo.mime if anexo else None),
+                tamanho=(anexo.tamanho if anexo else None),
+                sha256=(anexo.sha256 if anexo else None),
+                valor_total=valor_decimal,
+                saldo_disponivel=valor_decimal,
+                criado_por=usuario_nome or 'Sistema'
+            )
+            db.session.add(credito)
+            db.session.commit()
+            current_app.logger.info(f"Crédito criado para cliente #{cliente_id} a partir do pagamento #{pagamento.id}")
+            return credito
+        except Exception as exc:
+            db.session.rollback()
+            current_app.logger.error(f'Erro ao criar crédito de carteira: {exc}')
+            return None
+
+    @staticmethod
+    def consumir_credito_carteira(credito: CarteiraCredito, pedido_destino_id: int,
+                                  pagamento_destino: Optional[Pagamento] = None) -> bool:
+        if not credito:
+            return False
+        try:
+            credito.pedido_destino_id = pedido_destino_id
+            credito.pagamento_destino_id = pagamento_destino.id if pagamento_destino else None
+            credito.saldo_disponivel = Decimal('0')
+            credito.status = 'utilizado'
+            credito.utilizado_em = utcnow()
+            db.session.commit()
+            return True
+        except Exception as exc:
+            db.session.rollback()
+            current_app.logger.error(f'Erro ao consumir crédito #{credito.id}: {exc}')
+            return False
     

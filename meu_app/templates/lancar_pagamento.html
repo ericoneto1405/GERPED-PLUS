@@ -87,6 +87,39 @@
 
                     <fieldset>
                         <legend>Comprovante</legend>
+                        {% if carteira_creditos %}
+                        <div class="wallet-panel" id="carteiraPanel">
+                            <div class="wallet-header">
+                                <div>
+                                    <h4>Carteira do Cliente</h4>
+                                    <p>Utilize um crédito disponível para este pedido.</p>
+                                </div>
+                                <span class="wallet-count">{{ carteira_creditos|length }} disponível(is)</span>
+                            </div>
+                            <div class="wallet-list">
+                                {% for credito in carteira_creditos %}
+                                <div class="wallet-item">
+                                    <div>
+                                        <strong>{{ credito.valor_formatado }}</strong>
+                                        <span>Origem: pedido #{{ credito.pedido_origem or '-' }}</span>
+                                        <small>{{ credito.data }}</small>
+                                    </div>
+                                    <button type="button"
+                                            class="ghost-btn"
+                                            data-action="usar-credito"
+                                            data-id="{{ credito.id }}"
+                                            data-valor="{{ '%.2f' % credito.valor }}"
+                                            data-descricao="Pedido #{{ credito.pedido_origem or '-' }}">
+                                        Usar neste pedido
+                                    </button>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            <div class="wallet-alert" id="carteiraSelecionadaAviso" style="display:none;"></div>
+                            <button type="button" class="ghost-btn" id="removerCreditoBtn" data-action="remover-credito" style="display:none;">Remover crédito selecionado</button>
+                        </div>
+                        {% endif %}
+
                         <div class="comprovante-grid">
                             <div>
                                 <label class="dropzone" for="recibo">
@@ -126,6 +159,10 @@
                     <input type="hidden" name="conta_recebedor" id="conta_recebedor">
                     <input type="hidden" name="chave_pix_recebedor" id="chave_pix_recebedor">
                     <input type="hidden" name="comprovante_compartilhado_id" id="comprovante_compartilhado_id">
+                    <input type="hidden" name="compartilhar_item_id" id="compartilhar_item_id">
+                    <input type="hidden" name="compartilhar_item_valor" id="compartilhar_item_valor">
+                    <input type="hidden" name="compartilhar_item_filename" id="compartilhar_item_filename">
+                    <input type="hidden" name="carteira_credito_id" id="carteira_credito_id">
                     <div class="share-alert" id="avisoComprovanteCompartilhado">
                         Utilizando comprovante compartilhado. <button type="button" id="cancelarCompartilhado">Cancelar</button>
                     </div>

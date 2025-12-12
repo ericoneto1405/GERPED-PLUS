@@ -6,7 +6,7 @@ financeiro_bp = Blueprint('financeiro', __name__, url_prefix='/financeiro')
 from .services import FinanceiroService
 from functools import wraps
 from ..decorators import login_obrigatorio, permissao_necessaria, admin_necessario
-from ..models import Pagamento, PagamentoAnexo
+from ..models import Pagamento, PagamentoAnexo, Pedido, CarteiraCredito
 from app.auth.rbac import requires_financeiro
 from ..upload_security import FileUploadValidator
 from .ocr_service import OcrService

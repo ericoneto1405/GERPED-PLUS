@@ -254,6 +254,36 @@ class PagamentoAnexo(db.Model):
         }
 
 
+class CarteiraCredito(db.Model):
+    __tablename__ = 'carteira_credito'
+
+    id = db.Column(db.Integer, primary_key=True)
+    cliente_id = db.Column(db.Integer, db.ForeignKey('cliente.id'), nullable=False, index=True)
+    pedido_origem_id = db.Column(db.Integer, db.ForeignKey('pedido.id'), nullable=True)
+    pagamento_origem_id = db.Column(db.Integer, db.ForeignKey('pagamento.id'), nullable=True)
+    pagamento_anexo_id = db.Column(db.Integer, db.ForeignKey('pagamento_anexo.id'), nullable=True)
+    caminho_anexo = db.Column(db.String(255), nullable=False)
+    mime = db.Column(db.String(50), nullable=True)
+    tamanho = db.Column(db.Integer, nullable=True)
+    sha256 = db.Column(db.String(64), nullable=True)
+    valor_total = db.Column(db.Numeric(10, 2), nullable=False)
+    saldo_disponivel = db.Column(db.Numeric(10, 2), nullable=False)
+    status = db.Column(db.String(20), default='disponivel', nullable=False)
+    criado_por = db.Column(db.String(120), nullable=True)
+    criado_em = db.Column(db.DateTime, default=utcnow, nullable=False)
+    atualizado_em = db.Column(db.DateTime, default=utcnow, onupdate=utcnow, nullable=False)
+    utilizado_em = db.Column(db.DateTime, nullable=True)
+    pedido_destino_id = db.Column(db.Integer, db.ForeignKey('pedido.id'), nullable=True)
+    pagamento_destino_id = db.Column(db.Integer, db.ForeignKey('pagamento.id'), nullable=True)
+
+    cliente = db.relationship('Cliente', backref=db.backref('creditos_carteira', lazy='dynamic'))
+    pedido_origem = db.relationship('Pedido', foreign_keys=[pedido_origem_id])
+    pedido_destino = db.relationship('Pedido', foreign_keys=[pedido_destino_id])
+    pagamento_origem = db.relationship('Pagamento', foreign_keys=[pagamento_origem_id])
+    pagamento_destino = db.relationship('Pagamento', foreign_keys=[pagamento_destino_id])
+    anexo = db.relationship('PagamentoAnexo')
+
+
 class ClienteRetiranteAutorizado(db.Model):
     __tablename__ = 'cliente_retirante_autorizado'
 

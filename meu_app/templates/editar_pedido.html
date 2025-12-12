@@ -51,7 +51,7 @@
                 <input type="number" name="quantidade" class="form-control" placeholder="Qtd" value="{{ item.quantidade }}" min="1" required>
             </div>
             <div style="width: 160px;">
-                <input type="number" name="preco_venda" class="form-control preco-input" placeholder="Preço venda" inputmode="decimal" step="0.01" value="{{ item.preco_venda|string|replace(',', '.') }}" required>
+                <input type="text" name="preco_venda" class="form-control preco-input" placeholder="Preço venda" inputmode="decimal" data-requer-centavos="true" value="{{ item.preco_venda | replace('.', ',') }}" required>
             </div>
             <div style="width: 160px;">
                 <input type="text" class="form-control total-item" placeholder="0,00" value="" readonly>
@@ -126,7 +126,7 @@
                     <input type="number" name="quantidade" class="form-control" placeholder="Qtd" min="1" required>
                 </div>
                 <div style="width: 160px;">
-                    <input type="number" name="preco_venda" class="form-control preco-input" placeholder="Preço venda" inputmode="decimal" step="0.01" required>
+                    <input type="text" name="preco_venda" class="form-control preco-input" placeholder="Preço venda" inputmode="decimal" data-requer-centavos="true" required>
                 </div>
                 <div style="width: 160px;">
                     <input type="text" class="form-control total-item" placeholder="0,00" value="" readonly>
@@ -149,6 +149,13 @@
         return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(number);
     }
 
+    function parsePrecoTexto(texto) {
+        if (!texto) return 0;
+        const normalizado = texto.replace(/\./g, '').replace(',', '.');
+        const numero = parseFloat(normalizado);
+        return Number.isNaN(numero) ? 0 : numero;
+    }
+
     function calcularTotais() {
         const rows = document.querySelectorAll('[data-item-row]');
         let totalPedido = 0;
@@ -157,7 +164,7 @@
             const precoInput = row.querySelector('input[name="preco_venda"]');
             const totalField = row.querySelector('.total-item');
             const qtd = parseFloat(qtdInput?.value || 0);
-            const preco = parseFloat(precoInput?.value || 0);
+            const preco = parsePrecoTexto(precoInput?.value || '');
             const totalItem = (isNaN(qtd) || isNaN(preco)) ? 0 : qtd * preco;
             totalPedido += totalItem;
             if (totalField) {

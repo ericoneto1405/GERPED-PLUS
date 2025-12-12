@@ -283,7 +283,8 @@
             updateAlert('', false);
         }
     </script>
-    
+    <script src="{{ url_for('static', filename='js/validacao_preco_centavos.js') }}" nonce="{{ nonce }}" defer></script>
+
     {% block scripts %}
     <!-- Scripts customizados dos templates filhos serão inseridos aqui -->
     {% endblock %}

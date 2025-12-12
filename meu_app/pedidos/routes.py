@@ -8,6 +8,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from meu_app.models import Pedido, Cliente, Produto, ItemPedido, db
 from meu_app.pedidos.services import PedidoService
 from meu_app.decorators import login_obrigatorio, permissao_necessaria
+from ..utils.precos import normalizar_preco_brl, PrecoInvalidoError
 
 pedidos_bp = Blueprint('pedidos', __name__, url_prefix='/pedidos')
 
@@ -296,24 +297,28 @@ def novo_pedido():
         
         # Processar itens do pedido
         itens_data = []
+        preco_erro_msg = None
         for produto_id, qtd, pv in zip(
             request.form.getlist('produto_id'),
             request.form.getlist('quantidade'),
             request.form.getlist('preco_venda')
         ):
             if produto_id and qtd and pv:
-                # Limpar formatação do preço (R$ 32,00 -> 32.00)
-                preco_limpo = pv.replace('R$', '').replace(' ', '').replace('.', '').replace(',', '.')
                 try:
-                    preco_float = float(preco_limpo)
+                    preco_float = normalizar_preco_brl(pv, exigir_virgula=True)
                     itens_data.append({
                         'produto_id': produto_id,
                         'quantidade': qtd,
                         'preco_venda': preco_float
                     })
-                except ValueError:
-                    current_app.logger.error(f"Erro ao converter preço: {pv}")
-                    continue
+                except PrecoInvalidoError as exc:
+                    preco_erro_msg = str(exc)
+                    break
+        if preco_erro_msg:
+            flash(preco_erro_msg, 'error')
+            clientes = Cliente.query.all()
+            produtos = Produto.query.all()
+            return render_template('novo_pedido.html', clientes=clientes, produtos=produtos)
         
         # Usar o serviço para criar o pedido
         sucesso, mensagem, pedido = PedidoService.criar_pedido(cliente_id, itens_data)
@@ -349,23 +354,28 @@ def editar_pedido(id):
         
         # Processar itens do pedido (similar ao novo_pedido)
         itens_data = []
+        preco_erro_msg = None
         for produto_id, qtd, pv in zip(
             request.form.getlist('produto_id'),
             request.form.getlist('quantidade'),
             request.form.getlist('preco_venda')
         ):
             if produto_id and qtd and pv:
-                preco_limpo = pv.replace('R$', '').replace(' ', '').replace('.', '').replace(',', '.')
                 try:
-                    preco_float = float(preco_limpo)
-                except ValueError:
-                    current_app.logger.error(f"Erro ao converter preço: {pv}")
-                    continue
-                itens_data.append({
-                    'produto_id': produto_id,
-                    'quantidade': qtd,
-                    'preco_venda': preco_float
-                })
+                    preco_float = normalizar_preco_brl(pv, exigir_virgula=True)
+                    itens_data.append({
+                        'produto_id': produto_id,
+                        'quantidade': qtd,
+                        'preco_venda': preco_float
+                    })
+                except PrecoInvalidoError as exc:
+                    preco_erro_msg = str(exc)
+                    break
+        if preco_erro_msg:
+            flash(preco_erro_msg, 'error')
+            clientes = Cliente.query.all()
+            produtos = Produto.query.all()
+            return render_template('editar_pedido.html', pedido=pedido, clientes=clientes, produtos=produtos)
         
         # Usar o serviço para atualizar o pedido
         sucesso, mensagem, _pedido = PedidoService.editar_pedido(id, cliente_id, itens_data)

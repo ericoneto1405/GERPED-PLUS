@@ -57,7 +57,7 @@
                                 <input type="number" name="quantidade" value="{{ dados.get('quantidade','') }}" min="1" step="1" required>
                             </td>
                             <td>
-                                <input type="text" name="preco_venda" value="{{ dados.get('preco_venda','') }}" required placeholder="Ex.: 25,50">
+                                <input type="text" name="preco_venda" value="{{ dados.get('preco_venda','') }}" required placeholder="Ex.: 25,50" data-requer-centavos="true">
                             </td>
                             <td>
                                 <input type="text" name="data" value="{{ dados.get('data','') }}" required placeholder="DD/MM/AAAA">

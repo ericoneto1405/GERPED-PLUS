@@ -255,7 +255,7 @@
                 </div>
                 <div class="form-group">
                     <label for="precoMedio">Preço Médio de Compra (R$):</label>
-                    <input type="text" id="precoMedio" name="preco_medio" class="currency-input" required placeholder="0,00">
+                    <input type="text" id="precoMedio" name="preco_medio" class="currency-input" required placeholder="0,00" data-requer-centavos="true">
                 </div>
             </form>
         </div>
@@ -1297,10 +1297,15 @@ function fecharModalPrecoManual() {
 
 function salvarPrecoManual() {
     const produtoId = document.getElementById('produtoSelect').value;
-    const precoMedioFormatado = document.getElementById('precoMedio').value;
+    const precoMedioFormatado = document.getElementById('precoMedio').value.trim();
     
     if (!produtoId) {
         alert('Por favor, selecione um produto.');
+        return;
+    }
+    
+    if (!precoMedioFormatado || !precoMedioFormatado.includes(',')) {
+        alert('Use vírgula para separar os centavos (ex.: 15,90).');
         return;
     }
     
@@ -1315,6 +1320,7 @@ function salvarPrecoManual() {
     const formData = new FormData();
     formData.append('produto_id', produtoId);
     formData.append('preco_medio', precoMedio);
+    formData.append('preco_medio_raw', precoMedioFormatado);
     const csrfToken = window.CSRF_TOKEN || '';
     if (csrfToken) {
         formData.append('csrf_token', csrfToken);

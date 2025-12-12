@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, jsonify, send_file, session, flash, current_app
+from ..utils.precos import normalizar_preco_brl, PrecoInvalidoError
 
 produtos_bp = Blueprint('produtos', __name__, url_prefix='/produtos')
 from ..models import Produto

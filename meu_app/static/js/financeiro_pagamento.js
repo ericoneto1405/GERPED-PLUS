@@ -25,12 +25,43 @@ document.addEventListener('DOMContentLoaded', () => {
     const avisoCompartilhado = document.getElementById('avisoComprovanteCompartilhado');
     const cancelarCompartilhadoBtn = document.getElementById('cancelarCompartilhado');
     const masterSelectCheckbox = document.getElementById('selecionar_todos');
+    const shareItemIdInput = document.getElementById('compartilhar_item_id');
+    const shareItemValorInput = document.getElementById('compartilhar_item_valor');
+    const shareItemFilenameInput = document.getElementById('compartilhar_item_filename');
+    const carteiraCreditoInput = document.getElementById('carteira_credito_id');
+    const carteiraPanel = document.getElementById('carteiraPanel');
+    const carteiraAviso = document.getElementById('carteiraSelecionadaAviso');
+    const removerCreditoBtn = document.getElementById('removerCreditoBtn');
     const getSelecionarCheckboxes = () => Array.from(document.querySelectorAll('input[data-action="selecionar"]'));
     const getShareCheckboxes = () => Array.from(document.querySelectorAll('input[data-share-checkbox]'));
     const uncheckShareCheckboxes = () => {
         getShareCheckboxes().forEach((cb) => {
             cb.checked = false;
         });
+    };
+    const getShareSelectionId = () => (shareItemIdInput ? shareItemIdInput.value : '');
+    const clearShareHiddenFields = (alsoUncheck = false) => {
+        if (shareItemIdInput) shareItemIdInput.value = '';
+        if (shareItemValorInput) shareItemValorInput.value = '';
+        if (shareItemFilenameInput) shareItemFilenameInput.value = '';
+        if (alsoUncheck) {
+            getShareCheckboxes().forEach((cb) => {
+                cb.checked = false;
+            });
+        }
+    };
+    const setShareHiddenFields = (id, valor, filename) => {
+        if (shareItemIdInput) shareItemIdInput.value = id || '';
+        if (shareItemValorInput) {
+            if (valor === null || valor === undefined || Number.isNaN(Number(valor))) {
+                shareItemValorInput.value = '';
+            } else {
+                shareItemValorInput.value = Number(valor).toFixed(2);
+            }
+        }
+        if (shareItemFilenameInput) {
+            shareItemFilenameInput.value = filename || '';
+        }
     };
     const dropOverlay = document.getElementById('dropOverlay');
     const dropzone = document.querySelector('.dropzone');
@@ -49,6 +80,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let comprovantesDisponiveis = [];
     let bulkSelecting = false;
 
+    let carteiraSelecionada = null;
+
     const formatBRL = (valor) => {
         try {
             return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -64,6 +97,56 @@ document.addEventListener('DOMContentLoaded', () => {
         const i = Math.floor(Math.log(bytes) / Math.log(k));
         return `${(bytes / Math.pow(k, i)).toFixed(2)} ${sizes[i]}`;
     };
+
+    const atualizarCarteiraUI = () => {
+        if (carteiraAviso) {
+            if (carteiraSelecionada) {
+                const valorTexto = carteiraSelecionada.valor !== null && carteiraSelecionada.valor !== undefined
+                    ? formatBRL(carteiraSelecionada.valor)
+                    : 'Crédito selecionado';
+                const descricao = carteiraSelecionada.descricao ? ` (${carteiraSelecionada.descricao})` : '';
+                carteiraAviso.textContent = `${valorTexto}${descricao} será aplicado automaticamente.`;
+                carteiraAviso.style.display = 'block';
+            } else {
+                carteiraAviso.textContent = '';
+                carteiraAviso.style.display = 'none';
+            }
+        }
+        if (removerCreditoBtn) {
+            removerCreditoBtn.style.display = carteiraSelecionada ? 'inline-flex' : 'none';
+        }
+    };
+
+    const aplicarCreditoCarteira = (botao) => {
+        if (!botao || !carteiraCreditoInput) return;
+        const creditoId = Number(botao.dataset.id);
+        if (!creditoId) return;
+        const rawValor = botao.dataset.valor;
+        const valorNumero = rawValor ? Number(rawValor) : null;
+        carteiraSelecionada = {
+            id: creditoId,
+            valor: Number.isFinite(valorNumero) ? valorNumero : null,
+            descricao: botao.dataset.descricao || '',
+        };
+        carteiraCreditoInput.value = String(creditoId);
+        if (valorInput) {
+            const atual = parseValor(valorInput.value) || 0;
+            if (!atual && carteiraSelecionada.valor !== null) {
+                setValorFormatado(carteiraSelecionada.valor);
+            }
+        }
+        atualizarCarteiraUI();
+    };
+
+    const removerCreditoSelecionado = () => {
+        if (carteiraCreditoInput) {
+            carteiraCreditoInput.value = '';
+        }
+        carteiraSelecionada = null;
+        atualizarCarteiraUI();
+    };
+
+    atualizarCarteiraUI();
 
     const togglePainelEmptyState = (hasContent) => {
         if (painelEmptyState) {

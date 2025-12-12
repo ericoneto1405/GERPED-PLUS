@@ -82,6 +82,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let carteiraSelecionada = null;
 
+    const anexosPersistidos = [];
+    const anexosExistentesData = form.dataset.anexosExistentes;
+    if (anexosExistentesData) {
+        try {
+            const parsed = JSON.parse(anexosExistentesData);
+            if (Array.isArray(parsed)) {
+                parsed.forEach((info) => {
+                    if (!info || !info.url || !info.id) return;
+                    const valorNumero = typeof info.valor === 'number' ? info.valor : Number(info.valor);
+                    anexosPersistidos.push({
+                        id: String(info.id),
+                        nome: info.nome || 'Comprovante',
+                        valor: Number.isFinite(valorNumero) ? valorNumero : null,
+                        data: info.data_pagamento || info.data || '',
+                        metodo: info.metodo_pagamento || info.metodo || '',
+                        servidor: true,
+                        serverUrl: info.url,
+                        pagamentoId: info.pagamento_id || null,
+                    });
+                });
+            }
+        } catch (err) {
+            console.warn('Falha ao carregar anexos existentes do pedido', err);
+        }
+    }
+
     const formatBRL = (valor) => {
         try {
             return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -217,14 +243,65 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const updateQueueUI = () => {
         if (!filaLista) return;
-        filaLista.innerHTML = '';
         updateLimparFilaState();
-        if (!fila.length) {
-            filaLista.innerHTML = '<div class="fila-vazia">Nenhum comprovante enfileirado.</div>';
-            return;
+        const fragment = document.createDocumentFragment();
+        const shareSelecionadoId = getShareSelectionId();
+        const temPersistidos = anexosPersistidos.length > 0;
+        const temFila = fila.length > 0;
+
+        if (temPersistidos) {
+            const heading = document.createElement('div');
+            heading.className = 'fila-heading';
+            heading.textContent = 'Comprovantes já anexados neste pedido';
+            fragment.appendChild(heading);
+            anexosPersistidos.forEach((persistido) => {
+                const wrapperPersistido = document.createElement('div');
+                wrapperPersistido.className = 'fila-item persistido';
+                wrapperPersistido.dataset.persistidoId = persistido.id;
+                const valorTexto = persistido.valor !== null && persistido.valor !== undefined
+                    ? formatBRL(persistido.valor)
+                    : '—';
+                const metaPartes = [];
+                if (persistido.pagamentoId) metaPartes.push(`Pagamento #${persistido.pagamentoId}`);
+                if (persistido.metodo) metaPartes.push(persistido.metodo);
+                wrapperPersistido.innerHTML = `
+                    <div class="fila-header">
+                        <div>
+                            <div class="fila-nome">${persistido.nome}</div>
+                            <div class="fila-meta">${metaPartes.join(' · ')}</div>
+                        </div>
+                        <div class="fila-header-actions">
+                            <span class="fila-status status-salvo">Salvo</span>
+                        </div>
+                    </div>
+                    <div class="fila-resumo">
+                        <div><strong>Valor:</strong> ${valorTexto}</div>
+                        <div><strong>Data:</strong> ${persistido.data || '—'}</div>
+                    </div>
+                    <div class="fila-footer">
+                        <button type="button" class="btn btn-secondary" data-action="ver-comprovante" data-origin="persistido" data-id="${persistido.id}">
+                            Ver comprovante
+                        </button>
+                    </div>
+                `;
+                fragment.appendChild(wrapperPersistido);
+            });
+            if (temFila) {
+                const divider = document.createElement('div');
+                divider.className = 'fila-divider';
+                fragment.appendChild(divider);
+            }
         }
 
-        const shareSelecionadoId = getShareSelectionId();
+        if (!temFila) {
+            const vazio = document.createElement('div');
+            vazio.className = temPersistidos ? 'fila-vazia fila-vazia-secundaria' : 'fila-vazia';
+            vazio.textContent = temPersistidos ? 'Nenhum comprovante novo enfileirado.' : 'Nenhum comprovante enfileirado.';
+            fragment.appendChild(vazio);
+            filaLista.innerHTML = '';
+            filaLista.appendChild(fragment);
+            return;
+        }
 
         fila.forEach((item) => {
             const wrapper = document.createElement('div');
@@ -326,8 +403,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (falhaCard) {
                 wrapper.classList.add('error-state');
             }
-            filaLista.appendChild(wrapper);
+            fragment.appendChild(wrapper);
         });
+
+        filaLista.innerHTML = '';
+        filaLista.appendChild(fragment);
     };
 
     const enqueueFiles = (fileList) => {
@@ -729,40 +809,63 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const abrirModalComprovante = (item) => {
-        if (!item || !item.file) return;
-        const url = URL.createObjectURL(item.file);
-        const tipo = item.file.type || '';
+        if (!item) return;
+        let url = null;
+        let tipo = '';
+        let nomeArquivo = item.nome || 'Comprovante';
+        let temporario = false;
 
-        if (!modal || !modalBody || !modalTitle) {
-            window.open(url, '_blank', 'noopener');
+        if (item.file instanceof File) {
+            url = URL.createObjectURL(item.file);
+            tipo = item.file.type || '';
+            nomeArquivo = item.file.name || nomeArquivo;
+            temporario = true;
+        } else if (item.serverUrl) {
+            url = item.serverUrl;
+            tipo = item.mime || '';
+        }
+
+        if (!url) {
+            window.alert('Não foi possível localizar este comprovante.');
             return;
         }
 
-        modalTitle.textContent = `Comprovante: ${item.file.name}`;
+        if (!modal || !modalBody || !modalTitle) {
+            window.open(url, '_blank', 'noopener');
+            if (temporario) {
+                setTimeout(() => URL.revokeObjectURL(url), 1000);
+            }
+            return;
+        }
+
+        modalTitle.textContent = `Comprovante: ${nomeArquivo}`;
         modalBody.innerHTML = '';
 
-        if (tipo.startsWith('image/')) {
+        const isImagem = tipo.startsWith('image/') || /\.(png|jpe?g|gif|bmp|webp)$/i.test(nomeArquivo);
+        if (isImagem) {
             const img = document.createElement('img');
             img.src = url;
-            img.alt = item.file.name;
+            img.alt = nomeArquivo;
             modalBody.appendChild(img);
         } else {
             const frame = document.createElement('iframe');
             frame.src = url;
-            frame.title = item.file.name;
+            frame.title = nomeArquivo;
             modalBody.appendChild(frame);
         }
         modal.setAttribute('aria-hidden', 'false');
-        modal.dataset.url = url;
+        modal.dataset.previewUrl = url;
+        modal.dataset.previewTemporary = temporario ? 'true' : 'false';
     };
 
     const fecharModalComprovante = () => {
         if (!modal) return;
-        const url = modal.dataset.url;
-        if (url) {
+        const url = modal.dataset.previewUrl;
+        if (url && modal.dataset.previewTemporary === 'true') {
             URL.revokeObjectURL(url);
-            delete modal.dataset.url;
         }
+        delete modal.dataset.previewUrl;
+        delete modal.dataset.previewTemporary;
         modal.setAttribute('aria-hidden', 'true');
         if (modalBody) {
             modalBody.innerHTML = '<p class="empty-state">Selecione um comprovante para visualizar.</p>';
@@ -782,7 +885,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    updateLimparFilaState();
+    updateQueueUI();
 
     if (filaLista) {
         filaLista.addEventListener('click', (event) => {
@@ -790,10 +893,21 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!actionBtn) return;
             const itemDiv = actionBtn.closest('.fila-item');
             if (!itemDiv) return;
-            const item = fila.find((i) => i.id === itemDiv.dataset.id);
+            const persistidoId = itemDiv.dataset.persistidoId;
+            const item = persistidoId
+                ? anexosPersistidos.find((p) => p.id === persistidoId)
+                : fila.find((i) => i.id === itemDiv.dataset.id);
             if (!item) return;
 
             const action = actionBtn.dataset.action;
+            if (action === 'ver-comprovante') {
+                event.preventDefault();
+                abrirModalComprovante(item);
+                return;
+            }
+
+            if (persistidoId) return;
+
             if (action === 'usar' && item.status === 'concluido') {
                 aplicarResultadoNoFormulario(item);
             }
@@ -808,10 +922,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     clearShareHiddenFields(true);
                 }
                 updateQueueUI();
-            }
-            if (action === 'ver-comprovante') {
-                event.preventDefault();
-                abrirModalComprovante(item);
             }
         });
     }

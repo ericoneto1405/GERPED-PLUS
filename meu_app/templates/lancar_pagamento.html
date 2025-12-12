@@ -64,6 +64,7 @@
                       data-ocr-url="{{ url_for('financeiro.processar_recibo_ocr') }}"
                       data-compartilhados-url="{{ url_for('financeiro.api_comprovantes_compartilhados') }}"
                       data-descartar-comp-url="{{ url_for('financeiro.api_descartar_comprovante_compartilhado') }}"
+                      data-anexos-existentes='{{ anexos_existentes | tojson | safe }}'
                       enctype="multipart/form-data">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 

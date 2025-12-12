@@ -355,12 +355,29 @@ def registrar_pagamento(pedido_id):
         totais = pedido.calcular_totais()
         
         carteira_creditos = FinanceiroService.listar_creditos_cliente(pedido.cliente_id)
+        anexos_existentes = []
+        for pagamento in pedido.pagamentos or []:
+            todos_anexos = pagamento.todos_anexos or []
+            for anexo in todos_anexos:
+                caminho = anexo.get('caminho')
+                if not caminho:
+                    continue
+                anexos_existentes.append({
+                    'id': f"{pagamento.id}-{caminho}",
+                    'pagamento_id': pagamento.id,
+                    'nome': anexo.get('original_name') or caminho,
+                    'valor': float(pagamento.valor or 0),
+                    'data_pagamento': pagamento.data_pagamento.strftime('%d/%m/%Y %H:%M') if pagamento.data_pagamento else '',
+                    'metodo_pagamento': pagamento.metodo_pagamento,
+                    'url': url_for('financeiro.ver_recibo', filename=caminho)
+                })
         return render_template('lancar_pagamento.html', 
                              pedido=pedido, 
                              total=totais['total_pedido'], 
                              pago=totais['total_pago'], 
                              saldo=totais['saldo'],
-                             carteira_creditos=carteira_creditos)
+                             carteira_creditos=carteira_creditos,
+                             anexos_existentes=anexos_existentes)
     except Exception as e:
         current_app.logger.error(f"Erro ao carregar formulário de pagamento: {str(e)}")
         flash('Erro ao carregar dados do pedido', 'error')

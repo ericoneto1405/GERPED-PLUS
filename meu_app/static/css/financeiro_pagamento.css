@@ -490,6 +490,23 @@ button[type="submit"]:focus-visible,
     gap: 10px;
 }
 
+.fila-heading {
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin: 6px 0 2px;
+}
+
+.fila-item.persistido {
+    background: #f3f7ff;
+    border-color: #c5d7f2;
+}
+
+.fila-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 10px 0;
+}
+
 .fila-item {
     border-radius: 12px;
     border: 1px solid rgba(0, 0, 0, 0.08);
@@ -559,6 +576,17 @@ button[type="submit"]:focus-visible,
     background: #fdecea;
     color: #c0392b;
     border-color: #f5b7b1;
+}
+
+.fila-status.status-salvo {
+    background: #e7f7ef;
+    color: #0f8a4b;
+    border-color: #a3d8b0;
+}
+
+.fila-vazia.fila-vazia-secundaria {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
 }
 
 .fila-actions {

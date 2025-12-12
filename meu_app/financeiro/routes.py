@@ -6,7 +6,7 @@ financeiro_bp = Blueprint('financeiro', __name__, url_prefix='/financeiro')
 from .services import FinanceiroService
 from functools import wraps
 from ..decorators import login_obrigatorio, permissao_necessaria, admin_necessario
-from ..models import Pagamento, PagamentoAnexo, Pedido, CarteiraCredito
+from ..models import Pagamento, PagamentoAnexo, Pedido, CarteiraCredito, Usuario
 from app.auth.rbac import requires_financeiro
 from ..upload_security import FileUploadValidator
 from .ocr_service import OcrService
@@ -414,6 +414,21 @@ def api_descartar_comprovante_compartilhado():
         return jsonify({'success': False, 'message': 'ID não informado'}), 400
     sucesso = FinanceiroService.descartar_comprovante_compartilhado(comp_id)
     return jsonify({'success': sucesso})
+
+@financeiro_bp.route('/api/financeiro/verificar-senha-admin', methods=['POST'])
+@login_obrigatorio
+@permissao_necessaria('acesso_financeiro')
+def api_verificar_senha_admin_financeiro():
+    """Valida a senha do administrador para liberar ações restritas."""
+    payload = request.get_json(silent=True) or {}
+    senha = (payload.get('senha') or '').strip()
+    if not senha:
+        return jsonify({'success': False, 'message': 'Senha é obrigatória'}), 400
+    admin = Usuario.query.filter_by(tipo='admin').first()
+    if not admin or not admin.check_senha(senha):
+        return jsonify({'success': False, 'message': 'Senha incorreta'}), 403
+    current_app.logger.info(f"Senha de administrador validada para ação no financeiro por {session.get('usuario_nome', 'N/A')}")
+    return jsonify({'success': True})
 
 @financeiro_bp.route('/processar-recibo-ocr', methods=['POST'])
 @login_obrigatorio

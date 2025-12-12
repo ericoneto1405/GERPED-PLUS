@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const painelEmptyState = document.querySelector('.comprovante-panel .empty-state');
     const compartilhadosUrl = form.dataset.compartilhadosUrl;
     const descartarCompartilhadoUrl = form.dataset.descartarCompUrl;
+    const adminCheckUrl = form.dataset.adminCheckUrl;
     const listaCompartilhados = document.getElementById('listaComprovantesDisponiveis');
     const contadorCompartilhados = document.getElementById('contadorComprovantesDisponiveis');
     const campoCompartilhadoId = document.getElementById('comprovante_compartilhado_id');
@@ -173,6 +174,40 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     atualizarCarteiraUI();
+
+    const solicitarSenhaAdminFinanceiro = async () => {
+        if (!adminCheckUrl) {
+            window.alert('Endpoint de validação de senha não configurado.');
+            return false;
+        }
+        const senha = window.prompt('Informe a senha do administrador para liberar esta ação:');
+        if (senha === null) return false;
+        if (!senha.trim()) {
+            window.alert('Senha é obrigatória.');
+            return false;
+        }
+        const payload = { senha: senha.trim() };
+        try {
+            const resp = await fetch(adminCheckUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfTokenInput ? csrfTokenInput.value : '',
+                },
+                body: JSON.stringify(payload),
+            });
+            const data = await resp.json();
+            if (!resp.ok || !data.success) {
+                window.alert(data.message || 'Senha inválida ou não autorizada.');
+                return false;
+            }
+            return true;
+        } catch (error) {
+            console.error('Falha ao validar senha admin no financeiro', error);
+            window.alert('Não foi possível validar a senha. Verifique sua conexão.');
+            return false;
+        }
+    };
 
     const togglePainelEmptyState = (hasContent) => {
         if (painelEmptyState) {
@@ -348,9 +383,16 @@ document.addEventListener('DOMContentLoaded', () => {
             const statusIcon = (state) => (state === 'ok' ? '🟢' : state === 'fail' ? '🔴' : '⚪');
 
             const falhaCard = baseState === 'fail';
+            const adminShareUnlocked = !!item.adminShareUnlocked;
             const shareValorAttr = valorNumericoReconhecido !== null ? valorNumericoReconhecido.toFixed(2) : '';
             const shareCheckedAttr = shareSelecionadoId && shareSelecionadoId === item.id ? 'checked' : '';
-            const shareDisabledAttr = falhaCard ? 'disabled' : '';
+            const shareDisabledAttr = falhaCard && !adminShareUnlocked ? 'disabled' : '';
+            const shareHelper = falhaCard && !adminShareUnlocked
+                ? `<div class="share-admin-warning">
+                        <small>Comprovante reprovado. Apenas administradores podem disponibilizá-lo.</small>
+                        <button type="button" class="ghost-btn" data-action="admin-share" data-id="${item.id}">Liberar com senha</button>
+                   </div>`
+                : '';
             const encodedFileName = item.file && item.file.name ? encodeURIComponent(item.file.name) : '';
 
             wrapper.innerHTML = `
@@ -393,6 +435,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                ${shareDisabledAttr}>
                         Disponibilizar este comprovante para outro pedido após salvar
                     </label>
+                    ${shareHelper}
                 </div>
                 <div class="fila-footer">
                     <button type="button" class="btn btn-secondary" data-action="ver-comprovante" data-id="${item.id}">
@@ -420,6 +463,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 status: 'aguardando',
                 statusMessage: 'Aguardando na fila',
                 result: null,
+                adminShareUnlocked: false,
             });
         });
         updateQueueUI();
@@ -900,6 +944,16 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!item) return;
 
             const action = actionBtn.dataset.action;
+            if (action === 'admin-share') {
+                event.preventDefault();
+                solicitarSenhaAdminFinanceiro().then((autorizado) => {
+                    if (!autorizado) return;
+                    item.adminShareUnlocked = true;
+                    updateQueueUI();
+                    window.alert('Compartilhamento liberado para este comprovante.');
+                });
+                return;
+            }
             if (action === 'ver-comprovante') {
                 event.preventDefault();
                 abrirModalComprovante(item);

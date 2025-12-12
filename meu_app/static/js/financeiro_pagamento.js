@@ -224,6 +224,8 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        const shareSelecionadoId = getShareSelectionId();
+
         fila.forEach((item) => {
             const wrapper = document.createElement('div');
             wrapper.className = `fila-item ${item.status}${item.id === itemSelecionadoId ? ' selecionado' : ''}`;
@@ -269,6 +271,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const statusIcon = (state) => (state === 'ok' ? '🟢' : state === 'fail' ? '🔴' : '⚪');
 
             const falhaCard = baseState === 'fail';
+            const shareValorAttr = valorNumericoReconhecido !== null ? valorNumericoReconhecido.toFixed(2) : '';
+            const shareCheckedAttr = shareSelecionadoId && shareSelecionadoId === item.id ? 'checked' : '';
+            const shareDisabledAttr = falhaCard ? 'disabled' : '';
+            const encodedFileName = item.file && item.file.name ? encodeURIComponent(item.file.name) : '';
 
             wrapper.innerHTML = `
                 <div class="fila-header">
@@ -299,7 +305,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 <div class="share-inline">
                     <label>
-                        <input type="checkbox" name="disponibilizar_comprovante" value="on" data-share-checkbox data-id="${item.id}">
+                        <input type="checkbox"
+                               name="disponibilizar_comprovante"
+                               value="on"
+                               data-share-checkbox
+                               data-id="${item.id}"
+                               data-valor="${shareValorAttr}"
+                               data-filename="${encodedFileName}"
+                               ${shareCheckedAttr}
+                               ${shareDisabledAttr}>
                         Disponibilizar este comprovante para outro pedido após salvar
                     </label>
                 </div>

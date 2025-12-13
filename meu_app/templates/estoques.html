@@ -288,6 +288,24 @@ document.addEventListener('DOMContentLoaded', () => {
     const passwordInput = document.getElementById('inventoryPassword');
     const confirmForm = document.getElementById('formInventarioConfirmacao');
     const confirmarInventarioUrl = "{{ url_for('estoques.confirmar_inventario') }}";
+    const storageAvailable = (() => {
+        try {
+            if (typeof window === 'undefined' || !window.localStorage) {
+                return false;
+            }
+            const testKey = '__estoques_storage_test__';
+            window.localStorage.setItem(testKey, '1');
+            window.localStorage.removeItem(testKey);
+            return true;
+        } catch (error) {
+            console.warn('Persistência local indisponível:', error);
+            return false;
+        }
+    })();
+    const STORAGE_KEYS = {
+        filtro: 'estoques.filtroBusca',
+        checkbox: 'estoques.checkboxState'
+    };
     let currentSort = { index: null, direction: 'asc' };
 
     if (modalElement && passwordInput) {
@@ -310,6 +328,50 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const getCheckboxes = () => Array.from(document.querySelectorAll('.inventory-confirm-checkbox'));
+
+    const loadCheckboxState = () => {
+        if (!storageAvailable) return {};
+        try {
+            const raw = window.localStorage.getItem(STORAGE_KEYS.checkbox);
+            return raw ? JSON.parse(raw) : {};
+        } catch (error) {
+            console.warn('Não foi possível carregar o estado das checkboxes:', error);
+            return {};
+        }
+    };
+
+    const persistCheckboxState = (state) => {
+        if (!storageAvailable) return;
+        try {
+            window.localStorage.setItem(STORAGE_KEYS.checkbox, JSON.stringify(state));
+        } catch (error) {
+            console.warn('Não foi possível salvar o estado das checkboxes:', error);
+        }
+    };
+
+    const checkboxState = loadCheckboxState();
+
+    const sincronizarCheckboxes = () => {
+        const checkboxes = getCheckboxes();
+        const idsAtuais = new Set();
+        checkboxes.forEach((checkbox) => {
+            const id = checkbox.value;
+            idsAtuais.add(id);
+            if (Object.prototype.hasOwnProperty.call(checkboxState, id)) {
+                checkbox.checked = Boolean(checkboxState[id]);
+            }
+            checkbox.addEventListener('change', () => {
+                checkboxState[id] = checkbox.checked;
+                persistCheckboxState(checkboxState);
+            });
+        });
+        Object.keys(checkboxState).forEach((id) => {
+            if (!idsAtuais.has(id)) {
+                delete checkboxState[id];
+            }
+        });
+        persistCheckboxState(checkboxState);
+    };
 
     const parseValue = (cell, index) => {
         if (index === 1) {
@@ -377,15 +439,39 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     if (filtro) {
-        filtro.addEventListener('input', (event) => {
-            const termo = event.target.value.trim().toLowerCase();
+        const aplicarFiltro = (valor) => {
+            const termo = valor.trim().toLowerCase();
             const rows = tbody.querySelectorAll('tr');
             rows.forEach((row) => {
                 const texto = row.textContent.toLowerCase();
                 row.style.display = texto.includes(termo) ? '' : 'none';
             });
+        };
+
+        filtro.addEventListener('input', (event) => {
+            aplicarFiltro(event.target.value || '');
+            if (storageAvailable) {
+                try {
+                    window.localStorage.setItem(STORAGE_KEYS.filtro, event.target.value);
+                } catch (error) {
+                    console.warn('Não foi possível salvar o filtro de estoques:', error);
+                }
+            }
         });
+
+        if (storageAvailable) {
+            try {
+                const savedFilter = window.localStorage.getItem(STORAGE_KEYS.filtro) || '';
+                if (savedFilter) {
+                    filtro.value = savedFilter;
+                    aplicarFiltro(savedFilter);
+                }
+            } catch (error) {
+                console.warn('Não foi possível restaurar o filtro de estoques:', error);
+            }
+        }
     }
+    sincronizarCheckboxes();
 
     if (inventoryButton) {
         inventoryButton.addEventListener('click', () => {

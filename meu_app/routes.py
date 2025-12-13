@@ -21,6 +21,7 @@ import shutil
 from .decorators import login_obrigatorio, permissao_necessaria, admin_necessario
 from .security import limiter
 from .obs.metrics import export_metrics
+from .dashboard_service import DashboardService
 
 # Criar blueprint
 bp = Blueprint('main', __name__)
@@ -260,104 +261,6 @@ def api_pedido(pedido_id):
         current_app.logger.error(f"Erro na API pedido: {str(e)}")
         return jsonify({"error": "Erro interno do servidor"}), 500
 
-@bp.route('/painel')
-@login_obrigatorio
-def painel():
-    try:
-        # Obter filtros da URL ou usar mês/ano atual
-        mes = request.args.get('mes', datetime.now().month)
-        ano = request.args.get('ano', datetime.now().year)
-
-        # Converter para inteiros
-        mes = int(mes)
-        ano = int(ano)
-
-        # Calcular datas de início e fim (exclusivo) do mês
-        data_inicio = datetime(ano, mes, 1)
-        if mes == 12:
-            proximo_mes = datetime(ano + 1, 1, 1)
-        else:
-            proximo_mes = datetime(ano, mes + 1, 1)
-
-        # Estatísticas do painel
-        total_pedidos = Pedido.query.filter(
-            Pedido.data >= data_inicio,
-            Pedido.data < proximo_mes
-        ).count()
-
-        # Pagamentos reconhecidos no período selecionado
-        pagamentos_periodo_raw = (
-            db.session.query(
-                Pagamento.pedido_id,
-                Pagamento.valor,
-                Pagamento.data_pagamento
-            )
-            .join(Pedido, Pagamento.pedido_id == Pedido.id)
-            .filter(
-                Pagamento.data_pagamento >= data_inicio,
-                Pagamento.data_pagamento < proximo_mes,
-                Pedido.status == StatusPedido.PAGAMENTO_APROVADO
-            )
-            .all()
-        )
-
-        pagamentos_periodo = [
-            {
-                'pedido_id': pagamento.pedido_id,
-                'valor': float(pagamento.valor or 0),
-                'data': pagamento.data_pagamento or data_inicio,
-            }
-            for pagamento in pagamentos_periodo_raw
-        ]
-
-        pagamentos_por_pedido = {}
-        for pagamento in pagamentos_periodo:
-            pagamentos_por_pedido[pagamento['pedido_id']] = pagamentos_por_pedido.get(
-                pagamento['pedido_id'], 0.0
-            ) + pagamento['valor']
-
-        pedido_ids_pagamento = list(pagamentos_por_pedido.keys())
-
-        pedido_totais = {}
-        pedido_ratios = {}
-        if pedido_ids_pagamento:
-            pedido_totais_rows = (
-                db.session.query(
-                    ItemPedido.pedido_id.label('pedido_id'),
-                    func.coalesce(func.sum(ItemPedido.valor_total_venda), 0).label('total_venda'),
-                    func.coalesce(func.sum(ItemPedido.valor_total_compra), 0).label('total_compra'),
-                )
-                .filter(ItemPedido.pedido_id.in_(pedido_ids_pagamento))
-                .group_by(ItemPedido.pedido_id)
-                .all()
-            )
-
-            for row in pedido_totais_rows:
-                total_venda = float(row.total_venda or 0)
-                total_compra = float(row.total_compra or 0)
-                pedido_totais[row.pedido_id] = {
-                    'total_venda': total_venda,
-                    'total_compra': total_compra,
-                }
-                pedido_ratios[row.pedido_id] = (
-                    (total_compra / total_venda) if total_venda > 0 else 0.0
-                )
-
-        faturamento_total = sum(pagamentos_por_pedido.values())
-        pedidos_pagos = len(pagamentos_por_pedido)
-
-        # CPV proporcional aos pagamentos reconhecidos no período
-        cpv_total = sum(
-            pagamento['valor'] * pedido_ratios.get(pagamento['pedido_id'], 0.0)
-            for pagamento in pagamentos_periodo
-        )
-
-        # Verificar se existe apuração para o período
-        apuracao = Apuracao.query.filter_by(mes=mes, ano=ano).first()
-        tem_apuracao = apuracao is not None
-        
-        # Calcular verbas se houver apuração
-        if tem_apuracao:
             total_verbas = float(
                 apuracao.verba_scann + 
                 apuracao.verba_plano_negocios + 

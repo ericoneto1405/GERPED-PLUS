@@ -267,10 +267,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 </script>
-{% endblock %}
-
-{% block scripts %}
-{{ super() }}
 <script nonce="{{ nonce }}">
 document.addEventListener('DOMContentLoaded', () => {
     const tabela = document.querySelector('.coletas-table');
@@ -455,3 +451,4 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 {% endblock %}
+

@@ -147,14 +147,14 @@ class RetiranteAutorizadoRepository:
                 .all()
             )
         except SQLAlchemyError as e:
-            print(f"Erro ao listar retirantes autorizados: {e}")
+            current_app.logger.error("Erro ao listar retirantes autorizados: %s", e)
             return []
 
     def buscar_por_id(self, retirante_id: int) -> Optional[ClienteRetiranteAutorizado]:
         try:
             return self.model.query.get(retirante_id)
         except SQLAlchemyError as e:
-            print(f"Erro ao buscar retirante autorizado: {e}")
+            current_app.logger.error("Erro ao buscar retirante autorizado: %s", e)
             return None
 
     def buscar_por_cliente_e_cpf(self, cliente_id: int, cpf: str) -> Optional[ClienteRetiranteAutorizado]:
@@ -164,7 +164,7 @@ class RetiranteAutorizadoRepository:
                 .one_or_none()
             )
         except SQLAlchemyError as e:
-            print(f"Erro ao buscar retirante autorizado por CPF: {e}")
+            current_app.logger.error("Erro ao buscar retirante autorizado por CPF: %s", e)
             return None
 
     def criar(self, retirante: ClienteRetiranteAutorizado) -> ClienteRetiranteAutorizado:
@@ -174,7 +174,7 @@ class RetiranteAutorizadoRepository:
             return retirante
         except SQLAlchemyError as e:
             self.session.rollback()
-            print(f"Erro ao criar retirante autorizado: {e}")
+            current_app.logger.error("Erro ao criar retirante autorizado: %s", e)
             raise
 
     def atualizar(self, retirante: ClienteRetiranteAutorizado) -> ClienteRetiranteAutorizado:
@@ -183,7 +183,7 @@ class RetiranteAutorizadoRepository:
             return retirante
         except SQLAlchemyError as e:
             self.session.rollback()
-            print(f"Erro ao atualizar retirante autorizado: {e}")
+            current_app.logger.error("Erro ao atualizar retirante autorizado: %s", e)
             raise
 
     def excluir(self, retirante: ClienteRetiranteAutorizado) -> None:
@@ -192,5 +192,5 @@ class RetiranteAutorizadoRepository:
             self.session.commit()
         except SQLAlchemyError as e:
             self.session.rollback()
-            print(f"Erro ao excluir retirante autorizado: {e}")
+            current_app.logger.error("Erro ao excluir retirante autorizado: %s", e)
             raise

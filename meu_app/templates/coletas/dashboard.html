@@ -51,29 +51,30 @@
                                 <div class="action-buttons"
                                      data-processar-base="{{ processar_base }}"
                                      data-historico-base="{{ historico_base }}">
-                                    <div class="pedido-selector">
-                                        <label for="pedido-select-{{ loop.index }}" class="visually-hidden">Selecione o pedido</label>
-                                        <select class="form-select form-select-sm pedido-select" id="pedido-select-{{ loop.index }}">
-                                            {% for pedido_id in item.pedidos_ids %}
-                                                <option value="{{ pedido_id }}">Pedido #{{ pedido_id }}</option>
-                                            {% endfor %}
-                                        </select>
-                                    </div>
-                                    <div class="d-flex flex-wrap gap-1 justify-content-center">
-                                        {% if not item.coletado_completo %}
+                                    <div class="pedido-actions-list">
+                                        {% for pedido_id in item.pedidos_ids %}
+                                        <div class="pedido-action-line">
+                                            <span class="badge bg-light text-dark">#{{ pedido_id }}</span>
+                                            {% if not item.coletado_completo %}
                                             <button type="button"
                                                     class="btn btn-sm btn-primary btn-acao-coleta"
-                                                    title="Processar coleta do pedido selecionado">
+                                                    data-pedido-id="{{ pedido_id }}"
+                                                    title="Processar coleta do Pedido #{{ pedido_id }}">
                                                 <i class="bi bi-box-seam"></i> COLETAR
                                             </button>
-                                        {% endif %}
-                                        {% if item.itens_coletados > 0 %}
+                                            {% endif %}
+                                            {% if item.itens_coletados > 0 %}
                                             <button type="button"
                                                     class="btn btn-sm btn-outline-success btn-acao-historico"
-                                                    title="Histórico do pedido selecionado">
+                                                    data-pedido-id="{{ pedido_id }}"
+                                                    title="Histórico do Pedido #{{ pedido_id }}">
                                                 <i class="bi bi-clock-history"></i> HISTÓRICO
                                             </button>
-                                        {% endif %}
+                                            {% endif %}
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                    <div class="d-flex flex-wrap gap-1 justify-content-center">
                                         <button type="button"
                                                 class="btn btn-sm btn-dark btn-quant-pendente"
                                                 data-pedidos="{{ item.pedidos_ids | join(',') }}"
@@ -209,13 +210,19 @@
         padding: 6px 12px;
     }
 
-    .pedido-selector {
+    .pedido-actions-list {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
         width: 100%;
-        max-width: 220px;
     }
 
-    .pedido-selector select {
-        font-size: 0.9rem;
+    .pedido-action-line {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: center;
+        align-items: center;
     }
 
     .visually-hidden {
@@ -235,35 +242,31 @@
 {{ super() }}
 <script nonce="{{ nonce }}">
 document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('.action-buttons').forEach((container) => {
-        const select = container.querySelector('.pedido-select');
-        if (!select) return;
+    const resolveUrl = (base, id) => (!base || !id ? null : `${base}/${id}`);
 
+    document.querySelectorAll('.action-buttons').forEach((container) => {
         const processarBase = container.dataset.processarBase;
         const historicoBase = container.dataset.historicoBase;
 
-        const resolveUrl = (base, id) => {
-            if (!base || !id) return null;
-            return `${base}/${id}`;
-        };
-
-        const coletarBtn = container.querySelector('.btn-acao-coleta');
-        if (coletarBtn) {
-            coletarBtn.addEventListener('click', () => {
-                const pedidoId = select.value;
+        container.querySelectorAll('.btn-acao-coleta').forEach((botao) => {
+            botao.addEventListener('click', () => {
+                const pedidoId = botao.dataset.pedidoId;
                 const url = resolveUrl(processarBase, pedidoId);
-                if (url) window.location.href = url;
+                if (url) {
+                    window.location.href = url;
+                }
             });
-        }
+        });
 
-        const historicoBtn = container.querySelector('.btn-acao-historico');
-        if (historicoBtn) {
-            historicoBtn.addEventListener('click', () => {
-                const pedidoId = select.value;
+        container.querySelectorAll('.btn-acao-historico').forEach((botao) => {
+            botao.addEventListener('click', () => {
+                const pedidoId = botao.dataset.pedidoId;
                 const url = resolveUrl(historicoBase, pedidoId);
-                if (url) window.location.href = url;
+                if (url) {
+                    window.location.href = url;
+                }
             });
-        }
+        });
     });
 });
 </script>
@@ -451,4 +454,3 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 {% endblock %}
-

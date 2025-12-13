@@ -172,6 +172,7 @@
         display: flex;
         flex-direction: column;
         gap: 4px;
+        margin-bottom: 12px;
     }
 
     .coletas-table {
@@ -179,44 +180,53 @@
         border-collapse: separate;
         border-spacing: 0;
         background: #fff;
-        border-radius: 14px;
-        overflow: hidden;
         border: 1px solid #d7e3f7;
-        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+        border-radius: 12px;
+        box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
+        overflow: hidden;
+        table-layout: auto;
     }
 
     .coletas-table th,
     .coletas-table td {
-        padding: 14px 16px;
-        border-bottom: 1px solid #e5e9f2;
-        border-right: 1px solid #e5e9f2;
+        padding: 12px 14px;
+        border: 1px solid #d7e3f7;
         text-align: center;
         font-size: 0.92rem;
         color: #1f2937;
         font-weight: 500;
     }
 
+    .coletas-table th:first-child,
+    .coletas-table td:first-child {
+        border-left-width: 2px;
+    }
+
     .coletas-table th:last-child,
     .coletas-table td:last-child {
-        border-right: none;
+        border-right-width: 2px;
     }
 
-    .coletas-table th {
-        background: #f8f9fa;
-        font-weight: 600;
-        font-size: 0.9rem;
+    .coletas-table tbody tr:first-child td {
+        border-top-width: 2px;
     }
 
-    .coletas-table tbody tr {
-        background: #fff;
+    .coletas-table tbody tr:last-child td {
+        border-bottom-width: 2px;
     }
 
-    .coletas-table tbody tr:nth-child(even) {
-        background: #fdfefe;
+    .coletas-table thead th {
+        background: #f8fafc;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #475569;
+        font-weight: 700;
     }
 
-    .coletas-table tbody tr:hover td {
-        background: #edf5ff;
+    .coletas-table thead th .sort-indicator {
+        font-size: 0.7rem;
+        margin-left: 6px;
+        color: #94a3b8;
     }
 
     .coletas-table th[data-column-index] {
@@ -225,15 +235,17 @@
         position: relative;
     }
 
-    .coletas-table th[data-column-index] .sort-indicator {
-        font-size: 0.7rem;
-        margin-left: 6px;
-        color: #adb5bd;
-    }
-
     .coletas-table th.sorted-asc,
     .coletas-table th.sorted-desc {
         color: #0d6efd;
+    }
+
+    .coletas-table tbody tr:nth-child(even) td {
+        background: #fdfefe;
+    }
+
+    .coletas-table tbody tr:hover td {
+        background: #edf5ff;
     }
 
     .action-buttons {

@@ -7,6 +7,7 @@ separando a lógica de acesso ao banco de dados da lógica de negócio.
 
 from typing import List, Optional
 from sqlalchemy.exc import SQLAlchemyError
+from flask import current_app
 from ..models import db, Cliente, ClienteRetiranteAutorizado
 
 
@@ -35,42 +36,44 @@ class ClienteRepository:
         try:
             return self.model.query.get(cliente_id)
         except SQLAlchemyError as e:
-            print(f"Erro ao buscar cliente por ID {cliente_id}: {str(e)}")
+            current_app.logger.error("Erro ao buscar cliente por ID %s: %s", cliente_id, e)
             return None
 
     def buscar_por_nome(self, nome: str) -> Optional[Cliente]:
         try:
             return self.model.query.filter_by(nome=nome).first()
         except SQLAlchemyError as e:
-            print(f"Erro ao buscar cliente por nome '{nome}': {str(e)}")
+            current_app.logger.error("Erro ao buscar cliente por nome '%s': %s", nome, e)
             return None
 
     def buscar_por_cpf_cnpj(self, cpf_cnpj: str) -> Optional[Cliente]:
         try:
             return self.model.query.filter_by(cpf_cnpj=cpf_cnpj).first()
         except SQLAlchemyError as e:
-            print(f"Erro ao buscar cliente por CPF/CNPJ: {str(e)}")
+            current_app.logger.error("Erro ao buscar cliente por CPF/CNPJ: %s", e)
             return None
 
     def buscar_por_nome_parcial(self, nome: str) -> List[Cliente]:
         try:
             return self.model.query.filter(self.model.nome.ilike(f"%{nome}%")).all()
         except SQLAlchemyError as e:
-            print(f"Erro ao buscar clientes por nome parcial '{nome}': {str(e)}")
+            current_app.logger.error(
+                "Erro ao buscar clientes por nome parcial '%s': %s", nome, e
+            )
             return []
 
     def listar_todos(self) -> List[Cliente]:
         try:
             return self.model.query.order_by(self.model.nome).all()
         except SQLAlchemyError as e:
-            print(f"Erro ao listar clientes: {str(e)}")
+            current_app.logger.error("Erro ao listar clientes: %s", e)
             return []
 
     def listar_por_cidade(self, cidade: str) -> List[Cliente]:
         try:
             return self.model.query.filter_by(cidade=cidade).order_by(self.model.nome).all()
         except SQLAlchemyError as e:
-            print(f"Erro ao listar clientes por cidade '{cidade}': {str(e)}")
+            current_app.logger.error("Erro ao listar clientes por cidade '%s': %s", cidade, e)
             return []
 
     def criar(self, cliente: Cliente) -> Cliente:
@@ -80,7 +83,7 @@ class ClienteRepository:
             return cliente
         except SQLAlchemyError as e:
             self.session.rollback()
-            print(f"Erro ao criar cliente: {str(e)}")
+            current_app.logger.error("Erro ao criar cliente: %s", e)
             raise
 
     def atualizar(self, cliente: Cliente) -> Cliente:
@@ -89,7 +92,7 @@ class ClienteRepository:
             return cliente
         except SQLAlchemyError as e:
             self.session.rollback()
-            print(f"Erro ao atualizar cliente: {str(e)}")
+            current_app.logger.error("Erro ao atualizar cliente: %s", e)
             raise
 
     def excluir(self, cliente: Cliente) -> bool:
@@ -99,14 +102,14 @@ class ClienteRepository:
             return True
         except SQLAlchemyError as e:
             self.session.rollback()
-            print(f"Erro ao excluir cliente: {str(e)}")
+            current_app.logger.error("Erro ao excluir cliente: %s", e)
             raise
 
     def contar_total(self) -> int:
         try:
             return self.model.query.count()
         except SQLAlchemyError as e:
-            print(f"Erro ao contar clientes: {str(e)}")
+            current_app.logger.error("Erro ao contar clientes: %s", e)
             return 0
 
     def verificar_nome_existe(self, nome: str, excluir_id: Optional[int] = None) -> bool:
@@ -116,7 +119,7 @@ class ClienteRepository:
                 query = query.filter(self.model.id != excluir_id)
             return query.first() is not None
         except SQLAlchemyError as e:
-            print(f"Erro ao verificar nome do cliente: {str(e)}")
+            current_app.logger.error("Erro ao verificar nome do cliente '%s': %s", nome, e)
             return False
 
 

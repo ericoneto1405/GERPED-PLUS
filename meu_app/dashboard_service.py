@@ -262,7 +262,7 @@ class DashboardService:
         return faturamento_proj, margem_proj, perc_margem_proj
 
     @staticmethod
-    def _intervalo_mes(ano: int, mes: int):
+    def _intervalo_mes(mes: int, ano: int):
         inicio = datetime(ano, mes, 1)
         if mes == 12:
             proximo = datetime(ano + 1, 1, 1)

@@ -159,18 +159,29 @@
 
     .coletas-table {
         width: 100%;
-        border-collapse: collapse;
+        border-collapse: separate;
+        border-spacing: 0;
         background: #fff;
-        border-radius: 12px;
+        border-radius: 14px;
         overflow: hidden;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        border: 1px solid #d7e3f7;
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
     }
 
     .coletas-table th,
     .coletas-table td {
-        padding: 12px 16px;
-        border-bottom: 1px solid #f1f3f4;
+        padding: 14px 16px;
+        border-bottom: 1px solid #e5e9f2;
+        border-right: 1px solid #e5e9f2;
         text-align: center;
+        font-size: 0.92rem;
+        color: #1f2937;
+        font-weight: 500;
+    }
+
+    .coletas-table th:last-child,
+    .coletas-table td:last-child {
+        border-right: none;
     }
 
     .coletas-table th {
@@ -179,8 +190,16 @@
         font-size: 0.9rem;
     }
 
-    .coletas-table tr:hover {
-        background: #f8fbff;
+    .coletas-table tbody tr {
+        background: #fff;
+    }
+
+    .coletas-table tbody tr:nth-child(even) {
+        background: #fdfefe;
+    }
+
+    .coletas-table tbody tr:hover td {
+        background: #edf5ff;
     }
 
     .coletas-table th[data-column-index] {

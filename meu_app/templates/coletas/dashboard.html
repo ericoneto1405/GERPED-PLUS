@@ -21,7 +21,13 @@
             <small class="text-muted">Clique nos cabeçalhos para ordenar e use a busca para filtrar rapidamente.</small>
         </div>
         <div class="table-responsive">
-            <table class="coletas-table">
+            <table class="coletas-table auto-fit-table">
+                <colgroup>
+                    <col class="col-cliente">
+                    <col class="col-pedidos">
+                    <col class="col-data">
+                    <col class="col-acoes">
+                </colgroup>
                 <thead>
                     <tr>
                         <th data-column-index="0" class="text-center">Cliente</th>
@@ -210,6 +216,11 @@
         padding: 6px 12px;
     }
 
+    .coletas-table .col-cliente { width: 28%; }
+    .coletas-table .col-pedidos { width: 22%; }
+    .coletas-table .col-data { width: 18%; }
+    .coletas-table .col-acoes { width: 32%; }
+
     .pedido-actions-list {
         display: flex;
         flex-direction: column;
@@ -234,6 +245,22 @@
         overflow: hidden;
         clip: rect(0, 0, 0, 0);
         border: 0;
+    }
+
+    .resizable-header {
+        position: relative;
+        padding-right: 14px;
+        user-select: none;
+    }
+
+    .column-resizer {
+        position: absolute;
+        top: 0;
+        right: 2px;
+        width: 6px;
+        height: 100%;
+        cursor: col-resize;
+        user-select: none;
     }
 </style>
 {% endblock %}
@@ -277,6 +304,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const tbody = tabela.querySelector('tbody');
     const headers = tabela.querySelectorAll('th[data-column-index]');
+    const columns = tabela.querySelectorAll('colgroup col');
     const filtro = document.getElementById('filtroColetas');
     const pendenciasModalEl = document.getElementById('modalPendencias');
     const bootstrapLib = (typeof window !== 'undefined' && window.bootstrap)
@@ -343,8 +371,75 @@ document.addEventListener('DOMContentLoaded', () => {
         applySortIndicators();
     };
 
+    const applyColumnWidth = (columnIndex, width) => {
+        const headerCell = tabela.querySelectorAll('thead th')[columnIndex];
+        if (columns.length && columns[columnIndex]) {
+            columns[columnIndex].style.width = width + 'px';
+        }
+        if (headerCell) headerCell.style.width = width + 'px';
+        tabela.querySelectorAll('tbody tr').forEach((row) => {
+            const cell = row.children[columnIndex];
+            if (cell) cell.style.width = width + 'px';
+        });
+    };
+
+    const autoFitColumn = (columnIndex) => {
+        let maxWidth = 0;
+        tabela.querySelectorAll('tr').forEach((row) => {
+            const cell = row.children[columnIndex];
+            if (!cell) return;
+            const cellWidth = cell.scrollWidth + 16;
+            if (cellWidth > maxWidth) {
+                maxWidth = cellWidth;
+            }
+        });
+        applyColumnWidth(columnIndex, Math.max(80, maxWidth));
+    };
+
+    const startManualResize = (event, columnIndex) => {
+        event.preventDefault();
+        const startX = event.pageX;
+        const header = event.target.parentElement;
+        const startWidth = header.offsetWidth;
+
+        const onMouseMove = (moveEvent) => {
+            const delta = moveEvent.pageX - startX;
+            const newWidth = Math.max(80, startWidth + delta);
+            applyColumnWidth(columnIndex, newWidth);
+        };
+
+        const onMouseUp = () => {
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+        };
+
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+    };
+
     headers.forEach((header, index) => {
-        header.addEventListener('click', () => {
+        header.classList.add('resizable-header');
+        let handle = header.querySelector('.column-resizer');
+        if (!handle) {
+            handle = document.createElement('span');
+            handle.className = 'column-resizer';
+            header.appendChild(handle);
+        }
+
+        handle.addEventListener('mousedown', (e) => {
+            e.stopPropagation();
+            startManualResize(e, index);
+        });
+
+        header.addEventListener('dblclick', (e) => {
+            e.stopPropagation();
+            autoFitColumn(index);
+        });
+
+        header.addEventListener('click', (e) => {
+            if (e.target.classList.contains('column-resizer')) {
+                return;
+            }
             const direction = (currentSort.index === index && currentSort.direction === 'asc') ? 'desc' : 'asc';
             currentSort = { index, direction };
             sortRows(index, direction);

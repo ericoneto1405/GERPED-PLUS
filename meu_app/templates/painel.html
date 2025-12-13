@@ -324,16 +324,12 @@
             </div>
         </div>
 
-        <div class="kpi-card kpi-verbas-totais" onclick="showDrillDown('verbas_comercial')">
+        <div class="kpi-card kpi-verbas-totais" onclick="showDrillDown('projecao_mes')">
             <div class="kpi-content">
-                <h3>Verbas Consideradas</h3>
-                <div class="kpi-value">{{ total_verbas | currency_brl }}</div>
+                <h3>Projeção Mensal (Faturamento + Margem)</h3>
+                <div class="kpi-value">{{ faturamento_projetado_mes | currency_brl }}</div>
                 <div class="kpi-subtitle">
-                    {% if tem_apuracao %}
-                        Apuração vigente
-                    {% else %}
-                        Sem apuração no período
-                    {% endif %}
+                    Margem proj.: {{ margem_projetada_mes | currency_brl }} ({{ "{:.1f}%".format(percentual_margem_projetada) }})
                 </div>
             </div>
             <div class="kpi-action">

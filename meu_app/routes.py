@@ -494,6 +494,24 @@ def painel():
             if faturamento_liberados > 0 else 0
         )
 
+        # Projeção até o final do mês com base no andamento atual
+        hoje = datetime.now()
+        if ano == hoje.year and mes == hoje.month:
+            dias_passados = max(min(hoje.day, ultimo_dia), 1)
+        elif datetime(ano, mes, ultimo_dia) < hoje:
+            dias_passados = ultimo_dia
+        else:
+            dias_passados = 1
+
+        progresso = max(dias_passados / ultimo_dia, 0.01)
+        faturamento_projetado_mes = faturamento_total / progresso
+        cpv_projetado_mes = cpv_total / progresso
+        margem_projetada_mes = (faturamento_projetado_mes + total_verbas) - cpv_projetado_mes
+        percentual_margem_projetada = (
+            (margem_projetada_mes / faturamento_projetado_mes) * 100
+            if faturamento_projetado_mes > 0 else 0
+        )
+
         # Calcular necessidade de compra
         from .pedidos.services import PedidoService
         necessidade_compra = PedidoService.calcular_necessidade_compra()
@@ -523,6 +541,9 @@ def painel():
             margem_liberados=margem_liberados,
             percentual_margem_liberados=percentual_margem_liberados,
             pedidos_liberados=pedidos_liberados,
+            faturamento_projetado_mes=faturamento_projetado_mes,
+            margem_projetada_mes=margem_projetada_mes,
+            percentual_margem_projetada=percentual_margem_projetada,
             necessidade_compra=necessidade_compra,
             mes=mes,
             ano=ano,
@@ -554,6 +575,9 @@ def painel():
             margem_liberados=0.0,
             percentual_margem_liberados=0.0,
             pedidos_liberados=0,
+            faturamento_projetado_mes=0.0,
+            margem_projetada_mes=0.0,
+            percentual_margem_projetada=0.0,
             mes=mes,
             ano=ano,
         )

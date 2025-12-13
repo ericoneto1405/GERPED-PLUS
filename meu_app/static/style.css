@@ -1069,9 +1069,10 @@ table tbody tr:last-child td {
 /* KPI Grid - Modern Responsive Style */
 .kpi-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 24px;
     margin-bottom: 32px;
+    align-items: stretch;
 }
 
 .kpi-card {
@@ -1088,7 +1089,8 @@ table tbody tr:last-child td {
     position: relative;
     overflow: hidden;
     cursor: pointer;
-    min-height: 150px;
+    min-height: 180px;
+    height: 100%;
 }
 
 .kpi-card:hover {
@@ -1102,21 +1104,23 @@ table tbody tr:last-child td {
 }
 
 /* Responsive adjustments */
+@media (max-width: 1200px) {
+    .kpi-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 20px;
+    }
+}
+
 @media (max-width: 768px) {
     .kpi-grid {
-        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        grid-template-columns: 1fr;
         gap: 16px;
     }
     
     .kpi-card {
         padding: 20px;
         gap: 16px;
-    }
-}
-
-@media (max-width: 480px) {
-    .kpi-grid {
-        grid-template-columns: 1fr;
+        min-height: auto;
     }
 }
 

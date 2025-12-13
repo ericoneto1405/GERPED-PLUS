@@ -58,6 +58,70 @@
         margin: 0 0 5px 0;
         font-size: 1.5rem;
     }
+
+    .kpi-section {
+        background: #ffffff;
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0 15px 30px rgba(15, 23, 42, 0.08);
+        margin-bottom: 32px;
+    }
+
+    .principal-kpis {
+        background: transparent;
+        box-shadow: none;
+        padding: 0;
+    }
+
+    .kpi-section .section-header {
+        margin-bottom: 16px;
+    }
+
+    .kpi-section .section-header p {
+        margin: 4px 0 0 0;
+        color: #6b7280;
+    }
+
+    .kpi-section .kpi-grid {
+        margin-bottom: 0;
+    }
+
+    .kpi-projecao .kpi-card {
+        background: #f8f9ff;
+        border: 1px dashed #c5d4ff;
+        box-shadow: none;
+    }
+
+    .kpi-projecao .kpi-card::before {
+        background: linear-gradient(90deg, rgba(99, 102, 241, 0.5), rgba(14, 165, 233, 0.4));
+    }
+
+    .kpi-projecao .kpi-icon {
+        background: #e4edff;
+        color: #1d4ed8;
+    }
+
+    .kpi-projecao .kpi-subtitle {
+        font-weight: 500;
+        color: #1d4ed8;
+    }
+
+    @media (max-width: 640px) {
+        .kpi-card {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .kpi-icon {
+            width: 48px;
+            height: 48px;
+        }
+
+        .kpi-action {
+            display: none;
+        }
+    }
     
     .necessidade-table {
         width: 100%;
@@ -179,92 +243,94 @@
 </style>
 
 <!-- KPIs -->
-<div class="kpi-grid">
-    <!-- Faturamento -->
-    <div class="kpi-card kpi-faturamento" onclick="showDrillDown('faturamento')">
-        <div class="kpi-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/>
-            </svg>
-        </div>
-        <div class="kpi-content">
-            <h3>Faturamento</h3>
-            <div class="kpi-value">{{ faturamento_total | currency_brl }}</div>
-            <div class="kpi-subtitle">
-                {% if mes %}
-                    {{ ["", "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", 
-                        "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"][mes] }} / {{ ano }}
-                {% endif %}
+<div class="kpi-section principal-kpis">
+    <div class="kpi-grid">
+        <!-- Faturamento -->
+        <div class="kpi-card kpi-faturamento" onclick="showDrillDown('faturamento')">
+            <div class="kpi-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/>
+                </svg>
+            </div>
+            <div class="kpi-content">
+                <h3>Faturamento</h3>
+                <div class="kpi-value">{{ faturamento_total | currency_brl }}</div>
+                <div class="kpi-subtitle">
+                    {% if mes %}
+                        {{ ["", "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", 
+                            "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"][mes] }} / {{ ano }}
+                    {% endif %}
+                </div>
+            </div>
+            <div class="kpi-action">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/>
+                </svg>
             </div>
         </div>
-        <div class="kpi-action">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/>
-            </svg>
-        </div>
-    </div>
 
-    <!-- Verbas Totais -->
-    <div class="kpi-card kpi-verbas-totais" onclick="showDrillDown('verbas')">
-        <div class="kpi-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
-            </svg>
-        </div>
-        <div class="kpi-content">
-            <h3>Verbas Totais</h3>
-            <div class="kpi-value">{{ total_verbas | currency_brl }}</div>
-            <div class="kpi-subtitle">SCANN + Plano + AMBEV + Outras</div>
-        </div>
-        <div class="kpi-action">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/>
-            </svg>
-        </div>
-    </div>
-
-    <!-- CPV Total -->
-    <div class="kpi-card kpi-cpv" onclick="showDrillDown('cpv')">
-        <div class="kpi-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-            </svg>
-        </div>
-        <div class="kpi-content">
-            <h3>CPV Total</h3>
-            <div class="kpi-value">{{ cpv_total | currency_brl }}</div>
-            <div class="kpi-subtitle">Custo dos Produtos Vendidos</div>
-        </div>
-        <div class="kpi-action">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/>
-            </svg>
-        </div>
-    </div>
-
-    <!-- Margem de Manobra -->
-    <div class="kpi-card kpi-margem" onclick="showDrillDown('margem')">
-        <div class="kpi-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/>
-            </svg>
-        </div>
-        <div class="kpi-content">
-            <h3>Margem de Manobra</h3>
-            <div class="kpi-value">{{ margem_manobra | currency_brl }}</div>
-            <div class="kpi-subtitle">
-                {{ "{:.1f}%".format(percentual_margem) }} de margem
+        <!-- Verbas Totais -->
+        <div class="kpi-card kpi-verbas-totais" onclick="showDrillDown('verbas')">
+            <div class="kpi-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
+                </svg>
+            </div>
+            <div class="kpi-content">
+                <h3>Verbas Totais</h3>
+                <div class="kpi-value">{{ total_verbas | currency_brl }}</div>
+                <div class="kpi-subtitle">SCANN + Plano + AMBEV + Outras</div>
+            </div>
+            <div class="kpi-action">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/>
+                </svg>
             </div>
         </div>
-        <div class="kpi-action">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/>
-            </svg>
+
+        <!-- CPV Total -->
+        <div class="kpi-card kpi-cpv" onclick="showDrillDown('cpv')">
+            <div class="kpi-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                </svg>
+            </div>
+            <div class="kpi-content">
+                <h3>CPV Total</h3>
+                <div class="kpi-value">{{ cpv_total | currency_brl }}</div>
+                <div class="kpi-subtitle">Custo dos Produtos Vendidos</div>
+            </div>
+            <div class="kpi-action">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/>
+                </svg>
+            </div>
+        </div>
+
+        <!-- Margem de Manobra -->
+        <div class="kpi-card kpi-margem" onclick="showDrillDown('margem')">
+            <div class="kpi-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/>
+                </svg>
+            </div>
+            <div class="kpi-content">
+                <h3>Margem de Manobra</h3>
+                <div class="kpi-value">{{ margem_manobra | currency_brl }}</div>
+                <div class="kpi-subtitle">
+                    {{ "{:.1f}%".format(percentual_margem) }} de margem
+                </div>
+            </div>
+            <div class="kpi-action">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/>
+                </svg>
+            </div>
         </div>
     </div>
 </div>
 
-<div class="mt-5">
+<div class="kpi-section kpi-projecao-wrapper">
     <div class="section-header">
         <h3><i class="bi bi-columns-gap icon-text"></i> Projeção - Pedidos Liberados pelo Comercial</h3>
         <p class="text-muted mb-3">KPIs simulando o impacto dos pedidos que já foram liberados pelo comercial neste período.</p>

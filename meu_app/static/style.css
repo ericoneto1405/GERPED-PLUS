@@ -1080,13 +1080,15 @@ table tbody tr:last-child td {
     border-radius: var(--border-radius-large);
     padding: 24px;
     display: flex;
-    align-items: center;
-    gap: 20px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: var(--shadow-light);
     position: relative;
     overflow: hidden;
     cursor: pointer;
+    min-height: 150px;
 }
 
 .kpi-card:hover {
@@ -1128,34 +1130,8 @@ table tbody tr:last-child td {
     background: linear-gradient(90deg, var(--accent-purple), var(--accent-purple-light));
 }
 
-.kpi-icon {
-    font-size: 1.5rem;
-    font-weight: 600;
-    width: 56px;
-    height: 56px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: var(--border-radius);
-    flex-shrink: 0;
-    background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-primary));
-    color: var(--text-primary);
-    box-shadow: var(--shadow-light);
-    transition: all 0.3s ease;
-}
-
-.kpi-card:hover .kpi-icon {
-    transform: scale(1.05);
-}
-
 .kpi-action {
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    color: var(--text-muted);
-}
-
-.kpi-card:hover .kpi-action {
-    opacity: 1;
+    display: none;
 }
 
 .kpi-content {

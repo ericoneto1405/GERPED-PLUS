@@ -54,9 +54,11 @@
                             <td>
                                 {% set processar_base = url_for('coletas.processar_coleta', pedido_id=0).rsplit('/', 1)[0] %}
                                 {% set historico_base = url_for('coletas.historico_coletas', pedido_id=0).rsplit('/', 1)[0] %}
+                                {% set retornar_base = url_for('coletas.retornar_financeiro', pedido_id=0).rsplit('/', 1)[0] %}
                                 <div class="action-buttons"
                                      data-processar-base="{{ processar_base }}"
-                                     data-historico-base="{{ historico_base }}">
+                                     data-historico-base="{{ historico_base }}"
+                                     data-retornar-base="{{ retornar_base }}">
                                     <div class="d-flex flex-column gap-2 align-items-center w-100">
                                         {% if not item.coletado_completo %}
                                         <button type="button"
@@ -72,6 +74,14 @@
                                                 data-pedidos="{{ item.pedidos_ids | join(',') }}"
                                                 data-cliente="{{ item.cliente_nome }}">
                                             <i class="bi bi-clock-history"></i> HISTÓRICO
+                                        </button>
+                                        {% endif %}
+                                        {% if not item.coletado_completo %}
+                                        <button type="button"
+                                                class="btn btn-sm btn-outline-danger btn-retornar-financeiro"
+                                                data-pedidos="{{ item.pedidos_ids | join(',') }}"
+                                                data-cliente="{{ item.cliente_nome }}">
+                                            <i class="bi bi-arrow-counterclockwise"></i> RETORNAR FINANCEIRO
                                         </button>
                                         {% endif %}
                                         <button type="button"
@@ -328,6 +338,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const pendenciasEndpoint = "{{ url_for('coletas.pendencias_itens') }}";
     let currentSort = { index: null, direction: 'asc' };
     let selecaoBaseUrl = null;
+    let selecaoAcaoAtual = null;
+    let selecaoClienteAtual = '';
 
     const parsePedidoIds = (valor) => {
         if (!valor) return [];
@@ -337,29 +349,91 @@ document.addEventListener('DOMContentLoaded', () => {
             .filter((id) => Number.isInteger(id));
     };
 
+    const fecharSelecaoModal = () => {
+        if (selecaoModal) {
+            selecaoModal.hide();
+        } else if (selecaoModalEl) {
+            selecaoModalEl.classList.remove('show');
+            selecaoModalEl.style.display = 'none';
+            selecaoModalEl.setAttribute('aria-hidden', 'true');
+        }
+    };
+
+    const retornarPedido = async ({ pedidoId, baseUrl, cliente }) => {
+        if (!Number.isInteger(pedidoId) || !baseUrl) {
+            return;
+        }
+        const clienteInfo = cliente ? ` do cliente ${cliente}` : '';
+        const confirmMessage = `Confirmar retorno do pedido #${pedidoId}${clienteInfo} para o financeiro?`;
+        if (!window.confirm(confirmMessage)) {
+            return;
+        }
+        try {
+            const response = await fetch(`${baseUrl}/${pedidoId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': window.CSRF_TOKEN,
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({})
+            });
+            const result = await response.json();
+            if (!response.ok || !result.success) {
+                throw new Error(result.message || 'Não foi possível retornar o pedido.');
+            }
+            alert(result.message || 'Pedido retornado ao financeiro.');
+            window.location.reload();
+        } catch (error) {
+            alert(error.message || 'Erro ao retornar pedido.');
+        }
+    };
+
     const abrirSelecaoPedidos = ({ tipo, cliente, pedidos, baseUrl }) => {
         if (!Array.isArray(pedidos) || pedidos.length === 0 || !baseUrl) {
             return;
         }
 
-        const destino = (pedidoId) => `${baseUrl}/${pedidoId}`;
+        const executarAcao = (pedidoId) => {
+            if (tipo === 'historico' || tipo === 'coleta') {
+                window.location.href = `${baseUrl}/${pedidoId}`;
+                return;
+            }
+            if (tipo === 'retornar') {
+                retornarPedido({ pedidoId, baseUrl, cliente });
+            }
+        };
+
         if (pedidos.length === 1) {
-            window.location.href = destino(pedidos[0]);
+            executarAcao(pedidos[0]);
             return;
         }
 
+        selecaoAcaoAtual = tipo;
+        selecaoBaseUrl = baseUrl;
+        selecaoClienteAtual = cliente || '';
+
         if (selecaoTitulo) {
-            selecaoTitulo.textContent = tipo === 'historico'
-                ? 'Histórico dos pedidos'
-                : 'Processar coleta';
+            let titulo = 'Processar coleta';
+            if (tipo === 'historico') {
+                titulo = 'Histórico dos pedidos';
+            } else if (tipo === 'retornar') {
+                titulo = 'Retornar pedido ao financeiro';
+            }
+            selecaoTitulo.textContent = titulo;
         }
         if (selecaoCliente) {
-            selecaoCliente.textContent = cliente ? `Cliente: ${cliente}` : '';
+            selecaoCliente.textContent = selecaoClienteAtual ? `Cliente: ${selecaoClienteAtual}` : '';
         }
         if (selecaoDescricao) {
-            selecaoDescricao.textContent = tipo === 'historico'
-                ? 'Selecione qual pedido deseja consultar.'
-                : 'Selecione qual pedido deseja coletar primeiro.';
+            let descricao = 'Selecione qual pedido deseja coletar primeiro.';
+            if (tipo === 'historico') {
+                descricao = 'Selecione qual pedido deseja consultar.';
+            } else if (tipo === 'retornar') {
+                descricao = 'Selecione qual pedido deseja retornar para o financeiro.';
+            }
+            selecaoDescricao.textContent = descricao;
         }
         if (selecaoLista) {
             selecaoLista.innerHTML = '';
@@ -375,11 +449,14 @@ document.addEventListener('DOMContentLoaded', () => {
             selecaoFeedback.textContent = '';
         }
         if (selecaoConfirmar) {
-            selecaoConfirmar.textContent = tipo === 'historico'
-                ? 'Ver histórico'
-                : 'Processar coleta';
+            let textoBotao = 'Processar coleta';
+            if (tipo === 'historico') {
+                textoBotao = 'Ver histórico';
+            } else if (tipo === 'retornar') {
+                textoBotao = 'Confirmar retorno';
+            }
+            selecaoConfirmar.textContent = textoBotao;
         }
-        selecaoBaseUrl = baseUrl;
 
         if (selecaoModal) {
             selecaoModal.show();
@@ -401,6 +478,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     selecaoFeedback.textContent = 'Selecione um pedido válido para continuar.';
                     selecaoFeedback.classList.remove('d-none');
                 }
+                return;
+            }
+            if (selecaoAcaoAtual === 'retornar') {
+                fecharSelecaoModal();
+                retornarPedido({
+                    pedidoId,
+                    baseUrl: selecaoBaseUrl,
+                    cliente: selecaoClienteAtual
+                });
                 return;
             }
             window.location.href = `${selecaoBaseUrl}/${pedidoId}`;
@@ -605,6 +691,20 @@ document.addEventListener('DOMContentLoaded', () => {
             abrirSelecaoPedidos({
                 tipo: 'historico',
                 cliente: historicoBtn.dataset.cliente || '',
+                pedidos,
+                baseUrl,
+            });
+            return;
+        }
+
+        const retornoBtn = event.target.closest('.btn-retornar-financeiro');
+        if (retornoBtn) {
+            const container = retornoBtn.closest('.action-buttons');
+            const baseUrl = container ? container.dataset.retornarBase : null;
+            const pedidos = parsePedidoIds(retornoBtn.dataset.pedidos);
+            abrirSelecaoPedidos({
+                tipo: 'retornar',
+                cliente: retornoBtn.dataset.cliente || '',
                 pedidos,
                 baseUrl,
             });

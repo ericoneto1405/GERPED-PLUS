@@ -402,26 +402,31 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for pagamento in pedido.pagamentos %}
+                    {% set pagamentos_ordenados = pedido.pagamentos | sort(attribute='id', reverse=True) %}
+                    {% for pagamento in pagamentos_ordenados %}
                     <tr>
                         <td>{{ pagamento.data_pagamento.strftime('%d/%m/%Y %H:%M') }}</td>
                         <td>{{ pagamento.valor | currency_brl }}</td>
                         <td>{{ pagamento.metodo_pagamento }}</td>
                         <td>
-                            {% set principal = pagamento.anexo_principal %}
-                            {% if principal %}
-                                <a href="{{ url_for('financeiro.ver_recibo', filename=principal.caminho) }}" target="_blank" class="btn btn-sm btn-outline-primary">Principal</a>
-                            {% elif pagamento.caminho_recibo %}
-                                <a href="{{ url_for('financeiro.ver_recibo', filename=pagamento.caminho_recibo) }}" target="_blank" class="btn btn-sm btn-outline-primary">Principal</a>
-                            {% else %}
-                                <span class="text-muted">-</span>
-                            {% endif %}
-                            {% if pagamento.anexos_extra %}
-                                <div style="display:flex; flex-direction:column; gap:4px; margin-top:6px;">
-                                    {% for anexo in pagamento.anexos_extra %}
-                                        <a href="{{ url_for('financeiro.ver_recibo', filename=anexo.caminho) }}" target="_blank" class="btn btn-sm btn-outline-secondary">Anexo extra {{ loop.index }}</a>
+                            {% set anexos = pagamento.todos_anexos %}
+                            {% if anexos %}
+                                <div class="comprovantes-list" style="display:flex; flex-direction:column; gap:4px;">
+                                    {% for anexo in anexos %}
+                                        <a href="{{ url_for('financeiro.ver_recibo', filename=anexo.caminho) }}"
+                                           target="_blank"
+                                           class="btn btn-sm {% if loop.first %}btn-outline-primary{% else %}btn-outline-secondary{% endif %}">
+                                            <i class="bi bi-file-earmark-text icon-text"></i>
+                                            {% if loop.first %}
+                                                Ver comprovante
+                                            {% else %}
+                                                Ver anexo extra {{ loop.index }}
+                                            {% endif %}
+                                        </a>
                                     {% endfor %}
                                 </div>
+                            {% else %}
+                                <span class="text-muted">Sem comprovante</span>
                             {% endif %}
                         </td>
                     </tr>

@@ -186,16 +186,39 @@ class Pagamento(db.Model):
     @property
     def anexos_extra(self):
         anexos_rel = self._safe_anexos_rel()
+        extras_rel = []
         if anexos_rel:
-            extras = [anexo.to_dict() for anexo in anexos_rel if not anexo.principal]
-            if extras:
-                return extras
+            extras_rel = [anexo.to_dict() for anexo in anexos_rel if not anexo.principal]
+
+        extras_legado = []
         try:
             import json
             data = json.loads(self.ocr_json or "{}")
-            return data.get("anexos_extra") or []
+            extras_legado = data.get("anexos_extra") or []
         except Exception:
+            extras_legado = []
+
+        if not extras_rel and not extras_legado:
             return []
+
+        resultado = []
+        existentes = set()
+
+        for extra in extras_rel:
+            caminho = extra.get('caminho')
+            if not caminho:
+                continue
+            resultado.append(extra)
+            existentes.add(caminho)
+
+        for extra in extras_legado:
+            caminho = extra.get('caminho')
+            if not caminho or caminho in existentes:
+                continue
+            resultado.append(extra)
+            existentes.add(caminho)
+
+        return resultado
 
     @property
     def anexo_principal(self):

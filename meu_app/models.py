@@ -219,14 +219,22 @@ class Pagamento(db.Model):
     @property
     def todos_anexos(self):
         anexos_rel = self._safe_anexos_rel()
-        if anexos_rel:
-            return [anexo.to_dict() for anexo in anexos_rel]
-        principal = self.anexo_principal
-        extras = self.anexos_extra
         resultado = []
-        if principal:
-            resultado.append(principal)
-        resultado.extend(extras)
+        if anexos_rel:
+            resultado = [anexo.to_dict() for anexo in anexos_rel]
+        else:
+            principal = self.anexo_principal
+            if principal:
+                resultado.append(principal)
+        extras = self.anexos_extra or []
+        if extras:
+            existentes = {anexo.get('caminho') for anexo in resultado if anexo.get('caminho')}
+            for extra in extras:
+                caminho = extra.get('caminho')
+                if not caminho or caminho in existentes:
+                    continue
+                resultado.append(extra)
+                existentes.add(caminho)
         return resultado
 
     def _safe_anexos_rel(self):

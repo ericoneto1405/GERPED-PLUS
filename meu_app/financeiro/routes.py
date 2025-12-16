@@ -103,7 +103,6 @@ def registrar_pagamento(pedido_id):
         comprovante_origem = None
         recibos = request.files.getlist('recibo') if not comprovante_compartilhado_id else []
         recibos = [r for r in recibos if r and r.filename]
-        caminho_recibo = None
         anexos_payload = []
         uploads_salvos = []
         hashes_vistos = set()
@@ -152,7 +151,6 @@ def registrar_pagamento(pedido_id):
                     carteira_credito,
                     session.get('usuario_nome')
                 )
-                caminho_recibo = carteira_meta['caminho']
                 carteira_meta['valor'] = float(carteira_credito.saldo_disponivel or 0)
                 anexos_payload.append(carteira_meta)
             except FinanceiroValidationError as err:
@@ -190,7 +188,6 @@ def registrar_pagamento(pedido_id):
                 current_app.logger.error(f'Falha ao copiar comprovante compartilhado: {err}')
                 flash('Arquivo original do comprovante não foi encontrado. Solicite o envio novamente.', 'error')
                 return redirect(url_for('financeiro.registrar_pagamento', pedido_id=pedido_id))
-            caminho_recibo = novo_nome
             anexos_payload.append({
                 'caminho': novo_nome,
                 'mime': mime_type,
@@ -294,57 +291,84 @@ def registrar_pagamento(pedido_id):
         conta_recebedor = request.form.get('conta_recebedor', '')
         chave_pix_recebedor = request.form.get('chave_pix_recebedor', '')
 
-        # Usar o serviço para registrar o pagamento
+        pagamentos_para_criar = []
+        for meta in anexos_payload:
+            valor_meta = meta.get('valor')
+            try:
+                valor_convertido = float(valor_meta) if valor_meta is not None else None
+            except (TypeError, ValueError):
+                valor_convertido = None
+            if not valor_convertido or valor_convertido <= 0:
+                flash('Informe o valor de cada comprovante selecionado.', 'error')
+                return redirect(url_for('financeiro.registrar_pagamento', pedido_id=pedido_id))
+            pagamentos_para_criar.append({'meta': meta, 'valor': valor_convertido})
+
+        if not pagamentos_para_criar:
+            flash('Selecione ou informe ao menos um comprovante para registrar o pagamento.', 'error')
+            return redirect(url_for('financeiro.registrar_pagamento', pedido_id=pedido_id))
+
+        soma_comprovantes = sum(item['valor'] for item in pagamentos_para_criar)
+        if round(soma_comprovantes, 2) != round(valor, 2):
+            flash('O campo Valor deve ser igual à soma dos valores dos comprovantes selecionados.', 'error')
+            return redirect(url_for('financeiro.registrar_pagamento', pedido_id=pedido_id))
+
         try:
-            sucesso, mensagem, pagamento = FinanceiroService.registrar_pagamento(
-                pedido_id=pedido_id,
-                valor=valor,
-                forma_pagamento=forma_pagamento,
-                observacoes=observacoes,
-                caminho_recibo=caminho_recibo,
-                recibo_mime=(getattr(request, 'recibo_meta', {}) or {}).get('recibo_mime'),
-                recibo_tamanho=(getattr(request, 'recibo_meta', {}) or {}).get('recibo_tamanho'),
-                recibo_sha256=(getattr(request, 'recibo_meta', {}) or {}).get('recibo_sha256'),
-                id_transacao=id_transacao,
-                # NOVOS DADOS EXTRAÍDOS DO COMPROVANTE
-                data_comprovante=data_comprovante if data_comprovante else None,
-                banco_emitente=banco_emitente if banco_emitente else None,
-                agencia_recebedor=agencia_recebedor if agencia_recebedor else None,
-                conta_recebedor=conta_recebedor if conta_recebedor else None,
-                chave_pix_recebedor=chave_pix_recebedor if chave_pix_recebedor else None,
-                comprovante_compartilhado_origem_id=comprovante_origem.id if comprovante_origem else None,
-                anexos_detalhes=anexos_payload if anexos_payload else None
-            )
-            
-            if sucesso:
-                if comprovante_origem:
+            pagamentos_criados = []
+            for dados in pagamentos_para_criar:
+                meta = dados['meta']
+                sucesso, mensagem, pagamento = FinanceiroService.registrar_pagamento(
+                    pedido_id=pedido_id,
+                    valor=dados['valor'],
+                    forma_pagamento=forma_pagamento,
+                    observacoes=observacoes,
+                    caminho_recibo=meta.get('caminho'),
+                    recibo_mime=meta.get('mime'),
+                    recibo_tamanho=meta.get('tamanho'),
+                    recibo_sha256=meta.get('sha256'),
+                    id_transacao=id_transacao,
+                    data_comprovante=data_comprovante if data_comprovante else None,
+                    banco_emitente=banco_emitente if banco_emitente else None,
+                    agencia_recebedor=agencia_recebedor if agencia_recebedor else None,
+                    conta_recebedor=conta_recebedor if conta_recebedor else None,
+                    chave_pix_recebedor=chave_pix_recebedor if chave_pix_recebedor else None,
+                    comprovante_compartilhado_origem_id=meta.get('compartilhado_origem_id'),
+                    anexos_detalhes=[meta]
+                )
+
+                if not sucesso:
+                    flash(mensagem, 'error')
+                    return redirect(url_for('financeiro.registrar_pagamento', pedido_id=pedido_id))
+
+                pagamentos_criados.append(pagamento)
+
+                if meta.get('compartilhado_origem_id') and comprovante_origem:
                     FinanceiroService.marcar_comprovante_compartilhado_usado(comprovante_origem, pedido_id)
-                if compartilhar_meta and pagamento:
+
+                if compartilhar_meta and meta.get('caminho') == compartilhar_meta.get('caminho'):
                     try:
                         FinanceiroService.criar_credito_carteira(
                             cliente_id=cliente_id,
                             pedido_origem_id=pedido_id,
                             pagamento=pagamento,
                             caminho_anexo=compartilhar_meta.get('caminho'),
-                            valor=compartilhar_item_valor_num or valor,
+                            valor=compartilhar_item_valor_num or dados['valor'],
                             usuario_nome=session.get('usuario_nome'),
                             original_name=compartilhar_meta.get('original_name')
                         )
                     except Exception as err:
                         current_app.logger.error(f"Erro ao registrar crédito na carteira: {err}")
-                if carteira_credito and pagamento:
+
+                if carteira_credito and meta.get('origem_credito_id'):
                     FinanceiroService.consumir_credito_carteira(
                         carteira_credito,
                         pedido_destino_id=pedido_id,
                         pagamento_destino=pagamento
                     )
-                current_app.logger.info(f"Pagamento registrado por {session.get('usuario_nome', 'N/A')}")
-                flash(mensagem, 'success')
-                return redirect(url_for('financeiro.listar_financeiro'))
-            else:
-                flash(mensagem, 'error')
-                return redirect(url_for('financeiro.registrar_pagamento', pedido_id=pedido_id))
-        except (FinanceiroValidationError, PagamentoDuplicadoError, PedidoNaoEncontradoError,
+
+            current_app.logger.info(f"{len(pagamentos_criados)} pagamento(s) registrado(s) por {session.get('usuario_nome', 'N/A')}")
+            flash('Pagamentos registrados com sucesso.', 'success')
+            return redirect(url_for('financeiro.listar_financeiro'))
+        except (FinanceiroValidationError, PagamentoDuplicadoError, PedidoNaoEncontradoError, 
                 ValorInvalidoError, ComprovanteObrigatorioError) as e:
             flash(str(e), 'error')
             return redirect(url_for('financeiro.registrar_pagamento', pedido_id=pedido_id))

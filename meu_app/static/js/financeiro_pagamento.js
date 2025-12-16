@@ -1026,9 +1026,32 @@ document.addEventListener('DOMContentLoaded', () => {
         filaLista.addEventListener('change', (event) => {
             const checkbox = event.target.closest('input[data-action="selecionar"]');
             if (!checkbox || !valorInput) return;
-            const rawValor = checkbox.dataset.valor;
-            const valorNumero = rawValor ? Number(rawValor) : null;
-            if (valorNumero === null || Number.isNaN(valorNumero)) return;
+            let rawValor = checkbox.dataset.valor;
+            let valorNumero = rawValor ? Number(rawValor) : null;
+            if (valorNumero === null || Number.isNaN(valorNumero)) {
+                if (checkbox.checked) {
+                    const manualValor = window.prompt('Informe o valor deste comprovante (use vírgula para centavos):', '');
+                    if (manualValor === null) {
+                        checkbox.checked = false;
+                        atualizarMasterCheckboxEstado();
+                        return;
+                    }
+                    const parsedManual = parseValor(manualValor);
+                    if (parsedManual === null || parsedManual <= 0) {
+                        window.alert('Valor inválido. Operação cancelada.');
+                        checkbox.checked = false;
+                        atualizarMasterCheckboxEstado();
+                        return;
+                    }
+                    valorNumero = parsedManual;
+                    checkbox.dataset.valor = parsedManual.toFixed(2);
+                } else {
+                    selecionadosValores.delete(checkbox.dataset.id);
+                    atualizarValorTotalSelecionados();
+                    atualizarMasterCheckboxEstado();
+                    return;
+                }
+            }
             const checkboxId = checkbox.dataset.id;
             if (!checkboxId) return;
 

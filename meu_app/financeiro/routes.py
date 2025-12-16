@@ -153,11 +153,7 @@ def registrar_pagamento(pedido_id):
                     session.get('usuario_nome')
                 )
                 caminho_recibo = carteira_meta['caminho']
-                request.recibo_meta = {
-                    'recibo_mime': carteira_meta.get('mime'),
-                    'recibo_tamanho': carteira_meta.get('tamanho'),
-                    'recibo_sha256': carteira_meta.get('sha256')
-                }
+                carteira_meta['valor'] = float(carteira_credito.saldo_disponivel or 0)
                 anexos_payload.append(carteira_meta)
             except FinanceiroValidationError as err:
                 flash(str(err), 'error')
@@ -195,17 +191,14 @@ def registrar_pagamento(pedido_id):
                 flash('Arquivo original do comprovante não foi encontrado. Solicite o envio novamente.', 'error')
                 return redirect(url_for('financeiro.registrar_pagamento', pedido_id=pedido_id))
             caminho_recibo = novo_nome
-            request.recibo_meta = {
-                'recibo_mime': mime_type,
-                'recibo_tamanho': tamanho,
-                'recibo_sha256': sha256
-            }
             anexos_payload.append({
                 'caminho': novo_nome,
                 'mime': mime_type,
                 'tamanho': tamanho,
                 'sha256': sha256,
-                'principal': True
+                'principal': True,
+                'valor': valor,
+                'compartilhado_origem_id': comprovante_origem.id if comprovante_origem else None
             })
         elif recibos:
             upload_dir = FinanceiroConfig.get_upload_directory('recibos')
@@ -266,18 +259,11 @@ def registrar_pagamento(pedido_id):
                         'valor': anexos_valores_map.get(recibo.filename)
                     }
 
-                    if idx == 0 and not carteira_meta:
-                        caminho_recibo = secure_name
-                        request.recibo_meta = {
-                            'recibo_mime': meta.get('mime'),
-                            'recibo_tamanho': tamanho,
-                            'recibo_sha256': sha256
-                        }
                     anexos_payload.append(meta)
                     if compartilhar_item_filename and compartilhar_item_filename == recibo.filename:
                         compartilhar_meta = {
                             **meta,
-                            'valor': compartilhar_item_valor,
+                            'valor': compartilhar_item_valor_num,
                             'original_name': recibo.filename
                         }
             except (ArquivoInvalidoError, FinanceiroValidationError, PagamentoDuplicadoError) as err:

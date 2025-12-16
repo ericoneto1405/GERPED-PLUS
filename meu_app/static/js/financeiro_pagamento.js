@@ -30,6 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const shareItemValorInput = document.getElementById('compartilhar_item_valor');
     const shareItemFilenameInput = document.getElementById('compartilhar_item_filename');
     const carteiraCreditoInput = document.getElementById('carteira_credito_id');
+    const anexosValoresInput = document.getElementById('anexos_valores');
     const carteiraPanel = document.getElementById('carteiraPanel');
     const carteiraAviso = document.getElementById('carteiraSelecionadaAviso');
     const removerCreditoBtn = document.getElementById('removerCreditoBtn');
@@ -1188,20 +1189,30 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     form.addEventListener('submit', (event) => {
+        let anexosMeta = [];
         if (reciboInput && (!campoCompartilhadoId || !campoCompartilhadoId.value)) {
             const selecionados = getSelecionarCheckboxes().filter((cb) => cb.checked);
             if (selecionados.length) {
                 const dt = new DataTransfer();
-                selecionados.forEach((cb) => {
+                anexosMeta = selecionados.map((cb) => {
                     const item = fila.find((i) => i.id === cb.dataset.id);
                     if (item && item.file) {
                         dt.items.add(item.file);
+                        const valorSelecionado = selecionadosValores.get(cb.dataset.id);
+                        return {
+                            nome: item.file.name,
+                            valor: Number.isFinite(valorSelecionado) ? valorSelecionado : null,
+                        };
                     }
-                });
+                    return null;
+                }).filter(Boolean);
                 if (dt.files.length) {
                     reciboInput.files = dt.files;
                 }
             }
+        }
+        if (anexosValoresInput) {
+            anexosValoresInput.value = anexosMeta.length ? JSON.stringify(anexosMeta) : '';
         }
 
         const totalPedido = parseFloat(form.dataset.total) || 0;

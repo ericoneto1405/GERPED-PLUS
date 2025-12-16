@@ -410,7 +410,8 @@
                             {% for anexo in anexos %}
                             <tr>
                                 <td>{{ pagamento.data_pagamento.strftime('%d/%m/%Y %H:%M') }}</td>
-                                <td>{{ pagamento.valor | currency_brl }}</td>
+                                {% set valor_anexo = anexo.valor if anexo.valor is not none else None %}
+                                <td>{{ (valor_anexo if valor_anexo is not none else pagamento.valor) | currency_brl }}</td>
                                 <td>{{ pagamento.metodo_pagamento }}</td>
                                 <td>
                                     <a href="{{ url_for('financeiro.ver_recibo', filename=anexo.caminho) }}"

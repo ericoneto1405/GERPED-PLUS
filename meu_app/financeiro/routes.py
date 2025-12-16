@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app, session, jsonify, send_from_directory
 import hashlib
 import os
+import json
 
 financeiro_bp = Blueprint('financeiro', __name__, url_prefix='/financeiro')
 from .services import FinanceiroService
@@ -106,6 +107,24 @@ def registrar_pagamento(pedido_id):
         anexos_payload = []
         uploads_salvos = []
         hashes_vistos = set()
+        anexos_valores_raw = request.form.get('anexos_valores') or ''
+        anexos_valores_map = {}
+        if anexos_valores_raw:
+            try:
+                parsed_valores = json.loads(anexos_valores_raw)
+                if isinstance(parsed_valores, list):
+                    for info in parsed_valores:
+                        nome = (info or {}).get('nome')
+                        valor_info = (info or {}).get('valor')
+                        if not nome:
+                            continue
+                        try:
+                            valor_convertido = float(valor_info)
+                        except (TypeError, ValueError):
+                            valor_convertido = None
+                        anexos_valores_map[nome] = valor_convertido
+            except json.JSONDecodeError:
+                current_app.logger.warning('Falha ao decodificar anexos_valores: conteúdo inválido.')
         pedido = Pedido.query.get(pedido_id)
         if not pedido:
             flash('Pedido não encontrado', 'error')
@@ -243,7 +262,8 @@ def registrar_pagamento(pedido_id):
                         'tamanho': tamanho,
                         'sha256': sha256,
                         'principal': idx == 0 and not carteira_meta,
-                        'original_name': recibo.filename
+                        'original_name': recibo.filename,
+                        'valor': anexos_valores_map.get(recibo.filename)
                     }
 
                     if idx == 0 and not carteira_meta:

@@ -300,6 +300,7 @@ class PagamentoAnexo(db.Model):
     tamanho = db.Column(db.Integer, nullable=True)
     sha256 = db.Column(db.String(64), unique=True, nullable=True)
     principal = db.Column(db.Boolean, default=False, nullable=False)
+    valor = db.Column(db.Numeric(10, 2), nullable=True)
     criado_em = db.Column(db.DateTime, default=utcnow, nullable=False)
     atualizado_em = db.Column(db.DateTime, default=utcnow, onupdate=utcnow, nullable=False)
 
@@ -313,7 +314,8 @@ class PagamentoAnexo(db.Model):
             'mime': self.mime,
             'tamanho': self.tamanho,
             'sha256': self.sha256,
-            'principal': self.principal
+            'principal': self.principal,
+            'valor': float(self.valor) if self.valor is not None else None
         }
 
 

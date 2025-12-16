@@ -316,7 +316,8 @@ class FinanceiroService:
                             mime=info.get('mime'),
                             tamanho=info.get('tamanho'),
                             sha256=info.get('sha256'),
-                            principal=bool(info.get('principal'))
+                            principal=bool(info.get('principal')),
+                            valor=info.get('valor')
                         )
                     )
             else:

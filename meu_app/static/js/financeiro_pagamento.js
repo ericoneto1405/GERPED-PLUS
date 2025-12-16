@@ -125,6 +125,125 @@ document.addEventListener('DOMContentLoaded', () => {
         return `${(bytes / Math.pow(k, i)).toFixed(2)} ${sizes[i]}`;
     };
 
+    const normalizeMlLabel = (label) => {
+        if (!label) return '';
+        return label
+            .toString()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase();
+    };
+
+    const mlStatusConfigs = {
+        valido: {
+            label: 'Válido',
+            tone: 'positivo',
+            heading: 'IA classifica como VÁLIDO',
+            summary: 'Sem indícios de fraude ou inconsistência aparente.',
+            action: 'Revise rapidamente e prossiga com o lançamento.',
+        },
+        invalido: {
+            label: 'Inválido',
+            tone: 'critico',
+            heading: 'IA identifica o comprovante como INVÁLIDO',
+            summary: 'Foram detectados padrões de risco ou campos incoerentes.',
+            action: 'Não aprove automaticamente. Peça um novo upload ou revise com atenção.',
+        },
+        suspeito: {
+            label: 'Suspeito',
+            tone: 'alerta',
+            heading: 'IA marcou este comprovante como SUSPEITO',
+            summary: 'Existem alterações ou ausência de dados críticos.',
+            action: 'Solicite confirmação manual antes de liberar o pagamento.',
+        },
+        default: {
+            label: 'Sem classificação',
+            tone: 'neutro',
+            heading: 'IA sem opinião definida',
+            summary: 'Não foi possível classificar este comprovante automaticamente.',
+            action: 'Utilize os demais dados para tomar a decisão.',
+        },
+    };
+
+    const buildMlBadge = (result) => {
+        if (!result || (!result.ml_status && !result.ml_error)) return '';
+        if (result.ml_error) {
+            return '<span class="ml-pill neutro">IA indisponível</span>';
+        }
+        const normalized = normalizeMlLabel(result.ml_status);
+        const config = mlStatusConfigs[normalized] || mlStatusConfigs.default;
+        const confidence = typeof result.ml_confidence === 'number'
+            ? `${Math.round(result.ml_confidence * 100)}%`
+            : null;
+        return `<span class="ml-pill ${config.tone}">IA: ${config.label}${confidence ? ` · ${confidence}` : ''}</span>`;
+    };
+
+    const buildMlFeedback = (data) => {
+        const status = data.ml_status;
+        const error = data.ml_error;
+        if (!status && !error) return null;
+        const wrapper = document.createElement('div');
+        wrapper.className = 'ml-feedback';
+
+        if (error) {
+            wrapper.classList.add('neutro');
+            wrapper.innerHTML = `
+                <div class="ml-feedback-header">
+                    <div>
+                        <strong>IA indisponível</strong>
+                        <div class="ml-feedback-summary">Não foi possível usar o modelo PyTorch neste comprovante.</div>
+                    </div>
+                    <span class="ml-pill neutro">Verifique manualmente</span>
+                </div>
+                <div class="ml-feedback-action">${error}</div>
+            `;
+            return wrapper;
+        }
+
+        const normalized = normalizeMlLabel(status);
+        const config = mlStatusConfigs[normalized] || mlStatusConfigs.default;
+        wrapper.classList.add(config.tone);
+        const confidence = typeof data.ml_confidence === 'number'
+            ? `${Math.round(data.ml_confidence * 100)}%`
+            : null;
+
+        const header = document.createElement('div');
+        header.className = 'ml-feedback-header';
+        header.innerHTML = `
+            <div>
+                <strong>${config.heading}</strong>
+                <div class="ml-feedback-summary">${config.summary}</div>
+            </div>
+            <span class="ml-pill ${config.tone}">
+                ${config.label}${confidence ? ` · ${confidence}` : ''}
+            </span>
+        `;
+        wrapper.appendChild(header);
+
+        const action = document.createElement('div');
+        action.className = 'ml-feedback-action';
+        action.textContent = config.action;
+        wrapper.appendChild(action);
+
+        const scoresEntries = Object.entries(data.ml_scores || {});
+        if (scoresEntries.length) {
+            const scoreGrid = document.createElement('div');
+            scoreGrid.className = 'ml-scores';
+            scoresEntries
+                .sort((a, b) => Number(b[1]) - Number(a[1]))
+                .forEach(([label, score]) => {
+                    const scoreCard = document.createElement('div');
+                    scoreCard.className = 'ml-score-card';
+                    const percent = `${Math.round(Number(score) * 100)}%`;
+                    scoreCard.innerHTML = `<span>${label}</span><strong>${percent}</strong>`;
+                    scoreGrid.appendChild(scoreCard);
+                });
+            wrapper.appendChild(scoreGrid);
+        }
+
+        return wrapper;
+    };
+
     const abrirComprovanteEmNovaAba = (url, temporario) => {
         if (!url) return;
         const anchor = document.createElement('a');
@@ -464,6 +583,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     highlights.push(`📅 ${item.result.data_encontrada}`);
                 }
             }
+            const highlightText = highlights.length
+                ? highlights.join(' · ')
+                : (item.result ? 'Sem dados relevantes extraídos.' : 'Aguardando OCR...');
+            const mlBadgeHtml = item.result ? buildMlBadge(item.result) : '';
 
         const valorReconhecido = item.result && item.result.valor_encontrado !== undefined && item.result.valor_encontrado !== null
             ? formatBRL(parseValor(item.result.valor_encontrado) || item.result.valor_encontrado)
@@ -512,7 +635,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="fila-header">
                         <div>
                             <div class="fila-nome">${item.file.name}</div>
-                            <div class="fila-meta"></div>
+                            <div class="fila-meta">
+                                ${highlightText}
+                                ${mlBadgeHtml ? `<span class="ml-inline-pill">${mlBadgeHtml}</span>` : ''}
+                            </div>
                         </div>
                         <div class="fila-header-actions">
                             <span class="fila-status ${badgeClass}">${statusLabel}</span>
@@ -900,6 +1026,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
             }
             ocrStatus.appendChild(validacaoDiv);
+        }
+
+        const mlFeedback = buildMlFeedback(data);
+        if (mlFeedback) {
+            ocrStatus.appendChild(mlFeedback);
         }
 
         if (ocrStatusText === 'failed' && !dataPoints.length) {

@@ -469,6 +469,141 @@ button[type="submit"]:focus-visible,
     gap: 10px;
 }
 
+.panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 6px;
+}
+
+.panel-header h4 {
+    margin: 0;
+    font-size: 1rem;
+}
+
+.panel-badge {
+    background: #0f8b8d;
+    color: #fff;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 999px;
+    letter-spacing: 0.05em;
+}
+
+.ml-feedback {
+    border-radius: 12px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    padding: 14px;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    border-left: 4px solid #555;
+}
+
+.ml-feedback.positivo {
+    border-left-color: #0f8a4b;
+}
+
+.ml-feedback.alerta {
+    border-left-color: #f0ad4e;
+}
+
+.ml-feedback.critico {
+    border-left-color: #d9534f;
+}
+
+.ml-feedback.neutro {
+    border-left-color: #6c757d;
+}
+
+.ml-feedback-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.ml-feedback-summary {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-top: 4px;
+}
+
+.ml-feedback-action {
+    font-size: 0.9rem;
+    padding: 10px;
+    border-radius: 10px;
+    background: rgba(15, 139, 141, 0.08);
+    color: var(--text-primary);
+}
+
+.ml-feedback.critico .ml-feedback-action {
+    background: rgba(217, 83, 79, 0.08);
+}
+
+.ml-feedback.alerta .ml-feedback-action {
+    background: rgba(240, 173, 78, 0.12);
+}
+
+.ml-scores {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 8px;
+}
+
+.ml-score-card {
+    background: var(--surface-muted);
+    border-radius: 10px;
+    padding: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9rem;
+}
+
+.ml-score-card strong {
+    font-size: 1rem;
+}
+
+.ml-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.ml-pill.positivo {
+    background: rgba(15, 138, 75, 0.12);
+    color: #0f8a4b;
+}
+
+.ml-pill.alerta {
+    background: rgba(240, 173, 78, 0.15);
+    color: #b9770e;
+}
+
+.ml-pill.critico {
+    background: rgba(217, 83, 79, 0.15);
+    color: #b72121;
+}
+
+.ml-pill.neutro {
+    background: rgba(108, 117, 125, 0.2);
+    color: #4a4f54;
+}
+
+.ml-inline-pill {
+    display: inline-flex;
+    margin-left: 6px;
+}
+
 .recibo-queue {
     margin-top: 12px;
     border-radius: 12px;

@@ -398,41 +398,43 @@
                         <th>Data</th>
                         <th>Valor</th>
                         <th>Método</th>
-                        <th>Comprovantes</th>
+                        <th>Comprovante</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% set pagamentos_ordenados = pedido.pagamentos | sort(attribute='id', reverse=True) %}
+                    {% set exibiu_linha = False %}
                     {% for pagamento in pagamentos_ordenados %}
-                    <tr>
-                        <td>{{ pagamento.data_pagamento.strftime('%d/%m/%Y %H:%M') }}</td>
-                        <td>{{ pagamento.valor | currency_brl }}</td>
-                        <td>{{ pagamento.metodo_pagamento }}</td>
-                        <td>
-                            {% set anexos = pagamento.todos_anexos %}
-                            {% if anexos %}
-                                <div class="comprovantes-list" style="display:flex; flex-direction:column; gap:4px;">
-                                    {% for anexo in anexos %}
-                                        <a href="{{ url_for('financeiro.ver_recibo', filename=anexo.caminho) }}"
-                                           target="_blank"
-                                           class="btn btn-sm {% if loop.first %}btn-outline-primary{% else %}btn-outline-secondary{% endif %}">
-                                            <i class="bi bi-file-earmark-text icon-text"></i>
-                                            {% if loop.first %}
-                                                Ver comprovante
-                                            {% else %}
-                                                Ver anexo extra {{ loop.index }}
-                                            {% endif %}
-                                        </a>
-                                    {% endfor %}
-                                </div>
-                            {% else %}
-                                <span class="text-muted">Sem comprovante</span>
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% else %}
-                    <tr><td colspan="4">Nenhum pagamento registrado.</td></tr>
+                        {% set anexos = pagamento.todos_anexos %}
+                        {% if anexos %}
+                            {% for anexo in anexos %}
+                            <tr>
+                                <td>{{ pagamento.data_pagamento.strftime('%d/%m/%Y %H:%M') }}</td>
+                                <td>{{ pagamento.valor | currency_brl }}</td>
+                                <td>{{ pagamento.metodo_pagamento }}</td>
+                                <td>
+                                    <a href="{{ url_for('financeiro.ver_recibo', filename=anexo.caminho) }}"
+                                       target="_blank"
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-file-earmark-text icon-text"></i> Ver comprovante
+                                    </a>
+                                </td>
+                            </tr>
+                            {% set exibiu_linha = True %}
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td>{{ pagamento.data_pagamento.strftime('%d/%m/%Y %H:%M') }}</td>
+                                <td>{{ pagamento.valor | currency_brl }}</td>
+                                <td>{{ pagamento.metodo_pagamento }}</td>
+                                <td><span class="text-muted">Sem comprovante</span></td>
+                            </tr>
+                            {% set exibiu_linha = True %}
+                        {% endif %}
                     {% endfor %}
+                    {% if not exibiu_linha %}
+                        <tr><td colspan="4">Nenhum pagamento registrado.</td></tr>
+                    {% endif %}
                 </tbody>
             </table>
         </div>

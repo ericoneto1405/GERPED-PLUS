@@ -77,7 +77,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let itemSelecionadoId = null;
     let comprovantesDisponiveis = [];
     let bulkSelecting = false;
-
+    const selecionadosValores = new Map();
+    let atualizandoValorPorSelecao = false;
+    let valorControladoPorSelecao = false;
     let carteiraSelecionada = null;
 
     const anexosPersistidos = [];
@@ -282,6 +284,52 @@ document.addEventListener('DOMContentLoaded', () => {
         valorInput.dataset.rawValue = numero.toFixed(2);
     };
 
+    const atualizarMasterCheckboxEstado = () => {
+        if (!masterSelectCheckbox) return;
+        const checkboxes = getSelecionarCheckboxes();
+        if (!checkboxes.length) {
+            masterSelectCheckbox.checked = false;
+            masterSelectCheckbox.indeterminate = false;
+            return;
+        }
+        const marcados = checkboxes.filter((cb) => cb.checked).length;
+        masterSelectCheckbox.checked = marcados === checkboxes.length;
+        masterSelectCheckbox.indeterminate = marcados > 0 && marcados < checkboxes.length;
+    };
+
+    const atualizarValorTotalSelecionados = () => {
+        if (!valorInput) return;
+        if (!selecionadosValores.size) {
+            if (valorControladoPorSelecao) {
+                atualizandoValorPorSelecao = true;
+                setValorFormatado(0);
+                atualizandoValorPorSelecao = false;
+                valorControladoPorSelecao = false;
+            }
+            return;
+        }
+        let total = 0;
+        selecionadosValores.forEach((valor) => {
+            if (Number.isFinite(valor)) {
+                total += valor;
+            }
+        });
+        atualizandoValorPorSelecao = true;
+        setValorFormatado(total);
+        atualizandoValorPorSelecao = false;
+        valorControladoPorSelecao = true;
+    };
+
+    const limparSelecionados = () => {
+        selecionadosValores.clear();
+        getSelecionarCheckboxes().forEach((cb) => {
+            cb.checked = false;
+        });
+        valorControladoPorSelecao = false;
+        atualizarValorTotalSelecionados();
+        atualizarMasterCheckboxEstado();
+    };
+
     const parseValor = (valor) => {
         if (typeof valor === 'number') return Number.isFinite(valor) ? valor : null;
         if (typeof valor !== 'string') return null;
@@ -321,6 +369,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const shareSelecionadoId = getShareSelectionId();
         const temPersistidos = anexosPersistidos.length > 0;
         const temFila = fila.length > 0;
+
+        const idsAtuais = new Set(fila.map((item) => item.id));
+        Array.from(selecionadosValores.keys()).forEach((id) => {
+            if (!idsAtuais.has(id)) {
+                selecionadosValores.delete(id);
+            }
+        });
 
         if (temPersistidos) {
             const heading = document.createElement('div');
@@ -376,6 +431,11 @@ document.addEventListener('DOMContentLoaded', () => {
             fragment.appendChild(vazio);
             filaLista.innerHTML = '';
             filaLista.appendChild(fragment);
+            if (selecionadosValores.size) {
+                selecionadosValores.clear();
+            }
+            atualizarValorTotalSelecionados();
+            atualizarMasterCheckboxEstado();
             return;
         }
 
@@ -426,6 +486,16 @@ document.addEventListener('DOMContentLoaded', () => {
             const falhaCard = baseState === 'fail';
             const adminShareUnlocked = !!item.adminShareUnlocked;
             const podeSelecionar = !falhaCard || adminShareUnlocked;
+            if (!podeSelecionar && selecionadosValores.has(item.id)) {
+                selecionadosValores.delete(item.id);
+            }
+            if (selecionadosValores.has(item.id)) {
+                if (valorNumericoReconhecido !== null && !Number.isNaN(valorNumericoReconhecido)) {
+                    selecionadosValores.set(item.id, valorNumericoReconhecido);
+                } else {
+                    selecionadosValores.delete(item.id);
+                }
+            }
             const shareValorAttr = valorNumericoReconhecido !== null ? valorNumericoReconhecido.toFixed(2) : '';
             const shareCheckedAttr = shareSelecionadoId && shareSelecionadoId === item.id ? 'checked' : '';
             const shareDisabledAttr = falhaCard && !adminShareUnlocked ? 'disabled' : '';
@@ -447,7 +517,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             <span class="fila-status ${badgeClass}">${statusLabel}</span>
                         ${podeSelecionar ? `
                         <label class="fila-checkbox">
-                            <input type="checkbox" data-action="selecionar" data-id="${item.id}" data-valor="${valorNumericoReconhecido !== null ? valorNumericoReconhecido : ''}">
+                            <input type="checkbox" data-action="selecionar" data-id="${item.id}" data-valor="${valorNumericoReconhecido !== null ? valorNumericoReconhecido : ''}" ${selecionadosValores.has(item.id) ? 'checked' : ''}>
                             Selecionar
                         </label>` : ''}
                         <button type="button" class="btn btn-secondary" data-action="remover" ${item.status === 'processando' ? 'disabled' : ''}>
@@ -493,6 +563,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         filaLista.innerHTML = '';
         filaLista.appendChild(fragment);
+        atualizarMasterCheckboxEstado();
+        atualizarValorTotalSelecionados();
     };
 
     const enqueueFiles = (fileList) => {
@@ -937,6 +1009,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     itemSelecionadoId = null;
                     limparCampoStatus();
                 }
+                if (selecionadosValores.has(item.id)) {
+                    selecionadosValores.delete(item.id);
+                    atualizarValorTotalSelecionados();
+                }
                 if (getShareSelectionId() === item.id) {
                     clearShareHiddenFields(true);
                 }
@@ -952,15 +1028,18 @@ document.addEventListener('DOMContentLoaded', () => {
             const rawValor = checkbox.dataset.valor;
             const valorNumero = rawValor ? Number(rawValor) : null;
             if (valorNumero === null || Number.isNaN(valorNumero)) return;
+            const checkboxId = checkbox.dataset.id;
+            if (!checkboxId) return;
 
-            const atual = parseValor(valorInput.value) || 0;
-            const novo = checkbox.checked ? atual + valorNumero : Math.max(0, atual - valorNumero);
-            setValorFormatado(novo);
+            if (checkbox.checked) {
+                selecionadosValores.set(checkboxId, valorNumero);
+            } else {
+                selecionadosValores.delete(checkboxId);
+            }
+            atualizarValorTotalSelecionados();
 
             if (masterSelectCheckbox && !bulkSelecting) {
-                const todos = getSelecionarCheckboxes();
-                const todosMarcados = todos.length > 0 && todos.every((cb) => cb.checked);
-                masterSelectCheckbox.checked = todosMarcados;
+                atualizarMasterCheckboxEstado();
             }
         });
     }
@@ -1029,24 +1108,27 @@ document.addEventListener('DOMContentLoaded', () => {
         masterSelectCheckbox.addEventListener('change', () => {
             bulkSelecting = true;
             const marcar = masterSelectCheckbox.checked;
-            let atual = parseValor(valorInput.value) || 0;
-            let delta = 0;
             const todos = getSelecionarCheckboxes();
-            todos.forEach((cb) => {
-                const rawValor = cb.dataset.valor;
-                const valorNumero = rawValor ? Number(rawValor) : null;
-                const estava = cb.checked;
-                cb.checked = marcar;
-                if (valorNumero !== null && !Number.isNaN(valorNumero)) {
-                    if (marcar && !estava) delta += valorNumero;
-                    if (!marcar && estava) delta -= valorNumero;
-                }
-            });
-            if (valorInput && delta !== 0) {
-                const novo = Math.max(0, atual + delta);
-                setValorFormatado(novo);
+            if (!marcar) {
+                todos.forEach((cb) => {
+                    cb.checked = false;
+                });
+                selecionadosValores.clear();
+            } else {
+                selecionadosValores.clear();
+                todos.forEach((cb) => {
+                    cb.checked = true;
+                    const rawValor = cb.dataset.valor;
+                    const valorNumero = rawValor ? Number(rawValor) : null;
+                    const checkboxId = cb.dataset.id;
+                    if (checkboxId && valorNumero !== null && !Number.isNaN(valorNumero)) {
+                        selecionadosValores.set(checkboxId, valorNumero);
+                    }
+                });
             }
             bulkSelecting = false;
+            atualizarValorTotalSelecionados();
+            atualizarMasterCheckboxEstado();
         });
     }
 
@@ -1063,6 +1145,15 @@ document.addEventListener('DOMContentLoaded', () => {
             if (btn.dataset.action === 'descartar') {
                 const confirmar = window.confirm('Deseja remover este comprovante compartilhado da lista?');
                 if (confirmar) descartarComprovanteCompartilhado(id);
+            }
+        });
+    }
+
+    if (valorInput) {
+        valorInput.addEventListener('input', () => {
+            if (atualizandoValorPorSelecao) return;
+            if (selecionadosValores.size) {
+                limparSelecionados();
             }
         });
     }

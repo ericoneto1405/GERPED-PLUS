@@ -86,5 +86,205 @@
   {
     "texto": "Comprovante de Pagamento Pix\nSicredi\nValor: R$ 29.005,00\nRealizado em: 07/10/2025 - 10:26:02\nSolicitante: ARTUR AUGUSTO LUSTOSA DE ARAGAO\nCooperativa e conta origem: 0903/06245-5\nNome do destinatário: SERTAO ATACADO\nCNPJ do destinatário: 30.080.209/0004-16\nInstituição do destinatário: STONE IP S.A.\nAgência e conta do destinatário: 1/46283397-1\nNome do pagador: Al Comercio E Atacado De Alimentos Ltda\nCNPJ do pagador: 32.171.714/0003-10\nInstituição do pagador: BANCO COOPERATIVO SICREDI S.A.\nID da transação: E2640816120251007132534DlxAv1izY\nAutenticação Eletrônica: E264.0816.1202.5100.7132.534D.lxAv.1izY\nNúmero de Controle: 13145974174\nEmitido em: 07/10/2025 - 10:26:06\n* A transação acima foi realizada no nosso Aplicativo Sicredi conforme as condições especificadas neste comprovante.\n* Os dados digitados são de responsabilidade do usuário.\nServiços por telefone 3003 4770 (Capitais e Regiões Metropolitanas) / 0800 724 4770 (Demais Regiões)\nSAC 0800 724 7220 / Ouvidoria 0800 646 25 19",
     "label": "valido"
+  },
+  {
+    "texto": "Comprovante com inconsistências\nValor destacado: R$ 1.329,74\nRegistrado em 15/11/2025 03:09\nPagador: Dados borrados\nRecebedor: somente 'Grupo' sem CNPJ\nID apresentado: 621918d831c240298e\nTexto possui edições e múltiplas fontes.",
+    "label": "suspeito"
+  },
+  {
+    "texto": "Comprovante de transferência PIX\nData: 15/11/2025 20:00\nValor: R$ 7.805,94\nPagador: SERTAO ATACADO\nCNPJ Pagador: 30.080.209/0004-16\nRecebedor: GRUPO SERTAO\nChave: pix@gruposertao.com\nBanco: Stone Pagamentos S.A.\nID da transação: B2719F2AEDBF4BA4AF6417F97DAF001D\nMensagem: Pagamento confirmado sem restrições.",
+    "label": "valido"
+  },
+  {
+    "texto": "Recibo não autenticado\nValor anotado: R$ 10.668,44\nData declarada: 13/10/2025 11:57\nNão há banco emissor, nem ID da transação.\nRecebedor informado como 'Dinheiro em caixa'.\nAssinatura manual sem carimbo oficial.\nObservação: imagem cortada e sem QR Code.",
+    "label": "inválido"
+  },
+  {
+    "texto": "Comprovante de transferência PIX\nData: 21/10/2025 05:55\nValor: R$ 533,43\nPagador: SERTAO ATACADO\nCNPJ Pagador: 30.080.209/0004-16\nRecebedor: GRUPO SERTAO\nChave: pix@gruposertao.com\nBanco: Stone Pagamentos S.A.\nID da transação: BC4C8E3456334DAF83E5BF03278D169C\nMensagem: Pagamento confirmado sem restrições.",
+    "label": "valido"
+  },
+  {
+    "texto": "Comprovante de transferência PIX\nData: 07/10/2025 12:23\nValor: R$ 6.195,53\nPagador: SERTAO ATACADO\nCNPJ Pagador: 30.080.209/0004-16\nRecebedor: GRUPO SERTAO\nChave: pix@gruposertao.com\nBanco: Stone Pagamentos S.A.\nID da transação: B74F200C568F4E638FCC1CDF6217D90A\nMensagem: Pagamento confirmado sem restrições.",
+    "label": "valido"
+  },
+  {
+    "texto": "Comprovante de transferência PIX\nData: 09/11/2025 04:00\nValor: R$ 4.399,77\nPagador: SERTAO ATACADO\nCNPJ Pagador: 30.080.209/0004-16\nRecebedor: GRUPO SERTAO\nChave: pix@gruposertao.com\nBanco: Stone Pagamentos S.A.\nID da transação: EDA5649BBCFC4BE5BEFE934ECCFB3305\nMensagem: Pagamento confirmado sem restrições.",
+    "label": "valido"
+  },
+  {
+    "texto": "Recibo não autenticado\nValor anotado: R$ 11.803,37\nData declarada: 13/10/2025 13:18\nNão há banco emissor, nem ID da transação.\nRecebedor informado como 'Dinheiro em caixa'.\nAssinatura manual sem carimbo oficial.\nObservação: imagem cortada e sem QR Code.",
+    "label": "inválido"
+  },
+  {
+    "texto": "Recibo não autenticado\nValor anotado: R$ 6.145,03\nData declarada: 09/10/2025 01:41\nNão há banco emissor, nem ID da transação.\nRecebedor informado como 'Dinheiro em caixa'.\nAssinatura manual sem carimbo oficial.\nObservação: imagem cortada e sem QR Code.",
+    "label": "inválido"
+  },
+  {
+    "texto": "Comprovante de transferência PIX\nData: 10/11/2025 11:33\nValor: R$ 3.149,99\nPagador: SERTAO ATACADO\nCNPJ Pagador: 30.080.209/0004-16\nRecebedor: GRUPO SERTAO\nChave: pix@gruposertao.com\nBanco: Stone Pagamentos S.A.\nID da transação: 6DCC4D51B0CD4A15B538EAA853B20D60\nMensagem: Pagamento confirmado sem restrições.",
+    "label": "valido"
+  },
+  {
+    "texto": "Comprovante com inconsistências\nValor destacado: R$ 5.276,47\nRegistrado em 18/10/2025 08:25\nPagador: Dados borrados\nRecebedor: somente 'Grupo' sem CNPJ\nID apresentado: 7600aec096e247d192\nTexto possui edições e múltiplas fontes.",
+    "label": "suspeito"
+  },
+  {
+    "texto": "Comprovante de transferência PIX\nData: 05/11/2025 23:52\nValor: R$ 3.549,39\nPagador: SERTAO ATACADO\nCNPJ Pagador: 30.080.209/0004-16\nRecebedor: GRUPO SERTAO\nChave: pix@gruposertao.com\nBanco: Stone Pagamentos S.A.\nID da transação: BCEA356B68DE4AA89372E3ED804C60EC\nMensagem: Pagamento confirmado sem restrições.",
+    "label": "valido"
+  },
+  {
+    "texto": "Comprovante com inconsistências\nValor destacado: R$ 8.119,95\nRegistrado em 31/10/2025 06:27\nPagador: Dados borrados\nRecebedor: somente 'Grupo' sem CNPJ\nID apresentado: f117acf2b79e4d91bc\nTexto possui edições e múltiplas fontes.",
+    "label": "suspeito"
+  },
+  {
+    "texto": "Comprovante de transferência PIX\nData: 28/10/2025 04:08\nValor: R$ 1.566,98\nPagador: SERTAO ATACADO\nCNPJ Pagador: 30.080.209/0004-16\nRecebedor: GRUPO SERTAO\nChave: pix@gruposertao.com\nBanco: Stone Pagamentos S.A.\nID da transação: 96C411E45A28448997B1609677FC290B\nMensagem: Pagamento confirmado sem restrições.",
+    "label": "valido"
+  },
+  {
+    "texto": "Comprovante com inconsistências\nValor destacado: R$ 6.913,87\nRegistrado em 27/10/2025 11:59\nPagador: Dados borrados\nRecebedor: somente 'Grupo' sem CNPJ\nID apresentado: 7be0f91a963b4b3bae\nTexto possui edições e múltiplas fontes.",
+    "label": "suspeito"
+  },
+  {
+    "texto": "Comprovante de transferência PIX\nData: 14/10/2025 12:48\nValor: R$ 5.485,38\nPagador: SERTAO ATACADO\nCNPJ Pagador: 30.080.209/0004-16\nRecebedor: GRUPO SERTAO\nChave: pix@gruposertao.com\nBanco: Stone Pagamentos S.A.\nID da transação: BCCC842959B844258D5EFAA3B5A54F62\nMensagem: Pagamento confirmado sem restrições.",
+    "label": "valido"
+  },
+  {
+    "texto": "Comprovante de transferência PIX\nData: 19/10/2025 18:32\nValor: R$ 6.037,50\nPagador: SERTAO ATACADO\nCNPJ Pagador: 30.080.209/0004-16\nRecebedor: GRUPO SERTAO\nChave: pix@gruposertao.com\nBanco: Stone Pagamentos S.A.\nID da transação: 7AC73DDCF56B4451B56942BB05FB39A5\nMensagem: Pagamento confirmado sem restrições.",
+    "label": "valido"
+  },
+  {
+    "texto": "Comprovante de transferência PIX\nData: 20/10/2025 01:06\nValor: R$ 2.946,72\nPagador: SERTAO ATACADO\nCNPJ Pagador: 30.080.209/0004-16\nRecebedor: GRUPO SERTAO\nChave: pix@gruposertao.com\nBanco: Stone Pagamentos S.A.\nID da transação: A4A47A82E7874120875C4FF79841D5F1\nMensagem: Pagamento confirmado sem restrições.",
+    "label": "valido"
+  },
+  {
+    "texto": "Comprovante de transferência PIX\nData: 10/11/2025 05:06\nValor: R$ 8.560,01\nPagador: SERTAO ATACADO\nCNPJ Pagador: 30.080.209/0004-16\nRecebedor: GRUPO SERTAO\nChave: pix@gruposertao.com\nBanco: Stone Pagamentos S.A.\nID da transação: A8F94016472C428386D9394431B94F5D\nMensagem: Pagamento confirmado sem restrições.",
+    "label": "valido"
+  },
+  {
+    "texto": "Recibo não autenticado\nValor anotado: R$ 8.653,63\nData declarada: 02/11/2025 11:19\nNão há banco emissor, nem ID da transação.\nRecebedor informado como 'Dinheiro em caixa'.\nAssinatura manual sem carimbo oficial.\nObservação: imagem cortada e sem QR Code.",
+    "label": "inválido"
+  },
+  {
+    "texto": "Comprovante de transferência PIX\nData: 13/10/2025 07:57\nValor: R$ 5.199,29\nPagador: SERTAO ATACADO\nCNPJ Pagador: 30.080.209/0004-16\nRecebedor: GRUPO SERTAO\nChave: pix@gruposertao.com\nBanco: Stone Pagamentos S.A.\nID da transação: D3307DB18B384ADA871518CCEB1A0437\nMensagem: Pagamento confirmado sem restrições.",
+    "label": "valido"
+  },
+  {
+    "texto": "Comprovante com inconsistências\nValor destacado: R$ 7.902,33\nRegistrado em 02/10/2025 18:19\nPagador: Dados borrados\nRecebedor: somente 'Grupo' sem CNPJ\nID apresentado: bb6768222fd24e07be\nTexto possui edições e múltiplas fontes.",
+    "label": "suspeito"
+  },
+  {
+    "texto": "Comprovante de transferência PIX\nData: 07/11/2025 06:46\nValor: R$ 2.039,07\nPagador: SERTAO ATACADO\nCNPJ Pagador: 30.080.209/0004-16\nRecebedor: GRUPO SERTAO\nChave: pix@gruposertao.com\nBanco: Stone Pagamentos S.A.\nID da transação: 19DA1832468840578FAD9275FB7EE1F3\nMensagem: Pagamento confirmado sem restrições.",
+    "label": "valido"
+  },
+  {
+    "texto": "Recibo não autenticado\nValor anotado: R$ 6.327,38\nData declarada: 09/11/2025 11:07\nNão há banco emissor, nem ID da transação.\nRecebedor informado como 'Dinheiro em caixa'.\nAssinatura manual sem carimbo oficial.\nObservação: imagem cortada e sem QR Code.",
+    "label": "inválido"
+  },
+  {
+    "texto": "Comprovante com inconsistências\nValor destacado: R$ 2.292,24\nRegistrado em 10/10/2025 09:50\nPagador: Dados borrados\nRecebedor: somente 'Grupo' sem CNPJ\nID apresentado: 687c368f020946959e\nTexto possui edições e múltiplas fontes.",
+    "label": "suspeito"
+  },
+  {
+    "texto": "Recibo não autenticado\nValor anotado: R$ 542,27\nData declarada: 06/11/2025 09:44\nNão há banco emissor, nem ID da transação.\nRecebedor informado como 'Dinheiro em caixa'.\nAssinatura manual sem carimbo oficial.\nObservação: imagem cortada e sem QR Code.",
+    "label": "inválido"
+  },
+  {
+    "texto": "Recibo não autenticado\nValor anotado: R$ 8.518,32\nData declarada: 02/11/2025 15:05\nNão há banco emissor, nem ID da transação.\nRecebedor informado como 'Dinheiro em caixa'.\nAssinatura manual sem carimbo oficial.\nObservação: imagem cortada e sem QR Code.",
+    "label": "inválido"
+  },
+  {
+    "texto": "Recibo não autenticado\nValor anotado: R$ 16.696,54\nData declarada: 08/10/2025 00:44\nNão há banco emissor, nem ID da transação.\nRecebedor informado como 'Dinheiro em caixa'.\nAssinatura manual sem carimbo oficial.\nObservação: imagem cortada e sem QR Code.",
+    "label": "inválido"
+  },
+  {
+    "texto": "Comprovante de transferência PIX\nData: 06/11/2025 13:02\nValor: R$ 4.374,93\nPagador: SERTAO ATACADO\nCNPJ Pagador: 30.080.209/0004-16\nRecebedor: GRUPO SERTAO\nChave: pix@gruposertao.com\nBanco: Stone Pagamentos S.A.\nID da transação: 28D0AA8EBD9C43F69DDAD79FBDD55E91\nMensagem: Pagamento confirmado sem restrições.",
+    "label": "valido"
+  },
+  {
+    "texto": "Comprovante de transferência PIX\nData: 25/10/2025 05:28\nValor: R$ 6.530,89\nPagador: SERTAO ATACADO\nCNPJ Pagador: 30.080.209/0004-16\nRecebedor: GRUPO SERTAO\nChave: pix@gruposertao.com\nBanco: Stone Pagamentos S.A.\nID da transação: FC154E3D72DB415BA937790A52798675\nMensagem: Pagamento confirmado sem restrições.",
+    "label": "valido"
+  },
+  {
+    "texto": "Recibo não autenticado\nValor anotado: R$ 19.996,20\nData declarada: 06/10/2025 13:49\nNão há banco emissor, nem ID da transação.\nRecebedor informado como 'Dinheiro em caixa'.\nAssinatura manual sem carimbo oficial.\nObservação: imagem cortada e sem QR Code.",
+    "label": "inválido"
+  },
+  {
+    "texto": "Comprovante com inconsistências\nValor destacado: R$ 2.176,52\nRegistrado em 01/11/2025 21:09\nPagador: Dados borrados\nRecebedor: somente 'Grupo' sem CNPJ\nID apresentado: dd29b2ab53c94cfa8c\nTexto possui edições e múltiplas fontes.",
+    "label": "suspeito"
+  },
+  {
+    "texto": "Comprovante de transferência PIX\nData: 07/11/2025 13:16\nValor: R$ 9.166,58\nPagador: SERTAO ATACADO\nCNPJ Pagador: 30.080.209/0004-16\nRecebedor: GRUPO SERTAO\nChave: pix@gruposertao.com\nBanco: Stone Pagamentos S.A.\nID da transação: 17C44E953B9F48A89FF0D04A97E63D8D\nMensagem: Pagamento confirmado sem restrições.",
+    "label": "valido"
+  },
+  {
+    "texto": "Recibo não autenticado\nValor anotado: R$ 7.011,19\nData declarada: 14/10/2025 13:49\nNão há banco emissor, nem ID da transação.\nRecebedor informado como 'Dinheiro em caixa'.\nAssinatura manual sem carimbo oficial.\nObservação: imagem cortada e sem QR Code.",
+    "label": "inválido"
+  },
+  {
+    "texto": "Comprovante de transferência PIX\nData: 13/10/2025 04:20\nValor: R$ 7.609,26\nPagador: SERTAO ATACADO\nCNPJ Pagador: 30.080.209/0004-16\nRecebedor: GRUPO SERTAO\nChave: pix@gruposertao.com\nBanco: Stone Pagamentos S.A.\nID da transação: 65018D78C1C04264AC8AABBD45B049B9\nMensagem: Pagamento confirmado sem restrições.",
+    "label": "valido"
+  },
+  {
+    "texto": "Recibo não autenticado\nValor anotado: R$ 6.036,72\nData declarada: 05/11/2025 10:43\nNão há banco emissor, nem ID da transação.\nRecebedor informado como 'Dinheiro em caixa'.\nAssinatura manual sem carimbo oficial.\nObservação: imagem cortada e sem QR Code.",
+    "label": "inválido"
+  },
+  {
+    "texto": "Recibo não autenticado\nValor anotado: R$ 7.063,79\nData declarada: 29/10/2025 05:07\nNão há banco emissor, nem ID da transação.\nRecebedor informado como 'Dinheiro em caixa'.\nAssinatura manual sem carimbo oficial.\nObservação: imagem cortada e sem QR Code.",
+    "label": "inválido"
+  },
+  {
+    "texto": "Recibo não autenticado\nValor anotado: R$ 13.840,61\nData declarada: 08/10/2025 17:11\nNão há banco emissor, nem ID da transação.\nRecebedor informado como 'Dinheiro em caixa'.\nAssinatura manual sem carimbo oficial.\nObservação: imagem cortada e sem QR Code.",
+    "label": "inválido"
+  },
+  {
+    "texto": "Comprovante de transferência PIX\nData: 29/10/2025 20:54\nValor: R$ 6.771,90\nPagador: SERTAO ATACADO\nCNPJ Pagador: 30.080.209/0004-16\nRecebedor: GRUPO SERTAO\nChave: pix@gruposertao.com\nBanco: Stone Pagamentos S.A.\nID da transação: 4F3D5376F1F9404CAD5938D66C5FCEFB\nMensagem: Pagamento confirmado sem restrições.",
+    "label": "valido"
+  },
+  {
+    "texto": "Comprovante de transferência PIX\nData: 14/10/2025 07:34\nValor: R$ 3.482,50\nPagador: SERTAO ATACADO\nCNPJ Pagador: 30.080.209/0004-16\nRecebedor: GRUPO SERTAO\nChave: pix@gruposertao.com\nBanco: Stone Pagamentos S.A.\nID da transação: 5CE8C040477F49ADAFFF0304799C5D6B\nMensagem: Pagamento confirmado sem restrições.",
+    "label": "valido"
+  },
+  {
+    "texto": "Comprovante com inconsistências\nValor destacado: R$ 10.695,71\nRegistrado em 23/10/2025 12:01\nPagador: Dados borrados\nRecebedor: somente 'Grupo' sem CNPJ\nID apresentado: 078901d490f941ec83\nTexto possui edições e múltiplas fontes.",
+    "label": "suspeito"
+  },
+  {
+    "texto": "Comprovante de transferência PIX\nData: 14/11/2025 22:18\nValor: R$ 2.012,66\nPagador: SERTAO ATACADO\nCNPJ Pagador: 30.080.209/0004-16\nRecebedor: GRUPO SERTAO\nChave: pix@gruposertao.com\nBanco: Stone Pagamentos S.A.\nID da transação: 53CA7246FAC14B159CE272F50B2CC962\nMensagem: Pagamento confirmado sem restrições.",
+    "label": "valido"
+  },
+  {
+    "texto": "Comprovante de transferência PIX\nData: 02/10/2025 08:57\nValor: R$ 3.708,51\nPagador: SERTAO ATACADO\nCNPJ Pagador: 30.080.209/0004-16\nRecebedor: GRUPO SERTAO\nChave: pix@gruposertao.com\nBanco: Stone Pagamentos S.A.\nID da transação: D08665C40D444CAD86D44355A52BB398\nMensagem: Pagamento confirmado sem restrições.",
+    "label": "valido"
+  },
+  {
+    "texto": "Comprovante de transferência PIX\nData: 06/10/2025 19:15\nValor: R$ 1.678,66\nPagador: SERTAO ATACADO\nCNPJ Pagador: 30.080.209/0004-16\nRecebedor: GRUPO SERTAO\nChave: pix@gruposertao.com\nBanco: Stone Pagamentos S.A.\nID da transação: EA6869F4920B4E7780663996B64A303D\nMensagem: Pagamento confirmado sem restrições.",
+    "label": "valido"
+  },
+  {
+    "texto": "Comprovante com inconsistências\nValor destacado: R$ 13.698,25\nRegistrado em 24/10/2025 09:36\nPagador: Dados borrados\nRecebedor: somente 'Grupo' sem CNPJ\nID apresentado: 8dff886d5a5c4545bb\nTexto possui edições e múltiplas fontes.",
+    "label": "suspeito"
+  },
+  {
+    "texto": "Recibo não autenticado\nValor anotado: R$ 1.033,91\nData declarada: 13/10/2025 10:42\nNão há banco emissor, nem ID da transação.\nRecebedor informado como 'Dinheiro em caixa'.\nAssinatura manual sem carimbo oficial.\nObservação: imagem cortada e sem QR Code.",
+    "label": "inválido"
+  },
+  {
+    "texto": "Comprovante de transferência PIX\nData: 24/10/2025 00:52\nValor: R$ 2.255,30\nPagador: SERTAO ATACADO\nCNPJ Pagador: 30.080.209/0004-16\nRecebedor: GRUPO SERTAO\nChave: pix@gruposertao.com\nBanco: Stone Pagamentos S.A.\nID da transação: EC0B1837914446F3A99CD8E7D76DFECB\nMensagem: Pagamento confirmado sem restrições.",
+    "label": "valido"
+  },
+  {
+    "texto": "Comprovante de transferência PIX\nData: 28/10/2025 21:15\nValor: R$ 3.732,82\nPagador: SERTAO ATACADO\nCNPJ Pagador: 30.080.209/0004-16\nRecebedor: GRUPO SERTAO\nChave: pix@gruposertao.com\nBanco: Stone Pagamentos S.A.\nID da transação: FB29F951B50746278E8294E9B00F48ED\nMensagem: Pagamento confirmado sem restrições.",
+    "label": "valido"
+  },
+  {
+    "texto": "Comprovante de transferência PIX\nData: 08/11/2025 18:19\nValor: R$ 3.489,27\nPagador: SERTAO ATACADO\nCNPJ Pagador: 30.080.209/0004-16\nRecebedor: GRUPO SERTAO\nChave: pix@gruposertao.com\nBanco: Stone Pagamentos S.A.\nID da transação: E32559BD100D47EB92738C68002C9413\nMensagem: Pagamento confirmado sem restrições.",
+    "label": "valido"
+  },
+  {
+    "texto": "Recibo não autenticado\nValor anotado: R$ 14.427,03\nData declarada: 20/10/2025 03:20\nNão há banco emissor, nem ID da transação.\nRecebedor informado como 'Dinheiro em caixa'.\nAssinatura manual sem carimbo oficial.\nObservação: imagem cortada e sem QR Code.",
+    "label": "inválido"
+  },
+  {
+    "texto": "Comprovante com inconsistências\nValor destacado: R$ 5.562,34\nRegistrado em 23/10/2025 09:07\nPagador: Dados borrados\nRecebedor: somente 'Grupo' sem CNPJ\nID apresentado: 7744a71953ed418ca0\nTexto possui edições e múltiplas fontes.",
+    "label": "suspeito"
   }
 ]

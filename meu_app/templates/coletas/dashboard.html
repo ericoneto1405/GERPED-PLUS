@@ -24,29 +24,21 @@
             <table class="coletas-table data-table auto-fit-table">
                 <colgroup>
                     <col class="col-cliente">
-                    <col class="col-pedidos">
                     <col class="col-data">
                     <col class="col-acoes">
                 </colgroup>
                 <thead>
                     <tr>
                         <th data-column-index="0" class="text-center">Cliente</th>
-                        <th data-column-index="1" class="text-center">Pedidos</th>
-                        <th data-column-index="2" class="text-center">Data da última coleta</th>
+                        <th data-column-index="1" class="text-center">Data da última coleta</th>
                         <th class="text-center">Ações</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for item in pedidos %}
+                        {% set pedido_unificado = item.pedidos_ids[0] if item.pedidos_ids else None %}
                         <tr class="coleta-row" data-details-id="">
                             <td>{{ item.cliente_nome }}</td>
-                            <td>
-                                <div class="d-flex flex-wrap gap-1 justify-content-center">
-                                    {% for pedido_id in item.pedidos_ids %}
-                                        <span class="badge bg-light text-dark">#{{ pedido_id }}</span>
-                                    {% endfor %}
-                                </div>
-                            </td>
                             <td>
                                 {% set data_ref = item.data_mais_recente or (item.pedido.data if item.pedido and item.pedido.data else None) %}
                                 {{ data_ref.strftime('%d/%m/%Y') if data_ref else '-' }}
@@ -63,6 +55,7 @@
                                         {% if not item.coletado_completo %}
                                         <button type="button"
                                                 class="btn btn-sm btn-primary btn-acao-coleta"
+                                                data-pedido="{{ pedido_unificado }}"
                                                 data-pedidos="{{ item.pedidos_ids | join(',') }}"
                                                 data-cliente="{{ item.cliente_nome }}">
                                             <i class="bi bi-box-seam"></i> COLETAR PEDIDOS
@@ -71,6 +64,7 @@
                                         {% if item.itens_coletados > 0 %}
                                         <button type="button"
                                                 class="btn btn-sm btn-outline-success btn-acao-historico"
+                                                data-pedido="{{ pedido_unificado }}"
                                                 data-pedidos="{{ item.pedidos_ids | join(',') }}"
                                                 data-cliente="{{ item.cliente_nome }}">
                                             <i class="bi bi-clock-history"></i> HISTÓRICO
@@ -79,6 +73,7 @@
                                         {% if not item.coletado_completo %}
                                         <button type="button"
                                                 class="btn btn-sm btn-outline-danger btn-retornar-financeiro"
+                                                data-pedido="{{ pedido_unificado }}"
                                                 data-pedidos="{{ item.pedidos_ids | join(',') }}"
                                                 data-cliente="{{ item.cliente_nome }}">
                                             <i class="bi bi-arrow-counterclockwise"></i> RETORNAR FINANCEIRO
@@ -145,30 +140,6 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="modal fade" id="modalSelecionarPedido" tabindex="-1" aria-labelledby="modalSelecionarTitulo" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="modalSelecionarTitulo">Selecionar pedido</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
-            </div>
-            <div class="modal-body">
-                <p class="text-muted mb-1" id="modalSelecionarCliente"></p>
-                <p class="text-muted small" id="modalSelecionarDescricao"></p>
-                <div class="mb-3">
-                    <label for="modalSelecionarLista" class="form-label">Pedidos liberados</label>
-                    <select id="modalSelecionarLista" class="form-select"></select>
-                </div>
-                <div class="alert alert-warning d-none" id="modalSelecionarFeedback"></div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-primary" id="modalSelecionarConfirmar">Continuar</button>
             </div>
         </div>
     </div>
@@ -323,23 +294,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const pendenciasBody = document.getElementById('pendenciasBody');
     const pendenciasFeedback = document.getElementById('pendenciasFeedback');
     const pendenciasCliente = document.getElementById('modalPendenciasCliente');
-    const selecaoModalEl = document.getElementById('modalSelecionarPedido');
-    const selecaoTitulo = document.getElementById('modalSelecionarTitulo');
-    const selecaoCliente = document.getElementById('modalSelecionarCliente');
-    const selecaoDescricao = document.getElementById('modalSelecionarDescricao');
-    const selecaoLista = document.getElementById('modalSelecionarLista');
-    const selecaoFeedback = document.getElementById('modalSelecionarFeedback');
-    const selecaoConfirmar = document.getElementById('modalSelecionarConfirmar');
     const bootstrapLib = (typeof window !== 'undefined' && window.bootstrap)
         ? window.bootstrap
         : (typeof bootstrap !== 'undefined' ? bootstrap : null);
     const pendenciasModal = pendenciasModalEl && bootstrapLib ? new bootstrapLib.Modal(pendenciasModalEl) : null;
-    const selecaoModal = selecaoModalEl && bootstrapLib ? new bootstrapLib.Modal(selecaoModalEl) : null;
     const pendenciasEndpoint = "{{ url_for('coletas.pendencias_itens') }}";
     let currentSort = { index: null, direction: 'asc' };
-    let selecaoBaseUrl = null;
-    let selecaoAcaoAtual = null;
-    let selecaoClienteAtual = '';
 
     const parsePedidoIds = (valor) => {
         if (!valor) return [];
@@ -347,16 +307,6 @@ document.addEventListener('DOMContentLoaded', () => {
             .split(',')
             .map((parte) => parseInt(parte.trim(), 10))
             .filter((id) => Number.isInteger(id));
-    };
-
-    const fecharSelecaoModal = () => {
-        if (selecaoModal) {
-            selecaoModal.hide();
-        } else if (selecaoModalEl) {
-            selecaoModalEl.classList.remove('show');
-            selecaoModalEl.style.display = 'none';
-            selecaoModalEl.setAttribute('aria-hidden', 'true');
-        }
     };
 
     const retornarPedido = async ({ pedidoId, baseUrl, cliente }) => {
@@ -390,108 +340,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    const abrirSelecaoPedidos = ({ tipo, cliente, pedidos, baseUrl }) => {
-        if (!Array.isArray(pedidos) || pedidos.length === 0 || !baseUrl) {
-            return;
+    const resolverPedidoId = (element) => {
+        if (!element || !element.dataset) return null;
+        const direto = parseInt(element.dataset.pedido || '', 10);
+        if (Number.isInteger(direto)) {
+            return direto;
         }
-
-        const executarAcao = (pedidoId) => {
-            if (tipo === 'historico' || tipo === 'coleta') {
-                window.location.href = `${baseUrl}/${pedidoId}`;
-                return;
-            }
-            if (tipo === 'retornar') {
-                retornarPedido({ pedidoId, baseUrl, cliente });
-            }
-        };
-
-        if (pedidos.length === 1) {
-            executarAcao(pedidos[0]);
-            return;
-        }
-
-        selecaoAcaoAtual = tipo;
-        selecaoBaseUrl = baseUrl;
-        selecaoClienteAtual = cliente || '';
-
-        if (selecaoTitulo) {
-            let titulo = 'Processar coleta';
-            if (tipo === 'historico') {
-                titulo = 'Histórico dos pedidos';
-            } else if (tipo === 'retornar') {
-                titulo = 'Retornar pedido ao financeiro';
-            }
-            selecaoTitulo.textContent = titulo;
-        }
-        if (selecaoCliente) {
-            selecaoCliente.textContent = selecaoClienteAtual ? `Cliente: ${selecaoClienteAtual}` : '';
-        }
-        if (selecaoDescricao) {
-            let descricao = 'Selecione qual pedido deseja coletar primeiro.';
-            if (tipo === 'historico') {
-                descricao = 'Selecione qual pedido deseja consultar.';
-            } else if (tipo === 'retornar') {
-                descricao = 'Selecione qual pedido deseja retornar para o financeiro.';
-            }
-            selecaoDescricao.textContent = descricao;
-        }
-        if (selecaoLista) {
-            selecaoLista.innerHTML = '';
-            pedidos.forEach((pedidoId) => {
-                const option = document.createElement('option');
-                option.value = pedidoId;
-                option.textContent = `Pedido #${pedidoId}`;
-                selecaoLista.appendChild(option);
-            });
-        }
-        if (selecaoFeedback) {
-            selecaoFeedback.classList.add('d-none');
-            selecaoFeedback.textContent = '';
-        }
-        if (selecaoConfirmar) {
-            let textoBotao = 'Processar coleta';
-            if (tipo === 'historico') {
-                textoBotao = 'Ver histórico';
-            } else if (tipo === 'retornar') {
-                textoBotao = 'Confirmar retorno';
-            }
-            selecaoConfirmar.textContent = textoBotao;
-        }
-
-        if (selecaoModal) {
-            selecaoModal.show();
-        } else if (selecaoModalEl) {
-            selecaoModalEl.classList.add('show');
-            selecaoModalEl.style.display = 'block';
-            selecaoModalEl.removeAttribute('aria-hidden');
-        }
+        const lista = parsePedidoIds(element.dataset.pedidos || '');
+        return lista.length ? lista[0] : null;
     };
-
-    if (selecaoConfirmar) {
-        selecaoConfirmar.addEventListener('click', () => {
-            if (!selecaoLista || !selecaoBaseUrl) {
-                return;
-            }
-            const pedidoId = parseInt(selecaoLista.value, 10);
-            if (!Number.isInteger(pedidoId)) {
-                if (selecaoFeedback) {
-                    selecaoFeedback.textContent = 'Selecione um pedido válido para continuar.';
-                    selecaoFeedback.classList.remove('d-none');
-                }
-                return;
-            }
-            if (selecaoAcaoAtual === 'retornar') {
-                fecharSelecaoModal();
-                retornarPedido({
-                    pedidoId,
-                    baseUrl: selecaoBaseUrl,
-                    cliente: selecaoClienteAtual
-                });
-                return;
-            }
-            window.location.href = `${selecaoBaseUrl}/${pedidoId}`;
-        });
-    }
 
     const parseValue = (cell, index) => {
         const text = cell.textContent.trim();
@@ -673,13 +530,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (coletaBtn) {
             const container = coletaBtn.closest('.action-buttons');
             const baseUrl = container ? container.dataset.processarBase : null;
-            const pedidos = parsePedidoIds(coletaBtn.dataset.pedidos);
-            abrirSelecaoPedidos({
-                tipo: 'coleta',
-                cliente: coletaBtn.dataset.cliente || '',
-                pedidos,
-                baseUrl,
-            });
+            const pedidoId = resolverPedidoId(coletaBtn);
+            if (baseUrl && Number.isInteger(pedidoId)) {
+                window.location.href = `${baseUrl}/${pedidoId}`;
+            }
             return;
         }
 
@@ -687,13 +541,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (historicoBtn) {
             const container = historicoBtn.closest('.action-buttons');
             const baseUrl = container ? container.dataset.historicoBase : null;
-            const pedidos = parsePedidoIds(historicoBtn.dataset.pedidos);
-            abrirSelecaoPedidos({
-                tipo: 'historico',
-                cliente: historicoBtn.dataset.cliente || '',
-                pedidos,
-                baseUrl,
-            });
+            const pedidoId = resolverPedidoId(historicoBtn);
+            if (baseUrl && Number.isInteger(pedidoId)) {
+                window.location.href = `${baseUrl}/${pedidoId}`;
+            }
             return;
         }
 
@@ -701,13 +552,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (retornoBtn) {
             const container = retornoBtn.closest('.action-buttons');
             const baseUrl = container ? container.dataset.retornarBase : null;
-            const pedidos = parsePedidoIds(retornoBtn.dataset.pedidos);
-            abrirSelecaoPedidos({
-                tipo: 'retornar',
-                cliente: retornoBtn.dataset.cliente || '',
-                pedidos,
-                baseUrl,
-            });
+            const pedidoId = resolverPedidoId(retornoBtn);
+            if (baseUrl && Number.isInteger(pedidoId)) {
+                retornarPedido({
+                    pedidoId,
+                    baseUrl,
+                    cliente: retornoBtn.dataset.cliente || ''
+                });
+            }
             return;
         }
 

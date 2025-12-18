@@ -245,10 +245,9 @@
         padding: 6px 12px;
     }
 
-    .coletas-table .col-cliente { width: 28%; }
-    .coletas-table .col-pedidos { width: 22%; }
-    .coletas-table .col-data { width: 18%; }
-    .coletas-table .col-acoes { width: 32%; }
+    .coletas-table .col-cliente { width: 35%; }
+    .coletas-table .col-data { width: 25%; }
+    .coletas-table .col-acoes { width: 40%; }
 
     .visually-hidden {
         position: absolute;
@@ -352,7 +351,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const parseValue = (cell, index) => {
         const text = cell.textContent.trim();
-        if (index === 2) {
+        if (index === 1) {
             if (!text.includes('/')) return text.toLowerCase();
             const [dia, mes, ano] = text.split('/');
             if (!dia || !mes || !ano) return text.toLowerCase();

@@ -103,8 +103,13 @@ class ReceiptService:
         if scale <= 0:
             scale = 1.0
 
+        dpi_value = max(72, int(round(150 * scale)))
+
         def s(value: int) -> int:
             return max(1, int(round(value * scale)))
+
+        def cm(value: float) -> int:
+            return max(1, int(round((dpi_value / 2.54) * value)))
 
         width, height = s(1240), s(1754)  # Aproximadamente A4 em 150 DPI
         margin = s(100)
@@ -176,7 +181,7 @@ class ReceiptService:
                       fill=(50, 50, 50))
             current_y += row_height
 
-        y = table_y2 + s(60)
+        y = table_y2 + cm(1.5)
 
         # Assinaturas
         line_length = (table_x2 - table_x1 - s(80)) / 2
@@ -225,7 +230,6 @@ class ReceiptService:
         filepath = os.path.join(receipts_dir, filename)
 
         try:
-            dpi_value = max(72, int(round(150 * scale)))
             image.save(filepath, format='JPEG', quality=90, dpi=(dpi_value, dpi_value))
         except Exception as exc:  # pragma: no cover - exceções raras
             raise FileProcessingError(

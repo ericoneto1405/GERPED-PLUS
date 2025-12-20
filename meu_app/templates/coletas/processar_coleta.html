@@ -36,21 +36,6 @@
     display: none !important;
 }
 
-.lista-autorizados {
-    margin: 10px 0 0 18px;
-    padding: 0;
-}
-
-.lista-autorizados li {
-    margin-bottom: 4px;
-}
-
-.nota-autorizacao {
-    margin-top: 8px;
-    color: #6b7280;
-    font-size: 0.9rem;
-}
-
 .coleta-items-table thead th {
     background-color: #1f2937;
     color: #ffffff;
@@ -152,28 +137,6 @@
                 
                 <div class="card-body">
                     <div id="coletaAlert" class="alert d-none" role="alert"></div>
-                    {% if retirantes_autorizados is defined %}
-                    <div class="alert alert-info" style="margin-bottom: 20px;">
-                        <strong>Retirantes autorizados pelo cliente:</strong>
-                        {% set ativos = retirantes_autorizados | selectattr('ativo', 'equalto', True) | list %}
-                        {% if ativos %}
-                            <ul class="lista-autorizados">
-                                {% for r in ativos %}
-                                <li>{{ r.nome }} — {{ r.cpf_formatado() }}</li>
-                                {% endfor %}
-                            </ul>
-                        {% else %}
-                            <p>Nenhum retirante extra cadastrado. Confirme com o cliente ao liberar a mercadoria.</p>
-                        {% endif %}
-                        {% set inativos = retirantes_autorizados | selectattr('ativo', 'equalto', False) | list %}
-                        {% if inativos %}
-                            <p style="margin-top: 10px; font-size: 0.9rem; color: #6b7280;">
-                                Desativados: {% for r in inativos %}{{ r.nome }} ({{ r.cpf_formatado() }}){% if not loop.last %}, {% endif %}{% endfor %}
-                            </p>
-                        {% endif %}
-                        <p class="nota-autorizacao"><i class="bi bi-exclamation-triangle icon-text"></i> Caso o retirante não esteja na lista, confirme a autorização diretamente com o cliente.</p>
-                    </div>
-                    {% endif %}
                     <form id="formColeta" method="POST">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <!-- Informações do Cliente -->

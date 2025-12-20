@@ -95,24 +95,38 @@ class ReceiptService:
         os.makedirs(receipts_dir, exist_ok=True)
         ReceiptService.limpar_recibos_antigos(receipts_dir)
 
-        width, height = 1240, 1754  # Aproximadamente A4 em 150 DPI
-        margin = 100
+        scale = current_app.config.get('COLETAS_RECIBO_SCALE', 2.0)
+        try:
+            scale = float(scale)
+        except (TypeError, ValueError):
+            scale = 2.0
+        if scale <= 0:
+            scale = 1.0
+
+        def s(value: int) -> int:
+            return max(1, int(round(value * scale)))
+
+        width, height = s(1240), s(1754)  # Aproximadamente A4 em 150 DPI
+        margin = s(100)
         background_color = (255, 255, 255)
         accent = (31, 41, 55)  # azul escuro
         table_border = (15, 23, 42)
 
-        title_font = ReceiptService._load_font(48, bold=True)
-        section_font = ReceiptService._load_font(28, bold=True)
-        text_font = ReceiptService._load_font(26)
-        small_font = ReceiptService._load_font(22)
-        tiny_font = ReceiptService._load_font(18)
+        title_font = ReceiptService._load_font(s(48), bold=True)
+        section_font = ReceiptService._load_font(s(28), bold=True)
+        text_font = ReceiptService._load_font(s(26))
+        small_font = ReceiptService._load_font(s(22))
+        tiny_font = ReceiptService._load_font(s(18))
+
+        border_width = s(3)
+        row_border_width = s(2)
 
         image = Image.new('RGB', (width, height), background_color)
         draw = ImageDraw.Draw(image)
 
-        y = 130
+        y = s(130)
         draw.text((margin, y), 'Recibo de Coleta', font=title_font, fill=accent)
-        y += title_font.size + 30
+        y += title_font.size + s(30)
 
         info_lines = [
             ('Pedido', f"#{coleta_data.get('pedido_id', 'N/A')}"),
@@ -124,66 +138,72 @@ class ReceiptService:
 
         for label, value in info_lines:
             draw.text((margin, y), f"{label}:", font=section_font, fill=accent)
-            draw.text((margin + 270, y), value or 'N/A', font=text_font, fill=(60, 60, 60))
-            y += text_font.size + 12
+            draw.text((margin + s(270), y), value or 'N/A', font=text_font, fill=(60, 60, 60))
+            y += text_font.size + s(12)
 
-        y += 30
+        y += s(30)
 
         # Tabela de itens
         table_x1 = margin
         table_x2 = width - margin
-        header_height = 70
-        row_height = 70
+        header_height = s(70)
+        row_height = s(70)
         items = coleta_data.get('itens_coleta') or [{'produto_nome': 'Produto não informado', 'quantidade': '0'}]
         table_height = header_height + row_height * len(items)
         table_y1 = y
         table_y2 = y + table_height
 
         draw.rectangle([table_x1, table_y1, table_x2, table_y1 + header_height], fill=(239, 241, 245), outline=table_border,
-                       width=3)
+                       width=border_width)
         draw.line([(table_x1 + (table_x2 - table_x1) * 0.65, table_y1),
-                   (table_x1 + (table_x2 - table_x1) * 0.65, table_y1 + header_height)], fill=table_border, width=3)
-        draw.text((table_x1 + 20, table_y1 + header_height / 2 - section_font.size / 2), 'Produto', font=section_font,
+                   (table_x1 + (table_x2 - table_x1) * 0.65, table_y1 + header_height)], fill=table_border, width=border_width)
+        draw.text((table_x1 + s(20), table_y1 + header_height / 2 - section_font.size / 2), 'Produto', font=section_font,
                   fill=table_border)
-        draw.text((table_x1 + (table_x2 - table_x1) * 0.65 + 20,
+        draw.text((table_x1 + (table_x2 - table_x1) * 0.65 + s(20),
                    table_y1 + header_height / 2 - section_font.size / 2), 'Quantidade Coletada', font=section_font,
                   fill=table_border)
 
         current_y = table_y1 + header_height
         for item in items:
-            draw.rectangle([table_x1, current_y, table_x2, current_y + row_height], outline=table_border, width=2)
+            draw.rectangle([table_x1, current_y, table_x2, current_y + row_height], outline=table_border, width=row_border_width)
             produto = item.get('produto_nome', 'N/A')
             quantidade = str(item.get('quantidade', 0))
             produto_lines = textwrap.wrap(produto, width=40) or ['N/A']
             produto_text = '\n'.join(produto_lines)
-            draw.multiline_text((table_x1 + 20, current_y + 15), produto_text, font=small_font,
-                                 fill=(50, 50, 50), spacing=4)
-            draw.text((table_x1 + (table_x2 - table_x1) * 0.65 + 20, current_y + 20), quantidade, font=small_font,
+            draw.multiline_text((table_x1 + s(20), current_y + s(15)), produto_text, font=small_font,
+                                 fill=(50, 50, 50), spacing=s(4))
+            draw.text((table_x1 + (table_x2 - table_x1) * 0.65 + s(20), current_y + s(20)), quantidade, font=small_font,
                       fill=(50, 50, 50))
             current_y += row_height
 
-        y = table_y2 + 60
+        y = table_y2 + s(60)
 
         # Assinaturas
-        line_length = (table_x2 - table_x1 - 80) / 2
+        line_length = (table_x2 - table_x1 - s(80)) / 2
         sig_y = y
         left_start = table_x1
-        right_start = table_x1 + line_length + 80
-        draw.line([(left_start, sig_y), (left_start + line_length, sig_y)], fill=table_border, width=3)
-        draw.line([(right_start, sig_y), (right_start + line_length, sig_y)], fill=table_border, width=3)
+        right_start = table_x1 + line_length + s(80)
+        draw.line([(left_start, sig_y), (left_start + line_length, sig_y)], fill=table_border, width=border_width)
+        draw.line([(right_start, sig_y), (right_start + line_length, sig_y)], fill=table_border, width=border_width)
 
-        draw.text((left_start, sig_y + 10), 'Assinatura do Coletador', font=small_font, fill=accent)
-        draw.text((left_start, sig_y + 45), f"CPF: {coleta_data.get('documento_retirada', 'N/A')}", font=tiny_font,
+        draw.text((left_start, sig_y + s(10)), 'Assinatura do Coletador', font=small_font, fill=accent)
+        draw.text((left_start, sig_y + s(45)), f"CPF: {coleta_data.get('documento_retirada', 'N/A')}", font=tiny_font,
                   fill=(70, 70, 70))
-        draw.text((right_start, sig_y + 10), 'Assinatura do Conferente', font=small_font, fill=accent)
-        draw.text((right_start, sig_y + 45), f"CPF: {coleta_data.get('cpf_conferente', 'N/A')}", font=tiny_font,
+        draw.text((right_start, sig_y + s(10)), 'Assinatura do Conferente', font=small_font, fill=accent)
+        draw.text((right_start, sig_y + s(45)), f"CPF: {coleta_data.get('cpf_conferente', 'N/A')}", font=tiny_font,
                   fill=(70, 70, 70))
 
-        y = sig_y + 150
+        y = sig_y + s(150)
 
-        placeholder_height = 260
+        placeholder_height = s(260)
         placeholder_box = (table_x1, y, table_x2, y + placeholder_height)
-        ReceiptService._draw_dashed_rectangle(draw, placeholder_box)
+        ReceiptService._draw_dashed_rectangle(
+            draw,
+            placeholder_box,
+            dash_length=s(18),
+            gap=s(12),
+            width=border_width,
+        )
         msg = 'DOCUMENTO DE IDENTIFICAÇÃO\nAUTORIZADO PARA COLETA'
         bbox = draw.multiline_textbbox((0, 0), msg, font=small_font, align='center')
         text_width = bbox[2] - bbox[0]
@@ -196,7 +216,7 @@ class ReceiptService:
             align='center'
         )
 
-        y += placeholder_height + 60
+        y += placeholder_height + s(60)
         rodape = f"Recibo emitido em {datetime.now().strftime('%d/%m/%Y às %H:%M:%S')} pelo Sistema GERPED"
         draw.text((margin, y), rodape, font=tiny_font, fill=(120, 120, 120))
 
@@ -205,7 +225,8 @@ class ReceiptService:
         filepath = os.path.join(receipts_dir, filename)
 
         try:
-            image.save(filepath, format='JPEG', quality=90)
+            dpi_value = max(72, int(round(150 * scale)))
+            image.save(filepath, format='JPEG', quality=90, dpi=(dpi_value, dpi_value))
         except Exception as exc:  # pragma: no cover - exceções raras
             raise FileProcessingError(
                 message='Falha ao salvar recibo de coleta em JPG',

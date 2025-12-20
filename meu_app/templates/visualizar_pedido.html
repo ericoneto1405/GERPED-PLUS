@@ -319,7 +319,7 @@
         </div>
         <div class="info-card">
             <span>Data do pedido</span>
-            <strong>{{ pedido.data.strftime('%d/%m/%Y %H:%M') }}</strong>
+            <strong>{{ pedido.data | datetime_local('%d/%m/%Y %H:%M') }}</strong>
             <small>ID interno #{{ pedido.id }}</small>
         </div>
         <div class="info-card">

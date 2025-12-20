@@ -351,6 +351,10 @@ def register_error_handlers(app):
 
 def register_custom_filters(app):
     """Registra filtros personalizados para os templates"""
+    try:
+        import pytz
+    except Exception:
+        pytz = None
     
     @app.template_filter('currency_brl')
     def currency_brl_filter(value):
@@ -385,6 +389,19 @@ def register_custom_filters(app):
             return formatted
         except (ValueError, TypeError):
             return '0,00'
+
+    @app.template_filter('datetime_local')
+    def datetime_local_filter(value, fmt='%d/%m/%Y %H:%M'):
+        """Converte datetime para o fuso local antes de formatar."""
+        if value is None:
+            return ''
+        if not isinstance(value, datetime):
+            return value
+        tz_name = app.config.get('APP_TIMEZONE', 'America/Sao_Paulo')
+        tz = pytz.timezone(tz_name) if pytz else timezone(timedelta(hours=-3))
+        if value.tzinfo is None:
+            value = value.replace(tzinfo=timezone.utc)
+        return value.astimezone(tz).strftime(fmt)
 
 
 def register_template_context(app):

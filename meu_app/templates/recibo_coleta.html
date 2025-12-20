@@ -4,9 +4,20 @@
     <meta charset="UTF-8">
     <title>Recibo de Coleta</title>
     <style>
+        @page {
+            size: A4;
+            margin: 6mm;
+            @top-left { content: none; }
+            @top-center { content: none; }
+            @top-right { content: none; }
+            @bottom-left { content: none; }
+            @bottom-center { content: none; }
+            @bottom-right { content: none; }
+        }
+
         body {
             font-family: Arial, sans-serif;
-            padding: 40px;
+            padding: 16px;
             background-color: #f8f9fa;
         }
 
@@ -99,6 +110,12 @@
                 display: none;
             }
         }
+
+        @media print {
+            .botoes {
+                display: none;
+            }
+        }
     </style>
 </head>
 <body>
@@ -147,6 +164,16 @@
     <div class="identificacao-cnh">
         Documento de Identificação
     </div>
+
+    <script>
+        const originalTitle = document.title;
+        window.addEventListener('beforeprint', () => {
+            document.title = '';
+        });
+        window.addEventListener('afterprint', () => {
+            document.title = originalTitle;
+        });
+    </script>
 
 </body>
 </html>

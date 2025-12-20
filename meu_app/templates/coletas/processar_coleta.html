@@ -115,6 +115,13 @@
 .coleta-items-table .col-entrada {
     width: 16%;
 }
+
+.form-side-muted {
+    background: #f5f6f8;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 12px;
+}
 </style>
 {% endblock %}
 
@@ -141,7 +148,7 @@
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <!-- Informações do Cliente -->
                         <div class="row mb-4">
-                            <div class="col-12">
+                            <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="nome_retirada" class="form-label">
                                         <i class="fas fa-user"></i> Nome da Pessoa que está Retirando *
@@ -154,17 +161,19 @@
                                            placeholder="Digite o nome completo">
                                 </div>
                             </div>
-                            <div class="col-12 mt-3">
-                                <div class="form-group">
-                                    <label for="documento_retirada" class="form-label">
-                                        <i class="fas fa-id-card"></i> CPF da Pessoa que está Retirando *
-                                    </label>
-                                    <input type="text" 
-                                           class="form-control" 
-                                           id="documento_retirada" 
-                                           name="documento_retirada" 
-                                           required
-                                           placeholder="Digite o CPF">
+                            <div class="col-md-6">
+                                <div class="form-side-muted">
+                                    <div class="form-group mb-0">
+                                        <label for="documento_retirada" class="form-label">
+                                            <i class="fas fa-id-card"></i> CPF da Pessoa que está Retirando *
+                                        </label>
+                                        <input type="text" 
+                                               class="form-control" 
+                                               id="documento_retirada" 
+                                               name="documento_retirada" 
+                                               required
+                                               placeholder="Digite o CPF">
+                                    </div>
                                 </div>
                             </div>
                         </div>

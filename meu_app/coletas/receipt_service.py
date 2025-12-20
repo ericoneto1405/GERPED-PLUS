@@ -191,12 +191,18 @@ class ReceiptService:
         draw.line([(left_start, sig_y), (left_start + line_length, sig_y)], fill=table_border, width=border_width)
         draw.line([(right_start, sig_y), (right_start + line_length, sig_y)], fill=table_border, width=border_width)
 
-        draw.text((left_start, sig_y + s(10)), 'Assinatura do Coletador', font=small_font, fill=accent)
-        draw.text((left_start, sig_y + s(45)), f"CPF: {coleta_data.get('documento_retirada', 'N/A')}", font=tiny_font,
-                  fill=(70, 70, 70))
-        draw.text((right_start, sig_y + s(10)), 'Assinatura do Conferente', font=small_font, fill=accent)
-        draw.text((right_start, sig_y + s(45)), f"CPF: {coleta_data.get('cpf_conferente', 'N/A')}", font=tiny_font,
-                  fill=(70, 70, 70))
+        coletador_nome = coleta_data.get('nome_retirada') or 'N/A'
+        conferente_nome = coleta_data.get('nome_conferente') or 'N/A'
+
+        cpf_coletador = coleta_data.get('documento_retirada', 'N/A')
+        cpf_conferente = coleta_data.get('cpf_conferente', 'N/A')
+
+        draw.text((left_start, sig_y + s(10)), 'COLETADOR', font=small_font, fill=accent)
+        draw.text((left_start, sig_y + s(45)), coletador_nome, font=tiny_font, fill=(70, 70, 70))
+        draw.text((left_start, sig_y + s(70)), f"CPF: {cpf_coletador}", font=tiny_font, fill=(90, 90, 90))
+        draw.text((right_start, sig_y + s(10)), 'CONFERENTE', font=small_font, fill=accent)
+        draw.text((right_start, sig_y + s(45)), conferente_nome, font=tiny_font, fill=(70, 70, 70))
+        draw.text((right_start, sig_y + s(70)), f"CPF: {cpf_conferente}", font=tiny_font, fill=(90, 90, 90))
 
         y = sig_y + s(150)
 

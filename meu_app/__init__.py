@@ -399,8 +399,12 @@ def register_custom_filters(app):
             return value
         tz_name = app.config.get('APP_TIMEZONE', 'America/Sao_Paulo')
         tz = pytz.timezone(tz_name) if pytz else timezone(timedelta(hours=-3))
-        if value.tzinfo is None:
-            value = value.replace(tzinfo=timezone.utc)
+        if value.tzinfo is None or value.tzinfo.utcoffset(value) is None:
+            if pytz:
+                value = tz.localize(value)
+            else:
+                value = value.replace(tzinfo=tz)
+            return value.strftime(fmt)
         return value.astimezone(tz).strftime(fmt)
 
 

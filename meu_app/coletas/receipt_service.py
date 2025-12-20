@@ -206,7 +206,7 @@ class ReceiptService:
 
         y = sig_y + s(150)
 
-        placeholder_height = s(260)
+        placeholder_height = cm(6.0)
         placeholder_box = (table_x1, y, table_x2, y + placeholder_height)
         ReceiptService._draw_dashed_rectangle(
             draw,

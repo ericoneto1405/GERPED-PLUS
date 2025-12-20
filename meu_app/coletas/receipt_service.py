@@ -122,12 +122,36 @@ class ReceiptService:
         text_font = ReceiptService._load_font(s(26))
         small_font = ReceiptService._load_font(s(22))
         tiny_font = ReceiptService._load_font(s(18))
+        disclaimer_font = ReceiptService._load_font(max(1, int(round(title_font.size / 2))))
 
         border_width = s(3)
         row_border_width = s(2)
 
         image = Image.new('RGB', (width, height), background_color)
         draw = ImageDraw.Draw(image)
+
+        def _text_width(text: str, font: ImageFont.ImageFont) -> int:
+            if hasattr(draw, "textlength"):
+                return int(draw.textlength(text, font=font))
+            bbox = draw.textbbox((0, 0), text, font=font)
+            return bbox[2] - bbox[0]
+
+        def _wrap_text(text: str, font: ImageFont.ImageFont, max_width: int) -> list[str]:
+            words = text.split()
+            if not words:
+                return []
+            lines = []
+            current = ''
+            for word in words:
+                candidate = f"{current} {word}".strip()
+                if _text_width(candidate, font) <= max_width or not current:
+                    current = candidate
+                else:
+                    lines.append(current)
+                    current = word
+            if current:
+                lines.append(current)
+            return lines
 
         y = s(130)
         draw.text((margin, y), 'Recibo de Coleta', font=title_font, fill=accent)
@@ -204,7 +228,25 @@ class ReceiptService:
         draw.text((right_start, sig_y + s(45)), conferente_nome, font=tiny_font, fill=(70, 70, 70))
         draw.text((right_start, sig_y + s(70)), f"CPF: {cpf_conferente}", font=tiny_font, fill=(90, 90, 90))
 
-        y = sig_y + s(150)
+        disclaimer_text = (
+            "Ao assinar/validar esta coleta, o conferente coletador, confirma a conferência de itens e "
+            "quantidades e assume total responsabilidade. Após a liberação, não serão aceitas reclamações "
+            "posteriores."
+        )
+        disclaimer_lines = _wrap_text(disclaimer_text, disclaimer_font, int(line_length))
+        disclaimer_y = sig_y + s(95)
+        if disclaimer_lines:
+            draw.multiline_text(
+                (left_start, disclaimer_y),
+                "\n".join(disclaimer_lines),
+                font=disclaimer_font,
+                fill=(80, 80, 80),
+                spacing=s(6),
+            )
+        line_height = disclaimer_font.size + s(6)
+        disclaimer_height = line_height * max(1, len(disclaimer_lines))
+        sig_block_bottom = sig_y + s(150)
+        y = max(sig_block_bottom, disclaimer_y + disclaimer_height + s(20))
 
         placeholder_height = cm(6.0)
         placeholder_box = (table_x1, y, table_x2, y + placeholder_height)

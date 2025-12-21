@@ -160,20 +160,62 @@ class ReceiptService:
         draw.text((margin, y), 'Recibo de Coleta', font=header_title_font, fill=accent)
         y += header_title_font.size + s(14)
 
-        info_lines = [
-            ('Pedido', f"#{coleta_data.get('pedido_id', 'N/A')}"),
-            ('Cliente', coleta_data.get('cliente_nome', 'N/A')),
-            ('Data da Coleta', ReceiptService._format_data_coleta(coleta_data.get('data_coleta'))),
-            ('Coletado por', coleta_data.get('nome_retirada', 'N/A')),
-            ('Conferido por', coleta_data.get('nome_conferente', 'N/A')),
+        info_columns = [
+            ('PEDIDO', f"#{coleta_data.get('pedido_id', 'N/A')}"),
+            ('CLIENTE', coleta_data.get('cliente_nome', 'N/A')),
+            ('DATA DA COLETA', ReceiptService._format_data_coleta(coleta_data.get('data_coleta'))),
+            ('COLETADO POR', coleta_data.get('nome_retirada', 'N/A')),
+            ('CONFERIDO POR', coleta_data.get('nome_conferente', 'N/A')),
         ]
 
-        for label, value in info_lines:
-            draw.text((margin, y), f"{label}:", font=header_label_font, fill=accent)
-            draw.text((margin + s(250), y), value or 'N/A', font=header_value_font, fill=(60, 60, 60))
-            y += header_value_font.size + s(8)
+        table_x1 = margin
+        table_x2 = width - margin
+        table_width = table_x2 - table_x1
+        col_weights = [0.12, 0.28, 0.2, 0.2, 0.2]
+        col_widths = [int(table_width * w) for w in col_weights]
+        col_widths[-1] = table_width - sum(col_widths[:-1])
 
-        y += s(14)
+        cell_padding_x = s(10)
+        cell_padding_y = s(8)
+        header_row_height = max(header_label_font.size + s(16), s(44))
+        value_lines = [
+            _wrap_text(str(value or 'N/A'), header_value_font, col_widths[idx] - cell_padding_x * 2)
+            for idx, (_, value) in enumerate(info_columns)
+        ]
+        line_height = header_value_font.size + s(4)
+        value_row_height = max(1, max(len(lines) for lines in value_lines)) * line_height + cell_padding_y * 2
+
+        table_y1 = y
+        table_y2 = y + header_row_height + value_row_height
+
+        draw.rectangle([table_x1, table_y1, table_x2, table_y1 + header_row_height],
+                       fill=(239, 241, 245), outline=table_border, width=border_width)
+        draw.rectangle([table_x1, table_y1 + header_row_height, table_x2, table_y2],
+                       fill=(255, 255, 255), outline=table_border, width=border_width)
+
+        col_x = table_x1
+        for idx, (label, _) in enumerate(info_columns):
+            col_width = col_widths[idx]
+            if idx > 0:
+                draw.line([(col_x, table_y1), (col_x, table_y2)], fill=table_border, width=border_width)
+
+            label_width = _text_width(label, header_label_font)
+            if label_width + cell_padding_x * 2 <= col_width:
+                label_x = col_x + (col_width - label_width) / 2
+            else:
+                label_x = col_x + cell_padding_x
+            label_y = table_y1 + (header_row_height - header_label_font.size) / 2
+            draw.text((label_x, label_y), label, font=header_label_font, fill=accent)
+
+            value_y = table_y1 + header_row_height + cell_padding_y
+            lines = value_lines[idx] or ['N/A']
+            for line_idx, line in enumerate(lines):
+                draw.text((col_x + cell_padding_x, value_y + line_idx * line_height),
+                          line, font=header_value_font, fill=(60, 60, 60))
+
+            col_x += col_width
+
+        y = table_y2 + s(14)
 
         # Tabela de itens
         table_x1 = margin

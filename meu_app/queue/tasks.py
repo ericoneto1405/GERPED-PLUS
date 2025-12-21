@@ -3,6 +3,7 @@ Tasks assíncronas para processamento em background
 """
 
 import os
+from pathlib import Path
 from typing import Dict, Optional
 
 _flask_app = None
@@ -120,7 +121,8 @@ def generate_receipt_task(coleta_data: Dict) -> Dict:
 
             from meu_app.coletas.receipt_service import ReceiptService
 
-            image_path = ReceiptService.gerar_recibo_imagem(coleta_data)
+            pdf_path = ReceiptService.gerar_recibo_pdf(coleta_data)
+            image_path = str(Path(pdf_path).with_suffix('.jpg'))
 
             if job:
                 job.meta['progress'] = 100
@@ -130,7 +132,7 @@ def generate_receipt_task(coleta_data: Dict) -> Dict:
             return {
                 'success': True,
                 'image_path': image_path,
-                'pdf_path': image_path,  # Compatibilidade retroativa
+                'pdf_path': pdf_path,
                 'pedido_id': coleta_data.get('pedido_id'),
             }
 

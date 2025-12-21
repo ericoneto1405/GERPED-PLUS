@@ -112,7 +112,7 @@ class ReceiptService:
             return max(1, int(round((dpi_value / 2.54) * value)))
 
         width, height = s(1240), s(1754)  # Aproximadamente A4 em 150 DPI
-        margin = s(100)
+        margin = s(60)
         background_color = (255, 255, 255)
         accent = (31, 41, 55)  # azul escuro
         table_border = (15, 23, 42)
@@ -153,9 +153,9 @@ class ReceiptService:
                 lines.append(current)
             return lines
 
-        y = s(130)
+        y = margin
         draw.text((margin, y), 'Recibo de Coleta', font=title_font, fill=accent)
-        y += title_font.size + s(30)
+        y += title_font.size + s(20)
 
         info_lines = [
             ('Pedido', f"#{coleta_data.get('pedido_id', 'N/A')}"),
@@ -170,7 +170,7 @@ class ReceiptService:
             draw.text((margin + s(270), y), value or 'N/A', font=text_font, fill=(60, 60, 60))
             y += text_font.size + s(12)
 
-        y += s(30)
+        y += s(20)
 
         # Tabela de itens
         table_x1 = margin
@@ -292,9 +292,27 @@ class ReceiptService:
 
     @staticmethod
     def gerar_recibo_pdf(coleta_data: Dict, output_dir: Optional[str] = None) -> str:
-        """Compatibilidade: mantém assinatura antiga mas gera JPG."""
-        current_app.logger.debug('gerar_recibo_pdf está obsoleto. Gerando recibo em JPG.')
-        return ReceiptService.gerar_recibo_imagem(coleta_data, output_dir=output_dir)
+        """Gera recibo em PDF (a partir da imagem) e retorna o caminho."""
+        image_path = ReceiptService.gerar_recibo_imagem(coleta_data, output_dir=output_dir)
+        pdf_path = str(Path(image_path).with_suffix('.pdf'))
+
+        try:
+            with Image.open(image_path) as img:
+                if img.mode != 'RGB':
+                    img = img.convert('RGB')
+                img.save(pdf_path, format='PDF')
+        except Exception as exc:  # pragma: no cover - exceções raras
+            raise FileProcessingError(
+                message='Falha ao salvar recibo de coleta em PDF',
+                details={'pedido_id': coleta_data.get('pedido_id'), 'arquivo': pdf_path, 'error': str(exc)}
+            ) from exc
+
+        current_app.logger.info(
+            'Recibo de coleta (PDF) gerado com sucesso',
+            extra={'pedido_id': coleta_data.get('pedido_id'), 'arquivo': pdf_path,
+                   'quantidade_itens': len(coleta_data.get('itens_coleta', []))},
+        )
+        return pdf_path
 
     @staticmethod
     def enfileirar_recibo_imagem(coleta_data: Dict) -> Optional[str]:

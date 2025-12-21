@@ -8,6 +8,7 @@ from app.auth.rbac import requires_logistica
 import re
 from typing import Optional, List
 from pathlib import Path
+import mimetypes
 
 coletas_bp = Blueprint('coletas', __name__, url_prefix='/coletas')
 from .services.coleta_service import ColetaService
@@ -319,10 +320,10 @@ def processar_coleta(pedido_id):
                         flash(msg, 'info')
                         return redirect(status_url)
                     
-                    imagem_path = ReceiptService.gerar_recibo_imagem(coleta_data)
+                    pdf_path = ReceiptService.gerar_recibo_pdf(coleta_data)
                     download_url = url_for(
                         'coletas.visualizar_recibo',
-                        filename=os.path.basename(imagem_path),
+                        filename=os.path.basename(pdf_path),
                         _external=True
                     )
                     
@@ -336,9 +337,10 @@ def processar_coleta(pedido_id):
                         return respond_json(True, sucesso_msg, download_url=download_url)
                     
                     flash(sucesso_msg, 'success')
+                    mimetype = mimetypes.guess_type(pdf_path)[0] or 'application/octet-stream'
                     return send_file(
-                        imagem_path,
-                        mimetype='image/jpeg'
+                        pdf_path,
+                        mimetype=mimetype
                     )
                 
                 except ConfigurationError as e:
@@ -395,9 +397,10 @@ def status_recibo(job_id):
     
     if status_info.get('status') == 'finished':
         result = status_info.get('result') or {}
-        arquivo_path = result.get('image_path') or result.get('pdf_path')
+        arquivo_path = result.get('pdf_path') or result.get('image_path')
         if arquivo_path and os.path.exists(arquivo_path):
-            return send_file(arquivo_path, mimetype='image/jpeg')
+            mimetype = mimetypes.guess_type(arquivo_path)[0] or 'application/octet-stream'
+            return send_file(arquivo_path, mimetype=mimetype)
         
         current_app.logger.error(
             "Recibo finalizado, mas arquivo não encontrado",
@@ -441,7 +444,8 @@ def visualizar_recibo(filename):
     if not file_path.exists():
         abort(404)
 
-    return send_file(str(file_path), mimetype='image/jpeg')
+    mimetype = mimetypes.guess_type(str(file_path))[0] or 'application/octet-stream'
+    return send_file(str(file_path), mimetype=mimetype)
 
 
 @coletas_bp.route('/detalhes/<int:pedido_id>')

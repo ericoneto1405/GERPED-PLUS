@@ -122,6 +122,33 @@
     border-radius: 10px;
     padding: 12px;
 }
+
+@media (min-width: 768px) {
+    .form-split-row {
+        position: relative;
+    }
+
+    .form-split-row::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 50%;
+        width: 14px;
+        background: #f2f3f5;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        transform: translateX(-50%);
+    }
+
+    .form-split-row > [class*="col-"]:first-child {
+        padding-right: 24px;
+    }
+
+    .form-split-row > [class*="col-"]:last-child {
+        padding-left: 24px;
+    }
+}
 </style>
 {% endblock %}
 
@@ -147,7 +174,7 @@
                     <form id="formColeta" method="POST">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <!-- Informações do Cliente -->
-                        <div class="row mb-4">
+                        <div class="row mb-4 form-split-row">
                             <div class="col-md-6">
                                 <div class="form-side-muted h-100">
                                     <div class="form-group">

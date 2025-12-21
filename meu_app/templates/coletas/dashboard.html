@@ -21,7 +21,7 @@
             <small class="text-muted">Clique nos cabeçalhos para ordenar e use a busca para filtrar rapidamente.</small>
         </div>
         <div class="table-container d-none d-md-block">
-            <table class="coletas-table data-table auto-fit-table">
+            <table class="table table-hover align-middle coletas-table data-table auto-fit-table">
                 <colgroup>
                     <col class="col-id">
                     <col class="col-cliente">
@@ -397,9 +397,129 @@
         font-size: 0.9rem;
     }
 
-    .coletas-table .col-cliente { width: 35%; }
-    .coletas-table .col-data { width: 25%; }
-    .coletas-table .col-acoes { width: 40%; }
+    .coletas-table .col-id { width: 10%; }
+    .coletas-table .col-cliente { width: 22%; }
+    .coletas-table .col-data { width: 14%; }
+    .coletas-table .col-status { width: 12%; }
+    .coletas-table .col-total { width: 12%; }
+    .coletas-table .col-acoes { width: 30%; }
+
+    .cliente-cell {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .cliente-avatar {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background: #e0f2fe;
+        color: #0f172a;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        text-transform: uppercase;
+        flex-shrink: 0;
+    }
+
+    .cliente-avatar-lg {
+        width: 42px;
+        height: 42px;
+        font-size: 1.05rem;
+    }
+
+    .cliente-info .cliente-nome {
+        font-weight: 600;
+    }
+
+    .status-soft {
+        font-weight: 600;
+        padding: 6px 10px;
+        border-radius: 999px;
+    }
+
+    .coletas-cards {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        margin-top: 8px;
+    }
+
+    .coleta-card {
+        border-radius: 16px;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+    }
+
+    .coleta-card .card-body {
+        padding: 16px;
+        color: #0f172a;
+    }
+
+    .coleta-card .cliente-nome {
+        font-size: 1.05rem;
+        font-weight: 700;
+    }
+
+    .coleta-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: 12px;
+        margin-top: 12px;
+    }
+
+    .meta-label {
+        text-transform: uppercase;
+        font-size: 0.68rem;
+        letter-spacing: 0.08em;
+        color: #64748b;
+    }
+
+    .meta-value {
+        font-weight: 600;
+        color: #1f2937;
+    }
+
+    .total-value {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #0f172a;
+    }
+
+    .coleta-subinfo {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 10px;
+        font-size: 0.85rem;
+        color: #475569;
+    }
+
+    .actions-mobile {
+        display: grid;
+        gap: 8px;
+        margin-top: 14px;
+        width: 100%;
+    }
+
+    .actions-mobile .btn {
+        min-height: 44px;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+    }
+
+    @media (max-width: 360px) {
+        .coleta-card .card-body {
+            padding: 14px;
+        }
+
+        .total-value {
+            font-size: 1.1rem;
+        }
+    }
 
     .visually-hidden {
         position: absolute;
@@ -501,13 +621,30 @@ document.addEventListener('DOMContentLoaded', () => {
         return lista.length ? lista[0] : null;
     };
 
+    const getColumnIndex = (header) => {
+        const value = parseInt(header.dataset.columnIndex || '', 10);
+        return Number.isInteger(value) ? value : null;
+    };
+
     const parseValue = (cell, index) => {
         const text = cell.textContent.trim();
-        if (index === 1) {
+        if (index === 2) {
             if (!text.includes('/')) return text.toLowerCase();
             const [dia, mes, ano] = text.split('/');
             if (!dia || !mes || !ano) return text.toLowerCase();
             return `${ano}-${mes}-${dia}`;
+        }
+        if (index === 0) {
+            const numeric = parseInt(text.replace('#', '').trim(), 10);
+            return Number.isFinite(numeric) ? numeric : text.toLowerCase();
+        }
+        if (index === 4) {
+            const numeric = text
+                .replace(/[^\d,.-]/g, '')
+                .replace(/\./g, '')
+                .replace(',', '.');
+            const value = parseFloat(numeric);
+            return Number.isFinite(value) ? value : text.toLowerCase();
         }
         return text.toLowerCase();
     };
@@ -523,7 +660,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             indicator.innerHTML = '';
         });
-        const target = headers[currentSort.index];
+        const target = Array.from(headers).find(
+            (header) => getColumnIndex(header) === currentSort.index
+        );
         if (!target) return;
         let indicator = target.querySelector('.sort-indicator');
         if (!indicator) {
@@ -601,7 +740,11 @@ document.addEventListener('DOMContentLoaded', () => {
         document.addEventListener('mouseup', onMouseUp);
     };
 
-    headers.forEach((header, index) => {
+    headers.forEach((header) => {
+        const columnIndex = getColumnIndex(header);
+        if (columnIndex === null) {
+            return;
+        }
         header.classList.add('resizable-header');
         let handle = header.querySelector('.column-resizer');
         if (!handle) {
@@ -612,21 +755,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
         handle.addEventListener('mousedown', (e) => {
             e.stopPropagation();
-            startManualResize(e, index);
+            startManualResize(e, columnIndex);
         });
 
         header.addEventListener('dblclick', (e) => {
             e.stopPropagation();
-            autoFitColumn(index);
+            autoFitColumn(columnIndex);
         });
 
         header.addEventListener('click', (e) => {
             if (e.target.classList.contains('column-resizer')) {
                 return;
             }
-            const direction = (currentSort.index === index && currentSort.direction === 'asc') ? 'desc' : 'asc';
-            currentSort = { index, direction };
-            sortRows(index, direction);
+            const direction = (currentSort.index === columnIndex && currentSort.direction === 'asc') ? 'desc' : 'asc';
+            currentSort = { index: columnIndex, direction };
+            sortRows(columnIndex, direction);
         });
     });
 
@@ -636,6 +779,10 @@ document.addEventListener('DOMContentLoaded', () => {
             tbody.querySelectorAll('tr.coleta-row').forEach((row) => {
                 const texto = row.textContent.toLowerCase();
                 row.style.display = texto.includes(termo) ? '' : 'none';
+            });
+            document.querySelectorAll('.coleta-card').forEach((card) => {
+                const texto = card.textContent.toLowerCase();
+                card.style.display = texto.includes(termo) ? '' : 'none';
             });
         });
     }
@@ -676,7 +823,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    tabela.addEventListener('click', async (event) => {
+    document.addEventListener('click', async (event) => {
         const coletaBtn = event.target.closest('.btn-acao-coleta');
         if (coletaBtn) {
             const container = coletaBtn.closest('.action-buttons');

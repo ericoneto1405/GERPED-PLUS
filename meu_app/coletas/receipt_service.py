@@ -123,6 +123,9 @@ class ReceiptService:
         small_font = ReceiptService._load_font(s(22))
         tiny_font = ReceiptService._load_font(s(18))
         disclaimer_font = ReceiptService._load_font(max(1, int(round(title_font.size / 2))))
+        header_title_font = ReceiptService._load_font(s(42), bold=True)
+        header_label_font = ReceiptService._load_font(s(24), bold=True)
+        header_value_font = ReceiptService._load_font(s(22))
 
         border_width = s(3)
         row_border_width = s(2)
@@ -154,8 +157,8 @@ class ReceiptService:
             return lines
 
         y = margin
-        draw.text((margin, y), 'Recibo de Coleta', font=title_font, fill=accent)
-        y += title_font.size + s(20)
+        draw.text((margin, y), 'Recibo de Coleta', font=header_title_font, fill=accent)
+        y += header_title_font.size + s(14)
 
         info_lines = [
             ('Pedido', f"#{coleta_data.get('pedido_id', 'N/A')}"),
@@ -166,11 +169,11 @@ class ReceiptService:
         ]
 
         for label, value in info_lines:
-            draw.text((margin, y), f"{label}:", font=section_font, fill=accent)
-            draw.text((margin + s(270), y), value or 'N/A', font=text_font, fill=(60, 60, 60))
-            y += text_font.size + s(12)
+            draw.text((margin, y), f"{label}:", font=header_label_font, fill=accent)
+            draw.text((margin + s(250), y), value or 'N/A', font=header_value_font, fill=(60, 60, 60))
+            y += header_value_font.size + s(8)
 
-        y += s(20)
+        y += s(14)
 
         # Tabela de itens
         table_x1 = margin

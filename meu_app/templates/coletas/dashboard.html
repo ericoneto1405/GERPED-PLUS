@@ -51,40 +51,42 @@
                                      data-processar-base="{{ processar_base }}"
                                      data-historico-base="{{ historico_base }}"
                                      data-retornar-base="{{ retornar_base }}">
-                                    <div class="d-flex flex-column gap-2 align-items-center w-100">
+                                    <div class="actions-panel">
                                         {% if not item.coletado_completo %}
                                         <button type="button"
-                                                class="btn btn-sm btn-primary btn-acao-coleta"
+                                                class="btn btn-sm btn-primary btn-acao-coleta action-primary"
                                                 data-pedido="{{ pedido_unificado }}"
                                                 data-pedidos="{{ item.pedidos_ids | join(',') }}"
                                                 data-cliente="{{ item.cliente_nome }}">
                                             <i class="bi bi-box-seam"></i> COLETAR PEDIDOS
                                         </button>
                                         {% endif %}
-                                        {% if item.itens_coletados > 0 %}
-                                        <button type="button"
-                                                class="btn btn-sm btn-outline-success btn-acao-historico"
-                                                data-pedido="{{ pedido_unificado }}"
-                                                data-pedidos="{{ item.pedidos_ids | join(',') }}"
-                                                data-cliente="{{ item.cliente_nome }}">
-                                            <i class="bi bi-clock-history"></i> HISTÓRICO
-                                        </button>
-                                        {% endif %}
-                                        {% if not item.coletado_completo %}
-                                        <button type="button"
-                                                class="btn btn-sm btn-outline-danger btn-retornar-financeiro"
-                                                data-pedido="{{ pedido_unificado }}"
-                                                data-pedidos="{{ item.pedidos_ids | join(',') }}"
-                                                data-cliente="{{ item.cliente_nome }}">
-                                            <i class="bi bi-arrow-counterclockwise"></i> RETORNAR FINANCEIRO
-                                        </button>
-                                        {% endif %}
-                                        <button type="button"
-                                                class="btn btn-sm btn-dark btn-quant-pendente"
-                                                data-pedidos="{{ item.pedidos_ids | join(',') }}"
-                                                data-cliente="{{ item.cliente_nome }}">
-                                            <i class="bi bi-exclamation-circle"></i> QUANT. PENDENTE
-                                        </button>
+                                        <div class="actions-secondary">
+                                            {% if item.itens_coletados > 0 %}
+                                            <button type="button"
+                                                    class="btn btn-sm btn-outline-success btn-acao-historico"
+                                                    data-pedido="{{ pedido_unificado }}"
+                                                    data-pedidos="{{ item.pedidos_ids | join(',') }}"
+                                                    data-cliente="{{ item.cliente_nome }}">
+                                                <i class="bi bi-clock-history"></i> HISTÓRICO
+                                            </button>
+                                            {% endif %}
+                                            {% if not item.coletado_completo %}
+                                            <button type="button"
+                                                    class="btn btn-sm btn-outline-danger btn-retornar-financeiro"
+                                                    data-pedido="{{ pedido_unificado }}"
+                                                    data-pedidos="{{ item.pedidos_ids | join(',') }}"
+                                                    data-cliente="{{ item.cliente_nome }}">
+                                                <i class="bi bi-arrow-counterclockwise"></i> RETORNAR FINANCEIRO
+                                            </button>
+                                            {% endif %}
+                                            <button type="button"
+                                                    class="btn btn-sm btn-dark btn-quant-pendente"
+                                                    data-pedidos="{{ item.pedidos_ids | join(',') }}"
+                                                    data-cliente="{{ item.cliente_nome }}">
+                                                <i class="bi bi-exclamation-circle"></i> QUANT. PENDENTE
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </td>
@@ -231,18 +233,53 @@
 
     .action-buttons {
         display: flex;
+        justify-content: center;
+    }
+
+    .actions-panel {
+        width: 100%;
+        max-width: 360px;
+        display: flex;
         flex-direction: column;
-        gap: 8px;
-        align-items: center;
+        gap: 10px;
+        padding: 10px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
     }
 
     .action-buttons .btn {
         border-radius: 8px;
-        font-weight: 500;
+        font-weight: 600;
         display: inline-flex;
         align-items: center;
+        justify-content: center;
         gap: 6px;
         padding: 6px 12px;
+        letter-spacing: 0.02em;
+    }
+
+    .action-primary {
+        width: 100%;
+        text-transform: uppercase;
+    }
+
+    .actions-secondary {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 8px;
+    }
+
+    .actions-secondary .btn {
+        width: 100%;
+        font-weight: 600;
+        font-size: 0.78rem;
+        padding: 6px 8px;
+        text-transform: uppercase;
+    }
+
+    .actions-secondary .btn i {
+        font-size: 0.9rem;
     }
 
     .coletas-table .col-cliente { width: 35%; }

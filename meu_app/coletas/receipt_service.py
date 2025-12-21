@@ -229,9 +229,7 @@ class ReceiptService:
         draw.text((right_start, sig_y + s(70)), f"CPF: {cpf_conferente}", font=tiny_font, fill=(90, 90, 90))
 
         disclaimer_text = (
-            "Ao assinar/validar esta coleta, o conferente coletador, confirma a conferência de itens e "
-            "quantidades e assume total responsabilidade. Após a liberação, não serão aceitas reclamações "
-            "posteriores."
+            "Ao assinar, fica confirmado a conferência do recibo. Não serão aceitas reclamações posteriores."
         )
         disclaimer_lines = _wrap_text(disclaimer_text, disclaimer_font, int(line_length))
         disclaimer_y = sig_y + s(95)

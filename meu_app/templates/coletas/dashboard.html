@@ -23,7 +23,6 @@
         <div class="table-container d-none d-md-block">
             <table class="table table-hover align-middle coletas-table data-table auto-fit-table">
                 <colgroup>
-                    <col class="col-id">
                     <col class="col-cliente">
                     <col class="col-data">
                     <col class="col-status">
@@ -32,11 +31,10 @@
                 </colgroup>
                 <thead>
                     <tr>
-                        <th data-column-index="0" class="text-center">ID</th>
-                        <th data-column-index="1" class="text-center">Cliente</th>
-                        <th data-column-index="2" class="text-center">Data</th>
+                        <th data-column-index="0" class="text-center">Cliente</th>
+                        <th data-column-index="1" class="text-center">Data</th>
                         <th class="text-center">Status</th>
-                        <th data-column-index="4" class="text-center">Total</th>
+                        <th data-column-index="3" class="text-center">Total</th>
                         <th class="text-center">Ações</th>
                     </tr>
                 </thead>
@@ -54,12 +52,6 @@
                             {% set status_class = 'bg-warning bg-opacity-10 text-warning' %}
                         {% endif %}
                         <tr class="coleta-row" data-details-id="">
-                            <td class="text-muted">
-                                #{{ pedido_unificado if pedido_unificado else '-' }}
-                                {% if pedidos_count > 1 %}
-                                    <div class="small text-muted">+{{ pedidos_count - 1 }} pedidos</div>
-                                {% endif %}
-                            </td>
                             <td>
                                 <div class="cliente-cell">
                                     <div class="cliente-avatar">
@@ -397,11 +389,10 @@
         font-size: 0.9rem;
     }
 
-    .coletas-table .col-id { width: 10%; }
-    .coletas-table .col-cliente { width: 22%; }
-    .coletas-table .col-data { width: 14%; }
+    .coletas-table .col-cliente { width: 28%; }
+    .coletas-table .col-data { width: 16%; }
     .coletas-table .col-status { width: 12%; }
-    .coletas-table .col-total { width: 12%; }
+    .coletas-table .col-total { width: 14%; }
     .coletas-table .col-acoes { width: 30%; }
 
     .cliente-cell {
@@ -628,17 +619,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const parseValue = (cell, index) => {
         const text = cell.textContent.trim();
-        if (index === 2) {
+        if (index === 1) {
             if (!text.includes('/')) return text.toLowerCase();
             const [dia, mes, ano] = text.split('/');
             if (!dia || !mes || !ano) return text.toLowerCase();
             return `${ano}-${mes}-${dia}`;
         }
-        if (index === 0) {
-            const numeric = parseInt(text.replace('#', '').trim(), 10);
-            return Number.isFinite(numeric) ? numeric : text.toLowerCase();
-        }
-        if (index === 4) {
+        if (index === 3) {
             const numeric = text
                 .replace(/[^\d,.-]/g, '')
                 .replace(/\./g, '')

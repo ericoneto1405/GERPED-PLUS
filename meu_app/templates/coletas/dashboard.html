@@ -355,9 +355,9 @@
     .actions-row {
         width: 100%;
         display: flex;
-        flex-wrap: nowrap;
+        flex-direction: column;
         gap: 8px;
-        align-items: center;
+        align-items: stretch;
         justify-content: center;
     }
 
@@ -370,6 +370,10 @@
         gap: 6px;
         padding: 6px 12px;
         letter-spacing: 0.02em;
+    }
+
+    .actions-row .btn {
+        width: 100%;
     }
 
     .action-primary {

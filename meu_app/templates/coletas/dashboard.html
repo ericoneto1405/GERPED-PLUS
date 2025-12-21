@@ -51,7 +51,7 @@
                                      data-processar-base="{{ processar_base }}"
                                      data-historico-base="{{ historico_base }}"
                                      data-retornar-base="{{ retornar_base }}">
-                                    <div class="actions-panel">
+                                    <div class="actions-row">
                                         {% if not item.coletado_completo %}
                                         <button type="button"
                                                 class="btn btn-sm btn-primary btn-acao-coleta action-primary"
@@ -61,32 +61,30 @@
                                             <i class="bi bi-box-seam"></i> COLETAR PEDIDOS
                                         </button>
                                         {% endif %}
-                                        <div class="actions-secondary">
-                                            {% if item.itens_coletados > 0 %}
-                                            <button type="button"
-                                                    class="btn btn-sm btn-outline-success btn-acao-historico"
-                                                    data-pedido="{{ pedido_unificado }}"
-                                                    data-pedidos="{{ item.pedidos_ids | join(',') }}"
-                                                    data-cliente="{{ item.cliente_nome }}">
-                                                <i class="bi bi-clock-history"></i> HISTÓRICO
-                                            </button>
-                                            {% endif %}
-                                            {% if not item.coletado_completo %}
-                                            <button type="button"
-                                                    class="btn btn-sm btn-outline-danger btn-retornar-financeiro"
-                                                    data-pedido="{{ pedido_unificado }}"
-                                                    data-pedidos="{{ item.pedidos_ids | join(',') }}"
-                                                    data-cliente="{{ item.cliente_nome }}">
-                                                <i class="bi bi-arrow-counterclockwise"></i> RETORNAR FINANCEIRO
-                                            </button>
-                                            {% endif %}
-                                            <button type="button"
-                                                    class="btn btn-sm btn-dark btn-quant-pendente"
-                                                    data-pedidos="{{ item.pedidos_ids | join(',') }}"
-                                                    data-cliente="{{ item.cliente_nome }}">
-                                                <i class="bi bi-exclamation-circle"></i> QUANT. PENDENTE
-                                            </button>
-                                        </div>
+                                        {% if item.itens_coletados > 0 %}
+                                        <button type="button"
+                                                class="btn btn-sm btn-outline-success btn-acao-historico action-secondary"
+                                                data-pedido="{{ pedido_unificado }}"
+                                                data-pedidos="{{ item.pedidos_ids | join(',') }}"
+                                                data-cliente="{{ item.cliente_nome }}">
+                                            <i class="bi bi-clock-history"></i> HISTÓRICO
+                                        </button>
+                                        {% endif %}
+                                        {% if not item.coletado_completo and session.usuario_tipo == 'admin' %}
+                                        <button type="button"
+                                                class="btn btn-sm btn-outline-danger btn-retornar-financeiro action-secondary"
+                                                data-pedido="{{ pedido_unificado }}"
+                                                data-pedidos="{{ item.pedidos_ids | join(',') }}"
+                                                data-cliente="{{ item.cliente_nome }}">
+                                            <i class="bi bi-arrow-counterclockwise"></i> RETORNAR FINANCEIRO
+                                        </button>
+                                        {% endif %}
+                                        <button type="button"
+                                                class="btn btn-sm btn-dark btn-quant-pendente action-secondary"
+                                                data-pedidos="{{ item.pedidos_ids | join(',') }}"
+                                                data-cliente="{{ item.cliente_nome }}">
+                                            <i class="bi bi-exclamation-circle"></i> QUANT. PENDENTE
+                                        </button>
                                     </div>
                                 </div>
                             </td>
@@ -236,16 +234,13 @@
         justify-content: center;
     }
 
-    .actions-panel {
+    .actions-row {
         width: 100%;
-        max-width: 360px;
         display: flex;
-        flex-direction: column;
-        gap: 10px;
-        padding: 10px;
-        background: #f8fafc;
-        border: 1px solid #e2e8f0;
-        border-radius: 12px;
+        flex-wrap: nowrap;
+        gap: 8px;
+        align-items: center;
+        justify-content: center;
     }
 
     .action-buttons .btn {
@@ -260,25 +255,19 @@
     }
 
     .action-primary {
-        width: 100%;
         text-transform: uppercase;
+        white-space: nowrap;
     }
 
-    .actions-secondary {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-        gap: 8px;
-    }
-
-    .actions-secondary .btn {
-        width: 100%;
+    .action-secondary {
         font-weight: 600;
         font-size: 0.78rem;
         padding: 6px 8px;
         text-transform: uppercase;
+        white-space: nowrap;
     }
 
-    .actions-secondary .btn i {
+    .action-secondary i {
         font-size: 0.9rem;
     }
 

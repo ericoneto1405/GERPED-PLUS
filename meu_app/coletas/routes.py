@@ -4,7 +4,7 @@ Integra funcionalidades do módulo logística
 """
 from flask import Blueprint, render_template, current_app, flash, request, redirect, url_for, session, send_file, abort, jsonify
 from ..decorators import login_obrigatorio
-from app.auth.rbac import requires_logistica
+from meu_app.auth.rbac import requires_logistica
 import re
 from typing import Optional, List
 from pathlib import Path

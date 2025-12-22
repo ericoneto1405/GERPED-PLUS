@@ -1,6 +1,6 @@
 from flask import render_template, request, jsonify
 from meu_app.decorators import login_obrigatorio, permissao_necessaria
-from app.auth.rbac import requires_vendedor
+from meu_app.auth.rbac import requires_vendedor
 from meu_app.cache import cached_with_invalidation
 from . import vendedor_bp
 from .services import VendedorService

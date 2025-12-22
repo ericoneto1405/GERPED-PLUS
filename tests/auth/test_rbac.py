@@ -146,7 +146,7 @@ class TestRBACBasics:
     
     def test_get_user_roles_admin(self, app, client, admin_user):
         """Admin deve ter role ADMIN"""
-        from app.auth.rbac import get_user_roles
+        from meu_app.auth.rbac import get_user_roles
         
         with client.session_transaction() as sess:
             sess['usuario_id'] = admin_user.id
@@ -163,7 +163,7 @@ class TestRBACBasics:
     
     def test_get_user_roles_financeiro(self, app, client, financeiro_user):
         """Usuário financeiro deve ter role FINANCEIRO"""
-        from app.auth.rbac import get_user_roles
+        from meu_app.auth.rbac import get_user_roles
         
         with app.test_request_context():
             from flask import session as request_session
@@ -179,7 +179,7 @@ class TestRBACBasics:
     
     def test_get_user_roles_not_authenticated(self, app):
         """Usuário não autenticado não tem roles"""
-        from app.auth.rbac import get_user_roles
+        from meu_app.auth.rbac import get_user_roles
         
         with app.app_context():
             roles = get_user_roles()
@@ -191,7 +191,7 @@ class TestRequiresRolesDecorator:
     
     def test_requires_admin_allows_admin(self, app, client, admin_user):
         """Admin deve acessar rota protegida por @requires_roles('ADMIN')"""
-        from app.auth.rbac import requires_roles
+        from meu_app.auth.rbac import requires_roles
         
         @app.route('/test/admin')
         @requires_roles('ADMIN')
@@ -209,7 +209,7 @@ class TestRequiresRolesDecorator:
     
     def test_requires_admin_blocks_non_admin(self, app, client, financeiro_user):
         """Não-admin deve ser bloqueado em rota ADMIN-only"""
-        from app.auth.rbac import requires_roles
+        from meu_app.auth.rbac import requires_roles
         
         @app.route('/test/admin2')
         @requires_roles('ADMIN')
@@ -227,7 +227,7 @@ class TestRequiresRolesDecorator:
     
     def test_requires_financeiro_allows_admin(self, app, client, admin_user):
         """Admin deve acessar rota FINANCEIRO"""
-        from app.auth.rbac import requires_roles
+        from meu_app.auth.rbac import requires_roles
         
         @app.route('/test/financeiro')
         @requires_roles('FINANCEIRO', 'ADMIN')
@@ -243,7 +243,7 @@ class TestRequiresRolesDecorator:
     
     def test_requires_financeiro_allows_financeiro_user(self, app, client, financeiro_user):
         """Usuário financeiro deve acessar rota FINANCEIRO"""
-        from app.auth.rbac import requires_roles
+        from meu_app.auth.rbac import requires_roles
         
         @app.route('/test/financeiro2')
         @requires_roles('FINANCEIRO', 'ADMIN')
@@ -263,7 +263,7 @@ class TestRequiresRolesDecorator:
     
     def test_requires_financeiro_blocks_logistica(self, app, client, logistica_user):
         """Usuário logística NÃO deve acessar rota FINANCEIRO"""
-        from app.auth.rbac import requires_roles
+        from meu_app.auth.rbac import requires_roles
         
         @app.route('/test/financeiro3')
         @requires_roles('FINANCEIRO', 'ADMIN')
@@ -283,7 +283,7 @@ class TestRequiresRolesDecorator:
     
     def test_requires_not_authenticated(self, app, client):
         """Usuário não autenticado deve ser redirecionado para login"""
-        from app.auth.rbac import requires_roles
+        from meu_app.auth.rbac import requires_roles
         
         @app.route('/test/protected')
         @requires_roles('COMUM')
@@ -300,7 +300,7 @@ class TestRBACJSON:
     
     def test_unauthorized_json_response(self, app, client):
         """Requisição JSON não autenticada deve retornar 401 JSON"""
-        from app.auth.rbac import requires_roles
+        from meu_app.auth.rbac import requires_roles
         
         @app.route('/api/test/protected')
         @requires_roles('ADMIN')
@@ -315,7 +315,7 @@ class TestRBACJSON:
     
     def test_forbidden_json_response(self, app, client, vendedor_user):
         """Requisição JSON sem permissão deve retornar 403 JSON"""
-        from app.auth.rbac import requires_roles
+        from meu_app.auth.rbac import requires_roles
         
         @app.route('/api/test/admin')
         @requires_roles('ADMIN')
@@ -339,7 +339,7 @@ class TestRBACRoleMapping:
     
     def test_admin_has_all_permissions(self, app, admin_user):
         """Admin deve ter todas as permissões"""
-        from app.auth.rbac import ROLE_PERMISSIONS_MAP
+        from meu_app.auth.rbac import ROLE_PERMISSIONS_MAP
         
         admin_perms = ROLE_PERMISSIONS_MAP['ADMIN']
         assert 'acesso_financeiro' in admin_perms
@@ -348,7 +348,7 @@ class TestRBACRoleMapping:
     
     def test_financeiro_has_financial_permissions(self, app):
         """FINANCEIRO deve ter permissões financeiras"""
-        from app.auth.rbac import ROLE_PERMISSIONS_MAP
+        from meu_app.auth.rbac import ROLE_PERMISSIONS_MAP
         
         fin_perms = ROLE_PERMISSIONS_MAP['FINANCEIRO']
         assert 'acesso_financeiro' in fin_perms
@@ -356,7 +356,7 @@ class TestRBACRoleMapping:
     
     def test_logistica_has_logistics_permissions(self, app):
         """LOGISTICA deve ter permissões logísticas"""
-        from app.auth.rbac import ROLE_PERMISSIONS_MAP
+        from meu_app.auth.rbac import ROLE_PERMISSIONS_MAP
         
         log_perms = ROLE_PERMISSIONS_MAP['LOGISTICA']
         assert 'acesso_logistica' in log_perms
@@ -364,7 +364,7 @@ class TestRBACRoleMapping:
     
     def test_has_any_role_true(self, app, client, financeiro_user):
         """has_any_role deve retornar True quando usuário tem o role"""
-        from app.auth.rbac import has_any_role
+        from meu_app.auth.rbac import has_any_role
         
         with app.test_request_context():
             from flask import session as request_session
@@ -380,7 +380,7 @@ class TestRBACRoleMapping:
     
     def test_has_any_role_false(self, app, client, vendedor_user):
         """has_any_role deve retornar False quando usuário não tem o role"""
-        from app.auth.rbac import has_any_role
+        from meu_app.auth.rbac import has_any_role
         
         with client.session_transaction() as sess:
             sess['usuario_id'] = vendedor_user.id

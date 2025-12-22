@@ -8,7 +8,7 @@ from functools import wraps
 from datetime import datetime
 from ..models import Apuracao, db
 from ..decorators import login_obrigatorio
-from app.auth.rbac import requires_financeiro
+from meu_app.auth.rbac import requires_financeiro
 
 @apuracao_bp.route('/', methods=['GET'])
 @login_obrigatorio

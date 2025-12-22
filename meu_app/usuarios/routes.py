@@ -3,7 +3,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 usuarios_bp = Blueprint('usuarios', __name__, url_prefix='/usuarios')
 from .services import UsuarioService
 from functools import wraps
-from app.auth.rbac import requires_admin
+from meu_app.auth.rbac import requires_admin
 
 # Decoradores movidos para meu_app/decorators.py
 

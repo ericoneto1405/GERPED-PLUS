@@ -8,7 +8,7 @@ from .services import FinanceiroService
 from functools import wraps
 from ..decorators import login_obrigatorio, permissao_necessaria, admin_necessario
 from ..models import Pagamento, PagamentoAnexo, Pedido, CarteiraCredito, Usuario
-from app.auth.rbac import requires_financeiro
+from meu_app.auth.rbac import requires_financeiro
 from ..upload_security import FileUploadValidator
 from .ocr_service import OcrService
 from .config import FinanceiroConfig

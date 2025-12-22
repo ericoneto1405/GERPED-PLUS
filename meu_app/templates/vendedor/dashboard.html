@@ -124,7 +124,7 @@
                     <div class="ranking-item">
                         <span class="ranking-pos">{{ loop.index }}º</span>
                         <span class="ranking-nome">{{ produto.nome }}</span>
-                        <span class="ranking-valor">Médio: R$ {{ "%.2f"|format(produto.preco_medio) }}</span>
+                        <span class="ranking-valor">R$ {{ "%.2f"|format(produto.preco_medio) }}</span>
                     </div>
                     {% endfor %}
                 </div>

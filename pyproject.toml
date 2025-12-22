@@ -25,6 +25,10 @@ markers = [
     "smoke: Smoke tests",
     "security: Security tests",
 ]
+filterwarnings = [
+    "ignore:Using the in-memory storage for tracking rate limits:UserWarning:flask_limiter.*",
+    "ignore:The '__version__' attribute is deprecated:DeprecationWarning:flask.testing",
+]
 
 [tool.black]
 line-length = 100

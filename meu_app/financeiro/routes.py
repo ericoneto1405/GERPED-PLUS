@@ -329,8 +329,11 @@ def registrar_pagamento(pedido_id):
             pagamentos_para_criar.append({'meta': meta, 'valor': valor_convertido})
 
         if not pagamentos_para_criar:
-            flash('Selecione ou informe ao menos um comprovante para registrar o pagamento.', 'error')
-            return redirect(url_for('financeiro.registrar_pagamento', pedido_id=pedido_id))
+            if _metodo_sem_comprovante(forma_pagamento):
+                pagamentos_para_criar.append({'meta': {}, 'valor': valor})
+            else:
+                flash('Selecione ou informe ao menos um comprovante para registrar o pagamento.', 'error')
+                return redirect(url_for('financeiro.registrar_pagamento', pedido_id=pedido_id))
 
         soma_comprovantes = sum(item['valor'] for item in pagamentos_para_criar)
         if round(soma_comprovantes, 2) != round(valor, 2):

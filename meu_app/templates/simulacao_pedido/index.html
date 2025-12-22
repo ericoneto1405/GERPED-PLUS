@@ -5,210 +5,479 @@
 {% block page_title %}Simulação de Pedido{% endblock %}
 
 {% block content %}
-<div class="simulador-header">
-    <div>
-        <h2 class="mb-1">Simulação de Pedido</h2>
-        <p class="text-muted mb-0">Use as verbas previstas da Apuração e o custo médio dos produtos para saber se a negociação fecha no positivo.</p>
-    </div>
-    <span class="badge bg-primary px-3 py-2">Versão Beta</span>
-</div>
-
-<div class="cards-grid">
-    <div class="mini-card">
-        <div class="mini-title">Verbas previstas</div>
-        <div class="mini-value" id="cardVerbas">R$ 0,00</div>
-        <small class="text-muted">Fonte: Apuração (previsão)</small>
-    </div>
-    <div class="mini-card">
-        <div class="mini-title">Receita mês (pago)</div>
-        <div class="mini-value" id="cardReceita">R$ 0,00</div>
-        <small class="text-muted">Pedidos pagos no mês</small>
-    </div>
-    <div class="mini-card">
-        <div class="mini-title">CPV mês</div>
-        <div class="mini-value" id="cardCPV">R$ 0,00</div>
-        <small class="text-muted">Custo dos pedidos pagos</small>
-    </div>
-    <div class="mini-card">
-        <div class="mini-title">Margem mês</div>
-        <div class="mini-value" id="cardMargem">R$ 0,00</div>
-        <small class="text-muted">Receita - CPV</small>
-    </div>
-</div>
-
-<div class="simulador-grid">
-    <div class="simulador-main">
-        <div class="config-card">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <div>
-                    <h5 class="mb-1">Configuração de Verbas</h5>
-                    <p class="text-muted mb-0">Edite se precisar ajustar as verbas previstas gerais e por categoria.</p>
-                </div>
-                <button class="btn btn-outline-secondary btn-sm" id="btnResetVerbas">Restaurar valores</button>
-            </div>
-            <div class="verba-grid">
-                <div>
-                    <label class="form-label mb-1">Verba geral (R$)</label>
-                    <input type="number" step="0.01" class="form-control" id="inputVerbaGeral" value="0">
-                </div>
-                <div>
-                    <label class="form-label mb-1">Verba SCANN</label>
-                    <input type="number" step="0.01" class="form-control verba-extra" data-key="scann" value="0">
-                </div>
-                <div>
-                    <label class="form-label mb-1">Verba Plano Negócios</label>
-                    <input type="number" step="0.01" class="form-control verba-extra" data-key="plano_negocios" value="0">
-                </div>
-                <div>
-                    <label class="form-label mb-1">Verba Time Ambev</label>
-                    <input type="number" step="0.01" class="form-control verba-extra" data-key="time_ambev" value="0">
-                </div>
-                <div>
-                    <label class="form-label mb-1">Outras verbas</label>
-                    <input type="number" step="0.01" class="form-control verba-extra" data-key="outras" value="0">
-                </div>
-            </div>
-            <div class="mt-3">
-                <div class="d-flex justify-content-between align-items-center mb-1">
-                    <h6 class="mb-0">Verbas por categoria (insira se houver)</h6>
-                    <small class="text-muted">Somam com a verba geral</small>
-                </div>
-                <div id="verbasCategorias" class="verbas-categorias"></div>
+<div class="simulacao-page">
+    <section class="sim-hero" style="--delay: 0s;">
+        <div class="sim-hero-main">
+            <span class="sim-kicker">Simulação de Pedido</span>
+            <h2 class="sim-title">Decida com clareza se o pedido fecha no positivo.</h2>
+            <p class="sim-subtitle">Use as verbas previstas da Apuração e o custo médio dos produtos para entender o impacto da negociação no mês.</p>
+            <div class="sim-hero-meta">
+                <span class="sim-chip">Versão Beta</span>
+                <span class="sim-meta">Apuração: <strong id="periodoApuracao">--/--</strong></span>
+                <span class="sim-meta">Pedidos pagos no mês: <strong id="infoPedidosMes">0</strong></span>
             </div>
         </div>
-
-        <div class="table-card">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <h5 class="mb-0">Itens em negociação</h5>
-                <button class="btn btn-primary btn-sm" id="btnAddLinha"><i class="bi bi-plus-lg"></i> Adicionar linha</button>
-            </div>
-            <div class="table-container">
-                <table class="simulacao-table auto-fit-table">
-                    <colgroup>
-                        <col class="col-produto">
-                        <col class="col-cat">
-                        <col class="col-qtd">
-                        <col class="col-preco">
-                        <col class="col-sub">
-                        <col class="col-custo">
-                        <col class="col-margem">
-                        <col class="col-margemp">
-                        <col class="col-acoes">
-                    </colgroup>
-                    <thead>
-                        <tr>
-                            <th data-column-index="0">PRODUTO</th>
-                            <th data-column-index="1">CATEGORIA</th>
-                            <th data-column-index="2">QTDE</th>
-                            <th data-column-index="3">PREÇO NEGOCIADO</th>
-                            <th data-column-index="4">SUBTOTAL</th>
-                            <th data-column-index="5">CUSTO</th>
-                            <th data-column-index="6">MARGEM R$</th>
-                            <th data-column-index="7">MARGEM %</th>
-                            <th>AÇÕES</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tbodySimulacao">
-                        <tr class="linha-vazia"><td colspan="9" class="text-center text-muted">Adicione itens para simular</td></tr>
-                    </tbody>
-                </table>
+        <div class="sim-hero-aside">
+            <div class="sim-hero-card">
+                <div class="hero-card-label">Fluxo rápido</div>
+                <div class="hero-steps">
+                    <div class="hero-step">
+                        <span class="hero-step-index">1</span>
+                        <span>Informe verbas gerais e por categoria.</span>
+                    </div>
+                    <div class="hero-step">
+                        <span class="hero-step-index">2</span>
+                        <span>Adicione itens com preço e quantidade.</span>
+                    </div>
+                    <div class="hero-step">
+                        <span class="hero-step-index">3</span>
+                        <span>Valide o saldo final da negociação.</span>
+                    </div>
+                </div>
             </div>
         </div>
+    </section>
 
-        <div class="categoria-card">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <h5 class="mb-0">Resumo por categoria (mês + simulação)</h5>
-                <small class="text-muted">Receita, custo e margem considerando o que já foi pago no mês e esta simulação.</small>
+    <div class="cards-grid">
+        <div class="mini-card" data-tone="teal" style="--delay: 0.05s;">
+            <div class="mini-head">
+                <span class="mini-icon"><i class="bi bi-wallet2"></i></span>
+                <div class="mini-title">Verbas previstas</div>
             </div>
-            <div class="table-container">
-                <table class="simulacao-table resumo-cat">
-                    <thead>
-                        <tr>
-                            <th>CATEGORIA</th>
-                            <th>RECEITA</th>
-                            <th>CPV</th>
-                            <th>MARGEM</th>
-                            <th>BURACO</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tbodyCategorias">
-                        <tr><td colspan="5" class="text-center text-muted">Sem dados.</td></tr>
-                    </tbody>
-                </table>
+            <div class="mini-value" id="cardVerbas">R$ 0,00</div>
+            <small class="mini-caption">Fonte: Apuração (previsão)</small>
+        </div>
+        <div class="mini-card" data-tone="blue" style="--delay: 0.08s;">
+            <div class="mini-head">
+                <span class="mini-icon"><i class="bi bi-graph-up-arrow"></i></span>
+                <div class="mini-title">Receita mês (pago)</div>
             </div>
+            <div class="mini-value" id="cardReceita">R$ 0,00</div>
+            <small class="mini-caption">Pedidos pagos no mês</small>
+        </div>
+        <div class="mini-card" data-tone="amber" style="--delay: 0.11s;">
+            <div class="mini-head">
+                <span class="mini-icon"><i class="bi bi-box-seam"></i></span>
+                <div class="mini-title">CPV mês</div>
+            </div>
+            <div class="mini-value" id="cardCPV">R$ 0,00</div>
+            <small class="mini-caption">Custo dos pedidos pagos</small>
+        </div>
+        <div class="mini-card" data-tone="rose" style="--delay: 0.14s;">
+            <div class="mini-head">
+                <span class="mini-icon"><i class="bi bi-cash-stack"></i></span>
+                <div class="mini-title">Margem mês</div>
+            </div>
+            <div class="mini-value" id="cardMargem">R$ 0,00</div>
+            <small class="mini-caption">Receita - CPV</small>
         </div>
     </div>
 
-    <div class="simulador-side">
-        <div class="painel-resultado" id="painelResultado">
-            <div class="resultado-status bg-secondary text-white">Carregando...</div>
-            <div class="resultado-valores">
-                <div>
-                    <div class="label">Margem total (mês + sim)</div>
-                    <div class="value" id="valorMargemTotal">R$ 0,00</div>
+    <div class="simulador-grid">
+        <div class="simulador-main">
+            <section class="config-card sim-step" style="--delay: 0.12s;">
+                <div class="sim-step-header">
+                    <div class="sim-step-index">1</div>
+                    <div class="sim-step-text">
+                        <h5 class="mb-1">Configuração de Verbas</h5>
+                        <p class="mb-0">Edite se precisar ajustar as verbas previstas gerais e por categoria.</p>
+                    </div>
+                    <div class="sim-step-actions">
+                        <button class="btn btn-outline-secondary btn-sm" id="btnResetVerbas">Restaurar valores</button>
+                    </div>
                 </div>
-                <div>
-                    <div class="label">Verbas consideradas</div>
-                    <div class="value" id="valorVerbasConsideradas">R$ 0,00</div>
+                <div class="verba-grid">
+                    <div>
+                        <label class="form-label mb-1">Verba geral (R$)</label>
+                        <input type="number" step="0.01" class="form-control" id="inputVerbaGeral" value="0">
+                    </div>
+                    <div>
+                        <label class="form-label mb-1">Verba SCANN</label>
+                        <input type="number" step="0.01" class="form-control verba-extra" data-key="scann" value="0">
+                    </div>
+                    <div>
+                        <label class="form-label mb-1">Verba Plano Negócios</label>
+                        <input type="number" step="0.01" class="form-control verba-extra" data-key="plano_negocios" value="0">
+                    </div>
+                    <div>
+                        <label class="form-label mb-1">Verba Time Ambev</label>
+                        <input type="number" step="0.01" class="form-control verba-extra" data-key="time_ambev" value="0">
+                    </div>
+                    <div>
+                        <label class="form-label mb-1">Outras verbas</label>
+                        <input type="number" step="0.01" class="form-control verba-extra" data-key="outras" value="0">
+                    </div>
                 </div>
-                <div>
-                    <div class="label">Saldo após verbas</div>
-                    <div class="value" id="valorSaldo">R$ 0,00</div>
+                <div class="mt-3">
+                    <div class="d-flex justify-content-between align-items-center mb-1 flex-wrap gap-2">
+                        <h6 class="mb-0">Verbas por categoria (insira se houver)</h6>
+                        <small class="text-muted">Somam com a verba geral</small>
+                    </div>
+                    <div id="verbasCategorias" class="verbas-categorias"></div>
                 </div>
-            </div>
-            <div class="resultado-explicacao" id="textoExplicacao">
-                Avaliando…
-            </div>
+            </section>
+
+            <section class="table-card sim-step" style="--delay: 0.16s;">
+                <div class="sim-step-header">
+                    <div class="sim-step-index">2</div>
+                    <div class="sim-step-text">
+                        <h5 class="mb-1">Itens em negociação</h5>
+                        <p class="mb-0">Adicione produtos, quantidades e preço negociado para simular.</p>
+                    </div>
+                    <div class="sim-step-actions">
+                        <button class="btn btn-primary btn-sm btn-sim-primary" id="btnAddLinha"><i class="bi bi-plus-lg"></i> Adicionar linha</button>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table class="simulacao-table auto-fit-table">
+                        <colgroup>
+                            <col class="col-produto">
+                            <col class="col-cat">
+                            <col class="col-qtd">
+                            <col class="col-preco">
+                            <col class="col-sub">
+                            <col class="col-custo">
+                            <col class="col-margem">
+                            <col class="col-margemp">
+                            <col class="col-acoes">
+                        </colgroup>
+                        <thead>
+                            <tr>
+                                <th data-column-index="0">Produto</th>
+                                <th data-column-index="1">Categoria</th>
+                                <th data-column-index="2">Qtde</th>
+                                <th data-column-index="3">Preço negociado</th>
+                                <th data-column-index="4">Subtotal</th>
+                                <th data-column-index="5">Custo</th>
+                                <th data-column-index="6">Margem R$</th>
+                                <th data-column-index="7">Margem %</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodySimulacao">
+                            <tr class="linha-vazia"><td colspan="9" class="text-center text-muted">Adicione itens para simular</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="categoria-card sim-step" style="--delay: 0.2s;">
+                <div class="sim-step-header">
+                    <div class="sim-step-index">3</div>
+                    <div class="sim-step-text">
+                        <h5 class="mb-1">Resumo por categoria (mês + simulação)</h5>
+                        <p class="mb-0">Receita, custo e margem considerando o que já foi pago no mês e esta simulação.</p>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table class="simulacao-table resumo-cat">
+                        <thead>
+                            <tr>
+                                <th>Categoria</th>
+                                <th>Receita</th>
+                                <th>CPV</th>
+                                <th>Margem</th>
+                                <th>Buraco</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyCategorias">
+                            <tr><td colspan="5" class="text-center text-muted">Sem dados.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
         </div>
 
-        <div class="painel-notas">
-            <h6 class="mb-2">Como calculamos</h6>
-            <ul class="list-unstyled small mb-0">
-                <li>• Receita/CPV do mês: pedidos pagos, conforme Apuração.</li>
-                <li>• Custo do item: preço médio de compra atual.</li>
-                <li>• Margem total = (receita – CPV) + verbas informadas.</li>
-                <li>• Se saldo após verbas &lt; 0, o pedido não compensa.</li>
-            </ul>
-        </div>
+        <aside class="simulador-side">
+            <div class="painel-resultado" id="painelResultado" data-tone="loading" style="--delay: 0.14s;">
+                <div class="resultado-topo">
+                    <div>
+                        <div class="resultado-kicker">Decisão da simulação</div>
+                        <div class="resultado-status status-loading">Carregando...</div>
+                    </div>
+                    <div class="resultado-saldo">
+                        <div class="label">Saldo final estimado</div>
+                        <div class="value" id="valorSaldo">R$ 0,00</div>
+                        <div class="hint">Margem do mês + simulação + verbas</div>
+                    </div>
+                </div>
+                <div class="resultado-valores">
+                    <div>
+                        <div class="label">Margem total (mês + sim)</div>
+                        <div class="value" id="valorMargemTotal">R$ 0,00</div>
+                    </div>
+                    <div>
+                        <div class="label">Verbas consideradas</div>
+                        <div class="value" id="valorVerbasConsideradas">R$ 0,00</div>
+                    </div>
+                </div>
+                <div class="resultado-meter">
+                    <div class="meter-header">
+                        <span>Uso de verbas</span>
+                        <span id="consumoVerbaLabel">0%</span>
+                    </div>
+                    <div class="meter-bar">
+                        <div class="meter-fill" id="consumoVerbaFill" style="width: 0%;"></div>
+                    </div>
+                </div>
+                <div class="resultado-explicacao" id="textoExplicacao">Avaliando...</div>
+            </div>
+
+            <div class="painel-notas" style="--delay: 0.18s;">
+                <h6 class="mb-2">Como calculamos</h6>
+                <ul class="list-unstyled small mb-0">
+                    <li>Receita/CPV do mês: pedidos pagos, conforme Apuração.</li>
+                    <li>Custo do item: preço médio de compra atual.</li>
+                    <li>Margem total = (receita - CPV) + verbas informadas.</li>
+                    <li>Se saldo após verbas &lt; 0, o pedido não compensa.</li>
+                </ul>
+            </div>
+        </aside>
     </div>
 </div>
 
 <style>
-.simulador-header {
-    display: flex;
-    justify-content: space-between;
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Manrope:wght@400;500;600;700;800&display=swap');
+
+.simulacao-page {
+    --sim-ink: #1f2a44;
+    --sim-muted: #5b6a7f;
+    --sim-border: #dfe6ef;
+    --sim-surface: #ffffff;
+    --sim-surface-alt: #f4f7fb;
+    --sim-primary: #0ea5a0;
+    --sim-primary-strong: #0f766e;
+    --sim-accent: #f59e0b;
+    --sim-success: #16a34a;
+    --sim-danger: #e11d48;
+    --sim-shadow: 0 18px 35px rgba(15, 23, 42, 0.12);
+    --sim-shadow-soft: 0 6px 18px rgba(15, 23, 42, 0.08);
+    font-family: 'Manrope', 'Segoe UI', sans-serif;
+    color: var(--sim-ink);
+    background: radial-gradient(circle at 10% 10%, rgba(14, 165, 160, 0.18), transparent 45%),
+        radial-gradient(circle at 90% 5%, rgba(245, 158, 11, 0.14), transparent 35%),
+        linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(244, 247, 251, 0.96));
+    border-radius: 22px;
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+}
+.simulacao-page > * {
+    position: relative;
+    z-index: 1;
+}
+.simulacao-page::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(rgba(255, 255, 255, 0.65) 1px, transparent 1px);
+    background-size: 24px 24px;
+    opacity: 0.25;
+    pointer-events: none;
+}
+.simulacao-page .text-muted {
+    color: var(--sim-muted) !important;
+}
+.sim-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    gap: 24px;
     align-items: center;
-    gap: 12px;
-    margin-bottom: 18px;
+    margin-bottom: 6px;
+}
+.sim-kicker {
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    font-size: 0.72rem;
+    color: var(--sim-muted);
+    font-weight: 700;
+}
+.sim-title {
+    font-family: 'Fraunces', 'Georgia', serif;
+    font-size: clamp(1.85rem, 2vw + 1rem, 2.6rem);
+    margin: 8px 0 10px;
+    color: var(--sim-ink);
+}
+.sim-subtitle {
+    color: var(--sim-muted);
+    margin-bottom: 14px;
+    max-width: 64ch;
+}
+.sim-hero-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+.sim-chip {
+    background: rgba(14, 165, 160, 0.15);
+    color: var(--sim-primary-strong);
+    border: 1px solid rgba(14, 165, 160, 0.35);
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+.sim-meta {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid var(--sim-border);
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: 0.82rem;
+    color: var(--sim-muted);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.sim-hero-card {
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(14, 165, 160, 0.2);
+    border-radius: 16px;
+    padding: 16px;
+    box-shadow: var(--sim-shadow-soft);
+}
+.hero-card-label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--sim-muted);
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+.hero-steps {
+    display: grid;
+    gap: 10px;
+}
+.hero-step {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    font-size: 0.85rem;
+    color: var(--sim-ink);
+}
+.hero-step-index {
+    width: 24px;
+    height: 24px;
+    border-radius: 999px;
+    background: rgba(14, 165, 160, 0.18);
+    color: var(--sim-primary-strong);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.75rem;
 }
 .cards-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 12px;
-    margin-bottom: 18px;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px;
+    margin: 18px 0;
 }
 .mini-card {
-    background: #fff;
-    border: 1px solid #e5e7eb;
-    border-radius: 10px;
-    padding: 14px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    position: relative;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid var(--sim-border);
+    border-radius: 16px;
+    padding: 14px 16px;
+    box-shadow: var(--sim-shadow-soft);
+    display: grid;
+    gap: 6px;
 }
-.mini-title { font-size: 13px; color: #6b7280; margin-bottom: 4px; }
-.mini-value { font-size: 22px; font-weight: 700; color: #111827; }
+.mini-card::before {
+    content: '';
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--card-tone, rgba(14, 165, 160, 0.2));
+    opacity: 0.35;
+}
+.mini-card[data-tone='teal'] { --card-tone: rgba(14, 165, 160, 0.45); }
+.mini-card[data-tone='blue'] { --card-tone: rgba(59, 130, 246, 0.4); }
+.mini-card[data-tone='amber'] { --card-tone: rgba(245, 158, 11, 0.45); }
+.mini-card[data-tone='rose'] { --card-tone: rgba(225, 29, 72, 0.35); }
+.mini-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.mini-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: var(--sim-surface-alt);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--sim-primary-strong);
+    font-size: 1rem;
+}
+.mini-title {
+    font-size: 0.85rem;
+    color: var(--sim-muted);
+    font-weight: 700;
+}
+.mini-value {
+    font-size: 1.4rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--sim-ink);
+}
+.mini-caption {
+    color: var(--sim-muted);
+    font-size: 0.75rem;
+}
 .simulador-grid {
     display: grid;
-    grid-template-columns: 2fr 0.9fr;
-    gap: 16px;
+    grid-template-columns: minmax(0, 1fr) 340px;
+    gap: 18px;
     align-items: start;
 }
-.simulador-main, .simulador-side { display: flex; flex-direction: column; gap: 14px; }
-.config-card, .table-card, .categoria-card, .painel-resultado, .painel-notas {
-    background: #fff;
-    border: 1px solid #e5e7eb;
-    border-radius: 10px;
-    padding: 16px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+.simulador-main,
+.simulador-side {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+.sim-step,
+.painel-resultado,
+.painel-notas {
+    background: rgba(255, 255, 255, 0.97);
+    border: 1px solid var(--sim-border);
+    border-radius: 18px;
+    padding: 18px;
+    box-shadow: var(--sim-shadow-soft);
+}
+.sim-step-header {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 12px;
+}
+.sim-step-index {
+    width: 34px;
+    height: 34px;
+    border-radius: 12px;
+    background: rgba(14, 165, 160, 0.16);
+    color: var(--sim-primary-strong);
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.sim-step-text h5 {
+    font-family: 'Fraunces', 'Georgia', serif;
+}
+.sim-step-text p {
+    color: var(--sim-muted);
+}
+.sim-step-actions {
+    justify-self: end;
 }
 .verba-grid {
     display: grid;
@@ -221,38 +490,52 @@
     gap: 8px;
 }
 .verba-cat {
-    border: 1px dashed #d1d5db;
-    border-radius: 8px;
+    border: 1px dashed rgba(15, 118, 110, 0.35);
+    border-radius: 10px;
     padding: 8px 10px;
-    background: #f9fafb;
+    background: var(--sim-surface-alt);
 }
-.verba-cat label { font-size: 12px; margin-bottom: 4px; color: #4b5563; }
+.verba-cat label {
+    font-size: 12px;
+    margin-bottom: 4px;
+    color: var(--sim-muted);
+}
 .table-container {
-    background: white;
-    border-radius: 8px;
+    background: var(--sim-surface);
+    border-radius: 14px;
     overflow: auto;
-    box-shadow: inset 0 0 0 1px #e5e7eb;
+    border: 1px solid var(--sim-border);
 }
 .simulacao-table {
     width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-    background: #fff;
+    border-collapse: collapse;
+    background: transparent;
     table-layout: auto;
+    min-width: 860px;
 }
-.simulacao-table th, .simulacao-table td {
+.simulacao-table th,
+.simulacao-table td {
     padding: 10px 12px;
-    border: 1px solid #d7e3f7;
+    border-bottom: 1px solid var(--sim-border);
     font-size: 0.9rem;
 }
 .simulacao-table thead th {
-    background: #f8fafc;
+    background: var(--sim-surface-alt);
     text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: #64748b;
+    letter-spacing: 0.08em;
+    color: var(--sim-muted);
     font-weight: 700;
+    font-size: 0.72rem;
+    position: sticky;
+    top: 0;
+    z-index: 1;
 }
-.simulacao-table tbody tr:hover td { background: #f8f9fa; }
+.simulacao-table tbody tr:hover td {
+    background: rgba(14, 165, 160, 0.06);
+}
+.simulacao-table tbody tr.linha-negativa td {
+    background: rgba(225, 29, 72, 0.06);
+}
 .simulacao-table .col-produto { width: 30%; }
 .simulacao-table .col-cat { width: 12%; }
 .simulacao-table .col-qtd { width: 8%; }
@@ -262,22 +545,139 @@
 .simulacao-table .col-margem { width: 12%; }
 .simulacao-table .col-margemp { width: 10%; }
 .simulacao-table .col-acoes { width: 8%; }
-.input-inline { width: 100%; padding: 6px 8px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; }
-.input-inline:focus { outline: none; border-color: #7c3aed; box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.15); }
-.btn-icon {
-    border: 1px solid #e5e7eb;
+.input-inline {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--sim-border);
+    border-radius: 10px;
+    font-size: 14px;
     background: #fff;
-    border-radius: 6px;
+}
+.input-inline:focus {
+    outline: none;
+    border-color: var(--sim-primary);
+    box-shadow: 0 0 0 3px rgba(14, 165, 160, 0.15);
+}
+.btn-icon {
+    border: 1px solid var(--sim-border);
+    background: #fff;
+    border-radius: 8px;
     padding: 6px 10px;
     cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
-.btn-icon:hover { background: #f3f4f6; }
-.painel-resultado .resultado-status {
-    padding: 10px 12px;
-    border-radius: 8px;
-    font-weight: 700;
+.btn-icon:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--sim-shadow-soft);
+}
+.simulacao-page .form-control {
+    border-radius: 10px;
+    border: 1px solid var(--sim-border);
+    box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.05);
+}
+.simulacao-page .form-control:focus {
+    border-color: var(--sim-primary);
+    box-shadow: 0 0 0 3px rgba(14, 165, 160, 0.15);
+}
+.simulacao-page .btn-primary.btn-sim-primary {
+    background: var(--sim-primary);
+    border-color: var(--sim-primary);
+    box-shadow: var(--sim-shadow-soft);
+}
+.simulacao-page .btn-primary.btn-sim-primary:hover {
+    background: var(--sim-primary-strong);
+    border-color: var(--sim-primary-strong);
+}
+.simulacao-page .btn-outline-secondary {
+    border-color: var(--sim-border);
+    color: var(--sim-muted);
+}
+.simulacao-page .btn-outline-secondary:hover {
+    background: var(--sim-surface-alt);
+    color: var(--sim-ink);
+}
+.simulador-side {
+    position: sticky;
+    top: 88px;
+}
+.painel-resultado {
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(244, 247, 251, 0.96));
+    border: 1px solid rgba(14, 165, 160, 0.25);
+}
+.painel-resultado[data-tone='bad'] {
+    border-color: rgba(225, 29, 72, 0.3);
+}
+.painel-resultado[data-tone='good'] {
+    border-color: rgba(22, 163, 74, 0.3);
+}
+.resultado-topo {
+    display: grid;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+.resultado-kicker {
+    font-size: 0.72rem;
     text-transform: uppercase;
-    font-size: 13px;
+    letter-spacing: 0.12em;
+    color: var(--sim-muted);
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+.resultado-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-weight: 800;
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+.resultado-status::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+}
+.status-loading {
+    background: rgba(148, 163, 184, 0.2);
+    color: #475569;
+}
+.status-good {
+    background: rgba(22, 163, 74, 0.16);
+    color: #166534;
+}
+.status-warn {
+    background: rgba(245, 158, 11, 0.2);
+    color: #92400e;
+}
+.status-bad {
+    background: rgba(225, 29, 72, 0.18);
+    color: #9f1239;
+}
+.resultado-saldo {
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid var(--sim-border);
+    border-radius: 14px;
+    padding: 12px;
+}
+.resultado-saldo .label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--sim-muted);
+    font-weight: 700;
+}
+.resultado-saldo .value {
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin: 4px 0;
+}
+.resultado-saldo .hint {
+    font-size: 0.75rem;
+    color: var(--sim-muted);
 }
 .resultado-valores {
     display: grid;
@@ -285,15 +685,122 @@
     gap: 10px;
     margin: 12px 0;
 }
-.resultado-valores .label { font-size: 12px; color: #6b7280; }
-.resultado-valores .value { font-size: 18px; font-weight: 700; color: #111827; }
-.resultado-explicacao { font-size: 13px; color: #374151; }
-.painel-notas { font-size: 13px; color: #4b5563; }
-.badge-success { background-color: #22c55e !important; }
-.badge-danger { background-color: #ef4444 !important; }
-.badge-warning { background-color: #f59e0b !important; color: #111827 !important; }
-@media (max-width: 1024px) {
-    .simulador-grid { grid-template-columns: 1fr; }
+.resultado-valores .label {
+    font-size: 0.75rem;
+    color: var(--sim-muted);
+}
+.resultado-valores .value {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--sim-ink);
+}
+.resultado-meter {
+    margin-bottom: 12px;
+}
+.meter-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: var(--sim-muted);
+    margin-bottom: 6px;
+}
+.meter-bar {
+    height: 8px;
+    background: rgba(148, 163, 184, 0.25);
+    border-radius: 999px;
+    overflow: hidden;
+}
+.meter-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--sim-primary);
+    border-radius: inherit;
+    transition: width 0.3s ease;
+}
+.painel-resultado[data-tone='good'] .meter-fill { background: var(--sim-success); }
+.painel-resultado[data-tone='warn'] .meter-fill { background: var(--sim-accent); }
+.painel-resultado[data-tone='bad'] .meter-fill { background: var(--sim-danger); }
+.resultado-explicacao {
+    font-size: 0.85rem;
+    color: var(--sim-ink);
+}
+.painel-notas {
+    background: rgba(255, 255, 255, 0.92);
+}
+.painel-notas ul li {
+    position: relative;
+    padding-left: 18px;
+    margin-bottom: 8px;
+}
+.painel-notas ul li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 7px;
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: var(--sim-primary);
+}
+.painel-notas ul li:last-child {
+    margin-bottom: 0;
+}
+.sim-hero,
+.mini-card,
+.sim-step,
+.painel-resultado,
+.painel-notas {
+    animation: riseIn 0.6s ease both;
+    animation-delay: var(--delay, 0s);
+}
+@keyframes riseIn {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .sim-hero,
+    .mini-card,
+    .sim-step,
+    .painel-resultado,
+    .painel-notas {
+        animation: none;
+    }
+    .meter-fill,
+    .btn-icon {
+        transition: none;
+    }
+}
+@media (max-width: 1200px) {
+    .sim-hero {
+        grid-template-columns: 1fr;
+    }
+    .simulador-grid {
+        grid-template-columns: 1fr;
+    }
+    .simulador-side {
+        position: static;
+    }
+    .simulacao-table {
+        min-width: 720px;
+    }
+}
+@media (max-width: 720px) {
+    .simulacao-page {
+        padding: 16px;
+    }
+    .sim-step-header {
+        grid-template-columns: 1fr;
+        align-items: start;
+    }
+    .sim-step-actions {
+        justify-self: start;
+    }
 }
 </style>
 
@@ -415,11 +922,16 @@ function calcularSimulacao() {
         const sel = linha.querySelector('.input-produto');
         const qtd = parseNumber(linha.querySelector('.input-qtd').value);
         const preco = parseNumber(linha.querySelector('.input-preco').value);
+        const margemCell = linha.querySelector('.margem-cell');
+        const margemPctCell = linha.querySelector('.margemp-cell');
         if (!sel.value || qtd <= 0 || preco < 0) {
             linha.querySelector('.sub-cell').textContent = 'R$ 0,00';
             linha.querySelector('.custo-cell').textContent = 'R$ 0,00';
-            linha.querySelector('.margem-cell').textContent = 'R$ 0,00';
-            linha.querySelector('.margemp-cell').textContent = '0%';
+            margemCell.textContent = 'R$ 0,00';
+            margemPctCell.textContent = '0%';
+            linha.classList.remove('linha-negativa');
+            margemCell.classList.remove('text-danger');
+            margemPctCell.classList.remove('text-danger');
             return;
         }
         const produto = stateSim.produtos.find(p => p.id === Number(sel.value));
@@ -440,13 +952,16 @@ function calcularSimulacao() {
 
         linha.querySelector('.sub-cell').textContent = formatCurrency(subtotal);
         linha.querySelector('.custo-cell').textContent = formatCurrency(custo);
-        linha.querySelector('.margem-cell').textContent = formatCurrency(margem);
-        linha.querySelector('.margemp-cell').textContent = `${margemPct.toFixed(1)}%`;
+        margemCell.textContent = formatCurrency(margem);
+        margemPctCell.textContent = `${margemPct.toFixed(1)}%`;
+        const margemNegativa = margem < 0;
+        linha.classList.toggle('linha-negativa', margemNegativa);
+        margemCell.classList.toggle('text-danger', margemNegativa);
+        margemPctCell.classList.toggle('text-danger', margemNegativa);
     });
 
     const receitaAtual = dados.desempenho.geral.receita;
     const cpvAtual = dados.desempenho.geral.cpv;
-    const margemAtual = receitaAtual - cpvAtual;
 
     const receitaTotal = receitaAtual + receitaSim;
     const cpvTotal = cpvAtual + custoSim;
@@ -507,30 +1022,37 @@ function calcularSimulacao() {
     const verbaEl = document.getElementById('valorVerbasConsideradas');
     const statusEl = painel.querySelector('.resultado-status');
     const textoExplicacao = document.getElementById('textoExplicacao');
+    const consumoLabel = document.getElementById('consumoVerbaLabel');
+    const consumoFill = document.getElementById('consumoVerbaFill');
 
     margemEl.textContent = formatCurrency(margemTotal);
     verbaEl.textContent = formatCurrency(totalVerbas);
     saldoEl.textContent = formatCurrency(margemLiquida);
 
     let status = 'Atenção';
-    let statusClass = 'badge-warning';
+    let tone = 'warn';
     if (margemLiquida < 0) {
         status = 'Não vale a pena';
-        statusClass = 'badge-danger';
+        tone = 'bad';
     } else if (margemLiquida >= 0 && margemTotal >= 0) {
         status = 'Vale a pena';
-        statusClass = 'badge-success';
+        tone = 'good';
     }
-    statusEl.className = `resultado-status ${statusClass} text-white`;
+    statusEl.className = `resultado-status status-${tone}`;
     statusEl.textContent = status;
+    painel.dataset.tone = tone;
 
     const consumoVerba = totalVerbas > 0 ? Math.max(0, -margemTotal) / totalVerbas : (margemTotal < 0 ? 1 : 0);
-    const consumoPct = (consumoVerba * 100).toFixed(0);
+    const consumoPct = Math.min(100, Math.max(0, consumoVerba * 100));
+    const consumoPctLabel = Math.round(consumoPct);
+    if (consumoLabel) consumoLabel.textContent = `${consumoPctLabel}%`;
+    if (consumoFill) consumoFill.style.width = `${consumoPct}%`;
+
     let explicacao = `Margem líquida após verbas: ${formatCurrency(margemLiquida)}. `;
     if (margemLiquida < 0) {
         explicacao += `Falta ${formatCurrency(-margemLiquida)} para cobrir o desconto.`;
     } else if (consumoVerba > 0) {
-        explicacao += `Consome cerca de ${consumoPct}% das verbas informadas.`;
+        explicacao += `Consome cerca de ${consumoPctLabel}% das verbas informadas.`;
     } else {
         explicacao += 'Verbas não são necessárias para este pedido.';
     }
@@ -549,6 +1071,16 @@ function carregarDados() {
             document.getElementById('cardReceita').textContent = formatCurrency(data.desempenho.geral.receita || 0);
             document.getElementById('cardCPV').textContent = formatCurrency(data.desempenho.geral.cpv || 0);
             document.getElementById('cardMargem').textContent = formatCurrency((data.desempenho.geral.receita || 0) - (data.desempenho.geral.cpv || 0));
+
+            const periodoEl = document.getElementById('periodoApuracao');
+            if (periodoEl) {
+                const mes = String(data.mes).padStart(2, '0');
+                periodoEl.textContent = `${mes}/${data.ano}`;
+            }
+            const pedidosEl = document.getElementById('infoPedidosMes');
+            if (pedidosEl) {
+                pedidosEl.textContent = data.desempenho.geral.pedidos_processados || 0;
+            }
 
             // Verbas
             document.getElementById('inputVerbaGeral').value = (data.verbas.total || 0).toFixed(2);

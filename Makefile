@@ -155,8 +155,7 @@ coverage-report:
 
 smoke:
 	@echo "$(GREEN)🧪 Executando smoke tests...$(NC)"
-	@chmod +x scripts/smoke_test.sh
-	@./scripts/smoke_test.sh
+	$(PYTEST) -m smoke
 
 # ===========================
 # QUALIDADE DE CÓDIGO

@@ -512,12 +512,13 @@ class VendedorService:
                 if diffs:
                     recorrencia_media = sum(diffs) / len(diffs)
             
+            ultima_compra_iso = cliente.ultima_compra.isoformat() if cliente.ultima_compra else None
             resultado.append({
                 'id': cliente.id,
                 'nome': cliente.nome,
                 'fantasia': cliente.fantasia,
                 'telefone': cliente.telefone,
-                'ultima_compra': cliente.ultima_compra,
+                'ultima_compra': ultima_compra_iso,
                 'valor_ultima_compra': float(valor_ultima),
                 'dias_sem_comprar': dias_sem_comprar,
                 'total_pedidos': len(pedidos_cliente),

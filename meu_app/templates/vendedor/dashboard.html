@@ -12,7 +12,7 @@
 
     <!-- Cards Resumo -->
     <div class="cards-resumo">
-        <div class="card-resumo card-total" onclick="abrirModalClientes('todos')">
+        <div class="card-resumo card-total card-static">
             <div class="card-icon"><i class="bi bi-bar-chart icon-text"></i></div>
             <div class="card-title">RESUMO GERAL</div>
             <div class="card-number">{{ resumo.total_clientes }}</div>
@@ -273,6 +273,15 @@
 .card-resumo:hover {
     transform: translateY(-5px);
     box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+
+.card-resumo.card-static {
+    cursor: default;
+}
+
+.card-resumo.card-static:hover {
+    transform: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
 .card-total { border-top: 4px solid #667eea; }

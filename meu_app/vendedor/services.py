@@ -552,7 +552,8 @@ class VendedorService:
             Produto.id,
             Produto.nome,
             func.sum(ItemPedido.valor_total_venda).label('valor_total'),
-            func.sum(ItemPedido.quantidade).label('quantidade_total')
+            func.sum(ItemPedido.quantidade).label('quantidade_total'),
+            func.avg(ItemPedido.preco_venda).label('preco_medio')
         ).join(ItemPedido, Produto.id == ItemPedido.produto_id)\
          .join(Pedido, ItemPedido.pedido_id == Pedido.id)\
          .filter(Pedido.status.in_([
@@ -574,7 +575,8 @@ class VendedorService:
             'id': p.id,
             'nome': p.nome,
             'valor_total': float(p.valor_total),
-            'quantidade_total': int(p.quantidade_total or 0)
+            'quantidade_total': int(p.quantidade_total or 0),
+            'preco_medio': float(p.preco_medio or 0)
         } for p in ranking]
     
     @staticmethod

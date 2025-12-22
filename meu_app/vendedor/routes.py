@@ -30,7 +30,7 @@ def dashboard():
     rankings_data = VendedorService.get_rankings('todos', data_inicio=data_inicio, data_fim=data_fim)
     ranking_faturamento = rankings_data['faturamento'][:10]
     ranking_margem = rankings_data['margem'][:10]
-    ranking_produtos = VendedorService.get_ranking_produtos(10, data_inicio=data_inicio, data_fim=data_fim)
+    ranking_produtos = VendedorService.get_ranking_produtos(15, data_inicio=data_inicio, data_fim=data_fim)
     
     return render_template('vendedor/dashboard.html',
                          resumo=resumo,

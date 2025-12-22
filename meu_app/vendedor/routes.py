@@ -1,4 +1,4 @@
-from flask import render_template, request, jsonify
+from flask import render_template, request, jsonify, current_app
 from meu_app.decorators import login_obrigatorio, permissao_necessaria
 from meu_app.auth.rbac import requires_vendedor
 from meu_app.cache import cached_with_invalidation
@@ -12,7 +12,8 @@ from .services import VendedorService
 @cached_with_invalidation(
     timeout=600,  # 10 minutos
     key_prefix='vendedor_dashboard',
-    invalidate_on=['pedido.criado', 'pedido.atualizado', 'cliente.atualizado']
+    invalidate_on=['pedido.criado', 'pedido.atualizado', 'cliente.atualizado'],
+    unless=lambda: current_app.debug or current_app.testing,
 )
 def dashboard():
     """

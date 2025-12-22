@@ -245,7 +245,8 @@ def cached(
 def cached_with_invalidation(
     timeout: int = 300,
     key_prefix: Optional[str] = None,
-    invalidate_on: Optional[List[str]] = None
+    invalidate_on: Optional[List[str]] = None,
+    unless: Optional[Callable] = None,
 ) -> Callable:
     """
     Decorator de cache com invalidação automática por eventos.
@@ -278,7 +279,7 @@ def cached_with_invalidation(
                 CACHE_INVALIDATION_MAP[event].append(pattern)
     
     # Usar decorator de cache padrão
-    return cached(timeout=timeout, key_prefix=key_prefix)
+    return cached(timeout=timeout, key_prefix=key_prefix, unless=unless)
 
 
 def invalidate_cache(
@@ -465,4 +466,3 @@ def get_cache_stats() -> dict:
             len(patterns) for patterns in CACHE_INVALIDATION_MAP.values()
         )
     }
-

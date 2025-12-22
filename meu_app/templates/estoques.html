@@ -27,7 +27,17 @@
             </div>
             <small class="text-muted">Clique nos títulos para ordenar e utilize a busca para filtrar rapidamente.</small>
         </div>
-        <table class="data-table estoques-table">
+        <table class="estoques-table auto-fit-table">
+            <colgroup>
+                <col class="col-codigo">
+                <col class="col-descricao">
+                <col class="col-estoque">
+                <col class="col-data">
+                <col class="col-conferente">
+                <col class="col-status">
+                <col class="col-conferido">
+                <col class="col-acoes">
+            </colgroup>
             <thead>
                 <tr>
                     <th data-column-index="0" class="text-center">Código</th>
@@ -46,7 +56,7 @@
                     <td class="text-center code-cell">
                         {{ estoque.produto.codigo_interno or '—' }}
                     </td>
-                    <td>
+                    <td class="descricao-cell">
                         <div class="product-info">
                             <span class="product-name">{{ estoque.produto.nome }}</span>
                             <a href="{{ url_for('estoques.historico_movimentacao', produto_id=estoque.produto.id) }}" 
@@ -203,14 +213,48 @@
     margin-bottom: 12px;
 }
 
-.estoques-table thead {
-    background: #f8f9fa;
+.estoques-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: #fff;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    table-layout: auto;
 }
 
 .estoques-table th,
 .estoques-table td {
-    padding: 12px 16px;
-    border-bottom: 1px solid #f1f3f4;
+    padding: 10px 12px;
+    border: 1px solid #d7e3f7;
+    font-size: 0.9rem;
+    text-align: center;
+    color: #1f2937;
+}
+
+.estoques-table th:first-child,
+.estoques-table td:first-child {
+    border-left-width: 2px;
+}
+
+.estoques-table th:last-child,
+.estoques-table td:last-child {
+    border-right-width: 2px;
+}
+
+.estoques-table tbody tr:first-child td {
+    border-top-width: 2px;
+}
+
+.estoques-table tbody tr:last-child td {
+    border-bottom-width: 2px;
+}
+
+.estoques-table thead th {
+    background: #f8fafc;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #64748b;
+    font-weight: 700;
 }
 
 .inventory-controls {
@@ -251,6 +295,39 @@
 .estoques-table th.sorted-desc {
     color: #0d6efd;
 }
+
+.estoques-table tbody tr:hover td {
+    background: #f8f9fa;
+}
+
+.estoques-table .col-codigo { width: 10%; }
+.estoques-table .col-descricao { width: 26%; }
+.estoques-table .col-estoque { width: 10%; }
+.estoques-table .col-data { width: 14%; }
+.estoques-table .col-conferente { width: 14%; }
+.estoques-table .col-status { width: 12%; }
+.estoques-table .col-conferido { width: 6%; }
+.estoques-table .col-acoes { width: 8%; }
+
+.descricao-cell {
+    text-align: left;
+}
+
+.resizable-header {
+    position: relative;
+    padding-right: 14px;
+    user-select: none;
+}
+
+.column-resizer {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 6px;
+    height: 100%;
+    cursor: col-resize;
+    user-select: none;
+}
 </style>
 {% endblock %}
 
@@ -279,6 +356,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const tbody = tabela.querySelector('tbody');
     const headers = tabela.querySelectorAll('th[data-column-index]');
+    const columns = tabela.querySelectorAll('colgroup col');
     const filtro = document.getElementById('filtroEstoques');
     const inventoryButton = document.getElementById('btnInventarioAtualizado');
     const inventoryFeedback = document.getElementById('inventarioFeedback');
@@ -374,16 +452,22 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const parseValue = (cell, index) => {
-        if (index === 1) {
-            // datas no formato dd/mm/yyyy hh:mm
-            const text = cell.textContent.trim();
-            const [data, hora] = text.split(' ');
-            if (!data || !hora) return text.toLowerCase();
-            const [dia, mes, ano] = data.split('/');
-            const value = `${ano}-${mes}-${dia} ${hora}`;
-            return value;
+        const text = cell.textContent.trim();
+        if (index === 2) {
+            const numeric = text.replace(/[^\d,.-]/g, '').replace(',', '.');
+            const value = parseFloat(numeric);
+            return Number.isNaN(value) ? text.toLowerCase() : value;
         }
-        return cell.textContent.trim().toLowerCase();
+        if (index === 3) {
+            // datas no formato dd/mm/yyyy hh:mm
+            const [data, hora] = text.split(' ');
+            if (!data || !hora) return 0;
+            const [dia, mes, ano] = data.split('/');
+            if (!dia || !mes || !ano) return 0;
+            const parsed = Date.parse(`${ano}-${mes}-${dia}T${hora}`);
+            return Number.isNaN(parsed) ? 0 : parsed;
+        }
+        return text.toLowerCase();
     };
 
     const applySortIndicators = () => {
@@ -430,13 +514,80 @@ document.addEventListener('DOMContentLoaded', () => {
         applySortIndicators();
     };
 
+    const applyColumnWidth = (columnIndex, width) => {
+        if (columns.length && columns[columnIndex]) {
+            columns[columnIndex].style.width = width + 'px';
+        }
+        const headCell = tabela.querySelectorAll('thead th')[columnIndex];
+        if (headCell) headCell.style.width = width + 'px';
+        tabela.querySelectorAll('tbody tr').forEach((row) => {
+            const cell = row.children[columnIndex];
+            if (cell) cell.style.width = width + 'px';
+        });
+    };
+
+    const autoFitColumn = (columnIndex) => {
+        let maxWidth = 0;
+        tabela.querySelectorAll('tr').forEach((row) => {
+            const cell = row.children[columnIndex];
+            if (!cell) return;
+            const cellWidth = cell.scrollWidth + 16;
+            if (cellWidth > maxWidth) maxWidth = cellWidth;
+        });
+        const targetWidth = Math.min(Math.max(maxWidth, 70), 600);
+        applyColumnWidth(columnIndex, targetWidth);
+    };
+
+    const startManualResize = (event, columnIndex) => {
+        event.preventDefault();
+        const startX = event.pageX;
+        const header = event.target.parentElement;
+        const startWidth = header.offsetWidth;
+
+        function onMouseMove(moveEvent) {
+            const delta = moveEvent.pageX - startX;
+            const newWidth = Math.max(70, startWidth + delta);
+            applyColumnWidth(columnIndex, newWidth);
+        }
+
+        function onMouseUp() {
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+        }
+
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+    };
+
     headers.forEach((header, index) => {
-        header.addEventListener('click', () => {
+        header.classList.add('resizable-header');
+        let handle = header.querySelector('.column-resizer');
+        if (!handle) {
+            handle = document.createElement('span');
+            handle.className = 'column-resizer';
+            header.appendChild(handle);
+        }
+
+        handle.addEventListener('mousedown', (e) => {
+            e.stopPropagation();
+            startManualResize(e, index);
+        });
+
+        header.addEventListener('dblclick', (e) => {
+            e.stopPropagation();
+            autoFitColumn(index);
+        });
+
+        header.addEventListener('click', (e) => {
+            if (e.target.classList.contains('column-resizer')) {
+                return;
+            }
             const direction = (currentSort.index === index && currentSort.direction === 'asc') ? 'desc' : 'asc';
             currentSort = { index, direction };
             sortRows(index, direction);
         });
     });
+    applySortIndicators();
 
     if (filtro) {
         const aplicarFiltro = (valor) => {

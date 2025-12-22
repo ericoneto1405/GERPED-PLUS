@@ -552,8 +552,7 @@ class VendedorService:
             Produto.id,
             Produto.nome,
             func.sum(ItemPedido.valor_total_venda).label('valor_total'),
-            func.sum(ItemPedido.quantidade).label('quantidade_total'),
-            func.avg(ItemPedido.preco_venda).label('preco_medio')
+            func.sum(ItemPedido.quantidade).label('quantidade_total')
         ).join(ItemPedido, Produto.id == ItemPedido.produto_id)\
          .join(Pedido, ItemPedido.pedido_id == Pedido.id)\
          .filter(Pedido.status.in_([
@@ -571,13 +570,18 @@ class VendedorService:
                                .order_by(desc(func.sum(ItemPedido.valor_total_venda)))\
                                .limit(limite).all()
 
-        return [{
-            'id': p.id,
-            'nome': p.nome,
-            'valor_total': float(p.valor_total),
-            'quantidade_total': int(p.quantidade_total or 0),
-            'preco_medio': float(p.preco_medio or 0)
-        } for p in ranking]
+        resultados = []
+        for p in ranking:
+            quantidade_total = int(p.quantidade_total or 0)
+            valor_total = float(p.valor_total or 0)
+            preco_medio = valor_total / quantidade_total if quantidade_total else 0.0
+            resultados.append({
+                'id': p.id,
+                'nome': p.nome,
+                'preco_medio': preco_medio
+            })
+
+        return resultados
     
     @staticmethod
     def get_pedidos_cliente(cliente_id):

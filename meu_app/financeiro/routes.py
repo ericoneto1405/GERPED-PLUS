@@ -23,6 +23,31 @@ from .exceptions import (
     OcrProcessingError
 )
 from sqlalchemy.exc import SQLAlchemyError
+import unicodedata
+
+
+def _normalizar_metodo_pagamento(texto: str) -> str:
+    texto = (texto or "").strip().lower()
+    if not texto:
+        return ""
+    texto = unicodedata.normalize("NFD", texto)
+    return "".join(ch for ch in texto if unicodedata.category(ch) != "Mn")
+
+
+def _metodo_sem_comprovante(forma_pagamento: str) -> bool:
+    metodo = _normalizar_metodo_pagamento(forma_pagamento)
+    if not metodo:
+        return False
+    return any(
+        termo in metodo
+        for termo in (
+            "dinheiro",
+            "especie",
+            "troca",
+            "permuta",
+            "mercadoria",
+        )
+    )
 
 # Decorador login_obrigatorio movido para meu_app/decorators.py
 @financeiro_bp.route('/', methods=['GET'])

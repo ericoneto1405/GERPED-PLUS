@@ -1,6 +1,7 @@
 # Ferramentas de Qualidade (FASE 9)
 black==24.8.0
 ruff==0.6.8
+pydocstyle==6.3.0
 isort==5.13.2
 mypy==1.11.2
 codespell==2.3.0

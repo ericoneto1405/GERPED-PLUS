@@ -166,8 +166,8 @@ lint:
 	@echo "$(GREEN)🔍 Executando linters...$(NC)"
 	@echo "$(BLUE)→ Ruff$(NC)"
 	ruff check meu_app tests
-	@echo "$(BLUE)→ Flake8$(NC)"
-	flake8 meu_app tests --max-line-length=100 || true
+	@echo "$(BLUE)→ pydocstyle$(NC)"
+	pydocstyle meu_app
 
 format:
 	@echo "$(GREEN)✨ Formatando código...$(NC)"

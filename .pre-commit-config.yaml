@@ -44,6 +44,13 @@ repos:
         args: ['--fix', '--exit-non-zero-on-fix']
       - id: ruff-format
         name: Ruff - Formatação
+
+  - repo: https://github.com/pycqa/pydocstyle
+    rev: 6.3.0
+    hooks:
+      - id: pydocstyle
+        name: pydocstyle - Docstrings
+        args: ['--config=pyproject.toml']
   
   # ===========================
   # SEGURANÇA

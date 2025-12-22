@@ -72,7 +72,17 @@
     </div>
 
     <div class="table-container">
-        <table class="financeiro-table">
+        <table class="financeiro-table auto-fit-table">
+            <colgroup>
+                <col class="col-id">
+                <col class="col-cliente">
+                <col class="col-data">
+                <col class="col-status">
+                <col class="col-valor">
+                <col class="col-pago">
+                <col class="col-saldo">
+                <col class="col-acoes">
+            </colgroup>
             <thead>
                 <tr>
                     <th data-column-index="0">#</th>
@@ -92,7 +102,7 @@
                 {% set pago = item.total_pago %}
                 <tr class="align-middle pedido-row" data-details-id="details-{{ pedido.id }}">
                     <td>#{{ pedido.id }}</td>
-                    <td>{{ pedido.cliente.nome }}</td>
+                    <td class="cliente-cell">{{ pedido.cliente.nome }}</td>
                     <td>{{ pedido.data.strftime('%d/%m/%Y %H:%M') }}</td>
                     <td class="{% if item.status == 'PAGO' %}status-financeiro{% elif item.status == 'PAGO PARCIAL' %}status-coleta{% elif item.status == 'AGUARDANDO' %}status-pendente{% else %}status-secundario{% endif %}">
                         {{ item.status }}
@@ -188,12 +198,6 @@
 </div>
 
 <style nonce="{{ nonce }}">
-    .table-container {
-        width: 100%;
-        overflow-x: auto;
-        margin-top: 15px;
-    }
-
     .table-toolbar {
         display: flex;
         flex-direction: column;
@@ -202,23 +206,46 @@
 
     .financeiro-table {
         width: 100%;
-        border-collapse: collapse;
+        border-collapse: separate;
+        border-spacing: 0;
         background: #fff;
         box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-        border-radius: 12px;
-        overflow: hidden;
+        table-layout: auto;
     }
 
     .financeiro-table thead th,
     .financeiro-table tbody td {
-        padding: 12px 16px;
-        border-bottom: 1px solid #f1f3f4;
+        padding: 10px 12px;
+        border: 1px solid #d7e3f7;
         text-align: center;
+        font-size: 0.9rem;
+        color: #1f2937;
+    }
+
+    .financeiro-table th:first-child,
+    .financeiro-table td:first-child {
+        border-left-width: 2px;
+    }
+
+    .financeiro-table th:last-child,
+    .financeiro-table td:last-child {
+        border-right-width: 2px;
+    }
+
+    .financeiro-table tbody tr:first-child td {
+        border-top-width: 2px;
+    }
+
+    .financeiro-table tbody tr:last-child td {
+        border-bottom-width: 2px;
     }
 
     .financeiro-table thead th {
-        background: #f8f9fa;
-        font-weight: 600;
+        background: #f8fafc;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #64748b;
+        font-weight: 700;
     }
 
     .financeiro-table thead th[data-column-index] {
@@ -236,6 +263,23 @@
     .financeiro-table thead th.sorted-asc,
     .financeiro-table thead th.sorted-desc {
         color: #0d6efd;
+    }
+
+    .financeiro-table tbody tr:hover td {
+        background: #f8f9fa;
+    }
+
+    .financeiro-table .col-id { width: 6%; }
+    .financeiro-table .col-cliente { width: 20%; }
+    .financeiro-table .col-data { width: 14%; }
+    .financeiro-table .col-status { width: 12%; }
+    .financeiro-table .col-valor { width: 12%; }
+    .financeiro-table .col-pago { width: 12%; }
+    .financeiro-table .col-saldo { width: 10%; }
+    .financeiro-table .col-acoes { width: 14%; }
+
+    .cliente-cell {
+        text-align: left;
     }
 
     .status-financeiro {
@@ -322,6 +366,22 @@
         0% { transform: rotate(0deg); }
         100% { transform: rotate(360deg); }
     }
+
+    .resizable-header {
+        position: relative;
+        padding-right: 14px;
+        user-select: none;
+    }
+
+    .column-resizer {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 6px;
+        height: 100%;
+        cursor: col-resize;
+        user-select: none;
+    }
 </style>
 {% endblock %}
 
@@ -334,6 +394,7 @@
 
         const tbody = tabela.querySelector('tbody');
         const headers = tabela.querySelectorAll('th[data-column-index]');
+        const columns = tabela.querySelectorAll('colgroup col');
         const filtro = document.getElementById('filtroFinanceiro');
         let currentSort = { index: null, direction: 'asc' };
 
@@ -415,8 +476,74 @@
             applySortIndicators();
         };
 
+        const applyColumnWidth = (columnIndex, width) => {
+            if (columns.length && columns[columnIndex]) {
+                columns[columnIndex].style.width = width + 'px';
+            }
+            const headCell = tabela.querySelectorAll('thead th')[columnIndex];
+            if (headCell) headCell.style.width = width + 'px';
+            tabela.querySelectorAll('tbody tr').forEach((row) => {
+                const cell = row.children[columnIndex];
+                if (cell) cell.style.width = width + 'px';
+            });
+        };
+
+        const autoFitColumn = (columnIndex) => {
+            let maxWidth = 0;
+            tabela.querySelectorAll('tr').forEach((row) => {
+                const cell = row.children[columnIndex];
+                if (!cell) return;
+                const cellWidth = cell.scrollWidth + 16;
+                if (cellWidth > maxWidth) maxWidth = cellWidth;
+            });
+            const targetWidth = Math.min(Math.max(maxWidth, 70), 600);
+            applyColumnWidth(columnIndex, targetWidth);
+        };
+
+        const startManualResize = (event, columnIndex) => {
+            event.preventDefault();
+            const startX = event.pageX;
+            const header = event.target.parentElement;
+            const startWidth = header.offsetWidth;
+
+            function onMouseMove(moveEvent) {
+                const delta = moveEvent.pageX - startX;
+                const newWidth = Math.max(70, startWidth + delta);
+                applyColumnWidth(columnIndex, newWidth);
+            }
+
+            function onMouseUp() {
+                document.removeEventListener('mousemove', onMouseMove);
+                document.removeEventListener('mouseup', onMouseUp);
+            }
+
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', onMouseUp);
+        };
+
         headers.forEach((header, index) => {
-            header.addEventListener('click', () => {
+            header.classList.add('resizable-header');
+            let handle = header.querySelector('.column-resizer');
+            if (!handle) {
+                handle = document.createElement('span');
+                handle.className = 'column-resizer';
+                header.appendChild(handle);
+            }
+
+            handle.addEventListener('mousedown', (e) => {
+                e.stopPropagation();
+                startManualResize(e, index);
+            });
+
+            header.addEventListener('dblclick', (e) => {
+                e.stopPropagation();
+                autoFitColumn(index);
+            });
+
+            header.addEventListener('click', (e) => {
+                if (e.target.classList.contains('column-resizer')) {
+                    return;
+                }
                 const direction = (currentSort.index === index && currentSort.direction === 'asc') ? 'desc' : 'asc';
                 currentSort = { index, direction };
                 sortRows(index, direction);

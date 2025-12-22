@@ -379,50 +379,6 @@ class ColetaService:
         return itens
 
     @staticmethod
-    def retornar_pedido_para_financeiro(pedido_id: int, usuario_nome: Optional[str] = None) -> Tuple[bool, str]:
-        """
-        Reverte um pedido para a etapa financeira (status pendente).
-
-        Args:
-            pedido_id: ID do pedido que deve voltar para o financeiro
-            usuario_nome: Nome do usuário logado (para logs)
-
-        Returns:
-            Tuple (sucesso, mensagem)
-        """
-        if not pedido_id:
-            return False, 'Pedido inválido.'
-
-        pedido = Pedido.query.get(pedido_id)
-        if not pedido:
-            return False, f"Pedido #{pedido_id} não encontrado."
-
-        if pedido.status == StatusPedido.PENDENTE:
-            return False, f"Pedido #{pedido_id} já está em análise financeira."
-        if pedido.status == StatusPedido.CANCELADO:
-            return False, f"Pedido #{pedido_id} está cancelado e não pode retornar ao financeiro."
-        if pedido.status == StatusPedido.COLETA_CONCLUIDA:
-            return False, f"Pedido #{pedido_id} já foi coletado e não pode retornar ao financeiro."
-
-        pedido.status = StatusPedido.PENDENTE
-        try:
-            db.session.commit()
-            _app_logger().info(
-                "Pedido %s retornado ao financeiro por %s",
-                pedido_id,
-                usuario_nome or 'Sistema'
-            )
-            return True, f"Pedido #{pedido_id} retornado ao financeiro."
-        except Exception as exc:
-            db.session.rollback()
-            _app_logger().error(
-                "Erro ao retornar pedido %s para financeiro: %s",
-                pedido_id,
-                exc
-            )
-            return False, "Erro ao retornar pedido. Tente novamente."
-
-    @staticmethod
     def buscar_detalhes_pedido(pedido_id: int) -> Optional[Dict]:
         """
         Busca detalhes completos de um pedido para coleta

@@ -135,26 +135,6 @@ def pendencias_itens():
     return jsonify({'success': True, 'pendencias': pendencias})
 
 
-@coletas_bp.route('/retornar-financeiro/<int:pedido_id>', methods=['POST'])
-@login_obrigatorio
-@requires_logistica
-def retornar_financeiro(pedido_id: int):
-    """Permite retornar um pedido para análise financeira via módulo de coletas."""
-    try:
-        sucesso, mensagem = ColetaService.retornar_pedido_para_financeiro(
-            pedido_id,
-            session.get('usuario_nome', 'N/A')
-        )
-        status_code = 200 if sucesso else 400
-        return jsonify({'success': sucesso, 'message': mensagem}), status_code
-    except Exception as e:
-        current_app.logger.error(f"Erro ao retornar pedido {pedido_id} para financeiro: {e}")
-        return jsonify({
-            'success': False,
-            'message': 'Erro interno ao retornar pedido. Tente novamente.'
-        }), 500
-
-
 @coletas_bp.route('/processar/<int:pedido_id>', methods=['GET', 'POST'])
 @login_obrigatorio
 @requires_logistica

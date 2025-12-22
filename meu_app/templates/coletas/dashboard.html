@@ -75,11 +75,9 @@
                             <td>
                                 {% set processar_base = url_for('coletas.processar_coleta', pedido_id=0).rsplit('/', 1)[0] %}
                                 {% set historico_base = url_for('coletas.historico_coletas', pedido_id=0).rsplit('/', 1)[0] %}
-                                {% set retornar_base = url_for('coletas.retornar_financeiro', pedido_id=0).rsplit('/', 1)[0] %}
                                 <div class="action-buttons"
                                      data-processar-base="{{ processar_base }}"
-                                     data-historico-base="{{ historico_base }}"
-                                     data-retornar-base="{{ retornar_base }}">
+                                     data-historico-base="{{ historico_base }}">
                                     <div class="actions-row">
                                         {% if not item.coletado_completo %}
                                         <button type="button"
@@ -97,15 +95,6 @@
                                                 data-pedidos="{{ item.pedidos_ids | join(',') }}"
                                                 data-cliente="{{ item.cliente_nome }}">
                                             <i class="bi bi-clock-history"></i> HISTÓRICO
-                                        </button>
-                                        {% endif %}
-                                        {% if not item.coletado_completo and session.usuario_tipo == 'admin' %}
-                                        <button type="button"
-                                                class="btn btn-sm btn-outline-danger btn-retornar-financeiro action-secondary"
-                                                data-pedido="{{ pedido_unificado }}"
-                                                data-pedidos="{{ item.pedidos_ids | join(',') }}"
-                                                data-cliente="{{ item.cliente_nome }}">
-                                            <i class="bi bi-arrow-counterclockwise"></i> RETORNAR FINANCEIRO
                                         </button>
                                         {% endif %}
                                         <button type="button"
@@ -166,11 +155,9 @@
                         </div>
                         {% set processar_base = url_for('coletas.processar_coleta', pedido_id=0).rsplit('/', 1)[0] %}
                         {% set historico_base = url_for('coletas.historico_coletas', pedido_id=0).rsplit('/', 1)[0] %}
-                        {% set retornar_base = url_for('coletas.retornar_financeiro', pedido_id=0).rsplit('/', 1)[0] %}
                         <div class="action-buttons"
                              data-processar-base="{{ processar_base }}"
-                             data-historico-base="{{ historico_base }}"
-                             data-retornar-base="{{ retornar_base }}">
+                             data-historico-base="{{ historico_base }}">
                             <div class="actions-mobile">
                                 {% if not item.coletado_completo %}
                                 <button type="button"
@@ -188,15 +175,6 @@
                                         data-pedidos="{{ item.pedidos_ids | join(',') }}"
                                         data-cliente="{{ item.cliente_nome }}">
                                     <i class="bi bi-clock-history"></i> HISTÓRICO
-                                </button>
-                                {% endif %}
-                                {% if not item.coletado_completo and session.usuario_tipo == 'admin' %}
-                                <button type="button"
-                                        class="btn btn-outline-danger btn-retornar-financeiro action-secondary"
-                                        data-pedido="{{ pedido_unificado }}"
-                                        data-pedidos="{{ item.pedidos_ids | join(',') }}"
-                                        data-cliente="{{ item.cliente_nome }}">
-                                    <i class="bi bi-arrow-counterclockwise"></i> RETORNAR FINANCEIRO
                                 </button>
                                 {% endif %}
                                 <button type="button"
@@ -575,37 +553,6 @@ document.addEventListener('DOMContentLoaded', () => {
             .filter((id) => Number.isInteger(id));
     };
 
-    const retornarPedido = async ({ pedidoId, baseUrl, cliente }) => {
-        if (!Number.isInteger(pedidoId) || !baseUrl) {
-            return;
-        }
-        const clienteInfo = cliente ? ` do cliente ${cliente}` : '';
-        const confirmMessage = `Confirmar retorno do pedido #${pedidoId}${clienteInfo} para o financeiro?`;
-        if (!window.confirm(confirmMessage)) {
-            return;
-        }
-        try {
-            const response = await fetch(`${baseUrl}/${pedidoId}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': window.CSRF_TOKEN,
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                credentials: 'same-origin',
-                body: JSON.stringify({})
-            });
-            const result = await response.json();
-            if (!response.ok || !result.success) {
-                throw new Error(result.message || 'Não foi possível retornar o pedido.');
-            }
-            alert(result.message || 'Pedido retornado ao financeiro.');
-            window.location.reload();
-        } catch (error) {
-            alert(error.message || 'Erro ao retornar pedido.');
-        }
-    };
-
     const resolverPedidoId = (element) => {
         if (!element || !element.dataset) return null;
         const direto = parseInt(element.dataset.pedido || '', 10);
@@ -833,21 +780,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const pedidoId = resolverPedidoId(historicoBtn);
             if (baseUrl && Number.isInteger(pedidoId)) {
                 window.location.href = `${baseUrl}/${pedidoId}`;
-            }
-            return;
-        }
-
-        const retornoBtn = event.target.closest('.btn-retornar-financeiro');
-        if (retornoBtn) {
-            const container = retornoBtn.closest('.action-buttons');
-            const baseUrl = container ? container.dataset.retornarBase : null;
-            const pedidoId = resolverPedidoId(retornoBtn);
-            if (baseUrl && Number.isInteger(pedidoId)) {
-                retornarPedido({
-                    pedidoId,
-                    baseUrl,
-                    cliente: retornoBtn.dataset.cliente || ''
-                });
             }
             return;
         }

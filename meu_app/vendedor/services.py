@@ -421,9 +421,12 @@ class VendedorService:
                 sem_compra_15_dias.append(cliente.id)
             elif dias > 30:
                 sem_compra_30_dias.append(cliente.id)
-        
+
+        clientes_fieis = len(VendedorService.get_clientes_por_periodo('fieis'))
+
         return {
             'total_clientes': total_clientes,
+            'clientes_fieis': clientes_fieis,
             'sem_compra_7_dias': len(sem_compra_7_dias),
             'sem_compra_15_dias': len(sem_compra_15_dias),
             'sem_compra_30_dias': len(sem_compra_30_dias)
@@ -433,7 +436,7 @@ class VendedorService:
     def get_clientes_por_periodo(periodo):
         """
         Retorna lista de clientes baseado no período sem comprar
-        periodo: 'todos', '7', '15', '30'
+        periodo: 'todos', '7', '15', '30', 'fieis'
         """
         from meu_app.models import StatusPedido
         hoje = datetime.now().date()
@@ -453,10 +456,8 @@ class VendedorService:
         ]))\
          .group_by(Cliente.id, Cliente.nome, Cliente.fantasia, Cliente.telefone)
         
-        if periodo == 'todos':
-            clientes = clientes_query.all()
-        else:
-            clientes = clientes_query.all()
+        clientes = clientes_query.all()
+        if periodo in ('7', '15', '30'):
             # Filtrar por período
             dias_min = 0
             dias_max = 999999
@@ -470,11 +471,14 @@ class VendedorService:
             elif periodo == '30':
                 dias_min = 30
             
-            clientes = [c for c in clientes 
-                       if dias_min < (hoje - c.ultima_compra.date()).days <= dias_max]
+            clientes = [
+                c for c in clientes
+                if dias_min < (hoje - c.ultima_compra.date()).days <= dias_max
+            ]
         
         # Buscar valor da última compra
         resultado = []
+        limite_fieis = 5
         for cliente in clientes:
             ultimo_pedido = Pedido.query.filter_by(cliente_id=cliente.id)\
                                         .filter(Pedido.status.in_([
@@ -511,6 +515,10 @@ class VendedorService:
                 ]
                 if diffs:
                     recorrencia_media = sum(diffs) / len(diffs)
+
+            if periodo == 'fieis':
+                if recorrencia_media is None or recorrencia_media >= limite_fieis:
+                    continue
             
             ultima_compra_iso = cliente.ultima_compra.isoformat() if cliente.ultima_compra else None
             resultado.append({

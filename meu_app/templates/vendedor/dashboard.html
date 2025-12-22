@@ -19,6 +19,14 @@
             <div class="card-label">CLIENTES</div>
         </div>
 
+        <div class="card-resumo card-fieis" data-periodo="fieis">
+            <div class="card-icon"><i class="bi bi-star-fill text-success icon-text"></i></div>
+            <div class="card-title">CLIENTES FIÉIS</div>
+            <div class="card-subtitle">RECORRÊNCIA &lt; 5 DIAS</div>
+            <div class="card-number">{{ resumo.clientes_fieis }}</div>
+            <div class="card-label">CLIENTES</div>
+        </div>
+
         <div class="card-resumo card-7dias" data-periodo="7">
             <div class="card-icon"><i class="bi bi-circle-fill text-warning icon-text"></i></div>
             <div class="card-title">SEM COMPRA</div>
@@ -285,6 +293,7 @@
 }
 
 .card-total { border-top: 4px solid #667eea; }
+.card-fieis { border-top: 4px solid #198754; }
 .card-7dias { border-top: 4px solid #ffc107; }
 .card-15dias { border-top: 4px solid #ff9800; }
 .card-30dias { border-top: 4px solid #dc3545; }
@@ -647,6 +656,7 @@ function abrirModalClientes(periodo) {
     // Definir título
     const titulos = {
         'todos': 'Todos os Clientes',
+        'fieis': 'Clientes fiéis (recorrência < 5 dias)',
         '7': 'Clientes sem compra há 7-15 dias',
         '15': 'Clientes sem compra há 15-30 dias',
         '30': 'Clientes sem compra há mais de 30 dias'

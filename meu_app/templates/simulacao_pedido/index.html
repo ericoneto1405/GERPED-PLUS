@@ -257,8 +257,8 @@
     background: #fef2f2;
 }
 .simulacao-table .col-produto { width: 30%; }
-.simulacao-table .col-qtd { width: 8%; }
-.simulacao-table .col-preco { width: 12%; }
+.simulacao-table .col-qtd { width: 12%; }
+.simulacao-table .col-preco { width: 8%; }
 .simulacao-table .col-sub { width: 12%; }
 .simulacao-table .col-custo { width: 12%; }
 .simulacao-table .col-margem { width: 12%; }
@@ -271,6 +271,14 @@
     border-radius: 8px;
     font-size: 14px;
     background: #fff;
+}
+.simulacao-table input[type='number'] {
+    -moz-appearance: textfield;
+}
+.simulacao-table input[type='number']::-webkit-outer-spin-button,
+.simulacao-table input[type='number']::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
 }
 .input-inline:focus {
     outline: none;

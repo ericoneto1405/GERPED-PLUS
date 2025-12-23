@@ -152,10 +152,7 @@ class ItemPedido(db.Model):
     produto_id = db.Column(db.Integer, db.ForeignKey('produto.id'), nullable=False)
     quantidade = db.Column(db.Integer, nullable=False)
     preco_venda = db.Column(db.Numeric(10, 2), nullable=False)
-    preco_compra = db.Column(db.Numeric(10, 2), nullable=False)
     valor_total_venda = db.Column(db.Numeric(10, 2), nullable=False)
-    valor_total_compra = db.Column(db.Numeric(10, 2), nullable=False)
-    lucro_bruto = db.Column(db.Numeric(10, 2), nullable=False)
     produto = db.relationship('Produto')
 
 class Pagamento(db.Model):

@@ -456,13 +456,13 @@ class ApuracaoRepositoryMock(IApuracaoRepository):
             {
                 'id': 1,
                 'data': datetime(2025, 8, 15),
-                'itens': [{'valor_total_venda': 1000.0, 'valor_total_compra': 700.0}],
+                'itens': [{'valor_total_venda': 1000.0, 'quantidade': 10, 'preco_medio_compra': 70.0}],
                 'pagamentos': [{'valor': 1000.0}]
             },
             {
                 'id': 2,
                 'data': datetime(2025, 8, 20),
-                'itens': [{'valor_total_venda': 2000.0, 'valor_total_compra': 1400.0}],
+                'itens': [{'valor_total_venda': 2000.0, 'quantidade': 20, 'preco_medio_compra': 70.0}],
                 'pagamentos': [{'valor': 2000.0}]
             }
         ]

@@ -63,7 +63,6 @@ def criar_dados_teste():
     
     # Itens do pedido (total = R$ 100.00)
     preco_venda = Decimal("50.00")
-    preco_compra = Decimal("40.00")
     quantidade = 2
     
     item1 = ItemPedido(
@@ -71,10 +70,7 @@ def criar_dados_teste():
         produto_id=produto.id,
         quantidade=quantidade,
         preco_venda=preco_venda,
-        preco_compra=preco_compra,
         valor_total_venda=preco_venda * quantidade,
-        valor_total_compra=preco_compra * quantidade,
-        lucro_bruto=(preco_venda - preco_compra) * quantidade
     )
     db.session.add(item1)
     

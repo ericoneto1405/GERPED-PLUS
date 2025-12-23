@@ -77,21 +77,14 @@ class PedidoService:
                 if produto_id > 0 and quantidade > 0:
                     produto = Produto.query.get(produto_id)
                     if produto:
-                        # Usar o preço médio de compra do produto
-                        preco_compra = float(produto.preco_medio_compra or 0)
                         valor_total_venda = quantidade * preco_venda
-                        valor_total_compra = quantidade * preco_compra
-                        lucro_bruto = valor_total_venda - valor_total_compra
                         
                         item = ItemPedido(
                             pedido_id=pedido.id,
                             produto_id=produto.id,
                             quantidade=quantidade,
                             preco_venda=preco_venda,
-                            preco_compra=preco_compra,
                             valor_total_venda=valor_total_venda,
-                            valor_total_compra=valor_total_compra,
-                            lucro_bruto=lucro_bruto
                         )
                         db.session.add(item)
                         itens_validos += 1
@@ -173,21 +166,14 @@ class PedidoService:
                 if produto_id > 0 and quantidade > 0:
                     produto = Produto.query.get(produto_id)
                     if produto:
-                        # Usar o preço médio de compra do produto
-                        preco_compra = float(produto.preco_medio_compra or 0)
                         valor_total_venda = quantidade * preco_venda
-                        valor_total_compra = quantidade * preco_compra
-                        lucro_bruto = valor_total_venda - valor_total_compra
                         
                         item = ItemPedido(
                             pedido_id=pedido.id,
                             produto_id=produto.id,
                             quantidade=quantidade,
                             preco_venda=preco_venda,
-                            preco_compra=preco_compra,
                             valor_total_venda=valor_total_venda,
-                            valor_total_compra=valor_total_compra,
-                            lucro_bruto=lucro_bruto
                         )
                         db.session.add(item)
                         itens_validos += 1
@@ -898,16 +884,12 @@ class PedidoService:
                     db.session.flush() # Obter ID do pedido
                     for item_data in grupo['itens']:
                         produto = item_data['produto']
-                        preco_compra = produto.preco_medio_compra or Decimal(0)
                         item = ItemPedido(
                             pedido_id=novo_pedido.id,
                             produto_id=produto.id,
                             quantidade=item_data['quantidade'],
                             preco_venda=item_data['preco_venda'],
-                            preco_compra=preco_compra,
                             valor_total_venda=item_data['quantidade'] * item_data['preco_venda'],
-                            valor_total_compra=item_data['quantidade'] * preco_compra,
-                            lucro_bruto=(item_data['quantidade'] * item_data['preco_venda']) - (item_data['quantidade'] * preco_compra)
                         )
                         db.session.add(item)
                     pedidos_criados += 1

@@ -13,7 +13,6 @@ class ItemPedidoCreateSchema(BaseModel):
     produto_id: int = Field(..., gt=0, description="ID do produto")
     quantidade: int = Field(..., gt=0, description="Quantidade")
     preco_venda: Decimal = Field(..., gt=0, description="Preço de venda")
-    preco_compra: Decimal = Field(..., ge=0, description="Preço de compra")
     
     @validator('quantidade')
     def validar_quantidade(cls, v):
@@ -71,10 +70,7 @@ class ItemPedidoResponseSchema(BaseModel):
     produto_id: int
     quantidade: int
     preco_venda: Decimal
-    preco_compra: Decimal
     valor_total_venda: Decimal
-    valor_total_compra: Decimal
-    lucro_bruto: Decimal
     
     class Config:
         from_attributes = True
@@ -115,4 +111,3 @@ class PedidoResponseSchema(BaseModel):
         json_encoders = {
             datetime: lambda v: v.isoformat()
         }
-

@@ -68,10 +68,7 @@ def test_coleta_concorrencia_real():
                 produto_id=produto.id,
                 quantidade=3,  # Pedido de 3 unidades
                 preco_venda=10.00,
-                preco_compra=7.00,
                 valor_total_venda=30.00,
-                valor_total_compra=21.00,
-                lucro_bruto=9.00
             )
             db.session.add(item_pedido)
             db.session.commit()
@@ -184,10 +181,7 @@ def test_coleta_estoque_insuficiente():
                 produto_id=produto.id,
                 quantidade=5,  # Pedido de 5 unidades
                 preco_venda=12.00,
-                preco_compra=8.00,
                 valor_total_venda=60.00,
-                valor_total_compra=40.00,
-                lucro_bruto=20.00
             )
             db.session.add(item_pedido)
             db.session.commit()

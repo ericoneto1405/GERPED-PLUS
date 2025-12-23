@@ -62,7 +62,7 @@
                                id="receita" 
                                class="form-control currency-input" 
                                data-requer-centavos="true"
-                               value="{{ dados.receita if dados else (apuracao.receita if apuracao else '') }}"
+                               value="{{ (dados.receita if dados else (apuracao.receita_total if apuracao else 0)) | number_brl }}"
                                step="0.01" 
                                min="0"
                                oninput="calcularResultados()">
@@ -75,7 +75,7 @@
                                id="cpv" 
                                class="form-control currency-input" 
                                data-requer-centavos="true"
-                               value="{{ dados.cpv if dados else (apuracao.cpv if apuracao else '') }}"
+                               value="{{ (dados.cpv if dados else (apuracao.custo_produtos if apuracao else 0)) | number_brl }}"
                                step="0.01" 
                                min="0"
                                oninput="calcularResultados()">
@@ -95,7 +95,7 @@
                                id="verba_scann" 
                                class="form-control currency-input" 
                                data-requer-centavos="true"
-                               value="{{ dados.verba_scann if dados else (apuracao.verba_scann if apuracao else '') }}"
+                               value="{{ (dados.verba_scann if dados else (apuracao.verba_scann if apuracao else 0)) | number_brl }}"
                                step="0.01" 
                                min="0"
                                oninput="calcularResultados()">
@@ -108,7 +108,7 @@
                                id="verba_plano_negocios" 
                                class="form-control currency-input" 
                                data-requer-centavos="true"
-                               value="{{ dados.verba_plano_negocios if dados else (apuracao.verba_plano_negocios if apuracao else '') }}"
+                               value="{{ (dados.verba_plano_negocios if dados else (apuracao.verba_plano_negocios if apuracao else 0)) | number_brl }}"
                                step="0.01" 
                                min="0"
                                oninput="calcularResultados()">
@@ -123,7 +123,7 @@
                                id="verba_time_ambev" 
                                class="form-control currency-input" 
                                data-requer-centavos="true"
-                               value="{{ dados.verba_time_ambev if dados else (apuracao.verba_time_ambev if apuracao else '') }}"
+                               value="{{ (dados.verba_time_ambev if dados else (apuracao.verba_time_ambev if apuracao else 0)) | number_brl }}"
                                step="0.01" 
                                min="0"
                                oninput="calcularResultados()">
@@ -136,7 +136,7 @@
                                id="verba_outras_receitas" 
                                class="form-control currency-input" 
                                data-requer-centavos="true"
-                               value="{{ dados.verba_outras_receitas if dados else (apuracao.verba_outras_receitas if apuracao else '') }}"
+                               value="{{ (dados.verba_outras_receitas if dados else (apuracao.verba_outras_receitas if apuracao else 0)) | number_brl }}"
                                step="0.01" 
                                min="0"
                                oninput="calcularResultados()">
@@ -151,7 +151,7 @@
                                id="outros_custos" 
                                class="form-control currency-input" 
                                data-requer-centavos="true"
-                               value="{{ dados.outros_custos if dados else (apuracao.outros_custos if apuracao else '') }}"
+                               value="{{ (dados.outros_custos if dados else (apuracao.outros_custos if apuracao else 0)) | number_brl }}"
                                step="0.01" 
                                min="0"
                                oninput="calcularResultados()">

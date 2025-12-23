@@ -95,12 +95,22 @@ Sistema de logs detalhado para auditoria:
 **Data:** 2025-08-13
 **Licença:** Proprietária
 """
-from ..models import db, Apuracao, Pedido, LogAtividade, ItemPedido
+from ..models import (
+    db,
+    Apuracao,
+    Pedido,
+    LogAtividade,
+    ItemPedido,
+    Pagamento,
+    Produto,
+    StatusPedido,
+)
 from flask import current_app, session
 from typing import Dict, List, Tuple, Optional
 from datetime import datetime, timezone
 from calendar import monthrange
 from decimal import Decimal, InvalidOperation
+from sqlalchemy import func
 import json
 
 # ✅ FASE 2.7 - Cache simples para dados frequentes
@@ -663,51 +673,69 @@ class ApuracaoService:
             inicio_mes = datetime(ano, mes, 1)
             ultimo_dia = monthrange(ano, mes)[1]
             fim_mes = datetime(ano, mes, ultimo_dia, 23, 59, 59)
-            
-            # ✅ FASE 2.1 - Otimização: Carregar pedidos com itens e pagamentos em uma única query
-            from sqlalchemy.orm import joinedload
-            
+
             try:
-                pedidos_periodo = Pedido.query.options(
-                    joinedload(Pedido.itens).joinedload(ItemPedido.produto),
-                    joinedload(Pedido.pagamentos)
-                ).filter(
-                    Pedido.data >= inicio_mes,
-                    Pedido.data <= fim_mes
-                ).all()
+                pagamentos = (
+                    db.session.query(
+                        Pagamento.pedido_id,
+                        Pagamento.valor,
+                    )
+                    .join(Pedido, Pagamento.pedido_id == Pedido.id)
+                    .filter(
+                        Pagamento.data_pagamento >= inicio_mes,
+                        Pagamento.data_pagamento <= fim_mes,
+                        Pedido.status == StatusPedido.PAGAMENTO_APROVADO,
+                    )
+                    .all()
+                )
             except Exception as e:
-                raise ApuracaoDatabaseError(f"Erro ao buscar pedidos do período: {str(e)}")
-            
-            receita_calculada = Decimal('0.0')
-            cpv_calculado = Decimal('0.0')
-            
-            # ✅ FASE 3.8 - Tratamento robusto de cálculos
-            for pedido in pedidos_periodo:
-                try:
-                    # ✅ FASE 2.2 - Otimização: Usar dados já carregados (sem N+1)
-                    total_pedido = sum(Decimal(str(i.valor_total_venda)) for i in pedido.itens)
-                    total_pago = sum(Decimal(str(p.valor)) for p in pedido.pagamentos)
-                    
-                    # ✅ FASE 1.3 - Lógica corrigida: usar total_pedido para receita
-                    if total_pago >= total_pedido and total_pedido > 0:
-                        receita_calculada += total_pedido  # CORRIGIDO: usa total_pedido
-                        cpv_calculado += sum(
-                            Decimal(str(i.quantidade or 0))
-                            * Decimal(str((i.produto.preco_medio_compra if i.produto else 0) or 0))
-                            for i in pedido.itens
-                        )
-                        
-                except (InvalidOperation, ValueError) as e:
-                    current_app.logger.error(f"Erro de conversão decimal no pedido {pedido.id}: {str(e)}")
-                    continue
-                except Exception as e:
-                    current_app.logger.error(f"Erro ao processar pedido {pedido.id}: {str(e)}")
-                    continue
-            
+                raise ApuracaoDatabaseError(f"Erro ao buscar pagamentos do período: {str(e)}")
+
+            pagamentos_por_pedido = {}
+            for pagamento in pagamentos:
+                pedido_id = pagamento.pedido_id
+                valor_pago = float(pagamento.valor or 0)
+                pagamentos_por_pedido[pedido_id] = pagamentos_por_pedido.get(pedido_id, 0.0) + valor_pago
+
+            if not pagamentos_por_pedido:
+                return {
+                    'receita_calculada': 0.0,
+                    'cpv_calculado': 0.0,
+                    'pedidos_periodo': 0
+                }
+
+            pedido_ids = list(pagamentos_por_pedido.keys())
+            totais_pedido = (
+                db.session.query(
+                    ItemPedido.pedido_id.label('pedido_id'),
+                    func.coalesce(func.sum(ItemPedido.valor_total_venda), 0).label('total_venda'),
+                    func.coalesce(
+                        func.sum(ItemPedido.quantidade * func.coalesce(Produto.preco_medio_compra, 0)),
+                        0,
+                    ).label('total_compra'),
+                )
+                .outerjoin(Produto, Produto.id == ItemPedido.produto_id)
+                .filter(ItemPedido.pedido_id.in_(pedido_ids))
+                .group_by(ItemPedido.pedido_id)
+                .all()
+            )
+
+            ratios = {}
+            for linha in totais_pedido:
+                total_venda = float(linha.total_venda or 0)
+                total_compra = float(linha.total_compra or 0)
+                ratios[linha.pedido_id] = (total_compra / total_venda) if total_venda > 0 else 0.0
+
+            receita_calculada = sum(pagamentos_por_pedido.values())
+            cpv_calculado = sum(
+                valor_pago * ratios.get(pedido_id, 0.0)
+                for pedido_id, valor_pago in pagamentos_por_pedido.items()
+            )
+
             return {
                 'receita_calculada': float(receita_calculada),
                 'cpv_calculado': float(cpv_calculado),
-                'pedidos_periodo': len(pedidos_periodo)
+                'pedidos_periodo': len(pagamentos_por_pedido)
             }
             
         except ApuracaoValidationError as e:

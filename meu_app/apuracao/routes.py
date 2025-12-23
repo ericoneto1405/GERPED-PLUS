@@ -275,9 +275,12 @@ def editar_apuracao(id):
                 return render_template('editar_apuracao.html', apuracao=apuracao, dados=dados)
         
         # GET: Mostrar formulário com dados da apuração
+        dados_periodo = ApuracaoService.calcular_dados_periodo(
+            apuracao.mes, apuracao.ano
+        )
         dados = {
-            'receita': apuracao.receita_total,
-            'cpv': apuracao.custo_produtos,
+            'receita': dados_periodo.get('receita_calculada', apuracao.receita_total),
+            'cpv': dados_periodo.get('cpv_calculado', apuracao.custo_produtos),
             'verba_scann': apuracao.verba_scann,
             'verba_plano_negocios': apuracao.verba_plano_negocios,
             'verba_time_ambev': apuracao.verba_time_ambev,

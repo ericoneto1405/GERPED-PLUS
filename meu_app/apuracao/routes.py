@@ -1,3 +1,5 @@
+import re
+
 from flask import render_template, request, redirect, url_for, flash, current_app, session, jsonify
 from flask import Blueprint
 from .services import ApuracaoService
@@ -9,6 +11,26 @@ from datetime import datetime
 from ..models import Apuracao, db
 from ..decorators import login_obrigatorio
 from meu_app.auth.rbac import requires_financeiro
+
+
+def _parse_currency_value(raw_value):
+    if raw_value is None:
+        return 0.0
+    if isinstance(raw_value, (int, float)):
+        return float(raw_value)
+    cleaned = str(raw_value).strip()
+    if not cleaned:
+        return 0.0
+    cleaned = cleaned.replace('R$', '').replace(' ', '')
+    cleaned = re.sub(r'[^\d,.-]', '', cleaned)
+    if ',' in cleaned and '.' in cleaned:
+        cleaned = cleaned.replace('.', '').replace(',', '.')
+    else:
+        cleaned = cleaned.replace(',', '.')
+    try:
+        return float(cleaned)
+    except ValueError:
+        return 0.0
 
 @apuracao_bp.route('/', methods=['GET'])
 @login_obrigatorio
@@ -221,22 +243,24 @@ def editar_apuracao(id):
             # Extrair dados do formulário
             mes = request.form.get('mes', type=int)
             ano = request.form.get('ano', type=int)
-            receita = request.form.get('receita', type=float)
-            cpv = request.form.get('cpv', type=float)
-            verbas = request.form.get('verbas', type=float)
-            margem_manobra = request.form.get('margem_manobra', type=float)
-            percentual_margem = request.form.get('percentual_margem', type=float)
-            total_pedidos = request.form.get('total_pedidos', type=int)
-            pedidos_pagos = request.form.get('pedidos_pagos', type=int)
+            receita = _parse_currency_value(request.form.get('receita'))
+            cpv = _parse_currency_value(request.form.get('cpv'))
+            verba_scann = _parse_currency_value(request.form.get('verba_scann'))
+            verba_plano_negocios = _parse_currency_value(request.form.get('verba_plano_negocios'))
+            verba_time_ambev = _parse_currency_value(request.form.get('verba_time_ambev'))
+            verba_outras_receitas = _parse_currency_value(
+                request.form.get('verba_outras_receitas')
+            )
+            outros_custos = _parse_currency_value(request.form.get('outros_custos'))
             
             dados = {
-                'receita': receita or 0.0,
-                'cpv': cpv or 0.0,
-                'verbas': verbas or 0.0,
-                'margem_manobra': margem_manobra or 0.0,
-                'percentual_margem': percentual_margem or 0.0,
-                'total_pedidos': total_pedidos or 0,
-                'pedidos_pagos': pedidos_pagos or 0
+                'receita': receita,
+                'cpv': cpv,
+                'verba_scann': verba_scann,
+                'verba_plano_negocios': verba_plano_negocios,
+                'verba_time_ambev': verba_time_ambev,
+                'verba_outras_receitas': verba_outras_receitas,
+                'outros_custos': outros_custos
             }
             
             # Usar o serviço para atualizar a apuração
@@ -254,11 +278,11 @@ def editar_apuracao(id):
         dados = {
             'receita': apuracao.receita_total,
             'cpv': apuracao.custo_produtos,
-            'verbas': apuracao.total_verbas,
-            'margem_manobra': apuracao.margem_bruta,
-            'percentual_margem': apuracao.percentual_margem,
-            'total_pedidos': 0,  # Campo não existe no modelo
-            'pedidos_pagos': 0   # Campo não existe no modelo
+            'verba_scann': apuracao.verba_scann,
+            'verba_plano_negocios': apuracao.verba_plano_negocios,
+            'verba_time_ambev': apuracao.verba_time_ambev,
+            'verba_outras_receitas': apuracao.verba_outras_receitas,
+            'outros_custos': apuracao.outros_custos
         }
         
         return render_template('editar_apuracao.html', apuracao=apuracao, dados=dados)

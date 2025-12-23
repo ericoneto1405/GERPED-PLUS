@@ -24,7 +24,7 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label for="mes">Mês:</label>
-                        <select name="mes" id="mes" class="form-control" {% if apuracao %}disabled{% endif %} required>
+                        <select name="mes" id="mes" class="form-control" required>
                             {% for i in range(1, 13) %}
                                 {% set mes_nome = ['', 'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
                                                   'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'][i] %}
@@ -88,27 +88,27 @@
                 <h3>Verbas e Outros Dados</h3>
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="verbas">Verbas Totais:</label>
-                        <small class="help-text">Total de verbas do período</small>
+                        <label for="verba_scann">Verba SCANN:</label>
+                        <small class="help-text">Valor da verba SCANN do período</small>
                         <input type="text" 
-                               name="verbas" 
-                               id="verbas" 
+                               name="verba_scann" 
+                               id="verba_scann" 
                                class="form-control currency-input" 
                                data-requer-centavos="true"
-                               value="{{ dados.verbas if dados else (apuracao.verbas if apuracao else '') }}"
+                               value="{{ dados.verba_scann if dados else (apuracao.verba_scann if apuracao else '') }}"
                                step="0.01" 
                                min="0"
                                oninput="calcularResultados()">
                     </div>
                     <div class="form-group">
-                        <label for="margem_manobra">Margem de Manobra:</label>
-                        <small class="help-text">Margem de manobra do período</small>
+                        <label for="verba_plano_negocios">Verba Plano de Negócios:</label>
+                        <small class="help-text">Valor da verba de Plano de Negócios</small>
                         <input type="text" 
-                               name="margem_manobra" 
-                               id="margem_manobra" 
+                               name="verba_plano_negocios" 
+                               id="verba_plano_negocios" 
                                class="form-control currency-input" 
                                data-requer-centavos="true"
-                               value="{{ dados.margem_manobra if dados else (apuracao.margem_manobra if apuracao else '') }}"
+                               value="{{ dados.verba_plano_negocios if dados else (apuracao.verba_plano_negocios if apuracao else '') }}"
                                step="0.01" 
                                min="0"
                                oninput="calcularResultados()">
@@ -116,39 +116,43 @@
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="percentual_margem">Percentual de Margem (%):</label>
-                        <small class="help-text">Percentual de margem do período</small>
-                        <input type="number" 
-                               name="percentual_margem" 
-                               id="percentual_margem" 
-                               class="form-control" 
-                               value="{{ dados.percentual_margem if dados else (apuracao.percentual_margem if apuracao else '') }}"
-                               step="0.1" 
+                        <label for="verba_time_ambev">Verba Time Ambev:</label>
+                        <small class="help-text">Valor da verba Time Ambev</small>
+                        <input type="text" 
+                               name="verba_time_ambev" 
+                               id="verba_time_ambev" 
+                               class="form-control currency-input" 
+                               data-requer-centavos="true"
+                               value="{{ dados.verba_time_ambev if dados else (apuracao.verba_time_ambev if apuracao else '') }}"
+                               step="0.01" 
                                min="0"
-                               max="100"
                                oninput="calcularResultados()">
                     </div>
                     <div class="form-group">
-                        <label for="total_pedidos">Total de Pedidos:</label>
-                        <small class="help-text">Total de pedidos no período</small>
-                        <input type="number" 
-                               name="total_pedidos" 
-                               id="total_pedidos" 
-                               class="form-control" 
-                               value="{{ dados.total_pedidos if dados else (apuracao.total_pedidos if apuracao else '') }}"
+                        <label for="verba_outras_receitas">Outras verbas:</label>
+                        <small class="help-text">Outras receitas do período</small>
+                        <input type="text" 
+                               name="verba_outras_receitas" 
+                               id="verba_outras_receitas" 
+                               class="form-control currency-input" 
+                               data-requer-centavos="true"
+                               value="{{ dados.verba_outras_receitas if dados else (apuracao.verba_outras_receitas if apuracao else '') }}"
+                               step="0.01" 
                                min="0"
                                oninput="calcularResultados()">
                     </div>
                 </div>
-                <div class="form-row">
+                <div class="form-row single-col">
                     <div class="form-group">
-                        <label for="pedidos_pagos">Pedidos Pagos:</label>
-                        <small class="help-text">Total de pedidos pagos no período</small>
-                        <input type="number" 
-                               name="pedidos_pagos" 
-                               id="pedidos_pagos" 
-                               class="form-control" 
-                               value="{{ dados.pedidos_pagos if dados else (apuracao.pedidos_pagos if apuracao else '') }}"
+                        <label for="outros_custos">Outros custos:</label>
+                        <small class="help-text">Custos adicionais do período</small>
+                        <input type="text" 
+                               name="outros_custos" 
+                               id="outros_custos" 
+                               class="form-control currency-input" 
+                               data-requer-centavos="true"
+                               value="{{ dados.outros_custos if dados else (apuracao.outros_custos if apuracao else '') }}"
+                               step="0.01" 
                                min="0"
                                oninput="calcularResultados()">
                     </div>
@@ -271,6 +275,9 @@
     grid-template-columns: 1fr 1fr;
     gap: 1.5rem;
 }
+.form-row.single-col {
+    grid-template-columns: 1fr;
+}
 
 .form-group {
     display: flex;
@@ -337,21 +344,40 @@
 
 </style>
 <script nonce="{{ nonce }}">
+function parseCurrencyInput(id) {
+    const field = document.getElementById(id);
+    if (!field) return 0;
+    const rawValue = (field.value || '').trim();
+    if (!rawValue) return 0;
+    if (typeof parseCurrencyBRL === 'function') {
+        return parseCurrencyBRL(rawValue);
+    }
+    const normalized = rawValue
+        .replace(/[^\d,.-]/g, '')
+        .replace(/\./g, '')
+        .replace(',', '.');
+    const parsed = Number(normalized);
+    return Number.isFinite(parsed) ? parsed : 0;
+}
+
 function calcularResultados() {
-    const receita = parseFloat(document.getElementById('receita').value) || 0;
-    const cpv = parseFloat(document.getElementById('cpv').value) || 0;
-    const verbas = parseFloat(document.getElementById('verbas').value) || 0;
-    const margemManobra = parseFloat(document.getElementById('margem_manobra').value) || 0;
-    const percentualMargem = parseFloat(document.getElementById('percentual_margem').value) || 0;
+    const receita = parseCurrencyInput('receita');
+    const cpv = parseCurrencyInput('cpv');
+    const verbaScann = parseCurrencyInput('verba_scann');
+    const verbaPlanoNegocios = parseCurrencyInput('verba_plano_negocios');
+    const verbaTimeAmbev = parseCurrencyInput('verba_time_ambev');
+    const verbaOutras = parseCurrencyInput('verba_outras_receitas');
+    const outrosCustos = parseCurrencyInput('outros_custos');
 
     // Cálculos
+    const totalVerbas = verbaScann + verbaPlanoNegocios + verbaTimeAmbev + verbaOutras;
     const margemBruta = receita - cpv;
-    const resultadoLiquido = margemBruta + verbas;
+    const resultadoLiquido = margemBruta + totalVerbas - outrosCustos;
     const percentualCalculado = receita > 0 ? (margemBruta / receita) * 100 : 0;
 
     // Atualizar display
     document.getElementById('margemBruta').textContent = formatCurrency(margemBruta);
-    document.getElementById('totalVerbas').textContent = formatCurrency(verbas);
+    document.getElementById('totalVerbas').textContent = formatCurrency(totalVerbas);
     document.getElementById('resultadoLiquido').textContent = formatCurrency(resultadoLiquido);
     document.getElementById('percentualMargem').textContent = percentualCalculado.toFixed(1) + '%';
 

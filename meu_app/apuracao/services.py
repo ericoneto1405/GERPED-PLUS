@@ -1315,12 +1315,29 @@ class ApuracaoService:
             apuracao.receita_total = Decimal(str(dados.get('receita', 0)))
             apuracao.custo_produtos = Decimal(str(dados.get('cpv', 0)))
             
-            # Distribuir verbas entre os campos específicos
-            verbas_total = Decimal(str(dados.get('verbas', 0)))
-            apuracao.verba_scann = verbas_total * Decimal('0.25')  # 25% para SCANN
-            apuracao.verba_plano_negocios = verbas_total * Decimal('0.25')  # 25% para Plano Negócios
-            apuracao.verba_time_ambev = verbas_total * Decimal('0.25')  # 25% para Time AMBEV
-            apuracao.verba_outras_receitas = verbas_total * Decimal('0.25')  # 25% para Outras Receitas
+            # Atualizar verbas (detalhadas ou total legado)
+            verbas_detalhadas = (
+                'verba_scann',
+                'verba_plano_negocios',
+                'verba_time_ambev',
+                'verba_outras_receitas',
+            )
+            if any(campo in dados for campo in verbas_detalhadas):
+                apuracao.verba_scann = Decimal(str(dados.get('verba_scann', 0)))
+                apuracao.verba_plano_negocios = Decimal(
+                    str(dados.get('verba_plano_negocios', 0))
+                )
+                apuracao.verba_time_ambev = Decimal(str(dados.get('verba_time_ambev', 0)))
+                apuracao.verba_outras_receitas = Decimal(
+                    str(dados.get('verba_outras_receitas', 0))
+                )
+            else:
+                verbas_total = Decimal(str(dados.get('verbas', 0)))
+                verba_rateada = verbas_total / Decimal('4')
+                apuracao.verba_scann = verba_rateada
+                apuracao.verba_plano_negocios = verba_rateada
+                apuracao.verba_time_ambev = verba_rateada
+                apuracao.verba_outras_receitas = verba_rateada
             
             apuracao.outros_custos = Decimal(str(dados.get('outros_custos', 0)))
             

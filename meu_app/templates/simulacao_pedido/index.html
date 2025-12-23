@@ -80,10 +80,6 @@
                     </table>
                 </div>
             </section>
-
-        </div>
-
-        <aside class="sim-side">
             <div class="result-card" id="painelResultado" data-tone="loading">
                 <div class="result-header">
                     <div>
@@ -118,7 +114,7 @@
                 <div class="result-note" id="textoExplicacao">Avaliando...</div>
                 <div class="result-footnote">Base: pedidos pagos no mês e custo médio cadastrado.</div>
             </div>
-        </aside>
+        </div>
     </div>
 </div>
 
@@ -201,13 +197,9 @@
     font-size: 0.75rem;
 }
 .sim-layout {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 340px;
-    gap: 18px;
-    align-items: start;
+    display: block;
 }
-.sim-main,
-.sim-side {
+.sim-main {
     display: flex;
     flex-direction: column;
     gap: 14px;
@@ -319,10 +311,6 @@
     background: #f8fafc;
     color: var(--sim-ink);
 }
-.sim-side {
-    position: sticky;
-    top: 88px;
-}
 .result-header {
     display: flex;
     justify-content: space-between;
@@ -424,18 +412,6 @@
     color: var(--sim-muted);
 }
 @media (max-width: 1200px) {
-    .sim-layout {
-        grid-template-columns: 1fr;
-    }
-    .sim-side {
-        position: static;
-    }
-    .sim-main {
-        order: 2;
-    }
-    .sim-side {
-        order: 1;
-    }
     .simulacao-table {
         min-width: 720px;
     }
@@ -498,7 +474,6 @@ function adicionarLinha(produtoId = '') {
     selProd.addEventListener('change', () => {
         const produto = stateSim.produtos.find(p => p.id === Number(selProd.value));
         row.dataset.custo = produto ? produto.custo : 0;
-        row.dataset.categoria = produto ? produto.categoria : '';
         calcularSimulacao();
     });
     [inputQtd, inputPreco].forEach(el => el.addEventListener('input', calcularSimulacao));

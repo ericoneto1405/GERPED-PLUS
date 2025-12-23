@@ -83,30 +83,6 @@
                 </div>
             </section>
 
-            <section class="sim-card">
-                <div class="section-header">
-                    <div>
-                        <h5 class="mb-1">Resumo por categoria</h5>
-                        <p class="mb-0">Receita, custo e margem considerando o mês + simulação.</p>
-                    </div>
-                </div>
-                <div class="table-container">
-                    <table class="simulacao-table resumo-cat">
-                        <thead>
-                            <tr>
-                                <th>Categoria</th>
-                                <th>Receita</th>
-                                <th>CPV</th>
-                                <th>Margem</th>
-                                <th>Buraco</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tbodyCategorias">
-                            <tr><td colspan="5" class="text-center text-muted">Sem dados.</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </section>
         </div>
 
         <aside class="sim-side">
@@ -637,25 +613,27 @@ function calcularSimulacao() {
 
     // Render categorias
     const corpoCat = document.getElementById('tbodyCategorias');
-    corpoCat.innerHTML = '';
-    if (!Object.keys(mapaCategorias).length) {
-        corpoCat.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Sem dados.</td></tr>';
-    } else {
-        Object.values(mapaCategorias).forEach(cat => {
-            const receita = cat.receitaAtual + cat.receitaSim;
-            const custo = cat.custoAtual + cat.custoSim;
-            const margem = receita - custo;
-            const buraco = margem < 0 ? margem : 0;
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${cat.categoria}</td>
-                <td>${formatCurrency(receita)}</td>
-                <td>${formatCurrency(custo)}</td>
-                <td class="${margem < 0 ? 'text-danger' : ''}">${formatCurrency(margem)}</td>
-                <td class="${buraco < 0 ? 'text-danger' : 'text-muted'}">${formatCurrency(buraco)}</td>
-            `;
-            corpoCat.appendChild(tr);
-        });
+    if (corpoCat) {
+        corpoCat.innerHTML = '';
+        if (!Object.keys(mapaCategorias).length) {
+            corpoCat.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Sem dados.</td></tr>';
+        } else {
+            Object.values(mapaCategorias).forEach(cat => {
+                const receita = cat.receitaAtual + cat.receitaSim;
+                const custo = cat.custoAtual + cat.custoSim;
+                const margem = receita - custo;
+                const buraco = margem < 0 ? margem : 0;
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${cat.categoria}</td>
+                    <td>${formatCurrency(receita)}</td>
+                    <td>${formatCurrency(custo)}</td>
+                    <td class="${margem < 0 ? 'text-danger' : ''}">${formatCurrency(margem)}</td>
+                    <td class="${buraco < 0 ? 'text-danger' : 'text-muted'}">${formatCurrency(buraco)}</td>
+                `;
+                corpoCat.appendChild(tr);
+            });
+        }
     }
 
     // Indicador final

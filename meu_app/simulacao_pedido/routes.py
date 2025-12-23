@@ -1,7 +1,6 @@
 """Rotas do módulo Simulação de Pedido."""
 
 from datetime import datetime
-from calendar import monthrange
 
 from flask import Blueprint, current_app, jsonify, render_template, session
 from sqlalchemy.orm import joinedload
@@ -13,7 +12,6 @@ from meu_app.models import (
     Pedido,
     Produto,
 )
-from meu_app.apuracao.services import ApuracaoService
 
 simulacao_pedido_bp = Blueprint(
     "simulacao_pedido",
@@ -42,7 +40,7 @@ def dados_simulacao():
     Fornece dados consolidados para a simulação:
     - Produtos com custo e categoria
     - Verbas previstas (apuracao do período)
-    - Desempenho atual (receita/custo) por categoria no mês
+    - Desempenho atual (receita/custo) de pedidos liberados no mês
     """
     try:
         hoje = datetime.now()
@@ -70,56 +68,49 @@ def dados_simulacao():
             "ano": apuracao.ano if apuracao else ano,
         }
 
-        # Desempenho geral do período (pagos)
-        dados_periodo = ApuracaoService.calcular_dados_periodo(
-            verbas["mes"], verbas["ano"]
-        )
-        desempenho_geral = {
-            "receita": float(dados_periodo.get("receita_calculada", 0.0)),
-            "cpv": float(dados_periodo.get("cpv_calculado", 0.0)),
-        }
-        desempenho_geral["margem"] = desempenho_geral["receita"] - desempenho_geral["cpv"]
-        desempenho_geral["pedidos_processados"] = int(
-            dados_periodo.get("pedidos_periodo", 0)
-        )
-
-        # Desempenho por categoria (pedidos pagos no mês)
+        # Desempenho geral do período (liberados pelo comercial)
         inicio_mes = datetime(verbas["ano"], verbas["mes"], 1)
-        fim_mes = datetime(
-            verbas["ano"],
-            verbas["mes"],
-            monthrange(verbas["ano"], verbas["mes"])[1],
-            23,
-            59,
-            59,
-        )
+        if verbas["mes"] == 12:
+            proximo_mes = datetime(verbas["ano"] + 1, 1, 1)
+        else:
+            proximo_mes = datetime(verbas["ano"], verbas["mes"] + 1, 1)
+
         pedidos = (
             Pedido.query.options(
-                joinedload(Pedido.itens).joinedload(ItemPedido.produto),
-                joinedload(Pedido.pagamentos),
+                joinedload(Pedido.itens).joinedload(ItemPedido.produto)
             )
-            .filter(Pedido.data >= inicio_mes, Pedido.data <= fim_mes)
+            .filter(
+                Pedido.data >= inicio_mes,
+                Pedido.data < proximo_mes,
+                Pedido.confirmado_comercial == True,  # noqa: E712
+            )
             .all()
         )
 
+        total_receita = 0.0
+        total_cpv = 0.0
         categorias_map = {}
         for pedido in pedidos:
-            total_pedido = sum(float(i.valor_total_venda) for i in pedido.itens)
-            total_pago = sum(float(p.valor) for p in pedido.pagamentos)
-            if total_pedido <= 0 or total_pago < total_pedido:
-                continue  # segue lógica da apuração: só pagos e com valor
-
             for item in pedido.itens:
                 produto = item.produto
                 cat = (produto.categoria or "OUTROS").upper() if produto else "OUTROS"
-                receita = float(item.valor_total_venda)
+                receita = float(item.valor_total_venda or 0)
                 preco_medio = float(produto.preco_medio_compra or 0) if produto else 0
                 custo = float(item.quantidade or 0) * preco_medio
+                total_receita += receita
+                total_cpv += custo
                 cat_data = categorias_map.setdefault(
                     cat, {"categoria": cat, "receita": 0.0, "custo": 0.0}
                 )
                 cat_data["receita"] += receita
                 cat_data["custo"] += custo
+
+        desempenho_geral = {
+            "receita": total_receita,
+            "cpv": total_cpv,
+            "margem": total_receita - total_cpv,
+            "pedidos_processados": len(pedidos),
+        }
 
         categorias = []
         for cat, data in categorias_map.items():

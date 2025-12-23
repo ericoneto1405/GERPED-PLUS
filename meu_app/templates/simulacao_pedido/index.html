@@ -9,11 +9,11 @@
     <header class="sim-header">
         <div>
             <h2 class="sim-title">Simulação de Pedido</h2>
-            <p class="sim-subtitle">Informe os itens negociados e veja rapidamente se o pedido fecha no mês.</p>
+            <p class="sim-subtitle">Informe os itens negociados e veja rapidamente se o pedido fecha com base nos pedidos liberados pelo comercial.</p>
         </div>
         <div class="sim-meta">
             <span>Apuração: <strong id="periodoApuracao">--/--</strong></span>
-            <span>Pedidos pagos no mês: <strong id="infoPedidosMes">0</strong></span>
+            <span>Pedidos liberados no mês: <strong id="infoPedidosMes">0</strong></span>
         </div>
     </header>
 
@@ -24,19 +24,19 @@
             <small class="mini-caption">Fonte: Apuração (previsão)</small>
         </div>
         <div class="mini-card">
-            <div class="mini-title">Receita mês (pago)</div>
+            <div class="mini-title">Faturamento projetado</div>
             <div class="mini-value" id="cardReceita">R$ 0,00</div>
-            <small class="mini-caption">Pedidos pagos no mês</small>
+            <small class="mini-caption">Pedidos liberados no mês</small>
         </div>
         <div class="mini-card">
-            <div class="mini-title">CPV mês</div>
+            <div class="mini-title">CPV projetado</div>
             <div class="mini-value" id="cardCPV">R$ 0,00</div>
-            <small class="mini-caption">Custo dos pedidos pagos</small>
+            <small class="mini-caption">Custo dos pedidos liberados</small>
         </div>
         <div class="mini-card">
-            <div class="mini-title">Margem mês (com verbas)</div>
+            <div class="mini-title">Margem projetada (com verbas)</div>
             <div class="mini-value" id="cardMargem">R$ 0,00</div>
-            <small class="mini-caption">Receita - CPV + verbas</small>
+            <small class="mini-caption">Faturamento - CPV + verbas</small>
         </div>
     </div>
 
@@ -89,7 +89,7 @@
                     <div class="result-saldo">
                         <div class="label">Saldo final estimado</div>
                         <div class="value" id="valorSaldo">R$ 0,00</div>
-                        <div class="hint">Margem do mês + simulação + verbas</div>
+                        <div class="hint">Margem projetada + simulação + verbas</div>
                     </div>
                 </div>
                 <div class="result-meter">
@@ -102,7 +102,7 @@
                     </div>
                 </div>
                 <div class="result-note" id="textoExplicacao">Avaliando...</div>
-                <div class="result-footnote">Base: pedidos pagos no mês e custo médio cadastrado.</div>
+                <div class="result-footnote">Base: pedidos liberados no mês e custo médio cadastrado.</div>
             </div>
         </div>
     </div>

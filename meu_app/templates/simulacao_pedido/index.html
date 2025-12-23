@@ -461,8 +461,8 @@ function adicionarLinha(produtoId = '') {
                 ${stateSim.produtos.map(p => `<option value="${p.id}">${p.nome}</option>`).join('')}
             </select>
         </td>
-        <td><input type="number" min="0" step="1" class="input-inline input-qtd" value="0"></td>
-        <td><input type="number" min="0" step="0.01" class="input-inline input-preco" value="0"></td>
+        <td><input type="number" min="0" step="1" class="input-inline input-qtd" placeholder="0" value=""></td>
+        <td><input type="number" min="0" step="0.01" class="input-inline input-preco" placeholder="0" value=""></td>
         <td class="sub-cell text-end">R$ 0,00</td>
         <td class="custo-cell text-end">R$ 0,00</td>
         <td class="margem-cell text-end">R$ 0,00</td>

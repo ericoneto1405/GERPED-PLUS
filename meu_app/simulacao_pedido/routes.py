@@ -110,9 +110,11 @@ def dados_simulacao():
                 continue  # segue lógica da apuração: só pagos e com valor
 
             for item in pedido.itens:
-                cat = (item.produto.categoria or "OUTROS").upper()
+                produto = item.produto
+                cat = (produto.categoria or "OUTROS").upper() if produto else "OUTROS"
                 receita = float(item.valor_total_venda)
-                custo = float(item.valor_total_compra)
+                preco_medio = float(produto.preco_medio_compra or 0) if produto else 0
+                custo = float(item.quantidade or 0) * preco_medio
                 cat_data = categorias_map.setdefault(
                     cat, {"categoria": cat, "receita": 0.0, "custo": 0.0}
                 )

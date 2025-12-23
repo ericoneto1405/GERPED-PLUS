@@ -294,8 +294,9 @@ class VendedorService:
             
             # Calcular custo total (CPV) - apenas pedidos completamente pagos
             custo_total = db.session.query(
-                func.sum(ItemPedido.valor_total_compra)
+                func.sum(ItemPedido.quantidade * func.coalesce(Produto.preco_medio_compra, 0))
             ).join(Pedido, ItemPedido.pedido_id == Pedido.id)\
+             .outerjoin(Produto, Produto.id == ItemPedido.produto_id)\
              .filter(
                 Pedido.cliente_id == cliente_data.id,
                 Pedido.status.in_([

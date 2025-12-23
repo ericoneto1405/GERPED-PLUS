@@ -512,7 +512,9 @@ class PedidoService:
                     Produto.id.label('produto_id'),
                     Produto.nome.label('produto_nome'),
                     func.sum(ItemPedido.quantidade).label('quantidade_pedida'),
-                    func.sum(ItemPedido.valor_total_compra).label('valor_total_compra'),
+                    func.sum(
+                        ItemPedido.quantidade * func.coalesce(Produto.preco_medio_compra, 0)
+                    ).label('valor_total_compra'),
                 )
                 .join(ItemPedido, ItemPedido.produto_id == Produto.id)
                 .join(Pedido, Pedido.id == ItemPedido.pedido_id)

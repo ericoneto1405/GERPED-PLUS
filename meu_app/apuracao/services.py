@@ -95,7 +95,7 @@ Sistema de logs detalhado para auditoria:
 **Data:** 2025-08-13
 **Licença:** Proprietária
 """
-from ..models import db, Apuracao, Pedido, LogAtividade
+from ..models import db, Apuracao, Pedido, LogAtividade, ItemPedido
 from flask import current_app, session
 from typing import Dict, List, Tuple, Optional
 from datetime import datetime, timezone
@@ -669,7 +669,7 @@ class ApuracaoService:
             
             try:
                 pedidos_periodo = Pedido.query.options(
-                    joinedload(Pedido.itens),
+                    joinedload(Pedido.itens).joinedload(ItemPedido.produto),
                     joinedload(Pedido.pagamentos)
                 ).filter(
                     Pedido.data >= inicio_mes,
@@ -691,7 +691,11 @@ class ApuracaoService:
                     # ✅ FASE 1.3 - Lógica corrigida: usar total_pedido para receita
                     if total_pago >= total_pedido and total_pedido > 0:
                         receita_calculada += total_pedido  # CORRIGIDO: usa total_pedido
-                        cpv_calculado += sum(Decimal(str(i.valor_total_compra)) for i in pedido.itens)
+                        cpv_calculado += sum(
+                            Decimal(str(i.quantidade or 0))
+                            * Decimal(str((i.produto.preco_medio_compra if i.produto else 0) or 0))
+                            for i in pedido.itens
+                        )
                         
                 except (InvalidOperation, ValueError) as e:
                     current_app.logger.error(f"Erro de conversão decimal no pedido {pedido.id}: {str(e)}")

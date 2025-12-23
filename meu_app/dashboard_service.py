@@ -136,8 +136,12 @@ class DashboardService:
             self.session.query(
                 ItemPedido.pedido_id.label('pedido_id'),
                 func.coalesce(func.sum(ItemPedido.valor_total_venda), 0).label('total_venda'),
-                func.coalesce(func.sum(ItemPedido.valor_total_compra), 0).label('total_compra'),
+                func.coalesce(
+                    func.sum(ItemPedido.quantidade * func.coalesce(Produto.preco_medio_compra, 0)),
+                    0,
+                ).label('total_compra'),
             )
+            .outerjoin(Produto, Produto.id == ItemPedido.produto_id)
             .filter(ItemPedido.pedido_id.in_(pedido_ids))
             .group_by(ItemPedido.pedido_id)
             .all()
@@ -231,11 +235,15 @@ class DashboardService:
         return (
             self.session.query(
                 func.coalesce(func.sum(ItemPedido.valor_total_venda), 0).label('total_venda'),
-                func.coalesce(func.sum(ItemPedido.valor_total_compra), 0).label('total_compra'),
+                func.coalesce(
+                    func.sum(ItemPedido.quantidade * func.coalesce(Produto.preco_medio_compra, 0)),
+                    0,
+                ).label('total_compra'),
                 func.count(func.distinct(Pedido.id)).label('qtd_pedidos')
             )
             .select_from(Pedido)
             .outerjoin(ItemPedido, ItemPedido.pedido_id == Pedido.id)
+            .outerjoin(Produto, Produto.id == ItemPedido.produto_id)
             .filter(
                 Pedido.data >= inicio,
                 Pedido.data < fim,

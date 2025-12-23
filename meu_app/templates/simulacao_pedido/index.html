@@ -34,9 +34,9 @@
             <small class="mini-caption">Custo dos pedidos pagos</small>
         </div>
         <div class="mini-card">
-            <div class="mini-title">Margem mês</div>
+            <div class="mini-title">Margem mês (com verbas)</div>
             <div class="mini-value" id="cardMargem">R$ 0,00</div>
-            <small class="mini-caption">Receita - CPV</small>
+            <small class="mini-caption">Receita - CPV + verbas</small>
         </div>
     </div>
 
@@ -90,16 +90,6 @@
                         <div class="label">Saldo final estimado</div>
                         <div class="value" id="valorSaldo">R$ 0,00</div>
                         <div class="hint">Margem do mês + simulação + verbas</div>
-                    </div>
-                </div>
-                <div class="result-metrics">
-                    <div>
-                        <div class="label">Margem total (mês + sim)</div>
-                        <div class="value" id="valorMargemTotal">R$ 0,00</div>
-                    </div>
-                    <div>
-                        <div class="label">Verbas previstas</div>
-                        <div class="value" id="valorVerbasConsideradas">R$ 0,00</div>
                     </div>
                 </div>
                 <div class="result-meter">
@@ -370,21 +360,6 @@
     font-size: 0.72rem;
     color: var(--sim-muted);
 }
-.result-metrics {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 10px;
-    margin: 12px 0;
-}
-.result-metrics .label {
-    font-size: 0.75rem;
-    color: var(--sim-muted);
-}
-.result-metrics .value {
-    font-size: 1.05rem;
-    font-weight: 700;
-    color: var(--sim-ink);
-}
 .result-meter {
     margin-bottom: 12px;
 }
@@ -624,8 +599,8 @@ function calcularSimulacao() {
     const consumoLabel = document.getElementById('consumoVerbaLabel');
     const consumoFill = document.getElementById('consumoVerbaFill');
 
-    margemEl.textContent = formatCurrency(margemTotal);
-    verbaEl.textContent = formatCurrency(totalVerbas);
+    if (margemEl) margemEl.textContent = formatCurrency(margemTotal);
+    if (verbaEl) verbaEl.textContent = formatCurrency(totalVerbas);
     saldoEl.textContent = formatCurrency(margemLiquida);
 
     let status = 'Atenção';
@@ -669,7 +644,16 @@ function carregarDados() {
             document.getElementById('cardVerbas').textContent = formatCurrency(data.verbas.total || 0);
             document.getElementById('cardReceita').textContent = formatCurrency(data.desempenho.geral.receita || 0);
             document.getElementById('cardCPV').textContent = formatCurrency(data.desempenho.geral.cpv || 0);
-            document.getElementById('cardMargem').textContent = formatCurrency((data.desempenho.geral.receita || 0) - (data.desempenho.geral.cpv || 0));
+            const verbasBase = data.verbas || {};
+            const verbasComponentes =
+                parseNumber(verbasBase.scann) +
+                parseNumber(verbasBase.plano_negocios) +
+                parseNumber(verbasBase.time_ambev) +
+                parseNumber(verbasBase.outras);
+            const totalVerbasBase = parseNumber(verbasBase.total);
+            const totalVerbas = totalVerbasBase > 0 ? totalVerbasBase : verbasComponentes;
+            const margemMes = (data.desempenho.geral.receita || 0) - (data.desempenho.geral.cpv || 0) + totalVerbas;
+            document.getElementById('cardMargem').textContent = formatCurrency(margemMes);
 
             const periodoEl = document.getElementById('periodoApuracao');
             if (periodoEl) {

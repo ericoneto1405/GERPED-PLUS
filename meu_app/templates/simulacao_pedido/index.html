@@ -54,7 +54,6 @@
                     <table class="simulacao-table auto-fit-table">
                         <colgroup>
                             <col class="col-produto">
-                            <col class="col-cat">
                             <col class="col-qtd">
                             <col class="col-preco">
                             <col class="col-sub">
@@ -66,18 +65,17 @@
                         <thead>
                             <tr>
                                 <th data-column-index="0">Produto</th>
-                                <th data-column-index="1">Categoria</th>
-                                <th data-column-index="2">Qtde</th>
-                                <th data-column-index="3">Preço negociado</th>
-                                <th data-column-index="4">Subtotal</th>
-                                <th data-column-index="5">Custo</th>
-                                <th data-column-index="6">Margem R$</th>
-                                <th data-column-index="7">Margem %</th>
+                                <th data-column-index="1">Qtde</th>
+                                <th data-column-index="2">Preço negociado</th>
+                                <th data-column-index="3">Subtotal</th>
+                                <th data-column-index="4">Custo</th>
+                                <th data-column-index="5">Margem R$</th>
+                                <th data-column-index="6">Margem %</th>
                                 <th>Ações</th>
                             </tr>
                         </thead>
                         <tbody id="tbodySimulacao">
-                            <tr class="linha-vazia"><td colspan="9" class="text-center text-muted">Adicione itens para simular</td></tr>
+                            <tr class="linha-vazia"><td colspan="8" class="text-center text-muted">Adicione itens para simular</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -267,7 +265,6 @@
     background: #fef2f2;
 }
 .simulacao-table .col-produto { width: 30%; }
-.simulacao-table .col-cat { width: 12%; }
 .simulacao-table .col-qtd { width: 8%; }
 .simulacao-table .col-preco { width: 12%; }
 .simulacao-table .col-sub { width: 12%; }
@@ -480,7 +477,6 @@ function adicionarLinha(produtoId = '') {
                 ${stateSim.produtos.map(p => `<option value="${p.id}">${p.nome}</option>`).join('')}
             </select>
         </td>
-        <td class="cat-cell text-muted">-</td>
         <td><input type="number" min="0" step="1" class="input-inline input-qtd" value="0"></td>
         <td><input type="number" min="0" step="0.01" class="input-inline input-preco" value="0"></td>
         <td class="sub-cell text-end">R$ 0,00</td>
@@ -503,7 +499,6 @@ function adicionarLinha(produtoId = '') {
         const produto = stateSim.produtos.find(p => p.id === Number(selProd.value));
         row.dataset.custo = produto ? produto.custo : 0;
         row.dataset.categoria = produto ? produto.categoria : '';
-        row.querySelector('.cat-cell').textContent = produto ? produto.categoria : '-';
         calcularSimulacao();
     });
     [inputQtd, inputPreco].forEach(el => el.addEventListener('input', calcularSimulacao));
@@ -512,7 +507,7 @@ function adicionarLinha(produtoId = '') {
         if (!tbody.children.length) {
             const vazio = document.createElement('tr');
             vazio.className = 'linha-vazia';
-            vazio.innerHTML = '<td colspan="9" class="text-center text-muted">Adicione itens para simular</td>';
+            vazio.innerHTML = '<td colspan="8" class="text-center text-muted">Adicione itens para simular</td>';
             tbody.appendChild(vazio);
         }
         calcularSimulacao();

@@ -110,7 +110,20 @@ start_server() {
         print_warning "Porta $PORT está em uso pelos processos: $PORT_PIDS"
         print_info "Encerrando processos conflitantes..."
         echo "$PORT_PIDS" | xargs kill -9 2>/dev/null || true
-        sleep 2
+        
+        # Aguarda a porta ficar disponível (máximo 10 segundos)
+        print_info "Aguardando porta $PORT ficar disponível..."
+        for i in {1..10}; do
+            sleep 1
+            if [ -z "$(check_port)" ]; then
+                print_success "Porta $PORT está disponível"
+                break
+            fi
+            if [ $i -eq 10 ]; then
+                print_error "Porta $PORT ainda está em uso após 10 segundos"
+                return 1
+            fi
+        done
     fi
     
     # Cria diretório de logs se não existir

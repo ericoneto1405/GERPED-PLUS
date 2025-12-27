@@ -50,7 +50,6 @@ class DashboardService:
             ).order_by(Pedido.data.desc()).limit(5).all()
         )
 
-        dados_grafico = self._montar_grafico_pagamentos()
         dados_evolucao = self._montar_evolucao_diaria(mes, ano, pagamentos_periodo, pedido_ratios, total_verbas, tem_apuracao)
 
         liberados = self._consultar_pedidos_liberados(data_inicio, proximo_mes)
@@ -83,7 +82,6 @@ class DashboardService:
             'total_clientes': total_clientes,
             'total_produtos': total_produtos,
             'pedidos_recentes': pedidos_recentes,
-            'dados_grafico': dados_grafico,
             'dados_evolucao': dados_evolucao,
             'faturamento_liberados': faturamento_liberados,
             'cpv_liberados': cpv_liberados,
@@ -174,39 +172,6 @@ class DashboardService:
             + (apuracao.verba_outras_receitas or 0)
         )
 
-    def _montar_grafico_pagamentos(self):
-        data_30_dias_atras = datetime.now() - timedelta(days=30)
-        vendas_por_dia = (
-            self.session.query(
-                func.date(Pagamento.data_pagamento).label('data'),
-                func.sum(Pagamento.valor).label('total')
-            )
-            .join(Pedido, Pagamento.pedido_id == Pedido.id)
-            .filter(
-                Pagamento.data_pagamento >= data_30_dias_atras,
-                Pagamento.data_pagamento <= datetime.now(),
-                Pedido.status == StatusPedido.PAGAMENTO_APROVADO
-            )
-            .group_by(func.date(Pagamento.data_pagamento))
-            .order_by(func.date(Pagamento.data_pagamento))
-            .all()
-        )
-
-        labels, valores = [], []
-        for venda in vendas_por_dia:
-            data_val = venda.data
-            try:
-                label = data_val.strftime('%d/%m')
-            except Exception:
-                try:
-                    label = datetime.strptime(str(data_val), '%Y-%m-%d').strftime('%d/%m')
-                except Exception:
-                    label = str(data_val)
-            labels.append(label)
-            valores.append(float(venda.total or 0))
-
-        return {'labels': labels, 'data': valores}
-
     def _montar_evolucao_diaria(self, mes, ano, pagamentos, pedido_ratios, total_verbas, tem_apuracao):
         dados = {'labels': [], 'receita_verbas': [], 'cpv_total': [], 'margem': []}
         pagamentos_por_dia = {}
@@ -293,7 +258,6 @@ class DashboardService:
             'total_clientes': 0,
             'total_produtos': 0,
             'pedidos_recentes': [],
-            'dados_grafico': {'labels': [], 'data': []},
             'dados_evolucao': {'labels': [], 'receita_verbas': [], 'cpv_total': [], 'margem': []},
             'faturamento_liberados': 0.0,
             'cpv_liberados': 0.0,

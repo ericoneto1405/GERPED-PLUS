@@ -159,7 +159,7 @@ def _enviar_email_reset(usuario, token):
         current_app.logger.error('Biblioteca requests não está disponível para enviar e-mail.')
         return
     api_key = current_app.config.get('SENDGRID_API_KEY') or os.getenv('SENDGRID_API_KEY')
-    from_email = current_app.config.get('SENDGRID_FROM_EMAIL') or os.getenv('SENDGRID_FROM_EMAIL') or 'noreply@gerped.local'
+    from_email = current_app.config.get('SENDGRID_FROM_EMAIL') or os.getenv('SENDGRID_FROM_EMAIL') or 'erico.neto@gruposertao.com'
     reset_url = url_for('main.reset_password', token=token, _external=True)
     subject = 'GerpedPlus - Redefinição de Senha'
     conteudo = f"Olá {usuario.nome},\n\nRecebemos uma solicitação para redefinir sua senha no GerpedPlus. Clique no link abaixo para continuar:\n{reset_url}\n\nSe você não fez esta solicitação, ignore este e-mail. O link expira em 1 hora."
@@ -249,8 +249,8 @@ def api_pedido(pedido_id):
         if not isinstance(pedido_id, int) or pedido_id <= 0:
             return jsonify({"error": "ID do pedido inválido"}), 400
             
-        from .logistica.services import LogisticaService
-        dados = LogisticaService.buscar_pedido_coleta(pedido_id)
+        from .coletas.services.coleta_service import ColetaService
+        dados = ColetaService.buscar_detalhes_pedido(pedido_id)
         
         if dados:
             return jsonify(dados)

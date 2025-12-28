@@ -714,6 +714,60 @@ table tbody tr:last-child td {
     transition: border-color 0.3s;
 }
 
+.password-field {
+    position: relative;
+}
+
+.password-field input[type="password"],
+.password-field input[type="text"] {
+    padding-right: 44px;
+}
+
+.password-field .toggle-password {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    border: 0;
+    background: transparent;
+    padding: 6px;
+    cursor: pointer;
+    color: #2c3e50;
+    opacity: 0.7;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    transition: background 0.2s ease, opacity 0.2s ease, color 0.2s ease;
+}
+
+.password-field .toggle-password .bi {
+    font-size: 1.05rem;
+    line-height: 1;
+}
+
+.password-field .toggle-password:hover {
+    opacity: 1;
+    background: rgba(44, 62, 80, 0.08);
+}
+
+.password-field .toggle-password:focus {
+    outline: 2px solid rgba(102, 126, 234, 0.4);
+    outline-offset: 2px;
+}
+
+.password-field .toggle-password .eye-closed {
+    display: none;
+}
+
+.password-field .toggle-password.is-visible .eye-open {
+    display: none;
+}
+
+.password-field .toggle-password.is-visible .eye-closed {
+    display: inline;
+}
+
 .form-group input:focus,
 .form-group select:focus,
 .form-group textarea:focus {
@@ -1624,55 +1678,12 @@ table tbody tr:last-child td {
     background: rgba(255, 255, 255, 1);
 }
 
-.login-card .password-field {
-    position: relative;
-}
-
 .login-card .password-field .form-control {
-    padding-right: 52px;
+    padding-right: 56px;
 }
 
-.login-card .toggle-password {
-    position: absolute;
+.login-card .password-field .toggle-password {
     right: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    border: 0;
-    background: transparent;
-    padding: 6px;
-    cursor: pointer;
-    color: #64748b;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.login-card .toggle-password svg {
-    width: 20px;
-    height: 20px;
-    display: block;
-}
-
-.login-card .toggle-password .eye-closed {
-    display: none;
-}
-
-.login-card .toggle-password.is-visible .eye-open {
-    display: none;
-}
-
-.login-card .toggle-password.is-visible .eye-closed {
-    display: block;
-}
-
-.login-card .toggle-password:hover {
-    color: #2c3e50;
-}
-
-.login-card .toggle-password:focus {
-    outline: 2px solid rgba(102, 126, 234, 0.5);
-    outline-offset: 2px;
-    border-radius: 8px;
 }
 
 .login-card .btn-primary {

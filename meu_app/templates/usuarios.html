@@ -17,7 +17,13 @@
 
         <div class="form-group">
             <label for="senha">Senha</label>
-            <input type="password" id="senha" name="senha" required>
+            <div class="password-field">
+                <input type="password" id="senha" name="senha" required>
+                <button type="button" class="toggle-password" aria-label="Mostrar senha" aria-pressed="false" data-target="senha">
+                    <i class="bi bi-eye eye-open" aria-hidden="true"></i>
+                    <i class="bi bi-eye-slash eye-closed" aria-hidden="true"></i>
+                </button>
+            </div>
         </div>
 
         <div class="form-group">
@@ -213,18 +219,36 @@
             <div class="modal-body">
                 <div class="form-group">
                     <label for="senhaAtual">Senha Atual</label>
-                    <input type="password" id="senhaAtual" name="senha_atual" required>
+                    <div class="password-field">
+                        <input type="password" id="senhaAtual" name="senha_atual" required>
+                        <button type="button" class="toggle-password" aria-label="Mostrar senha" aria-pressed="false" data-target="senhaAtual">
+                            <i class="bi bi-eye eye-open" aria-hidden="true"></i>
+                            <i class="bi bi-eye-slash eye-closed" aria-hidden="true"></i>
+                        </button>
+                    </div>
                 </div>
                 
                 <div class="form-group">
                     <label for="novaSenha">Nova Senha</label>
-                    <input type="password" id="novaSenha" name="nova_senha" required>
+                    <div class="password-field">
+                        <input type="password" id="novaSenha" name="nova_senha" required>
+                        <button type="button" class="toggle-password" aria-label="Mostrar senha" aria-pressed="false" data-target="novaSenha">
+                            <i class="bi bi-eye eye-open" aria-hidden="true"></i>
+                            <i class="bi bi-eye-slash eye-closed" aria-hidden="true"></i>
+                        </button>
+                    </div>
                     <small class="form-text">Mínimo 6 caracteres, deve conter letras e números</small>
                 </div>
                 
                 <div class="form-group">
                     <label for="confirmarSenha">Confirmar Nova Senha</label>
-                    <input type="password" id="confirmarSenha" name="confirmar_senha" required>
+                    <div class="password-field">
+                        <input type="password" id="confirmarSenha" name="confirmar_senha" required>
+                        <button type="button" class="toggle-password" aria-label="Mostrar senha" aria-pressed="false" data-target="confirmarSenha">
+                            <i class="bi bi-eye eye-open" aria-hidden="true"></i>
+                            <i class="bi bi-eye-slash eye-closed" aria-hidden="true"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -252,12 +276,24 @@
                 
                 <div class="form-group">
                     <label for="senhaAdmin">Sua Senha de Administrador</label>
-                    <input type="password" id="senhaAdmin" name="senha_admin" required>
+                    <div class="password-field">
+                        <input type="password" id="senhaAdmin" name="senha_admin" required>
+                        <button type="button" class="toggle-password" aria-label="Mostrar senha" aria-pressed="false" data-target="senhaAdmin">
+                            <i class="bi bi-eye eye-open" aria-hidden="true"></i>
+                            <i class="bi bi-eye-slash eye-closed" aria-hidden="true"></i>
+                        </button>
+                    </div>
                 </div>
                 
                 <div class="form-group">
                     <label for="novaSenhaRedefinir">Nova Senha</label>
-                    <input type="password" id="novaSenhaRedefinir" name="nova_senha" required>
+                    <div class="password-field">
+                        <input type="password" id="novaSenhaRedefinir" name="nova_senha" required>
+                        <button type="button" class="toggle-password" aria-label="Mostrar senha" aria-pressed="false" data-target="novaSenhaRedefinir">
+                            <i class="bi bi-eye eye-open" aria-hidden="true"></i>
+                            <i class="bi bi-eye-slash eye-closed" aria-hidden="true"></i>
+                        </button>
+                    </div>
                     <small class="form-text">Mínimo 6 caracteres, deve conter letras e números</small>
                 </div>
             </div>

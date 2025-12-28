@@ -26,13 +26,42 @@
             
             <div class="form-group">
                 <label for="senha">Senha</label>
-                <input type="password" id="senha" name="senha" class="form-control" placeholder="Digite sua senha" required>
+                <div class="password-field">
+                    <input type="password" id="senha" name="senha" class="form-control" placeholder="Digite sua senha" required>
+                    <button type="button" class="toggle-password" aria-label="Mostrar senha" aria-pressed="false" data-target="senha">
+                        <svg class="eye-open" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                            <path d="M1.5 12s4.5-7 10.5-7 10.5 7 10.5 7-4.5 7-10.5 7S1.5 12 1.5 12z" fill="none" stroke="currentColor" stroke-width="1.8"/>
+                            <circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="1.8"/>
+                        </svg>
+                        <svg class="eye-closed" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                            <path d="M4 4l16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                            <path d="M2.2 12s3.8-6 9.8-6c2 0 3.7.6 5.2 1.5M21.8 12s-3.8 6-9.8 6c-2.3 0-4.2-.8-5.9-2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                </div>
             </div>
             <a class="forgot-password" href="{{ url_for('main.forgot_password') }}">Esqueci minha senha</a>
             
             <button type="submit" class="btn btn-primary" style="width: 100%;">Entrar</button>
         </form>
     </div>
+    <script>
+        (function () {
+            const toggleButtons = document.querySelectorAll('.toggle-password');
+            toggleButtons.forEach((button) => {
+                button.addEventListener('click', () => {
+                    const targetId = button.getAttribute('data-target');
+                    const input = document.getElementById(targetId);
+                    if (!input) return;
+                    const isHidden = input.type === 'password';
+                    input.type = isHidden ? 'text' : 'password';
+                    button.classList.toggle('is-visible', isHidden);
+                    button.setAttribute('aria-pressed', String(isHidden));
+                    button.setAttribute('aria-label', isHidden ? 'Ocultar senha' : 'Mostrar senha');
+                });
+            });
+        })();
+    </script>
 </body>
 </html>
 </body>

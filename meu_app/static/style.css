@@ -1624,6 +1624,57 @@ table tbody tr:last-child td {
     background: rgba(255, 255, 255, 1);
 }
 
+.login-card .password-field {
+    position: relative;
+}
+
+.login-card .password-field .form-control {
+    padding-right: 52px;
+}
+
+.login-card .toggle-password {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    border: 0;
+    background: transparent;
+    padding: 6px;
+    cursor: pointer;
+    color: #64748b;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.login-card .toggle-password svg {
+    width: 20px;
+    height: 20px;
+    display: block;
+}
+
+.login-card .toggle-password .eye-closed {
+    display: none;
+}
+
+.login-card .toggle-password.is-visible .eye-open {
+    display: none;
+}
+
+.login-card .toggle-password.is-visible .eye-closed {
+    display: block;
+}
+
+.login-card .toggle-password:hover {
+    color: #2c3e50;
+}
+
+.login-card .toggle-password:focus {
+    outline: 2px solid rgba(102, 126, 234, 0.5);
+    outline-offset: 2px;
+    border-radius: 8px;
+}
+
 .login-card .btn-primary {
     width: 100%;
     padding: 18px 24px;

@@ -788,6 +788,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const cancelarUsoCompartilhado = () => {
         campoCompartilhadoId.value = '';
+        if (idTransacaoInput) {
+            idTransacaoInput.value = '';
+        }
         if (reciboInput) {
             reciboInput.disabled = false;
         }
@@ -860,6 +863,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const limparCampoStatus = () => {
         togglePainelEmptyState(false);
+        if (idTransacaoInput) {
+            idTransacaoInput.value = '';
+        }
     };
 
     const aplicarResultadoNoFormulario = (item) => {
@@ -882,9 +888,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 encontrouInformacao = true;
             }
         }
-        if (data.id_transacao_encontrado && idTransacaoInput) {
-            idTransacaoInput.value = data.id_transacao_encontrado;
-            encontrouInformacao = true;
+        if (idTransacaoInput) {
+            if (data.id_transacao_encontrado) {
+                idTransacaoInput.value = data.id_transacao_encontrado;
+                encontrouInformacao = true;
+            } else {
+                idTransacaoInput.value = '';
+            }
         }
         if (data.data_encontrada && dataComprovanteInput) {
             dataComprovanteInput.value = data.data_encontrada;
@@ -1356,6 +1366,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         return {
                             nome: item.file.name,
                             valor: Number.isFinite(valorSelecionado) ? valorSelecionado : null,
+                            id_transacao: item.result && item.result.id_transacao_encontrado
+                                ? item.result.id_transacao_encontrado
+                                : null,
                         };
                     }
                     return null;

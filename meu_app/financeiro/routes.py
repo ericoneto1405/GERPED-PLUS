@@ -133,6 +133,7 @@ def registrar_pagamento(pedido_id):
         hashes_vistos = set()
         anexos_valores_raw = request.form.get('anexos_valores') or ''
         anexos_valores_map = {}
+        anexos_transacoes_map = {}
         if anexos_valores_raw:
             try:
                 parsed_valores = json.loads(anexos_valores_raw)
@@ -140,6 +141,7 @@ def registrar_pagamento(pedido_id):
                     for info in parsed_valores:
                         nome = (info or {}).get('nome')
                         valor_info = (info or {}).get('valor')
+                        id_transacao_info = (info or {}).get('id_transacao')
                         if not nome:
                             continue
                         try:
@@ -147,6 +149,10 @@ def registrar_pagamento(pedido_id):
                         except (TypeError, ValueError):
                             valor_convertido = None
                         anexos_valores_map[nome] = valor_convertido
+                        if isinstance(id_transacao_info, str):
+                            id_transacao_info = id_transacao_info.strip()
+                        if id_transacao_info:
+                            anexos_transacoes_map[nome] = id_transacao_info
             except json.JSONDecodeError:
                 current_app.logger.warning('Falha ao decodificar anexos_valores: conteúdo inválido.')
         pedido = Pedido.query.get(pedido_id)
@@ -278,7 +284,8 @@ def registrar_pagamento(pedido_id):
                         'sha256': sha256,
                         'principal': idx == 0 and not carteira_meta,
                         'original_name': recibo.filename,
-                        'valor': anexos_valores_map.get(recibo.filename)
+                        'valor': anexos_valores_map.get(recibo.filename),
+                        'id_transacao': anexos_transacoes_map.get(recibo.filename),
                     }
 
                     anexos_payload.append(meta)
@@ -342,8 +349,10 @@ def registrar_pagamento(pedido_id):
 
         try:
             pagamentos_criados = []
+            usar_id_transacao_global = len(pagamentos_para_criar) == 1
             for dados in pagamentos_para_criar:
                 meta = dados['meta']
+                id_transacao_meta = meta.get('id_transacao') or (id_transacao if usar_id_transacao_global else None)
                 sucesso, mensagem, pagamento = FinanceiroService.registrar_pagamento(
                     pedido_id=pedido_id,
                     valor=dados['valor'],
@@ -353,7 +362,7 @@ def registrar_pagamento(pedido_id):
                     recibo_mime=meta.get('mime'),
                     recibo_tamanho=meta.get('tamanho'),
                     recibo_sha256=meta.get('sha256'),
-                    id_transacao=id_transacao,
+                    id_transacao=id_transacao_meta,
                     data_comprovante=data_comprovante if data_comprovante else None,
                     banco_emitente=banco_emitente if banco_emitente else None,
                     agencia_recebedor=agencia_recebedor if agencia_recebedor else None,

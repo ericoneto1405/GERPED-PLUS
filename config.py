@@ -177,7 +177,8 @@ class DevelopmentConfig(BaseConfig):
             "'self'",
             "'unsafe-inline'",  # Mantém em dev por enquanto
             "https://cdn.jsdelivr.net",
-            "https://fonts.googleapis.com"
+            "https://fonts.googleapis.com",
+            "https://www.gstatic.com"
         ],
         "img-src": ["'self'", "data:", "https:"],
         "font-src": ["'self'", "data:", "https://cdn.jsdelivr.net", "https://fonts.gstatic.com"],
@@ -234,7 +235,7 @@ class ProductionConfig(BaseConfig):
     CSP_DIRECTIVES = {
         'default-src': ["'self'"],
         'script-src': ["'self'", "'strict-dynamic'"],  # nonce será injetado automaticamente
-        'style-src': ["'self'"],  # nonce será injetado automaticamente  
+        'style-src': ["'self'", "https://www.gstatic.com"],  # nonce será injetado automaticamente  
         'img-src': ["'self'", 'data:', 'https:'],
         'font-src': ["'self'", 'data:'],
         'connect-src': ["'self'"],

@@ -272,6 +272,9 @@
         .botao-imprimir {
             display: none !important;
         }
+        .info-card.itens-incluidos {
+            display: none !important;
+        }
         .botao-imprimir, .page-header, .tabela-secao, .assinatura-card {
             box-shadow: none;
         }
@@ -329,7 +332,7 @@
                 <small>Confirmado Comercial</small>
             {% endif %}
         </div>
-        <div class="info-card">
+        <div class="info-card itens-incluidos">
             <span>Itens incluídos</span>
             <strong>
                 {{ pedido.itens|length }}

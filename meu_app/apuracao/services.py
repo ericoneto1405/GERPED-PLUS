@@ -107,11 +107,12 @@ from ..models import (
 )
 from flask import current_app, session
 from typing import Dict, List, Tuple, Optional
-from datetime import datetime, timezone
+from datetime import datetime
 from calendar import monthrange
 from decimal import Decimal, InvalidOperation
 from sqlalchemy import func
 import json
+from ..time_utils import now_utc
 
 # ✅ FASE 2.7 - Cache simples para dados frequentes
 _cache_estatisticas = {}
@@ -291,7 +292,7 @@ class ApuracaoService:
         if _cache_estatisticas_timestamp is None:
             return False
         return (
-            datetime.now(timezone.utc) - _cache_estatisticas_timestamp
+            now_utc() - _cache_estatisticas_timestamp
         ).total_seconds() < CACHE_DURATION
     
     @staticmethod
@@ -357,7 +358,7 @@ class ApuracaoService:
                 raise ApuracaoValidationError("Ano deve estar entre 1900 e 2100")
             
             # ✅ FASE 3.3 - Validação de período futuro
-            data_atual = datetime.now(timezone.utc)
+            data_atual = now_utc()
             if ano > data_atual.year or (ano == data_atual.year and mes > data_atual.month):
                 raise ApuracaoValidationError("Não é possível criar apuração para período futuro")
             
@@ -1280,7 +1281,7 @@ class ApuracaoService:
             
             # ✅ FASE 2.9 - Otimização: Armazenar no cache
             _cache_estatisticas = estatisticas
-            _cache_estatisticas_timestamp = datetime.now(timezone.utc)
+            _cache_estatisticas_timestamp = now_utc()
             
             current_app.logger.debug("Estatísticas calculadas e armazenadas no cache")
             return estatisticas

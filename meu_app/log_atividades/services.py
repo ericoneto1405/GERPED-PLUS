@@ -9,6 +9,7 @@ Autor: Sistema de Gestão Empresarial
 Data: 2024
 """
 from ..models import db, LogAtividade, Usuario
+from ..time_utils import utcnow
 from flask import current_app, session, request
 from typing import Dict, List, Tuple, Optional, Any
 import json
@@ -310,7 +311,7 @@ class LogAtividadesService:
             if dias < 1:
                 return False, "Número de dias deve ser maior que zero", 0
             
-            data_limite = datetime.now() - timedelta(days=dias)
+            data_limite = utcnow() - timedelta(days=dias)
             
             # Contar registros que serão removidos
             quantidade = LogAtividade.query.filter(LogAtividade.data_hora < data_limite).count()
@@ -343,19 +344,19 @@ class LogAtividadesService:
             total_atividades = LogAtividade.query.count()
             
             # Atividades de hoje
-            hoje_inicio = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+            hoje_inicio = utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
             atividades_hoje = LogAtividade.query.filter(
                 LogAtividade.data_hora >= hoje_inicio
             ).count()
             
             # Atividades dos últimos 7 dias
-            data_7_dias = datetime.now() - timedelta(days=7)
+            data_7_dias = utcnow() - timedelta(days=7)
             atividades_7_dias = LogAtividade.query.filter(
                 LogAtividade.data_hora >= data_7_dias
             ).count()
             
             # Atividades dos últimos 30 dias
-            data_30_dias = datetime.now() - timedelta(days=30)
+            data_30_dias = utcnow() - timedelta(days=30)
             atividades_30_dias = LogAtividade.query.filter(
                 LogAtividade.data_hora >= data_30_dias
             ).count()

@@ -12,6 +12,7 @@ from meu_app.models import (
     Pedido,
     Produto,
 )
+from meu_app.time_utils import local_now_naive
 
 simulacao_pedido_bp = Blueprint(
     "simulacao_pedido",
@@ -43,7 +44,7 @@ def dados_simulacao():
     - Desempenho atual (receita/custo) de pedidos liberados no mês
     """
     try:
-        hoje = datetime.now()
+        hoje = local_now_naive()
         mes = hoje.month
         ano = hoje.year
 

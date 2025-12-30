@@ -19,7 +19,7 @@ from sqlalchemy import inspect as sa_inspect
 from sqlalchemy.exc import SQLAlchemyError
 
 from ..models import db, Pedido, Pagamento, StatusPedido, PagamentoAnexo, CarteiraCredito
-from ..time_utils import local_now, utcnow
+from ..time_utils import local_now_naive, utcnow
 from .config import FinanceiroConfig
 from .exceptions import (
     FinanceiroValidationError, 
@@ -87,7 +87,7 @@ class FinanceiroService:
             
         elif mes:
             # Filtro apenas por mês (ano atual)
-            ano_atual = local_now().year
+            ano_atual = local_now_naive().year
             mes_int = int(mes)
             data_inicio = datetime(ano_atual, mes_int, 1)
             ultimo_dia = calendar.monthrange(ano_atual, mes_int)[1]

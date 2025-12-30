@@ -3,6 +3,7 @@ from decimal import Decimal
 from sqlalchemy import func, desc
 from meu_app.models import Cliente, Pedido, ItemPedido, Produto
 from meu_app import db
+from meu_app.time_utils import local_now_naive
 
 class VendedorService:
     
@@ -12,7 +13,7 @@ class VendedorService:
         Organiza clientes em 4 categorias baseadas na data da última compra
         """
         from meu_app.models import StatusPedido
-        hoje = datetime.now().date()
+        hoje = local_now_naive().date()
         
         # Buscar todos os clientes com dados de última compra (apenas pedidos completamente pagos)
         # Primeiro, buscar a data da última compra de cada cliente
@@ -232,7 +233,7 @@ class VendedorService:
             filtro_data_inicio = datetime.combine(inicio_personalizado, datetime.min.time()) if inicio_personalizado else None
             filtro_data_fim = datetime.combine(fim_personalizado, datetime.max.time()) if fim_personalizado else None
         elif periodo != 'todos':
-            hoje = datetime.now().date()
+            hoje = local_now_naive().date()
             if periodo == 'ultimo_mes':
                 filtro = hoje - timedelta(days=30)
             elif periodo == 'ultimos_3_meses':
@@ -391,7 +392,7 @@ class VendedorService:
         Retorna resumo geral do dashboard
         """
         from meu_app.models import StatusPedido
-        hoje = datetime.now().date()
+        hoje = local_now_naive().date()
         
         # Total de clientes
         total_clientes = Cliente.query.count()
@@ -440,7 +441,7 @@ class VendedorService:
         periodo: 'todos', '7', '15', '30', 'fieis'
         """
         from meu_app.models import StatusPedido
-        hoje = datetime.now().date()
+        hoje = local_now_naive().date()
         
         # Buscar clientes com última compra (apenas pedidos completamente pagos)
         clientes_query = db.session.query(

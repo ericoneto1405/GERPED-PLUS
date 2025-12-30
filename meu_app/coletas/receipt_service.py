@@ -11,6 +11,7 @@ from typing import Dict, Optional
 from flask import current_app
 
 from meu_app.exceptions import ConfigurationError, FileProcessingError
+from meu_app.time_utils import local_now_naive, now_utc
 
 try:  # pragma: no cover - Pillow pode estar ausente em ambientes limitados
     from PIL import Image, ImageDraw, ImageFont
@@ -79,7 +80,7 @@ class ReceiptService:
             return valor.strftime('%d/%m/%Y %H:%M')
         if valor:
             return str(valor)
-        return datetime.now().strftime('%d/%m/%Y %H:%M')
+        return local_now_naive().strftime('%d/%m/%Y %H:%M')
 
     @staticmethod
     def gerar_recibo_imagem(coleta_data: Dict, output_dir: Optional[str] = None) -> str:
@@ -313,10 +314,10 @@ class ReceiptService:
         )
 
         y += placeholder_height + s(60)
-        rodape = f"Recibo emitido em {datetime.now().strftime('%d/%m/%Y às %H:%M:%S')} pelo Sistema GERPED"
+        rodape = f"Recibo emitido em {local_now_naive().strftime('%d/%m/%Y às %H:%M:%S')} pelo Sistema GERPED"
         draw.text((margin, y), rodape, font=tiny_font, fill=(120, 120, 120))
 
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        timestamp = local_now_naive().strftime('%Y%m%d_%H%M%S')
         filename = f"recibo_coleta_{coleta_data.get('pedido_id', 'N')}_{timestamp}.jpg"
         filepath = os.path.join(receipts_dir, filename)
 
@@ -397,7 +398,7 @@ class ReceiptService:
         if not diretorio.exists():
             return 0
 
-        limite_temporal = datetime.now(timezone.utc) - timedelta(hours=ttl)
+        limite_temporal = now_utc() - timedelta(hours=ttl)
         removidos = 0
 
         for arquivo in diretorio.glob('recibo_coleta_*'):

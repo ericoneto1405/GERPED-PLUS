@@ -22,7 +22,7 @@ from .decorators import login_obrigatorio, permissao_necessaria, admin_necessari
 from .security import limiter
 from .obs.metrics import export_metrics
 from .dashboard_service import DashboardService
-from .time_utils import local_now, now_utc
+from .time_utils import local_now_naive, now_utc
 
 # Criar blueprint
 bp = Blueprint('main', __name__)
@@ -37,7 +37,7 @@ def backup_banco():
             os.makedirs(pasta_backup)
 
         # Gera o nome do novo backup
-        agora = local_now().strftime("%Y-%m-%d_%H-%M-%S")
+        agora = local_now_naive().strftime("%Y-%m-%d_%H-%M-%S")
         nome_backup = os.path.join(pasta_backup, f"sistema_backup_{agora}.db")
 
         # Faz a cópia do banco
@@ -265,8 +265,8 @@ def api_pedido(pedido_id):
 @bp.route('/painel')
 @login_obrigatorio
 def painel():
-    mes = int(request.args.get('mes', local_now().month))
-    ano = int(request.args.get('ano', local_now().year))
+    mes = int(request.args.get('mes', local_now_naive().month))
+    ano = int(request.args.get('ano', local_now_naive().year))
     service = DashboardService()
     try:
         contexto = service.gerar_contexto(mes, ano)

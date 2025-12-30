@@ -3,12 +3,13 @@ Serviços para o módulo de estoques
 Contém toda a lógica de negócio separada das rotas
 """
 import json
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Dict, List, Optional, Tuple
 
 from flask import current_app, session
 
 from ..models import LogAtividade, MovimentacaoEstoque, Produto, Estoque, db
+from ..time_utils import now_utc
 
 class EstoqueService:
     """Serviço para operações relacionadas a estoques"""
@@ -52,9 +53,9 @@ class EstoqueService:
                         data_entrada.replace('Z', '+00:00')
                     )
                 else:
-                    data_entrada_dt = datetime.now(timezone.utc)
+                    data_entrada_dt = now_utc()
             except ValueError:
-                data_entrada_dt = datetime.now(timezone.utc)
+                data_entrada_dt = now_utc()
             
             # Usar nome do usuário logado como conferente se não fornecido
             if not conferente:
@@ -136,9 +137,9 @@ class EstoqueService:
                         data_entrada.replace('Z', '+00:00')
                     )
                 else:
-                    data_entrada_dt = datetime.now(timezone.utc)
+                data_entrada_dt = now_utc()
             except ValueError:
-                data_entrada_dt = datetime.now(timezone.utc)
+                data_entrada_dt = now_utc()
             
             # Atualizar dados
             estoque.quantidade = quantidade
@@ -287,9 +288,9 @@ class EstoqueService:
                         data_entrada.replace('Z', '+00:00')
                     )
                 else:
-                    data_entrada_dt = datetime.now(timezone.utc)
+                    data_entrada_dt = now_utc()
             except ValueError:
-                data_entrada_dt = datetime.now(timezone.utc)
+                data_entrada_dt = now_utc()
             
             # Usar nome do usuário logado como conferente se não fornecido
             if not conferente:
@@ -346,7 +347,7 @@ class EstoqueService:
                 return False, "Nenhum estoque disponível para confirmação.", 0
 
             responsavel = usuario_nome or session.get('usuario_nome', 'Sistema')
-            agora = datetime.now(timezone.utc)
+            agora = now_utc()
 
             for estoque in estoques:
                 estoque.data_modificacao = agora

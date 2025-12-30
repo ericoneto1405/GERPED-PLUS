@@ -20,13 +20,14 @@ from ..models import (
 )
 from flask import current_app, session
 from typing import Dict, List, Tuple, Optional
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 import json
 from collections import defaultdict
 from decimal import Decimal, InvalidOperation
 import pandas as pd
 import unicodedata
 from sqlalchemy import text
+from ..time_utils import utcnow
 
 class PedidoService:
     """Serviço para operações relacionadas a pedidos"""
@@ -285,7 +286,7 @@ class PedidoService:
             # Confirmar pedido
             pedido.confirmado_comercial = True
             pedido.confirmado_por = session.get('usuario_nome', 'Usuário')
-            pedido.data_confirmacao = datetime.now(timezone.utc)
+            pedido.data_confirmacao = utcnow()
             
             db.session.commit()
             

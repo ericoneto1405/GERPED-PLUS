@@ -42,6 +42,7 @@ from sqlalchemy import func, and_, or_
 
 from .interfaces import IApuracaoRepository
 from ..models import db, Apuracao, Pedido, LogAtividade
+from ..time_utils import utcnow
 
 # ✅ FASE 4.8 - Implementação padrão do repositório
 class ApuracaoRepository(IApuracaoRepository):
@@ -498,7 +499,7 @@ class ApuracaoRepositoryMock(IApuracaoRepository):
         nova_apuracao = {
             'id': self._next_id,
             **dados,
-            'data_criacao': datetime.now()
+            'data_criacao': utcnow()
         }
         self._apuracoes[self._next_id] = nova_apuracao
         self._next_id += 1

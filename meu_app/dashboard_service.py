@@ -9,6 +9,7 @@ from sqlalchemy import func
 from . import db
 from .models import Cliente, Produto, Pedido, ItemPedido, Pagamento, Apuracao, StatusPedido
 from .pedidos.services import PedidoService
+from .time_utils import local_now_naive
 
 
 class DashboardService:
@@ -219,7 +220,7 @@ class DashboardService:
 
     def _projetar_resultado_mensal(self, mes, ano, faturamento_total, cpv_total, total_verbas):
         _, ultimo_dia = monthrange(ano, mes)
-        hoje = datetime.now()
+        hoje = local_now_naive()
         if ano == hoje.year and mes == hoje.month:
             dias_passados = max(min(hoje.day, ultimo_dia), 1)
         elif datetime(ano, mes, ultimo_dia) < hoje:

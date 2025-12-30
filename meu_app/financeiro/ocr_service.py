@@ -13,7 +13,7 @@ from .vision_service import VisionOcrService
 from .local_ocr import LocalOcrFallback
 from .. import db
 from ..models import OcrQuota
-from ..time_utils import local_now
+from ..time_utils import local_now_naive
 
 class OcrService:
     """Serviço de OCR usando APENAS Google Vision API"""
@@ -29,7 +29,7 @@ class OcrService:
             return True
         
         try:
-            now = local_now()
+            now = local_now_naive()
             ano = now.year
             mes = now.month
             
@@ -63,7 +63,7 @@ class OcrService:
             return
         
         try:
-            now = local_now()
+            now = local_now_naive()
             ano = now.year
             mes = now.month
             

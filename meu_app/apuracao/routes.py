@@ -11,6 +11,7 @@ from datetime import datetime
 from ..models import Apuracao, db
 from ..decorators import login_obrigatorio
 from meu_app.auth.rbac import requires_financeiro
+from ..time_utils import local_now_naive
 
 
 def _parse_currency_value(raw_value):
@@ -49,8 +50,8 @@ def listar_apuracao():
     """
     try:
         # Filtros de mês e ano
-        mes = request.args.get('mes', datetime.now().month, type=int)
-        ano = request.args.get('ano', datetime.now().year, type=int)
+        mes = request.args.get('mes', local_now_naive().month, type=int)
+        ano = request.args.get('ano', local_now_naive().year, type=int)
         
         # Buscar apurações filtradas
         apuracoes = ApuracaoService.listar_apuracoes(mes, ano)
@@ -59,7 +60,7 @@ def listar_apuracao():
         anos_disponiveis = db.session.query(Apuracao.ano).distinct().order_by(Apuracao.ano.desc()).all()
         anos_disponiveis = [ano[0] for ano in anos_disponiveis]
         if not anos_disponiveis:
-            anos_disponiveis = [datetime.now().year]
+            anos_disponiveis = [local_now_naive().year]
         
         # Calcular dados do período atual para exibição
         dados_periodo = ApuracaoService.calcular_dados_periodo(mes, ano)
@@ -77,7 +78,7 @@ def listar_apuracao():
     except Exception as e:
         current_app.logger.error(f"Erro ao listar apuração: {str(e)}")
         flash(f"Erro ao carregar apuração: {str(e)}", 'error')
-        return render_template('apuracao.html', apuracoes=[], mes_selecionado=1, ano_selecionado=datetime.now().year)
+        return render_template('apuracao.html', apuracoes=[], mes_selecionado=1, ano_selecionado=local_now_naive().year)
 
 
 

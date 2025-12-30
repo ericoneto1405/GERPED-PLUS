@@ -11,7 +11,6 @@ Data: 2024
 
 from functools import wraps
 from typing import Any, Dict, Optional, Tuple
-from datetime import datetime
 
 from flask import current_app, jsonify, redirect, request, session, url_for
 from flask_login import current_user

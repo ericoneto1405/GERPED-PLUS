@@ -7,7 +7,6 @@ from meu_app.cache import cached_with_invalidation, invalidate_cache
 
 apuracao_bp = Blueprint('apuracao', __name__, url_prefix='/apuracao')
 from functools import wraps
-from datetime import datetime
 from ..models import Apuracao, db
 from ..decorators import login_obrigatorio
 from meu_app.auth.rbac import requires_financeiro

@@ -1,7 +1,6 @@
-from __future__ import annotations
-
 import os
 from datetime import datetime, timedelta, timezone
+from typing import Optional
 
 try:
     import pytz
@@ -22,12 +21,12 @@ def utcnow() -> datetime:
     return now_utc().replace(tzinfo=None)
 
 
-def _get_timezone(tz_name: str | None = None):
+def _get_timezone(tz_name: Optional[str] = None):
     name = tz_name or DEFAULT_TIMEZONE
     return pytz.timezone(name) if pytz else timezone(timedelta(hours=-3))
 
 
-def to_local(value: datetime, tz_name: str | None = None) -> datetime:
+def to_local(value: datetime, tz_name: Optional[str] = None) -> datetime:
     """Converte datetime para o fuso local configurado (assume UTC se naive)."""
     if value is None or not isinstance(value, datetime):
         return value
@@ -36,11 +35,11 @@ def to_local(value: datetime, tz_name: str | None = None) -> datetime:
     return value.astimezone(_get_timezone(tz_name))
 
 
-def local_now(tz_name: str | None = None) -> datetime:
+def local_now(tz_name: Optional[str] = None) -> datetime:
     """Agora no fuso local (timezone-aware), derivado da fonte UTC."""
     return to_local(now_utc(), tz_name)
 
 
-def local_now_naive(tz_name: str | None = None) -> datetime:
+def local_now_naive(tz_name: Optional[str] = None) -> datetime:
     """Agora no fuso local (naive), derivado da fonte UTC."""
     return local_now(tz_name).replace(tzinfo=None)

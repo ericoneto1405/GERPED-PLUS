@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime
 import enum
 import secrets
 from decimal import Decimal
@@ -7,12 +7,13 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy import Enum as EnumType
 
 from . import db
+from .time_utils import utcnow as _utcnow
 from sqlalchemy.exc import SQLAlchemyError
 
 
 def utcnow():
-    """Retorna datetime timezone-aware em UTC."""
-    return datetime.now(timezone.utc)
+    """Retorna datetime em UTC a partir da fonte única do sistema."""
+    return _utcnow()
 
 class Cliente(db.Model):
     id = db.Column(db.Integer, primary_key=True)

@@ -8,6 +8,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from meu_app import db
 from meu_app.models import Produto, Estoque, ItemPedido, Pedido, StatusPedido
 from decimal import Decimal
+from ..time_utils import utcnow
 
 
 class NecessidadeCompraRepository:
@@ -77,9 +78,9 @@ class NecessidadeCompraRepository:
             int: Média de vendas por dia
         """
         try:
-            from datetime import datetime, timedelta
-            
-            data_limite = datetime.now() - timedelta(days=dias)
+            from datetime import timedelta
+
+            data_limite = utcnow() - timedelta(days=dias)
             
             total_vendido = self.db.session.query(
                 func.sum(ItemPedido.quantidade)

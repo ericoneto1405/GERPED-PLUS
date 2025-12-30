@@ -15,13 +15,14 @@ from .models import (
 )
 import os
 import secrets
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from sqlalchemy import func
 import shutil
 from .decorators import login_obrigatorio, permissao_necessaria, admin_necessario
 from .security import limiter
 from .obs.metrics import export_metrics
 from .dashboard_service import DashboardService
+from .time_utils import local_now, now_utc
 
 # Criar blueprint
 bp = Blueprint('main', __name__)
@@ -36,7 +37,7 @@ def backup_banco():
             os.makedirs(pasta_backup)
 
         # Gera o nome do novo backup
-        agora = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        agora = local_now().strftime("%Y-%m-%d_%H-%M-%S")
         nome_backup = os.path.join(pasta_backup, f"sistema_backup_{agora}.db")
 
         # Faz a cópia do banco
@@ -90,7 +91,7 @@ def login():
             locked_until = datetime.fromisoformat(locked_until_raw)
         except ValueError:
             locked_until = None
-        current_time = datetime.now(timezone.utc)
+        current_time = now_utc()
         if locked_until and locked_until > current_time:
             tempo_restante = int((locked_until - current_time).total_seconds())
             return render_template(
@@ -115,7 +116,7 @@ def login():
             session['acesso_pedidos'] = usuario.acesso_pedidos
             session['acesso_financeiro'] = usuario.acesso_financeiro
             session['acesso_logistica'] = usuario.acesso_logistica
-            session['ultimo_acesso'] = datetime.now(timezone.utc).isoformat()
+            session['ultimo_acesso'] = now_utc().isoformat()
             session.permanent = True
             session.modified = True
             session.pop('login_attempts', None)
@@ -127,7 +128,7 @@ def login():
             attempts = session.get('login_attempts') or {'count': 0}
             attempts['count'] = attempts.get('count', 0) + 1
             if attempts['count'] >= max_attempts:
-                locked_until = datetime.now(timezone.utc) + timedelta(seconds=lockout_seconds)
+                locked_until = now_utc() + timedelta(seconds=lockout_seconds)
                 attempts['locked_until'] = locked_until.isoformat()
                 attempts['count'] = 0
                 current_app.logger.warning(
@@ -145,7 +146,7 @@ def _criar_token_reset(usuario):
     # invalidar tokens anteriores abertos
     PasswordResetToken.query.filter_by(usuario_id=usuario.id, usado=False).delete()
     token = secrets.token_urlsafe(48)
-    expira = datetime.now(timezone.utc) + timedelta(hours=current_app.config.get('RESET_TOKEN_EXPIRATION_HOURS', 1))
+    expira = now_utc() + timedelta(hours=current_app.config.get('RESET_TOKEN_EXPIRATION_HOURS', 1))
     token_obj = PasswordResetToken(usuario_id=usuario.id, token=token, expires_at=expira)
     db.session.add(token_obj)
     db.session.commit()
@@ -216,7 +217,7 @@ def reset_password(token):
     token_obj = PasswordResetToken.query.filter_by(token=token).first()
     erro = None
     mensagem = None
-    if not token_obj or token_obj.usado or token_obj.expires_at < datetime.now(timezone.utc):
+    if not token_obj or token_obj.usado or token_obj.expires_at < now_utc():
         erro = 'Link de redefinição inválido ou expirado.'
         return render_template('reset_password.html', erro=erro)
 
@@ -264,8 +265,8 @@ def api_pedido(pedido_id):
 @bp.route('/painel')
 @login_obrigatorio
 def painel():
-    mes = int(request.args.get('mes', datetime.now().month))
-    ano = int(request.args.get('ano', datetime.now().year))
+    mes = int(request.args.get('mes', local_now().month))
+    ano = int(request.args.get('ano', local_now().year))
     service = DashboardService()
     try:
         contexto = service.gerar_contexto(mes, ano)
@@ -358,14 +359,14 @@ def healthz():
         return jsonify({
             'status': 'healthy',
             'service': 'sistema-gerped',
-            'timestamp': datetime.now().isoformat()
+            'timestamp': now_utc().isoformat()
         }), 200
     except Exception as e:
         current_app.logger.error(f"Healthcheck falhou: {str(e)}")
         return jsonify({
             'status': 'unhealthy',
             'error': str(e),
-            'timestamp': datetime.now().isoformat()
+            'timestamp': now_utc().isoformat()
         }), 500
 
 
@@ -437,5 +438,5 @@ def readiness():
     return jsonify({
         'status': 'ready' if all_ready else 'not_ready',
         'checks': checks,
-        'timestamp': datetime.now().isoformat()
+        'timestamp': now_utc().isoformat()
     }), status_code

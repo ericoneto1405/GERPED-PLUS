@@ -4,7 +4,6 @@ Serviço de OCR simplificado - APENAS Google Vision.
 import os
 import json
 import hashlib
-from datetime import datetime
 from typing import Dict, Optional
 import uuid
 from flask import current_app
@@ -14,6 +13,7 @@ from .vision_service import VisionOcrService
 from .local_ocr import LocalOcrFallback
 from .. import db
 from ..models import OcrQuota
+from ..time_utils import local_now
 
 class OcrService:
     """Serviço de OCR usando APENAS Google Vision API"""
@@ -29,7 +29,7 @@ class OcrService:
             return True
         
         try:
-            now = datetime.now()
+            now = local_now()
             ano = now.year
             mes = now.month
             
@@ -63,7 +63,7 @@ class OcrService:
             return
         
         try:
-            now = datetime.now()
+            now = local_now()
             ano = now.year
             mes = now.month
             

@@ -19,6 +19,7 @@ from sqlalchemy import inspect as sa_inspect
 from sqlalchemy.exc import SQLAlchemyError
 
 from ..models import db, Pedido, Pagamento, StatusPedido, PagamentoAnexo, CarteiraCredito
+from ..time_utils import local_now, utcnow
 from .config import FinanceiroConfig
 from .exceptions import (
     FinanceiroValidationError, 
@@ -86,7 +87,7 @@ class FinanceiroService:
             
         elif mes:
             # Filtro apenas por mês (ano atual)
-            ano_atual = datetime.now().year
+            ano_atual = local_now().year
             mes_int = int(mes)
             data_inicio = datetime(ano_atual, mes_int, 1)
             ultimo_dia = calendar.monthrange(ano_atual, mes_int)[1]
@@ -458,7 +459,7 @@ class FinanceiroService:
             return False
         pagamento.compartilhado_disponivel = True
         pagamento.compartilhado_por = usuario_nome or 'Sistema'
-        pagamento.compartilhado_em = datetime.utcnow()
+        pagamento.compartilhado_em = utcnow()
         pagamento.compartilhado_usado_em = None
         pagamento.compartilhado_destino_pedido_id = None
         try:
@@ -521,7 +522,7 @@ class FinanceiroService:
         if not pagamento:
             return
         pagamento.compartilhado_disponivel = False
-        pagamento.compartilhado_usado_em = datetime.utcnow()
+        pagamento.compartilhado_usado_em = utcnow()
         pagamento.compartilhado_destino_pedido_id = pedido_destino_id
         try:
             db.session.commit()

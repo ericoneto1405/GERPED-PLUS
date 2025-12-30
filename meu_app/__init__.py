@@ -11,7 +11,7 @@ Data: Outubro 2025
 import logging
 import os
 import traceback
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta
 from logging.handlers import RotatingFileHandler
 
 from dotenv import load_dotenv
@@ -23,6 +23,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func
 
 from .security import csrf, limiter, setup_security
+from .time_utils import now_utc, to_local, utcnow
 
 # Carregar variáveis de ambiente
 load_dotenv()
@@ -186,7 +187,7 @@ def initialize_extensions(app):
         if 'usuario_id' not in session:
             return
         
-        now = datetime.now(timezone.utc)
+        now = now_utc()
         usuario_tipo = (session.get('usuario_tipo') or '').lower()
         timeout_atual = timeout_admin if usuario_tipo == 'admin' else timeout
         
@@ -281,7 +282,7 @@ def register_error_handlers(app):
                 'error': True,
                 'message': 'Erro interno do servidor' if not app.debug else str(e),
                 'type': type(e).__name__,
-                'timestamp': datetime.now().isoformat()
+                'timestamp': now_utc().isoformat()
             }), 500
         
         # Para requisições HTML, renderizar template 500.html
@@ -309,7 +310,7 @@ def register_error_handlers(app):
                 'error': True,
                 'message': 'Recurso não encontrado',
                 'type': 'NotFound',
-                'timestamp': datetime.now().isoformat()
+                'timestamp': now_utc().isoformat()
             }), 404
         
         # Para requisições HTML, renderizar template 404.html
@@ -330,7 +331,7 @@ def register_error_handlers(app):
                 'error': True,
                 'message': 'Acesso negado. Você não tem permissão para acessar este recurso.',
                 'type': 'Forbidden',
-                'timestamp': datetime.now().isoformat()
+                'timestamp': now_utc().isoformat()
             }), 403
         
         # Retornar template 403 amigável
@@ -345,16 +346,12 @@ def register_error_handlers(app):
             'error': True,
             'message': 'Muitas requisições. Tente novamente mais tarde.',
             'type': 'RateLimitExceeded',
-            'timestamp': datetime.now().isoformat()
+            'timestamp': now_utc().isoformat()
         }), 429
 
 
 def register_custom_filters(app):
     """Registra filtros personalizados para os templates"""
-    try:
-        import pytz
-    except Exception:
-        pytz = None
     
     @app.template_filter('currency_brl')
     def currency_brl_filter(value):
@@ -398,13 +395,8 @@ def register_custom_filters(app):
         if not isinstance(value, datetime):
             return value
         tz_name = app.config.get('APP_TIMEZONE', 'America/Sao_Paulo')
-        tz = pytz.timezone(tz_name) if pytz else timezone(timedelta(hours=-3))
-        if value.tzinfo is None or value.tzinfo.utcoffset(value) is None:
-            if pytz:
-                value = pytz.utc.localize(value)
-            else:
-                value = value.replace(tzinfo=timezone.utc)
-        return value.astimezone(tz).strftime(fmt)
+        local_value = to_local(value, tz_name)
+        return local_value.strftime(fmt)
 
 
 def register_template_context(app):
@@ -424,7 +416,7 @@ def register_template_context(app):
             if getattr(current_user, 'is_authenticated', False):
                 from .models import Estoque
 
-                limite_atualizacao = datetime.now(timezone.utc) - timedelta(days=3)
+                limite_atualizacao = utcnow() - timedelta(days=3)
 
                 outdated_count = (
                     db.session.query(func.count(Estoque.id))

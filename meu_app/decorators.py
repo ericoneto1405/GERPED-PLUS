@@ -11,10 +11,11 @@ Data: 2024
 
 from functools import wraps
 from typing import Any, Dict, Optional, Tuple
-from datetime import datetime, timedelta, timezone
+from datetime import datetime
 
 from flask import current_app, jsonify, redirect, request, session, url_for
 from flask_login import current_user
+from .time_utils import now_utc
 
 
 ROLLOUT_EVENT_LABELS = {
@@ -90,7 +91,7 @@ def login_obrigatorio(f):
                     'error': True,
                     'message': 'Acesso negado. Faça login para continuar.',
                     'type': 'AuthenticationRequired',
-                    'timestamp': datetime.now(timezone.utc).isoformat()
+                    'timestamp': now_utc().isoformat()
                 }), 401
             
             # Para requisições normais, redirecionar para login
@@ -128,7 +129,7 @@ def permissao_necessaria(permissao):
                         'error': True,
                         'message': 'Acesso negado. Faça login para continuar.',
                         'type': 'AuthenticationRequired',
-                        'timestamp': datetime.now().isoformat()
+                        'timestamp': now_utc().isoformat()
                     }), 401
                 return redirect(url_for('main.login'))
             
@@ -152,7 +153,7 @@ def permissao_necessaria(permissao):
                         'message': f'Acesso negado. Você não tem permissão para acessar esta funcionalidade.',
                         'type': 'InsufficientPermissions',
                         'permission_required': permissao,
-                        'timestamp': datetime.now().isoformat()
+                        'timestamp': now_utc().isoformat()
                     }), 403
                 
                 return jsonify({
@@ -160,7 +161,7 @@ def permissao_necessaria(permissao):
                     'message': f'Acesso negado. Você não tem permissão para acessar esta funcionalidade.',
                     'type': 'InsufficientPermissions',
                     'permission_required': permissao,
-                    'timestamp': datetime.now(timezone.utc).isoformat()
+                    'timestamp': now_utc().isoformat()
                 }), 403
             
             return f(*args, **kwargs)
@@ -189,7 +190,7 @@ def admin_necessario(f):
                     'error': True,
                     'message': 'Acesso negado. Faça login para continuar.',
                     'type': 'AuthenticationRequired',
-                    'timestamp': datetime.now().isoformat()
+                    'timestamp': now_utc().isoformat()
                 }), 401
             return redirect(url_for('main.login'))
         
@@ -207,14 +208,14 @@ def admin_necessario(f):
                     'error': True,
                     'message': 'Acesso negado. Apenas administradores podem acessar esta funcionalidade.',
                     'type': 'AdminRequired',
-                    'timestamp': datetime.now().isoformat()
+                    'timestamp': now_utc().isoformat()
                 }), 403
             
             return jsonify({
                 'error': True,
                 'message': 'Acesso negado. Apenas administradores podem acessar esta funcionalidade.',
                 'type': 'AdminRequired',
-                'timestamp': datetime.now().isoformat()
+                'timestamp': now_utc().isoformat()
             }), 403
         
         return f(*args, **kwargs)
@@ -248,7 +249,7 @@ def validar_metodo_http(metodos_permitidos):
                         'message': f'Método {request.method} não permitido para esta rota.',
                         'type': 'MethodNotAllowed',
                         'allowed_methods': metodos_permitidos,
-                        'timestamp': datetime.now(timezone.utc).isoformat()
+                        'timestamp': now_utc().isoformat()
                     }), 405
                 
                 return jsonify({
@@ -256,7 +257,7 @@ def validar_metodo_http(metodos_permitidos):
                     'message': f'Método {request.method} não permitido para esta rota.',
                     'type': 'MethodNotAllowed',
                     'allowed_methods': metodos_permitidos,
-                    'timestamp': datetime.now().isoformat()
+                    'timestamp': now_utc().isoformat()
                 }), 405
             
             return f(*args, **kwargs)

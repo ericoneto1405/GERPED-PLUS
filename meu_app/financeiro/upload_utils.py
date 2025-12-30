@@ -6,10 +6,10 @@ Fase 7 - Upload Seguro com validação robusta
 import hashlib
 import os
 import secrets
-from datetime import datetime
 from typing import Tuple, Optional
 from werkzeug.utils import secure_filename
 import magic
+from ..time_utils import now_utc
 
 
 # Tipos MIME permitidos para uploads de comprovantes
@@ -50,7 +50,7 @@ def generate_secure_filename(original_filename: str) -> str:
     random_hash = secrets.token_hex(16)
     
     # Timestamp para evitar colisões
-    timestamp = int(datetime.now().timestamp())
+    timestamp = int(now_utc().timestamp())
     
     return f"{random_hash}_{timestamp}{ext}"
 

@@ -60,7 +60,7 @@ def enum_values(enum_cls):
 class Pedido(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     cliente_id = db.Column(db.Integer, db.ForeignKey('cliente.id'), nullable=False)
-    data = db.Column(db.DateTime, default=db.func.current_timestamp())
+    data = db.Column(db.DateTime, default=utcnow)
     status = db.Column(
         EnumType(
             StatusPedido,
@@ -159,7 +159,7 @@ class Pagamento(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     pedido_id = db.Column(db.Integer, db.ForeignKey('pedido.id'), nullable=False)
     valor = db.Column(db.Numeric(10, 2), nullable=False)
-    data_pagamento = db.Column(db.DateTime, default=db.func.current_timestamp())
+    data_pagamento = db.Column(db.DateTime, default=utcnow)
     metodo_pagamento = db.Column(db.String(255))
     id_transacao = db.Column(db.String(255), unique=True, nullable=True) # ID da transação para evitar duplicidade
     observacoes = db.Column(db.Text, nullable=True)

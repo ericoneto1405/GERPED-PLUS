@@ -401,10 +401,9 @@ def register_custom_filters(app):
         tz = pytz.timezone(tz_name) if pytz else timezone(timedelta(hours=-3))
         if value.tzinfo is None or value.tzinfo.utcoffset(value) is None:
             if pytz:
-                value = tz.localize(value)
+                value = pytz.utc.localize(value)
             else:
-                value = value.replace(tzinfo=tz)
-            return value.strftime(fmt)
+                value = value.replace(tzinfo=timezone.utc)
         return value.astimezone(tz).strftime(fmt)
 
 

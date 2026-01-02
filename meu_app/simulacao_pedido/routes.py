@@ -53,10 +53,6 @@ def dados_simulacao():
             .order_by(Apuracao.id.desc())
             .first()
         )
-        if not apuracao:
-            apuracao = (
-                Apuracao.query.order_by(Apuracao.ano.desc(), Apuracao.mes.desc()).first()
-            )
 
         verbas = {
             "total": float(apuracao.total_verbas) if apuracao else 0.0,
@@ -65,8 +61,8 @@ def dados_simulacao():
             "time_ambev": float(apuracao.verba_time_ambev) if apuracao else 0.0,
             "outras": float(apuracao.verba_outras_receitas) if apuracao else 0.0,
             "apuracao_id": apuracao.id if apuracao else None,
-            "mes": apuracao.mes if apuracao else mes,
-            "ano": apuracao.ano if apuracao else ano,
+            "mes": mes,
+            "ano": ano,
         }
 
         # Desempenho geral do período (liberados pelo comercial)

@@ -137,7 +137,7 @@ class EstoqueService:
                         data_entrada.replace('Z', '+00:00')
                     )
                 else:
-                data_entrada_dt = now_utc()
+                    data_entrada_dt = now_utc()
             except ValueError:
                 data_entrada_dt = now_utc()
             

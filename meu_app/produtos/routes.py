@@ -335,7 +335,11 @@ def api_produtos():
     
     # Formatar para o padrão que o Select2 espera (id, text)
     results = [
-        {'id': produto.id, 'text': f"{produto.nome} ({produto.codigo_interno or 'N/A'})"}
+        {
+            'id': produto.id,
+            'text': f"{produto.nome} ({produto.codigo_interno or 'N/A'})",
+            'preco_medio_compra': float(produto.preco_medio_compra or 0)
+        }
         for produto in produtos
     ]
     

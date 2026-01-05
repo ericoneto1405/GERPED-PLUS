@@ -66,12 +66,59 @@
 <script nonce="{{ nonce }}" src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/i18n/pt-BR.js"></script>
 <script nonce="{{ nonce }}">
     (function() {
+        function formatarMoeda(valor) {
+            if (typeof CurrencyFormatter !== 'undefined') {
+                return CurrencyFormatter.formatBRL(valor);
+            }
+            const numero = Number(valor || 0);
+            return `R$ ${numero.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        }
+
+        function parsearMoeda(valor) {
+            if (typeof CurrencyFormatter !== 'undefined') {
+                return CurrencyFormatter.parseBRL(valor || '');
+            }
+            if (!valor) return 0;
+            const limpo = String(valor)
+                .replace(/R\$\s?/g, '')
+                .replace(/\./g, '')
+                .replace(/,/g, '.');
+            return parseFloat(limpo) || 0;
+        }
+
+        function atualizarPrecoCompra(row, precoCompra) {
+            if (!row) return;
+            const input = row.querySelector('[data-field="preco-compra"]');
+            if (!input) return;
+            const valor = Number(precoCompra) || 0;
+            input.dataset.valor = String(valor);
+            input.value = formatarMoeda(valor);
+        }
+
+        function atualizarInvestimento(row) {
+            if (!row) return;
+            const quantidadeInput = row.querySelector('input[name="quantidade"]');
+            const precoVendaInput = row.querySelector('input[name="preco_venda"]');
+            const precoCompraInput = row.querySelector('[data-field="preco-compra"]');
+            const investimentoInput = row.querySelector('[data-field="investimento"]');
+
+            if (!investimentoInput) return;
+
+            const quantidade = parseFloat(quantidadeInput?.value || '0') || 0;
+            const precoVenda = parsearMoeda(precoVendaInput?.value || '');
+            const precoCompra = parseFloat(precoCompraInput?.dataset.valor || '0') || 0;
+            const investimento = (precoVenda - precoCompra) * quantidade;
+
+            investimentoInput.value = formatarMoeda(isNaN(investimento) ? 0 : investimento);
+        }
+
         function setupSelect2(element) {
             if (!window.jQuery || !jQuery.fn.select2 || !element) {
                 console.error('Select2 não está disponível.');
                 return;
             }
-            jQuery(element).select2({
+            const select = jQuery(element);
+            select.select2({
                 placeholder: 'Digite para buscar um produto...',
                 width: '100%',
                 language: 'pt-BR',
@@ -85,6 +132,15 @@
                 },
                 minimumInputLength: 1,
             });
+            select.on('select2:select', (event) => {
+                const data = event?.params?.data || {};
+                const row = element.closest('[data-item-row]');
+                atualizarPrecoCompra(row, data.preco_medio_compra);
+                atualizarInvestimento(row);
+                if (data.text) {
+                    element.dataset.currentLabel = data.text;
+                }
+            });
         }
 
         function adicionarItem(abrirBusca = false) {
@@ -95,7 +151,7 @@
             }
 
             const linha = document.createElement('div');
-            linha.className = 'd-flex gap-2 mb-2 align-items-center';
+            linha.className = 'd-flex gap-2 mb-2 align-items-center flex-wrap';
             linha.setAttribute('data-item-row', '');
             linha.innerHTML = `
                 <div class="flex-grow-1">
@@ -105,7 +161,13 @@
                     <input type="number" name="quantidade" class="form-control" placeholder="Qtd" min="1" required>
                 </div>
                 <div style="width: 150px;">
-                <input type="text" name="preco_venda" class="form-control preco-input" placeholder="Preço Venda" inputmode="decimal" data-requer-centavos="true" required>
+                    <input type="text" name="preco_venda" class="form-control preco-input" placeholder="Preço Venda" inputmode="decimal" data-requer-centavos="true" required>
+                </div>
+                <div style="width: 150px;">
+                    <input type="text" class="form-control" placeholder="Preço Compra" data-field="preco-compra" readonly tabindex="-1" aria-label="Preço médio de compra">
+                </div>
+                <div style="width: 170px;">
+                    <input type="text" class="form-control" placeholder="Investimento" data-field="investimento" readonly tabindex="-1" aria-label="Investimento">
                 </div>
                 <button type="button" class="btn btn-danger btn-sm" data-action="remove-item" aria-label="Remover item"><i class="bi bi-trash icon-text"></i></button>
             `;
@@ -117,6 +179,8 @@
             if (typeof CurrencyFormatter !== 'undefined') {
                 CurrencyFormatter.initializeInputs();
             }
+            atualizarPrecoCompra(linha, 0);
+            atualizarInvestimento(linha);
 
             if (abrirBusca) {
                 setTimeout(() => {
@@ -219,6 +283,15 @@
                     if (select) {
                         const option = select.selectedOptions[0];
                         select.dataset.currentLabel = option ? option.text : '';
+                        const row = select.closest('[data-item-row]');
+                        atualizarInvestimento(row);
+                    }
+                });
+                itemsContainer?.addEventListener('input', (event) => {
+                    const alvo = event.target;
+                    if (alvo.matches('input[name="quantidade"], input[name="preco_venda"]')) {
+                        const row = alvo.closest('[data-item-row]');
+                        atualizarInvestimento(row);
                     }
                 });
 

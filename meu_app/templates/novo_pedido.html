@@ -63,6 +63,7 @@
 {% block scripts %}
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
 <script nonce="{{ nonce }}" src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script nonce="{{ nonce }}" src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/i18n/pt-BR.js"></script>
 <script nonce="{{ nonce }}">
     (function() {
         function setupSelect2(element) {
@@ -73,6 +74,7 @@
             jQuery(element).select2({
                 placeholder: 'Digite para buscar um produto...',
                 width: '100%',
+                language: 'pt-BR',
                 ajax: {
                     url: "{{ url_for('produtos.api_produtos') }}",
                     dataType: 'json',

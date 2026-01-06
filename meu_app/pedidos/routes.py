@@ -44,7 +44,7 @@ def listar_pedidos():
                 mes_ano = '' # Limpa para não ser enviado ao template
 
         # Validar parâmetros de ordenação
-        campos_validos = ['id', 'cliente', 'data', 'valor', 'status']
+        campos_validos = ['id', 'cliente', 'data', 'valor', 'investimento', 'status']
         if ordenar_por not in campos_validos:
             ordenar_por = 'data'
         
@@ -53,6 +53,7 @@ def listar_pedidos():
         
         pedidos = PedidoService.listar_pedidos(filtro_status, data_inicio, data_fim, ordenar_por, direcao)
         total_pedidos_filtrados = sum((item.get('total_venda') or 0) for item in pedidos)
+        total_investimento_filtrado = sum((item.get('saldo_investimento') or 0) for item in pedidos)
         
         current_app.logger.info(f"Listagem de pedidos acessada por {session.get('usuario_nome', 'N/A')} - Ordenado por: {ordenar_por} ({direcao})")
         
@@ -65,7 +66,8 @@ def listar_pedidos():
             mes_ano=mes_ano or '',
             current_sort=ordenar_por,
             current_direction=direcao,
-            total_pedidos_filtrados=total_pedidos_filtrados
+            total_pedidos_filtrados=total_pedidos_filtrados,
+            total_investimento_filtrado=total_investimento_filtrado
         )
         
     except Exception as e:

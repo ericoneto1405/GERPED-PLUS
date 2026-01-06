@@ -306,7 +306,9 @@
     .total-resume-wrapper {
         display: flex;
         justify-content: flex-end;
+        gap: 12px;
         margin-bottom: 8px;
+        flex-wrap: wrap;
     }
 
     .valor-total-card {
@@ -334,6 +336,12 @@
         color: #111827;
     }
 
+    .valor-total-card.investimento {
+        background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+        border-color: #fca5a5;
+        box-shadow: 0 5px 14px rgba(239, 68, 68, 0.2);
+    }
+
     .pedidos-table th.sorted-asc,
     .pedidos-table th.sorted-desc {
         color: #0d6efd;
@@ -343,12 +351,13 @@
         background: #f8f9fa;
     }
 
-    .pedidos-table .col-id { width: 8%; }
-    .pedidos-table .col-cliente { width: 26%; }
-    .pedidos-table .col-data { width: 18%; }
-    .pedidos-table .col-valor { width: 14%; }
-    .pedidos-table .col-status { width: 14%; }
-    .pedidos-table .col-ver { width: 10%; }
+    .pedidos-table .col-id { width: 7%; }
+    .pedidos-table .col-cliente { width: 22%; }
+    .pedidos-table .col-data { width: 16%; }
+    .pedidos-table .col-valor { width: 12%; }
+    .pedidos-table .col-investimento { width: 12%; }
+    .pedidos-table .col-status { width: 12%; }
+    .pedidos-table .col-ver { width: 9%; }
     .pedidos-table .col-acoes { width: 10%; }
 
     .resizable-header {
@@ -649,6 +658,10 @@
         <span>Total filtrado</span>
         <strong>{{ (total_pedidos_filtrados or 0) | currency_brl }}</strong>
     </div>
+    <div class="valor-total-card investimento">
+        <span>Total filtrado investimento</span>
+        <strong>{{ (total_investimento_filtrado or 0) | currency_brl }}</strong>
+    </div>
 </div>
 
 <table class="pedidos-table auto-fit-table">
@@ -657,6 +670,7 @@
         <col class="col-cliente">
         <col class="col-data">
         <col class="col-valor">
+        <col class="col-investimento">
         <col class="col-status">
         <col class="col-ver">
         <col class="col-acoes">
@@ -695,7 +709,15 @@
                     {% endif %}
                 </span>
             </th>
-            <th data-column-index="4" data-sort-field="status" class="{% if current_sort == 'status' %}sorted-{{ current_direction }}{% endif %}">
+            <th data-column-index="4" data-sort-field="investimento" class="{% if current_sort == 'investimento' %}sorted-{{ current_direction }}{% endif %}">
+                SALDO INVESTIMENTO
+                <span class="sort-indicator">
+                    {% if current_sort == 'investimento' %}
+                        <i class="bi bi-caret-{{ 'up' if current_direction == 'asc' else 'down' }}-fill"></i>
+                    {% endif %}
+                </span>
+            </th>
+            <th data-column-index="5" data-sort-field="status" class="{% if current_sort == 'status' %}sorted-{{ current_direction }}{% endif %}">
                 STATUS
                 <span class="sort-indicator">
                     {% if current_sort == 'status' %}
@@ -714,6 +736,7 @@
             <td>{{ item.pedido.cliente.nome }}</td>
             <td>{{ item.pedido.data | datetime_local('%d/%m/%Y %H:%M') }}</td>
             <td>{{ item.total_venda | currency_brl }}</td>
+            <td>{{ (item.saldo_investimento or 0) | currency_brl }}</td>
             <td class="{% if item.status_codigo == 'liberado_coleta' %}status-financeiro{% elif item.status_codigo in ['coletado_parcial', 'coleta_concluida'] %}status-coleta{% elif item.status_codigo == 'cancelado' %}status-cancelado{% else %}status-pendente{% endif %}">
                 {{ item.status }}
             </td>
@@ -746,7 +769,7 @@
             </td>
         </tr>
         {% else %}
-        <tr><td colspan="7">Nenhum pedido encontrado com os filtros aplicados.</td></tr>
+        <tr><td colspan="8">Nenhum pedido encontrado com os filtros aplicados.</td></tr>
         {% endfor %}
     </tbody>
 </table>
@@ -1017,7 +1040,7 @@ function confirmarAcao() {
                         const tbody = document.querySelector('.pedidos-table tbody');
                         if (tbody && tbody.querySelectorAll('tr').length === 0) {
                             const vazio = document.createElement('tr');
-                            vazio.innerHTML = '<td colspan="7">Nenhum pedido encontrado com os filtros aplicados.</td>';
+                            vazio.innerHTML = '<td colspan="8">Nenhum pedido encontrado com os filtros aplicados.</td>';
                             tbody.appendChild(vazio);
                         }
                     }, 150);

@@ -355,6 +355,11 @@ class PedidoService:
             for pedido in pedidos:
                 total_venda = sum(i.valor_total_venda for i in pedido.itens)
                 total_pago = sum(p.valor for p in pedido.pagamentos)
+                total_compra = sum(
+                    (item.quantidade or 0) * (item.produto.preco_medio_compra or 0)
+                    for item in pedido.itens
+                )
+                saldo_investimento = total_venda - total_compra
 
                 try:
                     if pedido.sincronizar_status_financeiro(total_venda, total_pago):
@@ -394,6 +399,7 @@ class PedidoService:
                     'pedido': pedido,
                     'total_venda': float(total_venda),
                     'total_pago': float(total_pago),
+                    'saldo_investimento': float(saldo_investimento),
                     'status': fase_status,
                     'status_codigo': status_codigo,
                     'cliente_nome': pedido.cliente.nome,
@@ -422,6 +428,8 @@ class PedidoService:
                     key=lambda x: status_order.get(x.get('status_codigo'), 999),
                     reverse=(direcao == 'desc')
                 )
+            elif ordenar_por == 'investimento':
+                resultado.sort(key=lambda x: x['saldo_investimento'], reverse=(direcao == 'desc'))
             
             if correcoes_status:
                 try:

@@ -41,7 +41,7 @@
     </div>
     <div id="items" class="mb-3">
         {% for item in pedido.itens %}
-        <div class="d-flex gap-2 mb-2 align-items-center" data-item-row>
+        <div class="d-flex gap-2 mb-2 align-items-center" data-item-row data-preco-compra="{{ item.produto.preco_medio_compra or 0 }}">
             <div class="flex-grow-1">
                 <select name="produto_id" class="form-control select2-ajax" required>
                     <option value="{{ item.produto.id }}" selected>{{ item.produto.nome }} {% if item.produto.codigo_interno %}({{ item.produto.codigo_interno }}){% endif %}</option>
@@ -65,7 +65,10 @@
         <hr class="mt-4">
 
         <div class="d-flex justify-content-between align-items-center">
-            <div class="fw-bold fs-5">Total do pedido: <span id="pedido-total">R$ 0,00</span></div>
+            <div>
+                <div class="fw-bold fs-5">Total do pedido: <span id="pedido-total">R$ 0,00</span></div>
+                <div class="text-muted">Saldo/Investimento: <span id="pedido-investimento">R$ 0,00</span></div>
+            </div>
             <div class="text-end">
                 <button type="submit" class="btn btn-primary btn-lg"><i class="bi bi-save icon-text"></i>Salvar Alterações</button>
             </div>
@@ -85,7 +88,8 @@
                 console.error('Select2 não está carregado.');
                 return;
             }
-            $(selector).select2({
+            const $select = $(selector);
+            $select.select2({
                 placeholder: "Digite para buscar um produto...",
                 width: '100%',
                 ajax: {
@@ -102,6 +106,14 @@
                 },
                 minimumInputLength: 1,
             });
+            $select.on('select2:select', (event) => {
+                const data = event?.params?.data || {};
+                const row = $select.closest('[data-item-row]')[0];
+                if (row) {
+                    row.dataset.precoCompra = data.preco_medio_compra ?? 0;
+                    calcularTotais();
+                }
+            });
         } catch (error) {
             console.error('Erro ao inicializar Select2:', error);
         }
@@ -117,6 +129,7 @@
             const itemBox = document.createElement('div');
             itemBox.className = 'd-flex gap-2 mb-2 align-items-center';
             itemBox.setAttribute('data-item-row', '');
+            itemBox.dataset.precoCompra = '0';
             
             itemBox.innerHTML = `
                 <div class="flex-grow-1">
@@ -159,14 +172,18 @@
     function calcularTotais() {
         const rows = document.querySelectorAll('[data-item-row]');
         let totalPedido = 0;
+        let totalInvestimento = 0;
         rows.forEach(row => {
             const qtdInput = row.querySelector('input[name="quantidade"]');
             const precoInput = row.querySelector('input[name="preco_venda"]');
             const totalField = row.querySelector('.total-item');
             const qtd = parseFloat(qtdInput?.value || 0);
             const preco = parsePrecoTexto(precoInput?.value || '');
+            const precoCompra = parseFloat(row.dataset.precoCompra || 0) || 0;
             const totalItem = (isNaN(qtd) || isNaN(preco)) ? 0 : qtd * preco;
+            const investimento = (isNaN(qtd) || isNaN(preco)) ? 0 : (preco - precoCompra) * qtd;
             totalPedido += totalItem;
+            totalInvestimento += investimento;
             if (totalField) {
                 totalField.value = formatBRL(totalItem);
             }
@@ -174,6 +191,10 @@
         const totalLabel = document.getElementById('pedido-total');
         if (totalLabel) {
             totalLabel.textContent = formatBRL(totalPedido);
+        }
+        const investimentoLabel = document.getElementById('pedido-investimento');
+        if (investimentoLabel) {
+            investimentoLabel.textContent = formatBRL(totalInvestimento);
         }
     }
 

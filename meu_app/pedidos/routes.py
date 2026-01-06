@@ -54,6 +54,11 @@ def listar_pedidos():
         pedidos = PedidoService.listar_pedidos(filtro_status, data_inicio, data_fim, ordenar_por, direcao)
         total_pedidos_filtrados = sum((item.get('total_venda') or 0) for item in pedidos)
         total_investimento_filtrado = sum((item.get('saldo_investimento') or 0) for item in pedidos)
+        percentual_investimento = (
+            (total_investimento_filtrado / total_pedidos_filtrados) * 100
+            if total_pedidos_filtrados
+            else 0
+        )
         
         current_app.logger.info(f"Listagem de pedidos acessada por {session.get('usuario_nome', 'N/A')} - Ordenado por: {ordenar_por} ({direcao})")
         
@@ -67,13 +72,21 @@ def listar_pedidos():
             current_sort=ordenar_por,
             current_direction=direcao,
             total_pedidos_filtrados=total_pedidos_filtrados,
-            total_investimento_filtrado=total_investimento_filtrado
+            total_investimento_filtrado=total_investimento_filtrado,
+            percentual_investimento=percentual_investimento
         )
         
     except Exception as e:
         current_app.logger.error(f"Erro ao listar pedidos: {str(e)}")
         flash(f"Erro ao carregar pedidos: {str(e)}", 'error')
-        return render_template('listar_pedidos.html', pedidos=[], filtro='todos', total_pedidos_filtrados=0)
+        return render_template(
+            'listar_pedidos.html',
+            pedidos=[],
+            filtro='todos',
+            total_pedidos_filtrados=0,
+            total_investimento_filtrado=0,
+            percentual_investimento=0
+        )
 
 @pedidos_bp.route('/importar-historico', methods=['POST'])
 @login_obrigatorio

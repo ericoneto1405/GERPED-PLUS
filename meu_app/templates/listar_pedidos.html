@@ -342,6 +342,19 @@
         box-shadow: 0 5px 14px rgba(239, 68, 68, 0.2);
     }
 
+    .valor-total-card.pequeno {
+        min-width: 160px;
+        padding: 8px 12px;
+    }
+
+    .valor-total-card.pequeno span {
+        font-size: 0.72rem;
+    }
+
+    .valor-total-card.pequeno strong {
+        font-size: 1rem;
+    }
+
     .pedidos-table th.sorted-asc,
     .pedidos-table th.sorted-desc {
         color: #0d6efd;
@@ -661,6 +674,10 @@
     <div class="valor-total-card investimento">
         <span>Total filtrado investimento</span>
         <strong>{{ (total_investimento_filtrado or 0) | currency_brl }}</strong>
+    </div>
+    <div class="valor-total-card pequeno investimento">
+        <span>% investimento</span>
+        <strong>{{ (percentual_investimento or 0) | number_brl }}%</strong>
     </div>
 </div>
 

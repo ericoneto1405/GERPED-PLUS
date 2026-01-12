@@ -101,6 +101,7 @@
             const precoVendaInput = row.querySelector('input[name="preco_venda"]');
             const precoCompraInput = row.querySelector('[data-field="preco-compra"]');
             const investimentoInput = row.querySelector('[data-field="investimento"]');
+            const totalItemInput = row.querySelector('[data-field="total-item"]');
 
             if (!investimentoInput) return;
 
@@ -108,8 +109,12 @@
             const precoVenda = parsearMoeda(precoVendaInput?.value || '');
             const precoCompra = parseFloat(precoCompraInput?.dataset.valor || '0') || 0;
             const investimento = (precoVenda - precoCompra) * quantidade;
+            const totalItem = precoVenda * quantidade;
 
             investimentoInput.value = formatarMoeda(isNaN(investimento) ? 0 : investimento);
+            if (totalItemInput) {
+                totalItemInput.value = formatarMoeda(isNaN(totalItem) ? 0 : totalItem);
+            }
         }
 
         function setupSelect2(element) {
@@ -160,14 +165,17 @@
                 <div style="width: 100px;">
                     <input type="number" name="quantidade" class="form-control" placeholder="Qtd" min="1" required>
                 </div>
-                <div style="width: 150px;">
+                <div style="width: 130px;">
                     <input type="text" name="preco_venda" class="form-control preco-input" placeholder="Preço Venda" inputmode="decimal" data-requer-centavos="true" required>
                 </div>
-                <div style="width: 150px;">
+                <div style="width: 130px;">
                     <input type="text" class="form-control" placeholder="Preço Compra" data-field="preco-compra" readonly tabindex="-1" aria-label="Preço médio de compra">
                 </div>
-                <div style="width: 170px;">
+                <div style="width: 150px;">
                     <input type="text" class="form-control" placeholder="Investimento" data-field="investimento" readonly tabindex="-1" aria-label="Investimento">
+                </div>
+                <div style="width: 130px;">
+                    <input type="text" class="form-control" placeholder="Total item" data-field="total-item" readonly tabindex="-1" aria-label="Total do item">
                 </div>
                 <button type="button" class="btn btn-danger btn-sm" data-action="remove-item" aria-label="Remover item"><i class="bi bi-trash icon-text"></i></button>
             `;

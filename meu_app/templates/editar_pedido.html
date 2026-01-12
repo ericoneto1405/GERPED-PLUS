@@ -35,9 +35,10 @@
     <div class="d-flex gap-2 mb-2 text-secondary small fw-semibold flex-wrap" aria-hidden="true">
         <div class="flex-grow-1">Produto</div>
         <div style="width: 100px;">Qtd.</div>
-        <div style="width: 150px;">Preço de venda</div>
-        <div style="width: 150px;">Preço compra</div>
-        <div style="width: 170px;">Investimento</div>
+        <div style="width: 130px;">Preço de venda</div>
+        <div style="width: 130px;">Preço compra</div>
+        <div style="width: 150px;">Investimento</div>
+        <div style="width: 130px;">Total item</div>
         <div style="width: 42px;"></div>
     </div>
     <div id="items" class="mb-3">
@@ -51,21 +52,19 @@
             <div style="width: 100px;">
                 <input type="number" name="quantidade" class="form-control" placeholder="Qtd" value="{{ item.quantidade }}" min="1" required>
             </div>
-            <div style="width: 150px;">
+            <div style="width: 130px;">
                 <input type="text" name="preco_venda" class="form-control preco-input" placeholder="Preço venda" inputmode="decimal" data-requer-centavos="true" value="{{ item.preco_venda | replace('.', ',') }}" required>
             </div>
-            <div style="width: 150px;">
+            <div style="width: 130px;">
                 <input type="text" class="form-control" placeholder="Preço compra" data-field="preco-compra" readonly tabindex="-1" aria-label="Preço médio de compra">
             </div>
-            <div style="width: 170px;">
+            <div style="width: 150px;">
                 <input type="text" class="form-control" placeholder="Investimento" data-field="investimento" readonly tabindex="-1" aria-label="Investimento">
             </div>
-            <button type="button" class="btn btn-danger btn-sm" data-action="remove-item" aria-label="Remover item"><i class="bi bi-trash icon-text"></i></button>
-            <div class="w-100 d-flex justify-content-end mt-1">
-                <div style="width: 150px;">
-                    <input type="text" class="form-control total-item" placeholder="0,00" value="" readonly aria-label="Total do item">
-                </div>
+            <div style="width: 130px;">
+                <input type="text" class="form-control total-item" placeholder="0,00" value="" readonly aria-label="Total do item">
             </div>
+            <button type="button" class="btn btn-danger btn-sm" data-action="remove-item" aria-label="Remover item"><i class="bi bi-trash icon-text"></i></button>
         </div>
         {% endfor %}
     </div>
@@ -149,21 +148,19 @@
                 <div style="width: 100px;">
                     <input type="number" name="quantidade" class="form-control" placeholder="Qtd" min="1" required>
                 </div>
-                <div style="width: 150px;">
+                <div style="width: 130px;">
                     <input type="text" name="preco_venda" class="form-control preco-input" placeholder="Preço venda" inputmode="decimal" data-requer-centavos="true" required>
                 </div>
-                <div style="width: 150px;">
+                <div style="width: 130px;">
                     <input type="text" class="form-control" placeholder="Preço compra" data-field="preco-compra" readonly tabindex="-1" aria-label="Preço médio de compra">
                 </div>
-                <div style="width: 170px;">
+                <div style="width: 150px;">
                     <input type="text" class="form-control" placeholder="Investimento" data-field="investimento" readonly tabindex="-1" aria-label="Investimento">
                 </div>
-                <button type="button" class="btn btn-danger btn-sm" data-action="remove-item" aria-label="Remover item"><i class="bi bi-trash icon-text"></i></button>
-                <div class="w-100 d-flex justify-content-end mt-1">
-                    <div style="width: 150px;">
-                        <input type="text" class="form-control total-item" placeholder="0,00" value="" readonly aria-label="Total do item">
-                    </div>
+                <div style="width: 130px;">
+                    <input type="text" class="form-control total-item" placeholder="0,00" value="" readonly aria-label="Total do item">
                 </div>
+                <button type="button" class="btn btn-danger btn-sm" data-action="remove-item" aria-label="Remover item"><i class="bi bi-trash icon-text"></i></button>
             `;
             
             container.appendChild(itemBox);

@@ -38,7 +38,6 @@
         <div style="width: 150px;">Preço de venda</div>
         <div style="width: 150px;">Preço compra</div>
         <div style="width: 170px;">Investimento</div>
-        <div style="width: 150px;">Total item</div>
         <div style="width: 42px;"></div>
     </div>
     <div id="items" class="mb-3">
@@ -61,10 +60,12 @@
             <div style="width: 170px;">
                 <input type="text" class="form-control" placeholder="Investimento" data-field="investimento" readonly tabindex="-1" aria-label="Investimento">
             </div>
-            <div style="width: 150px;">
-                <input type="text" class="form-control total-item" placeholder="0,00" value="" readonly>
-            </div>
             <button type="button" class="btn btn-danger btn-sm" data-action="remove-item" aria-label="Remover item"><i class="bi bi-trash icon-text"></i></button>
+            <div class="w-100 d-flex justify-content-end mt-1">
+                <div style="width: 150px;">
+                    <input type="text" class="form-control total-item" placeholder="0,00" value="" readonly aria-label="Total do item">
+                </div>
+            </div>
         </div>
         {% endfor %}
     </div>
@@ -157,10 +158,12 @@
                 <div style="width: 170px;">
                     <input type="text" class="form-control" placeholder="Investimento" data-field="investimento" readonly tabindex="-1" aria-label="Investimento">
                 </div>
-                <div style="width: 150px;">
-                    <input type="text" class="form-control total-item" placeholder="0,00" value="" readonly>
-                </div>
                 <button type="button" class="btn btn-danger btn-sm" data-action="remove-item" aria-label="Remover item"><i class="bi bi-trash icon-text"></i></button>
+                <div class="w-100 d-flex justify-content-end mt-1">
+                    <div style="width: 150px;">
+                        <input type="text" class="form-control total-item" placeholder="0,00" value="" readonly aria-label="Total do item">
+                    </div>
+                </div>
             `;
             
             container.appendChild(itemBox);

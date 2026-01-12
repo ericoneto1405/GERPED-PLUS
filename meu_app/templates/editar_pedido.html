@@ -32,27 +32,27 @@
         <hr>
 
     <h5><i class="bi bi-box-seam icon-text"></i>Itens do Pedido</h5>
-    <div class="d-flex gap-2 mb-2 text-secondary small fw-semibold" aria-hidden="true">
+    <div class="d-flex gap-2 mb-2 text-secondary small fw-semibold flex-wrap" aria-hidden="true">
         <div class="flex-grow-1">Produto</div>
-        <div style="width: 110px;">Qtd.</div>
-        <div style="width: 160px;">Preço de venda</div>
+        <div style="width: 100px;">Qtd.</div>
+        <div style="width: 150px;">Preço de venda</div>
         <div style="width: 150px;">Preço compra</div>
         <div style="width: 170px;">Investimento</div>
-        <div style="width: 160px;">Total item</div>
+        <div style="width: 150px;">Total item</div>
         <div style="width: 42px;"></div>
     </div>
     <div id="items" class="mb-3">
         {% for item in pedido.itens %}
-        <div class="d-flex gap-2 mb-2 align-items-center" data-item-row data-preco-compra="{{ item.produto.preco_medio_compra or 0 }}">
+        <div class="d-flex gap-2 mb-2 align-items-center flex-wrap" data-item-row data-preco-compra="{{ item.produto.preco_medio_compra or 0 }}">
             <div class="flex-grow-1">
                 <select name="produto_id" class="form-control select2-ajax" required>
                     <option value="{{ item.produto.id }}" selected>{{ item.produto.nome }} {% if item.produto.codigo_interno %}({{ item.produto.codigo_interno }}){% endif %}</option>
                 </select>
             </div>
-            <div style="width: 110px;">
+            <div style="width: 100px;">
                 <input type="number" name="quantidade" class="form-control" placeholder="Qtd" value="{{ item.quantidade }}" min="1" required>
             </div>
-            <div style="width: 160px;">
+            <div style="width: 150px;">
                 <input type="text" name="preco_venda" class="form-control preco-input" placeholder="Preço venda" inputmode="decimal" data-requer-centavos="true" value="{{ item.preco_venda | replace('.', ',') }}" required>
             </div>
             <div style="width: 150px;">
@@ -61,7 +61,7 @@
             <div style="width: 170px;">
                 <input type="text" class="form-control" placeholder="Investimento" data-field="investimento" readonly tabindex="-1" aria-label="Investimento">
             </div>
-            <div style="width: 160px;">
+            <div style="width: 150px;">
                 <input type="text" class="form-control total-item" placeholder="0,00" value="" readonly>
             </div>
             <button type="button" class="btn btn-danger btn-sm" data-action="remove-item" aria-label="Remover item"><i class="bi bi-trash icon-text"></i></button>
@@ -137,7 +137,7 @@
                 return;
             }
             const itemBox = document.createElement('div');
-            itemBox.className = 'd-flex gap-2 mb-2 align-items-center';
+            itemBox.className = 'd-flex gap-2 mb-2 align-items-center flex-wrap';
             itemBox.setAttribute('data-item-row', '');
             itemBox.dataset.precoCompra = '0';
             
@@ -145,10 +145,10 @@
                 <div class="flex-grow-1">
                     <select name="produto_id" class="form-control select2-ajax" required></select>
                 </div>
-                <div style="width: 110px;">
+                <div style="width: 100px;">
                     <input type="number" name="quantidade" class="form-control" placeholder="Qtd" min="1" required>
                 </div>
-                <div style="width: 160px;">
+                <div style="width: 150px;">
                     <input type="text" name="preco_venda" class="form-control preco-input" placeholder="Preço venda" inputmode="decimal" data-requer-centavos="true" required>
                 </div>
                 <div style="width: 150px;">
@@ -157,7 +157,7 @@
                 <div style="width: 170px;">
                     <input type="text" class="form-control" placeholder="Investimento" data-field="investimento" readonly tabindex="-1" aria-label="Investimento">
                 </div>
-                <div style="width: 160px;">
+                <div style="width: 150px;">
                     <input type="text" class="form-control total-item" placeholder="0,00" value="" readonly>
                 </div>
                 <button type="button" class="btn btn-danger btn-sm" data-action="remove-item" aria-label="Remover item"><i class="bi bi-trash icon-text"></i></button>

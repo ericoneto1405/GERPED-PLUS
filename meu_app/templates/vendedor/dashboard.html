@@ -143,7 +143,12 @@
         <form id="buscaProdutosForm" class="busca-form">
             <div class="filter-group">
                 <label for="busca_produto">Produto</label>
-                <input type="text" id="busca_produto" name="q" placeholder="Nome, código interno ou EAN" required>
+                <div class="input-group shadow-sm" style="max-width: 360px;">
+                    <span class="input-group-text bg-white">
+                        <i class="fas fa-search text-muted"></i>
+                    </span>
+                    <input type="search" id="busca_produto" name="q" class="form-control" placeholder="Buscar por produto, código ou EAN..." required>
+                </div>
             </div>
             <div class="filter-group">
                 <label for="busca_data_inicio">Data inicial</label>
@@ -567,7 +572,7 @@
     color: #6c757d;
 }
 
-.busca-form input[type="text"],
+.busca-form input[type="search"],
 .busca-form input[type="date"] {
     padding: 8px 12px;
     border: 1px solid #ced4da;
@@ -749,7 +754,7 @@
         align-items: stretch;
     }
 
-    .busca-form input[type="text"],
+    .busca-form input[type="search"],
     .busca-form input[type="date"] {
         min-width: 100%;
     }

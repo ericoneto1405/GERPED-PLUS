@@ -282,6 +282,13 @@
         } else {
             updateAlert('', false);
         }
+
+        document.querySelectorAll('[data-action="history-back"]').forEach((el) => {
+            el.addEventListener('click', () => history.back());
+        });
+        document.querySelectorAll('[data-action="reload"]').forEach((el) => {
+            el.addEventListener('click', () => location.reload());
+        });
     </script>
     <script src="{{ url_for('static', filename='js/validacao_preco_centavos.js') }}" nonce="{{ nonce }}" defer></script>
     <script src="{{ url_for('static', filename='js/password_toggle.js') }}" nonce="{{ nonce }}" defer></script>

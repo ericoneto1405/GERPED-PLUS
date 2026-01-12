@@ -76,6 +76,15 @@ def novo_produto():
 @permissao_necessaria('acesso_produtos')
 def editar_produto(id):
     produto = Produto.query.get_or_404(id)
+    categorias = [
+        row[0]
+        for row in db.session.query(Produto.categoria)
+        .distinct()
+        .filter(Produto.categoria.isnot(None))
+        .order_by(Produto.categoria)
+    ]
+    if not categorias:
+        categorias = ['CERVEJA', 'NAB', 'OUTROS']
     
     if request.method == 'POST':
         nome = request.form['nome']

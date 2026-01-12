@@ -36,6 +36,8 @@
         <div class="flex-grow-1">Produto</div>
         <div style="width: 110px;">Qtd.</div>
         <div style="width: 160px;">Preço de venda</div>
+        <div style="width: 150px;">Preço compra</div>
+        <div style="width: 170px;">Investimento</div>
         <div style="width: 160px;">Total item</div>
         <div style="width: 42px;"></div>
     </div>
@@ -52,6 +54,12 @@
             </div>
             <div style="width: 160px;">
                 <input type="text" name="preco_venda" class="form-control preco-input" placeholder="Preço venda" inputmode="decimal" data-requer-centavos="true" value="{{ item.preco_venda | replace('.', ',') }}" required>
+            </div>
+            <div style="width: 150px;">
+                <input type="text" class="form-control" placeholder="Preço compra" data-field="preco-compra" readonly tabindex="-1" aria-label="Preço médio de compra">
+            </div>
+            <div style="width: 170px;">
+                <input type="text" class="form-control" placeholder="Investimento" data-field="investimento" readonly tabindex="-1" aria-label="Investimento">
             </div>
             <div style="width: 160px;">
                 <input type="text" class="form-control total-item" placeholder="0,00" value="" readonly>
@@ -141,6 +149,12 @@
                 <div style="width: 160px;">
                     <input type="text" name="preco_venda" class="form-control preco-input" placeholder="Preço venda" inputmode="decimal" data-requer-centavos="true" required>
                 </div>
+                <div style="width: 150px;">
+                    <input type="text" class="form-control" placeholder="Preço compra" data-field="preco-compra" readonly tabindex="-1" aria-label="Preço médio de compra">
+                </div>
+                <div style="width: 170px;">
+                    <input type="text" class="form-control" placeholder="Investimento" data-field="investimento" readonly tabindex="-1" aria-label="Investimento">
+                </div>
                 <div style="width: 160px;">
                     <input type="text" class="form-control total-item" placeholder="0,00" value="" readonly>
                 </div>
@@ -177,6 +191,8 @@
             const qtdInput = row.querySelector('input[name="quantidade"]');
             const precoInput = row.querySelector('input[name="preco_venda"]');
             const totalField = row.querySelector('.total-item');
+            const precoCompraField = row.querySelector('[data-field="preco-compra"]');
+            const investimentoField = row.querySelector('[data-field="investimento"]');
             const qtd = parseFloat(qtdInput?.value || 0);
             const preco = parsePrecoTexto(precoInput?.value || '');
             const precoCompra = parseFloat(row.dataset.precoCompra || 0) || 0;
@@ -186,6 +202,13 @@
             totalInvestimento += investimento;
             if (totalField) {
                 totalField.value = formatBRL(totalItem);
+            }
+            if (precoCompraField) {
+                precoCompraField.dataset.valor = String(precoCompra);
+                precoCompraField.value = formatBRL(precoCompra);
+            }
+            if (investimentoField) {
+                investimentoField.value = formatBRL(investimento);
             }
         });
         const totalLabel = document.getElementById('pedido-total');

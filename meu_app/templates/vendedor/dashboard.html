@@ -131,6 +131,50 @@
             </div>
         </div>
     </div>
+
+    <!-- Busca de Produtos -->
+    <div class="produto-busca-section">
+        <div class="busca-header">
+            <div>
+                <h2><i class="bi bi-search icon-text"></i> Busca de Produtos</h2>
+                <p class="busca-subtitle">Encontre o preço médio de venda por período.</p>
+            </div>
+        </div>
+        <form id="buscaProdutosForm" class="busca-form">
+            <div class="filter-group">
+                <label for="busca_produto">Produto</label>
+                <input type="text" id="busca_produto" name="q" placeholder="Nome, código interno ou EAN" required>
+            </div>
+            <div class="filter-group">
+                <label for="busca_data_inicio">Data inicial</label>
+                <input type="date" id="busca_data_inicio" name="data_inicio">
+            </div>
+            <div class="filter-group">
+                <label for="busca_data_fim">Data final</label>
+                <input type="date" id="busca_data_fim" name="data_fim">
+            </div>
+            <div class="filter-actions">
+                <button type="submit" class="btn-aplicar">Buscar</button>
+                <button type="button" class="btn-limpar" data-action="limpar-busca-produto">Limpar</button>
+            </div>
+        </form>
+        <p id="produtoBuscaInfo" class="intervalo-info" style="display: none;"></p>
+        <div class="busca-result">
+            <div id="produtoBuscaStatus" class="loading" style="display: none;"></div>
+            <table id="produtoBuscaTabela" class="tabela-modal" style="display: none;">
+                <thead>
+                    <tr>
+                        <th>Produto</th>
+                        <th>Preço Médio</th>
+                        <th>Quantidade</th>
+                        <th>Total Vendido</th>
+                        <th>Última venda</th>
+                    </tr>
+                </thead>
+                <tbody id="produtoBuscaBody"></tbody>
+            </table>
+        </div>
+    </div>
 </div>
 
 <!-- Modal: Lista de Clientes -->
@@ -482,6 +526,67 @@
     color: #28a745;
 }
 
+/* Busca de Produtos */
+.produto-busca-section {
+    margin-top: 40px;
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.busca-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: #2c3e50;
+}
+
+.busca-subtitle {
+    margin: 6px 0 0;
+    color: #6c757d;
+    font-size: 0.95rem;
+}
+
+.busca-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: flex-end;
+    margin: 18px 0 12px;
+}
+
+.busca-form .filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.busca-form label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #6c757d;
+}
+
+.busca-form input[type="text"],
+.busca-form input[type="date"] {
+    padding: 8px 12px;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    min-width: 220px;
+}
+
+.busca-result .tabela-modal th {
+    white-space: nowrap;
+}
+
+.produto-meta {
+    display: block;
+    font-size: 0.8rem;
+    color: #6c757d;
+    margin-top: 2px;
+}
+
 /* Modais */
 .modal-overlay {
     display: none;
@@ -638,6 +743,15 @@
     .modal-container {
         width: 95%;
         max-height: 90vh;
+    }
+
+    .busca-form {
+        align-items: stretch;
+    }
+
+    .busca-form input[type="text"],
+    .busca-form input[type="date"] {
+        min-width: 100%;
     }
 }
 </style>
@@ -917,6 +1031,144 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+
+    const buscaForm = document.getElementById('buscaProdutosForm');
+    const buscaInput = document.getElementById('busca_produto');
+    const buscaInicio = document.getElementById('busca_data_inicio');
+    const buscaFim = document.getElementById('busca_data_fim');
+    const buscaStatus = document.getElementById('produtoBuscaStatus');
+    const buscaTabela = document.getElementById('produtoBuscaTabela');
+    const buscaBody = document.getElementById('produtoBuscaBody');
+    const buscaInfo = document.getElementById('produtoBuscaInfo');
+    const limparBuscaBtn = document.querySelector('[data-action="limpar-busca-produto"]');
+
+    function formatarMoeda(valor) {
+        const numero = Number(valor || 0);
+        return `R$ ${numero.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    }
+
+    function atualizarInfoBusca(termo, intervalo) {
+        if (!buscaInfo) return;
+        const inicio = intervalo?.inicio;
+        const fim = intervalo?.fim;
+        let periodoTexto = 'sempre';
+        if (inicio || fim) {
+            periodoTexto = `${inicio || 'sempre'} até ${fim || 'hoje'}`;
+        }
+        buscaInfo.textContent = `Resultados para "${termo}" • Período: ${periodoTexto}`;
+        buscaInfo.style.display = 'block';
+    }
+
+    function limparBuscaProdutos() {
+        if (buscaForm) buscaForm.reset();
+        if (buscaBody) buscaBody.innerHTML = '';
+        if (buscaTabela) buscaTabela.style.display = 'none';
+        if (buscaStatus) buscaStatus.style.display = 'none';
+        if (buscaInfo) buscaInfo.style.display = 'none';
+    }
+
+    function renderResultados(produtos) {
+        if (!buscaBody) return;
+        buscaBody.innerHTML = '';
+        produtos.forEach(produto => {
+            const tr = document.createElement('tr');
+
+            const produtoTd = document.createElement('td');
+            const nomeSpan = document.createElement('span');
+            nomeSpan.textContent = produto.nome || '-';
+            produtoTd.appendChild(nomeSpan);
+            const metaParts = [];
+            if (produto.codigo_interno) {
+                metaParts.push(`Cód.: ${produto.codigo_interno}`);
+            }
+            if (produto.ean) {
+                metaParts.push(`EAN: ${produto.ean}`);
+            }
+            if (metaParts.length) {
+                const metaSpan = document.createElement('span');
+                metaSpan.className = 'produto-meta';
+                metaSpan.textContent = metaParts.join(' • ');
+                produtoTd.appendChild(metaSpan);
+            }
+
+            const precoTd = document.createElement('td');
+            precoTd.textContent = formatarMoeda(produto.preco_medio);
+
+            const qtdTd = document.createElement('td');
+            qtdTd.textContent = String(produto.quantidade_total ?? 0);
+
+            const totalTd = document.createElement('td');
+            totalTd.textContent = formatarMoeda(produto.valor_total);
+
+            const ultimaTd = document.createElement('td');
+            ultimaTd.textContent = produto.ultima_venda || '-';
+
+            tr.appendChild(produtoTd);
+            tr.appendChild(precoTd);
+            tr.appendChild(qtdTd);
+            tr.appendChild(totalTd);
+            tr.appendChild(ultimaTd);
+
+            buscaBody.appendChild(tr);
+        });
+    }
+
+    function buscarProdutos(event) {
+        event.preventDefault();
+        if (!buscaInput || !buscaStatus || !buscaTabela || !buscaBody) {
+            return;
+        }
+        const termo = buscaInput.value.trim();
+        if (!termo) {
+            buscaStatus.textContent = 'Informe um produto para buscar.';
+            buscaStatus.style.display = 'block';
+            buscaTabela.style.display = 'none';
+            return;
+        }
+
+        buscaStatus.textContent = 'Buscando produtos...';
+        buscaStatus.style.display = 'block';
+        buscaTabela.style.display = 'none';
+        buscaBody.innerHTML = '';
+
+        const params = new URLSearchParams({
+            q: termo,
+            data_inicio: buscaInicio?.value || '',
+            data_fim: buscaFim?.value || ''
+        });
+
+        fetch(`/vendedor/api/produtos-preco-medio?${params.toString()}`)
+            .then(response => response.json())
+            .then(data => {
+                const produtos = data.produtos || [];
+                if (!produtos.length) {
+                    buscaStatus.textContent = data.message || 'Nenhum produto encontrado para este período.';
+                    buscaStatus.style.display = 'block';
+                    buscaTabela.style.display = 'none';
+                    atualizarInfoBusca(termo, data.intervalo || {});
+                    return;
+                }
+
+                buscaStatus.style.display = 'none';
+                buscaTabela.style.display = 'table';
+                renderResultados(produtos);
+                atualizarInfoBusca(termo, data.intervalo || {});
+            })
+            .catch(error => {
+                console.error('Erro ao buscar produtos:', error);
+                buscaStatus.textContent = 'Erro ao buscar produtos.';
+                buscaStatus.style.display = 'block';
+                buscaTabela.style.display = 'none';
+            });
+    }
+
+    if (buscaForm) {
+        buscaForm.addEventListener('submit', buscarProdutos);
+    }
+
+    if (limparBuscaBtn) {
+        limparBuscaBtn.addEventListener('click', limparBuscaProdutos);
+    }
 });
 </script>
 {% endblock %}

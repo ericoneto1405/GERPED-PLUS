@@ -584,6 +584,80 @@ class VendedorService:
             })
 
         return resultados
+
+    @staticmethod
+    def get_preco_medio_produtos(termo, data_inicio=None, data_fim=None, limite=20):
+        """
+        Retorna preço médio de venda por produto em um intervalo.
+        """
+        from meu_app.models import StatusPedido
+        termo = (termo or '').strip()
+
+        inicio = VendedorService._parse_data_param(data_inicio)
+        fim = VendedorService._parse_data_param(data_fim)
+        if inicio and fim and inicio > fim:
+            inicio, fim = fim, inicio
+        inicio_dt = datetime.combine(inicio, datetime.min.time()) if inicio else None
+        fim_dt = datetime.combine(fim, datetime.max.time()) if fim else None
+
+        query = db.session.query(
+            Produto.id,
+            Produto.nome,
+            Produto.codigo_interno,
+            Produto.ean,
+            func.sum(ItemPedido.valor_total_venda).label('valor_total'),
+            func.sum(ItemPedido.quantidade).label('quantidade_total'),
+            func.max(Pedido.data).label('ultima_venda')
+        ).join(ItemPedido, Produto.id == ItemPedido.produto_id)\
+         .join(Pedido, ItemPedido.pedido_id == Pedido.id)\
+         .filter(Pedido.status.in_([
+            StatusPedido.PAGAMENTO_APROVADO,
+            StatusPedido.COLETA_PARCIAL,
+            StatusPedido.COLETA_CONCLUIDA
+        ]))
+
+        if termo:
+            like = f"%{termo}%"
+            query = query.filter(
+                Produto.nome.ilike(like) |
+                Produto.codigo_interno.ilike(like) |
+                Produto.ean.ilike(like)
+            )
+
+        if inicio_dt:
+            query = query.filter(Pedido.data >= inicio_dt)
+        if fim_dt:
+            query = query.filter(Pedido.data <= fim_dt)
+
+        resultados_query = query.group_by(
+            Produto.id, Produto.nome, Produto.codigo_interno, Produto.ean
+        ).order_by(desc(func.sum(ItemPedido.valor_total_venda)))\
+         .limit(limite)\
+         .all()
+
+        resultados = []
+        for item in resultados_query:
+            quantidade_total = int(item.quantidade_total or 0)
+            valor_total = float(item.valor_total or 0)
+            preco_medio = valor_total / quantidade_total if quantidade_total else 0.0
+            ultima_venda = item.ultima_venda.strftime('%d/%m/%Y') if item.ultima_venda else None
+            resultados.append({
+                'id': item.id,
+                'nome': item.nome,
+                'codigo_interno': item.codigo_interno,
+                'ean': item.ean,
+                'quantidade_total': quantidade_total,
+                'valor_total': valor_total,
+                'preco_medio': preco_medio,
+                'ultima_venda': ultima_venda
+            })
+
+        intervalo = {
+            'inicio': inicio.strftime('%d/%m/%Y') if inicio else None,
+            'fim': fim.strftime('%d/%m/%Y') if fim else None
+        }
+
+        return resultados, intervalo
     
     @staticmethod
     def get_pedidos_cliente(cliente_id):

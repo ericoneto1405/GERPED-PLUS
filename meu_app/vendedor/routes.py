@@ -168,3 +168,38 @@ def api_precos_cliente(cliente_id):
     """API para buscar últimos preços negociados por cliente"""
     precos = VendedorService.get_precos_negociados(cliente_id)
     return jsonify({'precos': precos})
+
+@vendedor_bp.route('/api/produtos-preco-medio')
+@login_obrigatorio
+@permissao_necessaria('acesso_clientes')
+@requires_vendedor
+def api_produtos_preco_medio():
+    """API para buscar preço médio de venda por produto em um período"""
+    termo = request.args.get('q', '').strip()
+    data_inicio = request.args.get('data_inicio', '')
+    data_fim = request.args.get('data_fim', '')
+    try:
+        limite = int(request.args.get('limite', 20))
+    except ValueError:
+        limite = 20
+    limite = max(1, min(limite, 50))
+
+    if not termo:
+        return jsonify({
+            'produtos': [],
+            'intervalo': {'inicio': None, 'fim': None},
+            'message': 'Informe um produto para buscar.'
+        })
+
+    produtos, intervalo = VendedorService.get_preco_medio_produtos(
+        termo,
+        data_inicio=data_inicio,
+        data_fim=data_fim,
+        limite=limite
+    )
+
+    return jsonify({
+        'produtos': produtos,
+        'intervalo': intervalo,
+        'termo': termo
+    })

@@ -844,6 +844,27 @@ button[type="submit"]:focus-visible,
     color: var(--text-secondary);
 }
 
+.shared-panel .queue-header h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.shared-panel .queue-header p {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.shared-panel .panel-badge {
+    background: #0f8b8d;
+    color: #fff;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 999px;
+    letter-spacing: 0.05em;
+}
+
 .shared-card {
     border-radius: 12px;
     border: 1px solid rgba(0,0,0,0.08);

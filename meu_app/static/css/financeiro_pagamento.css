@@ -829,6 +829,10 @@ button[type="submit"]:focus-visible,
     padding: 14px;
 }
 
+.recibo-queue + .shared-panel {
+    margin-top: 16px;
+}
+
 .shared-header {
     display: flex;
     justify-content: space-between;

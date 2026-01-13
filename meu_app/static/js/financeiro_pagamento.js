@@ -1274,23 +1274,11 @@ document.addEventListener('DOMContentLoaded', () => {
             bulkSelecting = true;
             const marcar = masterSelectCheckbox.checked;
             const todos = getSelecionarCheckboxes();
-            if (!marcar) {
-                todos.forEach((cb) => {
-                    cb.checked = false;
-                });
-                selecionadosValores.clear();
-            } else {
-                selecionadosValores.clear();
-                todos.forEach((cb) => {
-                    cb.checked = true;
-                    const rawValor = cb.dataset.valor;
-                    const valorNumero = rawValor ? Number(rawValor) : null;
-                    const checkboxId = cb.dataset.id;
-                    if (checkboxId && valorNumero !== null && !Number.isNaN(valorNumero)) {
-                        selecionadosValores.set(checkboxId, valorNumero);
-                    }
-                });
-            }
+            selecionadosValores.clear();
+            todos.forEach((cb) => {
+                cb.checked = marcar;
+                cb.dispatchEvent(new Event('change', { bubbles: true }));
+            });
             bulkSelecting = false;
             atualizarValorTotalSelecionados();
             atualizarMasterCheckboxEstado();

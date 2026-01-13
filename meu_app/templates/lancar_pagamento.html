@@ -160,6 +160,21 @@
                             </div>
                         </div>
 
+                        <div class="recibo-queue shared-panel" id="comprovantes-compartilhados">
+                            <div class="queue-header">
+                                <div>
+                                    <h4 style="margin:0;">Comprovantes compartilhados</h4>
+                                    <p style="margin: 4px 0 0; color: var(--text-secondary); font-size: 0.9rem;">
+                                        Disponíveis para reutilizar em outro pedido.
+                                    </p>
+                                </div>
+                                <span class="panel-badge" id="contadorComprovantesDisponiveis">0 ativos</span>
+                            </div>
+                            <div id="listaComprovantesDisponiveis" class="fila-lista" style="margin-top:12px;" aria-live="polite">
+                                <div class="fila-vazia">Nenhum comprovante compartilhado no momento.</div>
+                            </div>
+                        </div>
+
                     </fieldset>
 
                     <input type="hidden" name="id_transacao">

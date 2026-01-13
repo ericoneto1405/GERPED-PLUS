@@ -825,7 +825,7 @@ button[type="submit"]:focus-visible,
     margin-top: 12px;
     border-radius: 12px;
     border: 1px solid var(--border);
-    background: white;
+    background: var(--surface-muted);
     padding: 14px;
 }
 
@@ -848,7 +848,7 @@ button[type="submit"]:focus-visible,
     border-radius: 12px;
     border: 1px solid rgba(0,0,0,0.08);
     padding: 12px;
-    background: #fdfdfd;
+    background: #fff;
     display: flex;
     flex-direction: column;
     gap: 6px;

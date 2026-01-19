@@ -46,12 +46,24 @@
     <div class="date-range">
         <div class="form-group">
             <label for="data_inicio">Data Inicial:</label>
-            <input type="text" name="data_inicio" value="{{ data_inicio }}" id="data_inicio" class="form-control" placeholder="DD/MM/AAAA" inputmode="numeric" autocomplete="off">
+            <div class="date-input-wrapper">
+                <input type="text" name="data_inicio" value="{{ data_inicio }}" id="data_inicio" class="form-control" placeholder="DD/MM/AAAA" inputmode="numeric" autocomplete="off">
+                <button type="button" class="date-picker-btn" data-target="data_inicio" aria-label="Abrir calendário">
+                    <i class="bi bi-calendar-event icon-text"></i>
+                </button>
+                <input type="date" id="data_inicio_picker" class="date-picker-hidden" tabindex="-1" aria-hidden="true">
+            </div>
         </div>
 
         <div class="form-group">
             <label for="data_fim">Data Final:</label>
-            <input type="text" name="data_fim" value="{{ data_fim }}" id="data_fim" class="form-control" placeholder="DD/MM/AAAA" inputmode="numeric" autocomplete="off">
+            <div class="date-input-wrapper">
+                <input type="text" name="data_fim" value="{{ data_fim }}" id="data_fim" class="form-control" placeholder="DD/MM/AAAA" inputmode="numeric" autocomplete="off">
+                <button type="button" class="date-picker-btn" data-target="data_fim" aria-label="Abrir calendário">
+                    <i class="bi bi-calendar-event icon-text"></i>
+                </button>
+                <input type="date" id="data_fim_picker" class="date-picker-hidden" tabindex="-1" aria-hidden="true">
+            </div>
         </div>
 
         <div class="divider-text">OU</div>
@@ -116,6 +128,35 @@
         background: var(--accent-purple);
         border-color: transparent;
         color: #fff;
+    }
+
+    .date-input-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .date-picker-btn {
+        position: absolute;
+        right: 6px;
+        border: none;
+        background: transparent;
+        color: var(--text-muted);
+        padding: 4px 6px;
+        cursor: pointer;
+    }
+
+    .date-picker-btn:disabled {
+        cursor: not-allowed;
+        opacity: 0.5;
+    }
+
+    .date-picker-hidden {
+        position: absolute;
+        opacity: 0;
+        width: 1px;
+        height: 1px;
+        pointer-events: none;
     }
 
     .action-chip-primary:hover {
@@ -856,18 +897,76 @@ document.addEventListener('DOMContentLoaded', () => {
     const filtroStatus = document.getElementById('filtroStatus');
     const dataInicioInput = document.getElementById('data_inicio');
     const dataFimInput = document.getElementById('data_fim');
+    const dataInicioPicker = document.getElementById('data_inicio_picker');
+    const dataFimPicker = document.getElementById('data_fim_picker');
+    const datePickerButtons = Array.from(document.querySelectorAll('.date-picker-btn'));
     const mesAnoInput = document.getElementById('mes_ano');
     const buscaInput = document.getElementById('filtroPedidos');
 
     const inputs = [filtroStatus, dataInicioInput, dataFimInput, mesAnoInput, buscaInput];
+
+    function formatarDataBR(valorIso) {
+        if (!valorIso) return '';
+        const match = String(valorIso).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+        if (!match) return valorIso;
+        return `${match[3]}/${match[2]}/${match[1]}`;
+    }
+
+    function normalizarParaIso(valor) {
+        if (!valor) return '';
+        const raw = String(valor).trim();
+        const brMatch = raw.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+        if (brMatch) {
+            return `${brMatch[3]}-${brMatch[2]}-${brMatch[1]}`;
+        }
+        return raw;
+    }
+
+    function abrirPicker(targetInput, pickerInput) {
+        if (!targetInput || !pickerInput) return;
+        const valorIso = normalizarParaIso(targetInput.value);
+        if (valorIso.match(/^\d{4}-\d{2}-\d{2}$/)) {
+            pickerInput.value = valorIso;
+        }
+        if (typeof pickerInput.showPicker === 'function') {
+            pickerInput.showPicker();
+        } else {
+            pickerInput.focus();
+            pickerInput.click();
+        }
+    }
+
+    function configurarPickers() {
+        datePickerButtons.forEach((btn) => {
+            const targetId = btn.getAttribute('data-target');
+            const targetInput = document.getElementById(targetId);
+            const pickerInput = document.getElementById(`${targetId}_picker`);
+            btn.addEventListener('click', () => abrirPicker(targetInput, pickerInput));
+        });
+
+        if (dataInicioPicker && dataInicioInput) {
+            dataInicioPicker.addEventListener('change', () => {
+                dataInicioInput.value = formatarDataBR(dataInicioPicker.value);
+            });
+        }
+        if (dataFimPicker && dataFimInput) {
+            dataFimPicker.addEventListener('change', () => {
+                dataFimInput.value = formatarDataBR(dataFimPicker.value);
+            });
+        }
+    }
 
     function loadFilters() {
         try {
             const stored = JSON.parse(localStorage.getItem(storageKey));
             if (!stored) return;
             if (filtroStatus && !filtroStatus.value && stored.status) filtroStatus.value = stored.status;
-            if (dataInicioInput && !dataInicioInput.value && stored.data_inicio) dataInicioInput.value = stored.data_inicio;
-            if (dataFimInput && !dataFimInput.value && stored.data_fim) dataFimInput.value = stored.data_fim;
+            if (dataInicioInput && !dataInicioInput.value && stored.data_inicio) {
+                dataInicioInput.value = formatarDataBR(stored.data_inicio);
+            }
+            if (dataFimInput && !dataFimInput.value && stored.data_fim) {
+                dataFimInput.value = formatarDataBR(stored.data_fim);
+            }
             if (mesAnoInput && !mesAnoInput.value && stored.mes_ano) mesAnoInput.value = stored.mes_ano;
             if (buscaInput && !buscaInput.value && stored.busca) buscaInput.value = stored.busca;
         } catch (err) {
@@ -877,12 +976,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function normalizarDataInput(input) {
         if (!input) return;
-        const raw = (input.value || '').trim();
-        if (!raw) return;
-        const match = raw.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-        if (match) {
-            input.value = `${match[3]}-${match[2]}-${match[1]}`;
-        }
+        const valorIso = normalizarParaIso(input.value);
+        input.value = valorIso;
     }
 
     function saveFilters() {
@@ -897,6 +992,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     loadFilters();
+    configurarPickers();
+    if (dataInicioInput && dataInicioInput.value) {
+        dataInicioInput.value = formatarDataBR(dataInicioInput.value);
+    }
+    if (dataFimInput && dataFimInput.value) {
+        dataFimInput.value = formatarDataBR(dataFimInput.value);
+    }
     saveFilters(); // garante que valores atuais do servidor permaneçam
 
     inputs.forEach(el => {
@@ -1201,6 +1303,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const dataInicioInput = document.getElementById('data_inicio');
     const dataFimInput = document.getElementById('data_fim');
     const filtroStatus = document.getElementById('filtroStatus');
+    const datePickerButtons = Array.from(document.querySelectorAll('.date-picker-btn'));
+    const dataInicioPicker = document.getElementById('data_inicio_picker');
+    const dataFimPicker = document.getElementById('data_fim_picker');
     
     // Event listener para filtro de status
     if (filtroStatus) {
@@ -1213,6 +1318,11 @@ document.addEventListener('DOMContentLoaded', function() {
     if (mesAnoInput.value) {
         dataInicioInput.disabled = true;
         dataFimInput.disabled = true;
+        datePickerButtons.forEach(btn => {
+            btn.disabled = true;
+        });
+        if (dataInicioPicker) dataInicioPicker.disabled = true;
+        if (dataFimPicker) dataFimPicker.disabled = true;
     }
 
     // Ao selecionar um mês/ano, limpa e desabilita os campos de data e submete
@@ -1220,13 +1330,33 @@ document.addEventListener('DOMContentLoaded', function() {
         if (this.value) {
             dataInicioInput.value = '';
             dataFimInput.value = '';
+            datePickerButtons.forEach(btn => {
+                btn.disabled = true;
+            });
+            if (dataInicioPicker) dataInicioPicker.disabled = true;
+            if (dataFimPicker) dataFimPicker.disabled = true;
             this.form.submit();
+        } else {
+            dataInicioInput.disabled = false;
+            dataFimInput.disabled = false;
+            datePickerButtons.forEach(btn => {
+                btn.disabled = false;
+            });
+            if (dataInicioPicker) dataInicioPicker.disabled = false;
+            if (dataFimPicker) dataFimPicker.disabled = false;
         }
     });
 
     // Ao interagir com os campos de data, limpa o campo de mês/ano
     function limparMesAno() {
         mesAnoInput.value = '';
+        dataInicioInput.disabled = false;
+        dataFimInput.disabled = false;
+        datePickerButtons.forEach(btn => {
+            btn.disabled = false;
+        });
+        if (dataInicioPicker) dataInicioPicker.disabled = false;
+        if (dataFimPicker) dataFimPicker.disabled = false;
     }
 
     dataInicioInput.addEventListener('input', limparMesAno);

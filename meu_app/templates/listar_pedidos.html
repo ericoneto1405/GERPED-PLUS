@@ -749,7 +749,7 @@
     <tbody>
         {% for item in pedidos %}
         <tr id="linha-pedido-{{ item.pedido.id }}">
-            <td>#{{ item.pedido.id }}</td>
+            <td>#{{ item.pedido.numero_exibicao }}</td>
             <td>{{ item.pedido.cliente.nome }}</td>
             <td>{{ item.pedido.data | datetime_local('%d/%m/%Y %H:%M') }}</td>
             <td>{{ item.total_venda | currency_brl }}</td>

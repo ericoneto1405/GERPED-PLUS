@@ -7,7 +7,7 @@
 {% set titulo_pdf = ('pedido ' ~ nome_compacto ~ ' ' ~ data_para_titulo).strip() %}
 
 {% block title %}
-    {{ titulo_pdf if titulo_pdf|length else ('Pedido #' ~ pedido.id) }}
+    {{ titulo_pdf if titulo_pdf|length else ('Pedido #' ~ pedido.numero_exibicao) }}
 {% endblock %}
 
 {% block content %}
@@ -299,7 +299,7 @@
 
 <div class="pedido-detalhe-wrapper">
     <div class="page-header">
-        <h1><i class="bi bi-file-earmark-text icon-text"></i> Pedido #{{ pedido.id }}</h1>
+        <h1><i class="bi bi-file-earmark-text icon-text"></i> Pedido #{{ pedido.numero_exibicao }}</h1>
         <div class="acoes-header">
             {% if origem == 'financeiro' %}
                 <a class="botao-imprimir secondary" href="{{ url_for('financeiro.listar_financeiro') }}"><i class="bi bi-arrow-left icon-text"></i> Voltar para Financeiro</a>

@@ -148,7 +148,7 @@
     <h1><i class="bi bi-file-earmark-text icon-text"></i> Recibo de Coleta</h1>
 
     <div class="dados">
-        <p><strong>Pedido:</strong> #{{ coleta.pedido.id }}</p>
+        <p><strong>Pedido:</strong> #{{ coleta.pedido.numero_exibicao }}</p>
         <p><strong>Cliente:</strong> {{ coleta.pedido.cliente.nome }}</p>
         <p><strong>Data da Coleta:</strong> {{ coleta.data_coleta.strftime('%d/%m/%Y %H:%M') }}</p>
         <p><strong>Coletado por:</strong> {{ coleta.coletado_por }}</p>

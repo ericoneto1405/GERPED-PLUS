@@ -101,7 +101,7 @@
                 {% set total = item.total_pedido %}
                 {% set pago = item.total_pago %}
                 <tr class="align-middle pedido-row" data-details-id="details-{{ pedido.id }}">
-                    <td>#{{ pedido.id }}</td>
+                    <td>#{{ pedido.numero_exibicao }}</td>
                     <td class="cliente-cell">{{ pedido.cliente.nome }}</td>
                     <td>{{ pedido.data.strftime('%d/%m/%Y %H:%M') }}</td>
                     <td class="{% if item.status == 'PAGO' %}status-financeiro{% elif item.status == 'PAGO PARCIAL' %}status-coleta{% elif item.status == 'AGUARDANDO' %}status-pendente{% else %}status-secundario{% endif %}">
@@ -135,7 +135,7 @@
                 <tr class="collapse" id="details-{{ pedido.id }}">
                     <td colspan="8">
                         <div class="p-3 bg-light">
-                            <h5>Histórico de Pagamentos do Pedido #{{ pedido.id }}</h5>
+                            <h5>Histórico de Pagamentos do Pedido #{{ pedido.numero_exibicao }}</h5>
                             {% if pedido.pagamentos %}
                                 <table class="table table-sm">
                                     <thead>

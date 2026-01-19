@@ -93,6 +93,8 @@ class PedidoService:
             if itens_validos == 0:
                 db.session.rollback()
                 return False, "Nenhum item válido foi adicionado ao pedido", None
+
+            pedido.versao = (pedido.versao or 1) + 1
             
             db.session.commit()
             

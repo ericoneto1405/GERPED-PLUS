@@ -1,13 +1,13 @@
 {% extends 'base.html' %}
 
-{% block title %}Verificar Recibos - Pedido {{ pedido.id }}{% endblock %}
+{% block title %}Verificar Recibos - Pedido {{ pedido.numero_exibicao }}{% endblock %}
 
 {% block page_title %}Verificar Recibos{% endblock %}
 
 {% block content %}
 <div class="card">
     <div class="card-header">
-        <h3><i class="fas fa-receipt"></i> Recibos de Coleta - Pedido #{{ pedido.id }}</h3>
+        <h3><i class="fas fa-receipt"></i> Recibos de Coleta - Pedido #{{ pedido.numero_exibicao }}</h3>
         <p class="text-muted mb-0">
             <strong>Cliente:</strong> {{ pedido.cliente.nome }} | 
             <strong>Data do Pedido:</strong> {{ pedido.data.strftime('%d/%m/%Y') }}

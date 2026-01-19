@@ -60,6 +60,7 @@ def enum_values(enum_cls):
 
 class Pedido(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    versao = db.Column(db.Integer, nullable=False, default=1)
     cliente_id = db.Column(db.Integer, db.ForeignKey('cliente.id'), nullable=False)
     data = db.Column(db.DateTime, default=utcnow)
     status = db.Column(
@@ -114,6 +115,11 @@ class Pedido(db.Model):
                 return 'Pendente'
         else:
             return 'Sem Valor'
+
+    @property
+    def numero_exibicao(self):
+        versao = self.versao or 1
+        return f"{self.id} V.{versao}"
 
     def sincronizar_status_financeiro(self, total_pedido=None, total_pago=None):
         """

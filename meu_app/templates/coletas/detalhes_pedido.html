@@ -1,8 +1,8 @@
 {% extends 'base.html' %}
 
-{% block title %}Detalhes do Pedido {{ detalhes.pedido.id }}{% endblock %}
+{% block title %}Detalhes do Pedido {{ detalhes.pedido.numero_exibicao }}{% endblock %}
 
-{% block page_title %}Detalhes do Pedido {{ detalhes.pedido.id }}{% endblock %}
+{% block page_title %}Detalhes do Pedido {{ detalhes.pedido.numero_exibicao }}{% endblock %}
 
 {% block content %}
 <div class="row">
@@ -18,7 +18,7 @@
                 <table class="table table-borderless">
                     <tr>
                         <td><strong>ID:</strong></td>
-                        <td>{{ detalhes.pedido.id }}</td>
+                        <td>{{ detalhes.pedido.numero_exibicao }}</td>
                     </tr>
                     <tr>
                         <td><strong>Cliente:</strong></td>

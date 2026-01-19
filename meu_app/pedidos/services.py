@@ -192,14 +192,21 @@ class PedidoService:
             PedidoService._registrar_atividade(
                 tipo_atividade="Edição de Pedido",
                 titulo="Pedido Editado",
-                descricao=f"Pedido #{pedido.id} - Cliente: {cliente.nome} - Total: R$ {total_pedido:.2f}",
+                descricao=f"Pedido #{pedido.numero_exibicao} - Cliente: {cliente.nome} - Total: R$ {total_pedido:.2f}",
                 modulo="Pedidos",
-                dados_extras={"pedido_id": pedido.id, "cliente_id": cliente_id, "total": total_pedido}
+                dados_extras={
+                    "pedido_id": pedido.id,
+                    "cliente_id": cliente_id,
+                    "total": total_pedido,
+                    "versao": pedido.versao,
+                },
             )
             
-            current_app.logger.info(f"Pedido editado: #{pedido.id} - Cliente: {cliente.nome} - Total: R$ {total_pedido:.2f}")
+            current_app.logger.info(
+                f"Pedido editado: #{pedido.numero_exibicao} - Cliente: {cliente.nome} - Total: R$ {total_pedido:.2f}"
+            )
             
-            return True, f"Pedido #{pedido.id} editado com sucesso", pedido
+            return True, f"Pedido #{pedido.numero_exibicao} editado com sucesso", pedido
             
         except Exception as e:
             db.session.rollback()

@@ -182,6 +182,7 @@ class VendedorService:
             
             pedidos_detalhados.append({
                 'id': pedido.id,
+                'numero_exibicao': pedido.numero_exibicao,
                 'data': pedido.data,
                 'valor_total': float(valor_total_pedido),
                 'status': pedido.status.value if pedido.status else 'N/A',
@@ -681,6 +682,7 @@ class VendedorService:
             
             resultado.append({
                 'id': pedido.id,
+                'numero_exibicao': pedido.numero_exibicao,
                 'data': pedido.data.strftime('%d/%m/%Y'),
                 'valor_total': float(valor_total),
                 'status': pedido.status.value if pedido.status else 'N/A'

@@ -856,7 +856,7 @@ function carregarPedidos(clienteId) {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>${pedido.data}</td>
-                    <td>#${pedido.id}</td>
+                    <td>#${pedido.numero_exibicao || pedido.id}</td>
                     <td>R$ ${pedido.valor_total.toFixed(2)}</td>
                     <td><span class="badge">${pedido.status}</span></td>
                 `;

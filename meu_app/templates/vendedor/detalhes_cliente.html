@@ -139,7 +139,7 @@
                                             <td>
                                                 <a href="{{ url_for('pedidos.visualizar_pedido', pedido_id=pedido.id) }}" 
                                                    class="text-decoration-none">
-                                                    #{{ pedido.id }}
+                                                    #{{ pedido.numero_exibicao or pedido.id }}
                                                 </a>
                                             </td>
                                             <td>

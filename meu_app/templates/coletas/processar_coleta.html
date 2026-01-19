@@ -1,7 +1,7 @@
 
 {% extends "base.html" %}
 
-{% block title %}Processar Coleta - Pedido {{ detalhes.pedido.id }}{% endblock %}
+{% block title %}Processar Coleta - Pedido {{ detalhes.pedido.numero_exibicao }}{% endblock %}
 
 {% block extra_head %}
 <script src="https://cdn.jsdelivr.net/npm/imask@6.4.3/dist/imask.min.js" nonce="{{ nonce }}"></script>
@@ -152,7 +152,7 @@
 </style>
 {% endblock %}
 
-{% block page_title %}<i class="bi bi-box-seam icon-text"></i> Processar Coleta - Pedido #{{ detalhes.pedido.id }}{% endblock %}
+{% block page_title %}<i class="bi bi-box-seam icon-text"></i> Processar Coleta - Pedido #{{ detalhes.pedido.numero_exibicao }}{% endblock %}
 
 {% block content %}
 <div class="container-fluid">

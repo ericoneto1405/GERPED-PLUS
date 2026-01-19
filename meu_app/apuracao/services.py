@@ -760,6 +760,70 @@ class ApuracaoService:
                 'cpv_calculado': 0.0,
                 'pedidos_periodo': 0
             }
+
+    @staticmethod
+    def calcular_dados_periodo_por_pedido(mes: int, ano: int) -> Dict:
+        """
+        Calcula dados financeiros do período com base na data do pedido.
+
+        Este método é usado na previsão de verbas, considerando o mês/ano do
+        pedido em vez da data de pagamento.
+        """
+        try:
+            ApuracaoService._validar_periodo(mes, ano)
+
+            inicio_mes = datetime(ano, mes, 1)
+            ultimo_dia = monthrange(ano, mes)[1]
+            fim_mes = datetime(ano, mes, ultimo_dia, 23, 59, 59)
+
+            resumo = (
+                db.session.query(
+                    func.coalesce(func.sum(ItemPedido.valor_total_venda), 0).label('total_venda'),
+                    func.coalesce(
+                        func.sum(ItemPedido.quantidade * func.coalesce(Produto.preco_medio_compra, 0)),
+                        0,
+                    ).label('total_compra'),
+                    func.count(func.distinct(Pedido.id)).label('total_pedidos'),
+                )
+                .select_from(Pedido)
+                .outerjoin(ItemPedido, ItemPedido.pedido_id == Pedido.id)
+                .outerjoin(Produto, Produto.id == ItemPedido.produto_id)
+                .filter(
+                    Pedido.data >= inicio_mes,
+                    Pedido.data <= fim_mes,
+                    Pedido.status != StatusPedido.CANCELADO,
+                )
+                .one()
+            )
+
+            receita_calculada = float(resumo.total_venda or 0)
+            cpv_calculado = float(resumo.total_compra or 0)
+            pedidos_periodo = int(resumo.total_pedidos or 0)
+
+            return {
+                'receita_calculada': receita_calculada,
+                'cpv_calculado': cpv_calculado,
+                'pedidos_periodo': pedidos_periodo,
+            }
+
+        except ApuracaoValidationError as e:
+            current_app.logger.error(
+                f"Erro de validação em calcular_dados_periodo_por_pedido: {str(e)}"
+            )
+            return {
+                'receita_calculada': 0.0,
+                'cpv_calculado': 0.0,
+                'pedidos_periodo': 0,
+            }
+        except Exception as e:
+            current_app.logger.error(
+                f"Erro inesperado em calcular_dados_periodo_por_pedido: {str(e)}"
+            )
+            return {
+                'receita_calculada': 0.0,
+                'cpv_calculado': 0.0,
+                'pedidos_periodo': 0,
+            }
     
     @staticmethod
     def criar_apuracao(mes: int, ano: int, dados: Dict) -> Tuple[bool, str, Optional[Apuracao]]:

@@ -187,8 +187,8 @@ def salvar_previsao():
         verba_time_ambev = request.form.get('verba_time_ambev', 0, type=float)
         verba_outras_receitas = request.form.get('verba_outras_receitas', 0, type=float)
         
-        # Calcular dados do período para preencher campos obrigatórios
-        dados_periodo = ApuracaoService.calcular_dados_periodo(mes, ano)
+        # Calcular dados do período por data do pedido para previsão
+        dados_periodo = ApuracaoService.calcular_dados_periodo_por_pedido(mes, ano)
         
         # Criar apuração (previsão = definitivo False)
         nova_apuracao = Apuracao(

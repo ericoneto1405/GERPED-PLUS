@@ -1303,9 +1303,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const dataInicioInput = document.getElementById('data_inicio');
     const dataFimInput = document.getElementById('data_fim');
     const filtroStatus = document.getElementById('filtroStatus');
-    const datePickerButtons = Array.from(document.querySelectorAll('.date-picker-btn'));
-    const dataInicioPicker = document.getElementById('data_inicio_picker');
-    const dataFimPicker = document.getElementById('data_fim_picker');
     
     // Event listener para filtro de status
     if (filtroStatus) {
@@ -1314,49 +1311,18 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Se um mês/ano já estiver selecionado, desabilita os campos de data
-    if (mesAnoInput.value) {
-        dataInicioInput.disabled = true;
-        dataFimInput.disabled = true;
-        datePickerButtons.forEach(btn => {
-            btn.disabled = true;
-        });
-        if (dataInicioPicker) dataInicioPicker.disabled = true;
-        if (dataFimPicker) dataFimPicker.disabled = true;
-    }
-
-    // Ao selecionar um mês/ano, limpa e desabilita os campos de data e submete
+    // Ao selecionar um mês/ano, limpa os campos de data e submete
     mesAnoInput.addEventListener('change', function() {
         if (this.value) {
             dataInicioInput.value = '';
             dataFimInput.value = '';
-            datePickerButtons.forEach(btn => {
-                btn.disabled = true;
-            });
-            if (dataInicioPicker) dataInicioPicker.disabled = true;
-            if (dataFimPicker) dataFimPicker.disabled = true;
             this.form.submit();
-        } else {
-            dataInicioInput.disabled = false;
-            dataFimInput.disabled = false;
-            datePickerButtons.forEach(btn => {
-                btn.disabled = false;
-            });
-            if (dataInicioPicker) dataInicioPicker.disabled = false;
-            if (dataFimPicker) dataFimPicker.disabled = false;
         }
     });
 
     // Ao interagir com os campos de data, limpa o campo de mês/ano
     function limparMesAno() {
         mesAnoInput.value = '';
-        dataInicioInput.disabled = false;
-        dataFimInput.disabled = false;
-        datePickerButtons.forEach(btn => {
-            btn.disabled = false;
-        });
-        if (dataInicioPicker) dataInicioPicker.disabled = false;
-        if (dataFimPicker) dataFimPicker.disabled = false;
     }
 
     dataInicioInput.addEventListener('input', limparMesAno);

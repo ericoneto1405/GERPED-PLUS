@@ -516,7 +516,6 @@ function calcularSimulacao() {
         catData.receita += subtotal;
         catData.custo += custo;
         catSim[cat] = catData;
-        ensureCategoriaConfig(cat);
 
         linha.querySelector('.sub-cell').textContent = formatCurrency(subtotal);
         linha.querySelector('.custo-cell').textContent = formatCurrency(custo);
@@ -592,15 +591,11 @@ function calcularSimulacao() {
     // Indicador final
     const painel = document.getElementById('painelResultado');
     const saldoEl = document.getElementById('valorSaldo');
-    const margemEl = document.getElementById('valorMargemTotal');
-    const verbaEl = document.getElementById('valorVerbasConsideradas');
     const statusEl = painel.querySelector('.resultado-status');
     const textoExplicacao = document.getElementById('textoExplicacao');
     const consumoLabel = document.getElementById('consumoVerbaLabel');
     const consumoFill = document.getElementById('consumoVerbaFill');
 
-    if (margemEl) margemEl.textContent = formatCurrency(margemTotal);
-    if (verbaEl) verbaEl.textContent = formatCurrency(totalVerbas);
     saldoEl.textContent = formatCurrency(margemLiquida);
 
     let status = 'Atenção';

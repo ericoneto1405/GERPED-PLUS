@@ -9,6 +9,25 @@
         <a href="{{ url_for('pedidos.listar_pedidos') }}" class="btn btn-secondary"><i class="bi bi-arrow-left icon-text"></i> Voltar</a>
     </div>
 
+    <style>
+        .pedido-itens-header,
+        .pedido-item-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: nowrap;
+            width: 100%;
+        }
+        .pedido-col-produto { flex: 1 1 0; min-width: 220px; }
+        .pedido-col-qtd { width: 80px; }
+        .pedido-col-preco,
+        .pedido-col-compra,
+        .pedido-col-invest,
+        .pedido-col-total { width: 110px; }
+        .pedido-col-percent { width: 70px; }
+        .pedido-col-acao { width: 34px; }
+    </style>
+
     <form method="POST" id="formPedido" action="{{ url_for('pedidos.novo_pedido') }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="form-group mb-3">
@@ -24,15 +43,15 @@
 
         <h5>Itens do Pedido</h5>
 
-        <div class="d-flex gap-2 mb-1 align-items-center flex-wrap text-muted small">
-            <div style="width: 280px;">Produto</div>
-            <div style="width: 90px;">Qtd</div>
-            <div style="width: 120px;">Pr. negociado</div>
-            <div style="width: 120px;">Pr. compra</div>
-            <div style="width: 120px;">Investimento</div>
-            <div style="width: 110px;">Total item</div>
-            <div style="width: 70px;">%</div>
-            <div style="width: 32px;"></div>
+        <div class="pedido-itens-header mb-1 text-muted small">
+            <div class="pedido-col-produto">Produto</div>
+            <div class="pedido-col-qtd">Qtd</div>
+            <div class="pedido-col-preco">Pr. negociado</div>
+            <div class="pedido-col-compra">Pr. compra</div>
+            <div class="pedido-col-invest">Investimento</div>
+            <div class="pedido-col-total">Total item</div>
+            <div class="pedido-col-percent">%</div>
+            <div class="pedido-col-acao"></div>
         </div>
 
         <div id="itens" class="item-container"></div>
@@ -182,31 +201,33 @@
             }
 
             const linha = document.createElement('div');
-            linha.className = 'd-flex gap-2 mb-2 align-items-center flex-wrap';
+            linha.className = 'pedido-item-row mb-2';
             linha.setAttribute('data-item-row', '');
             linha.innerHTML = `
-                <div style="width: 280px;">
+                <div class="pedido-col-produto">
                     <select name="produto_id" class="form-control select2-produto" required></select>
                 </div>
-                <div style="width: 90px;">
+                <div class="pedido-col-qtd">
                     <input type="number" name="quantidade" class="form-control" placeholder="Qtd" min="1" required>
                 </div>
-                <div style="width: 120px;">
+                <div class="pedido-col-preco">
                     <input type="text" name="preco_venda" class="form-control preco-input" placeholder="Preço Venda" inputmode="decimal" data-requer-centavos="true" required>
                 </div>
-                <div style="width: 120px;">
+                <div class="pedido-col-compra">
                     <input type="text" class="form-control" placeholder="Preço Compra" data-field="preco-compra" readonly tabindex="-1" aria-label="Preço médio de compra">
                 </div>
-                <div style="width: 120px;">
+                <div class="pedido-col-invest">
                     <input type="text" class="form-control" placeholder="Investimento" data-field="investimento" readonly tabindex="-1" aria-label="Investimento">
                 </div>
-                <div style="width: 110px;">
+                <div class="pedido-col-total">
                     <input type="text" class="form-control" placeholder="Total item" data-field="total-item" readonly tabindex="-1" aria-label="Total do item">
                 </div>
-                <div style="width: 70px;">
+                <div class="pedido-col-percent">
                     <input type="text" class="form-control text-center" data-field="percentual-item" value="0%" readonly tabindex="-1" aria-label="Percentual do investimento">
                 </div>
-                <button type="button" class="btn btn-danger btn-sm" data-action="remove-item" aria-label="Remover item"><i class="bi bi-trash icon-text"></i></button>
+                <div class="pedido-col-acao">
+                    <button type="button" class="btn btn-danger btn-sm" data-action="remove-item" aria-label="Remover item"><i class="bi bi-trash icon-text"></i></button>
+                </div>
             `;
 
             container.appendChild(linha);

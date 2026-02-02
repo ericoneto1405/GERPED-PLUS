@@ -25,7 +25,7 @@
         <h5>Itens do Pedido</h5>
 
         <div class="d-flex gap-2 mb-1 align-items-center flex-wrap text-muted small">
-            <div class="flex-grow-1">Produto</div>
+            <div style="width: 280px;">Produto</div>
             <div style="width: 90px;">Qtd</div>
             <div style="width: 120px;">Pr. negociado</div>
             <div style="width: 120px;">Pr. compra</div>
@@ -184,7 +184,7 @@
             linha.className = 'd-flex gap-2 mb-2 align-items-center flex-wrap';
             linha.setAttribute('data-item-row', '');
             linha.innerHTML = `
-                <div class="flex-grow-1">
+                <div style="width: 280px;">
                     <select name="produto_id" class="form-control select2-produto" required></select>
                 </div>
                 <div style="width: 90px;">

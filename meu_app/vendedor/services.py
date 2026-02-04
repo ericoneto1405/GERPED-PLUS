@@ -12,10 +12,9 @@ class VendedorService:
         """
         Organiza clientes em 4 categorias baseadas na data da última compra
         """
-        from meu_app.models import StatusPedido
         hoje = local_now_naive().date()
         
-        # Buscar todos os clientes com dados de última compra (apenas pedidos completamente pagos)
+        # Buscar todos os clientes com dados de última compra (apenas pedidos liberados pelo comercial)
         # Primeiro, buscar a data da última compra de cada cliente
         clientes_ultima_compra = db.session.query(
             Cliente.id,
@@ -24,26 +23,17 @@ class VendedorService:
             Cliente.telefone,
             func.max(Pedido.data).label('ultima_compra')
         ).join(Pedido, Cliente.id == Pedido.cliente_id)\
-         .filter(Pedido.status.in_([
-            StatusPedido.PAGAMENTO_APROVADO,
-            StatusPedido.COLETA_PARCIAL,
-            StatusPedido.COLETA_CONCLUIDA
-        ]))\
+         .filter(Pedido.confirmado_comercial == True)\
          .group_by(Cliente.id, Cliente.nome, Cliente.fantasia, Cliente.telefone)\
          .all()
         
         # Para cada cliente, buscar o valor da última compra
         clientes_com_pedidos = []
         for cliente in clientes_ultima_compra:
-            # Buscar o valor total do último pedido (apenas pedidos completamente pagos)
+            # Buscar o valor total do último pedido (apenas pedidos liberados pelo comercial)
             ultimo_pedido = db.session.query(Pedido).filter(
                 Pedido.cliente_id == cliente.id,
-                Pedido.data == cliente.ultima_compra,
-                Pedido.status.in_([
-                    StatusPedido.PAGAMENTO_APROVADO,
-                    StatusPedido.COLETA_PARCIAL,
-                    StatusPedido.COLETA_CONCLUIDA
-                ])
+                Pedido.data == cliente.ultima_compra
             ).first()
             
             if ultimo_pedido:
@@ -122,15 +112,10 @@ class VendedorService:
         """
         cliente = Cliente.query.get_or_404(cliente_id)
         
-        # Buscar apenas pedidos completamente pagos do cliente
-        from meu_app.models import StatusPedido
+        # Buscar apenas pedidos liberados pelo comercial do cliente
         
         pedidos = Pedido.query.filter_by(cliente_id=cliente_id)\
-                             .filter(Pedido.status.in_([
-                                StatusPedido.PAGAMENTO_APROVADO,
-                                StatusPedido.COLETA_PARCIAL,
-                                StatusPedido.COLETA_CONCLUIDA
-                             ]))\
+                             .filter(Pedido.confirmado_comercial == True)\
                              .order_by(desc(Pedido.data)).all()
         
         # Calcular estatísticas
@@ -144,17 +129,13 @@ class VendedorService:
         total_pedidos = len(pedidos)
         ticket_medio = total_gasto / total_pedidos if total_pedidos > 0 else 0
         
-        # Produtos diferentes comprados (apenas em pedidos completamente pagos)
+        # Produtos diferentes comprados (apenas em pedidos liberados pelo comercial)
         produtos_diferentes = db.session.query(
             func.count(func.distinct(ItemPedido.produto_id))
         ).join(Pedido, ItemPedido.pedido_id == Pedido.id)\
          .filter(
             Pedido.cliente_id == cliente_id,
-            Pedido.status.in_([
-                StatusPedido.PAGAMENTO_APROVADO,
-                StatusPedido.COLETA_PARCIAL,
-                StatusPedido.COLETA_CONCLUIDA
-            ])
+            Pedido.confirmado_comercial == True
          ).scalar() or 0
         
         # Primeiro e último pedido
@@ -250,19 +231,13 @@ class VendedorService:
                 filtro_data_inicio = datetime.combine(filtro, datetime.min.time())
                 filtro_data_fim = datetime.combine(hoje, datetime.max.time())
         
-        # Query base - buscar clientes com pedidos completamente pagos
-        from meu_app.models import StatusPedido
-        
+        # Query base - buscar clientes com pedidos liberados pelo comercial
         query = db.session.query(
             Cliente.id,
             Cliente.nome,
             func.count(Pedido.id).label('total_pedidos')
         ).join(Pedido, Cliente.id == Pedido.cliente_id)\
-         .filter(Pedido.status.in_([
-            StatusPedido.PAGAMENTO_APROVADO,
-            StatusPedido.COLETA_PARCIAL,
-            StatusPedido.COLETA_CONCLUIDA
-        ]))
+         .filter(Pedido.confirmado_comercial == True)
         
         if filtro_data_inicio:
             query = query.filter(Pedido.data >= filtro_data_inicio)
@@ -274,17 +249,13 @@ class VendedorService:
         # Calcular valores totais e custos para cada cliente
         clientes_com_valores = []
         for cliente_data in clientes_data:
-            # Calcular valor total (receita) - apenas pedidos completamente pagos
+            # Calcular valor total (receita) - apenas pedidos liberados pelo comercial
             valor_total = db.session.query(
                 func.sum(ItemPedido.valor_total_venda)
             ).join(Pedido, ItemPedido.pedido_id == Pedido.id)\
              .filter(
                 Pedido.cliente_id == cliente_data.id,
-                Pedido.status.in_([
-                    StatusPedido.PAGAMENTO_APROVADO,
-                    StatusPedido.COLETA_PARCIAL,
-                    StatusPedido.COLETA_CONCLUIDA
-                ])
+                Pedido.confirmado_comercial == True
             )
             
             if filtro_data_inicio:
@@ -294,18 +265,14 @@ class VendedorService:
             
             valor_total = valor_total.scalar() or 0
             
-            # Calcular custo total (CPV) - apenas pedidos completamente pagos
+            # Calcular custo total (CPV) - apenas pedidos liberados pelo comercial
             custo_total = db.session.query(
                 func.sum(ItemPedido.quantidade * func.coalesce(Produto.preco_medio_compra, 0))
             ).join(Pedido, ItemPedido.pedido_id == Pedido.id)\
              .outerjoin(Produto, Produto.id == ItemPedido.produto_id)\
              .filter(
                 Pedido.cliente_id == cliente_data.id,
-                Pedido.status.in_([
-                    StatusPedido.PAGAMENTO_APROVADO,
-                    StatusPedido.COLETA_PARCIAL,
-                    StatusPedido.COLETA_CONCLUIDA
-                ])
+                Pedido.confirmado_comercial == True
             )
             
             if filtro_data_inicio:
@@ -392,22 +359,17 @@ class VendedorService:
         """
         Retorna resumo geral do dashboard
         """
-        from meu_app.models import StatusPedido
         hoje = local_now_naive().date()
         
         # Total de clientes
         total_clientes = Cliente.query.count()
         
-        # Clientes com última compra (apenas pedidos completamente pagos)
+        # Clientes com última compra (apenas pedidos liberados pelo comercial)
         clientes_ultima_compra = db.session.query(
             Cliente.id,
             func.max(Pedido.data).label('ultima_compra')
         ).join(Pedido, Cliente.id == Pedido.cliente_id)\
-         .filter(Pedido.status.in_([
-            StatusPedido.PAGAMENTO_APROVADO,
-            StatusPedido.COLETA_PARCIAL,
-            StatusPedido.COLETA_CONCLUIDA
-        ]))\
+         .filter(Pedido.confirmado_comercial == True)\
          .group_by(Cliente.id).all()
         
         # Categorizar por período
@@ -441,10 +403,9 @@ class VendedorService:
         Retorna lista de clientes baseado no período sem comprar
         periodo: 'todos', '7', '15', '30', 'fieis'
         """
-        from meu_app.models import StatusPedido
         hoje = local_now_naive().date()
         
-        # Buscar clientes com última compra (apenas pedidos completamente pagos)
+        # Buscar clientes com última compra (apenas pedidos liberados pelo comercial)
         clientes_query = db.session.query(
             Cliente.id,
             Cliente.nome,
@@ -452,11 +413,7 @@ class VendedorService:
             Cliente.telefone,
             func.max(Pedido.data).label('ultima_compra')
         ).join(Pedido, Cliente.id == Pedido.cliente_id)\
-         .filter(Pedido.status.in_([
-            StatusPedido.PAGAMENTO_APROVADO,
-            StatusPedido.COLETA_PARCIAL,
-            StatusPedido.COLETA_CONCLUIDA
-        ]))\
+         .filter(Pedido.confirmado_comercial == True)\
          .group_by(Cliente.id, Cliente.nome, Cliente.fantasia, Cliente.telefone)
         
         clientes = clientes_query.all()
@@ -484,11 +441,7 @@ class VendedorService:
         limite_fieis = 5
         for cliente in clientes:
             ultimo_pedido = Pedido.query.filter_by(cliente_id=cliente.id)\
-                                        .filter(Pedido.status.in_([
-                                            StatusPedido.PAGAMENTO_APROVADO,
-                                            StatusPedido.COLETA_PARCIAL,
-                                            StatusPedido.COLETA_CONCLUIDA
-                                        ]))\
+                                        .filter(Pedido.confirmado_comercial == True)\
                                         .order_by(Pedido.data.desc()).first()
             
             if ultimo_pedido:
@@ -501,11 +454,7 @@ class VendedorService:
             dias_sem_comprar = (hoje - cliente.ultima_compra.date()).days
 
             pedidos_cliente = Pedido.query.filter_by(cliente_id=cliente.id)\
-                                          .filter(Pedido.status.in_([
-                                              StatusPedido.PAGAMENTO_APROVADO,
-                                              StatusPedido.COLETA_PARCIAL,
-                                              StatusPedido.COLETA_CONCLUIDA
-                                          ]))\
+                                          .filter(Pedido.confirmado_comercial == True)\
                                           .order_by(Pedido.data.desc()).all()
 
             recorrencia_media = None
@@ -541,9 +490,8 @@ class VendedorService:
     @staticmethod
     def get_ranking_produtos(limite=10, data_inicio=None, data_fim=None):
         """
-        Retorna ranking de produtos por valor vendido (apenas pedidos completamente pagos)
+        Retorna ranking de produtos por valor vendido (apenas pedidos liberados pelo comercial)
         """
-        from meu_app.models import StatusPedido
         inicio = VendedorService._parse_data_param(data_inicio)
         fim = VendedorService._parse_data_param(data_fim)
         if inicio and fim and inicio > fim:
@@ -558,11 +506,7 @@ class VendedorService:
             func.sum(ItemPedido.quantidade).label('quantidade_total')
         ).join(ItemPedido, Produto.id == ItemPedido.produto_id)\
          .join(Pedido, ItemPedido.pedido_id == Pedido.id)\
-         .filter(Pedido.status.in_([
-            StatusPedido.PAGAMENTO_APROVADO,
-            StatusPedido.COLETA_PARCIAL,
-            StatusPedido.COLETA_CONCLUIDA
-        ]))
+         .filter(Pedido.confirmado_comercial == True)
 
         if inicio_dt:
             ranking_query = ranking_query.filter(Pedido.data >= inicio_dt)
@@ -591,7 +535,6 @@ class VendedorService:
         """
         Retorna preço médio de venda por produto em um intervalo.
         """
-        from meu_app.models import StatusPedido
         termo = (termo or '').strip()
 
         inicio = VendedorService._parse_data_param(data_inicio)
@@ -611,11 +554,7 @@ class VendedorService:
             func.max(Pedido.data).label('ultima_venda')
         ).join(ItemPedido, Produto.id == ItemPedido.produto_id)\
          .join(Pedido, ItemPedido.pedido_id == Pedido.id)\
-         .filter(Pedido.status.in_([
-            StatusPedido.PAGAMENTO_APROVADO,
-            StatusPedido.COLETA_PARCIAL,
-            StatusPedido.COLETA_CONCLUIDA
-        ]))
+         .filter(Pedido.confirmado_comercial == True)
 
         if termo:
             like = f"%{termo}%"
@@ -663,15 +602,10 @@ class VendedorService:
     @staticmethod
     def get_pedidos_cliente(cliente_id):
         """
-        Retorna lista de pedidos de um cliente (apenas pedidos completamente pagos)
+        Retorna lista de pedidos de um cliente (apenas pedidos liberados pelo comercial)
         """
-        from meu_app.models import StatusPedido
         pedidos = Pedido.query.filter_by(cliente_id=cliente_id)\
-                             .filter(Pedido.status.in_([
-                                StatusPedido.PAGAMENTO_APROVADO,
-                                StatusPedido.COLETA_PARCIAL,
-                                StatusPedido.COLETA_CONCLUIDA
-                             ]))\
+                             .filter(Pedido.confirmado_comercial == True)\
                              .order_by(desc(Pedido.data)).all()
         
         resultado = []
@@ -693,9 +627,8 @@ class VendedorService:
     @staticmethod
     def get_produtos_cliente(cliente_id):
         """
-        Retorna lista de produtos compilados comprados por um cliente (apenas pedidos completamente pagos)
+        Retorna lista de produtos compilados comprados por um cliente (apenas pedidos liberados pelo comercial)
         """
-        from meu_app.models import StatusPedido
         produtos = db.session.query(
             Produto.nome,
             func.sum(ItemPedido.quantidade).label('quantidade_total'),
@@ -705,11 +638,7 @@ class VendedorService:
          .join(Pedido, ItemPedido.pedido_id == Pedido.id)\
          .filter(
             Pedido.cliente_id == cliente_id,
-            Pedido.status.in_([
-                StatusPedido.PAGAMENTO_APROVADO,
-                StatusPedido.COLETA_PARCIAL,
-                StatusPedido.COLETA_CONCLUIDA
-            ])
+            Pedido.confirmado_comercial == True
          )\
          .group_by(Produto.nome)\
          .order_by(desc(func.sum(ItemPedido.quantidade)))\
@@ -727,7 +656,6 @@ class VendedorService:
         """
         Retorna os últimos preços negociados por produto para um cliente
         """
-        from meu_app.models import StatusPedido
         itens = db.session.query(
             Produto.nome.label('produto'),
             ItemPedido.preco_venda.label('preco'),
@@ -736,11 +664,7 @@ class VendedorService:
          .join(Pedido, ItemPedido.pedido_id == Pedido.id)\
          .filter(
             Pedido.cliente_id == cliente_id,
-            Pedido.status.in_([
-                StatusPedido.PAGAMENTO_APROVADO,
-                StatusPedido.COLETA_PARCIAL,
-                StatusPedido.COLETA_CONCLUIDA
-            ])
+            Pedido.confirmado_comercial == True
          )\
          .order_by(desc(Pedido.data), desc(ItemPedido.id))\
          .limit(limite)\

@@ -3,16 +3,37 @@ Serviços para o módulo de estoques
 Contém toda a lógica de negócio separada das rotas
 """
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Optional, Tuple
 
 from flask import current_app, session
 
 from ..models import LogAtividade, MovimentacaoEstoque, Produto, Estoque, db
-from ..time_utils import now_utc
+from ..time_utils import now_utc, _get_timezone
 
 class EstoqueService:
     """Serviço para operações relacionadas a estoques"""
+
+    @staticmethod
+    def _normalizar_data_entrada(data_entrada: Optional[str]) -> datetime:
+        """
+        Normaliza a data de entrada para UTC (naive) usando timezone explícito.
+        - Se vier com offset/UTC, converte para UTC.
+        - Se vier sem timezone, assume APP_TIMEZONE.
+        """
+        if not data_entrada:
+            return now_utc().replace(tzinfo=None)
+        try:
+            dt = datetime.fromisoformat(data_entrada.replace('Z', '+00:00'))
+        except ValueError:
+            return now_utc().replace(tzinfo=None)
+        if dt.tzinfo is None or dt.tzinfo.utcoffset(dt) is None:
+            tz = _get_timezone()
+            if hasattr(tz, 'localize'):
+                dt = tz.localize(dt)
+            else:
+                dt = dt.replace(tzinfo=tz)
+        return dt.astimezone(timezone.utc).replace(tzinfo=None)
     
     @staticmethod
     def criar_estoque(produto_id: int, quantidade: int, data_entrada: str, conferente: str = None, status: str = 'Contagem', observacoes: str = '') -> Tuple[bool, str, Optional[Estoque]]:
@@ -46,16 +67,8 @@ class EstoqueService:
             if estoque_existente:
                 return False, "Já existe um registro de estoque para este produto", None
             
-            # Converter data_entrada de string para datetime
-            try:
-                if data_entrada:
-                    data_entrada_dt = datetime.fromisoformat(
-                        data_entrada.replace('Z', '+00:00')
-                    )
-                else:
-                    data_entrada_dt = now_utc()
-            except ValueError:
-                data_entrada_dt = now_utc()
+            # Converter data_entrada para UTC (naive)
+            data_entrada_dt = EstoqueService._normalizar_data_entrada(data_entrada)
             
             # Usar nome do usuário logado como conferente se não fornecido
             if not conferente:
@@ -130,16 +143,8 @@ class EstoqueService:
             # Guardar quantidade anterior para movimentação
             quantidade_anterior = estoque.quantidade
             
-            # Converter data_entrada de string para datetime
-            try:
-                if data_entrada:
-                    data_entrada_dt = datetime.fromisoformat(
-                        data_entrada.replace('Z', '+00:00')
-                    )
-                else:
-                    data_entrada_dt = now_utc()
-            except ValueError:
-                data_entrada_dt = now_utc()
+            # Converter data_entrada para UTC (naive)
+            data_entrada_dt = EstoqueService._normalizar_data_entrada(data_entrada)
             
             # Atualizar dados
             estoque.quantidade = quantidade
@@ -281,16 +286,8 @@ class EstoqueService:
             # Guardar quantidade anterior para movimentação
             quantidade_anterior = estoque.quantidade
             
-            # Converter data_entrada de string para datetime
-            try:
-                if data_entrada:
-                    data_entrada_dt = datetime.fromisoformat(
-                        data_entrada.replace('Z', '+00:00')
-                    )
-                else:
-                    data_entrada_dt = now_utc()
-            except ValueError:
-                data_entrada_dt = now_utc()
+            # Converter data_entrada para UTC (naive)
+            data_entrada_dt = EstoqueService._normalizar_data_entrada(data_entrada)
             
             # Usar nome do usuário logado como conferente se não fornecido
             if not conferente:

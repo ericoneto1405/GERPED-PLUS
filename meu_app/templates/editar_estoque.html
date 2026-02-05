@@ -42,7 +42,7 @@
             </div>
 
             <div class="form-group">
-                <label for="data_entrada">Data de Entrada</label>
+                <label for="data_entrada">Data de Entrada/Inventário</label>
                 <input type="datetime-local" name="data_entrada" id="data_entrada" class="form-control" 
                        required value="{{ estoque.data_entrada.strftime('%Y-%m-%dT%H:%M') if estoque.data_entrada else '' }}">
             </div>
@@ -145,6 +145,21 @@
 <script nonce="{{ nonce }}" src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/i18n/pt-BR.js"></script>
 <script nonce="{{ nonce }}">
 $(document).ready(function() {
+    function formatarDataHoraLocal(date) {
+        const pad = (num) => String(num).padStart(2, '0');
+        const ano = date.getFullYear();
+        const mes = pad(date.getMonth() + 1);
+        const dia = pad(date.getDate());
+        const hora = pad(date.getHours());
+        const min = pad(date.getMinutes());
+        return `${ano}-${mes}-${dia}T${hora}:${min}`;
+    }
+
+    function atualizarDataEntradaAgora() {
+        const agora = new Date();
+        $('#data_entrada').val(formatarDataHoraLocal(agora));
+    }
+
     // Inicializar Select2 para melhor experiência
     $('#produto_id').select2({
         placeholder: 'Selecione um produto',
@@ -152,9 +167,13 @@ $(document).ready(function() {
         width: '100%',
         language: 'pt-BR'
     });
+
+    // Atualiza a data automaticamente com o horário de edição
+    atualizarDataEntradaAgora();
     
     // Validação do formulário
     $('form').on('submit', function(e) {
+        atualizarDataEntradaAgora();
         var produto = $('#produto_id').val();
         var quantidade = $('#quantidade').val();
         var data_entrada = $('#data_entrada').val();

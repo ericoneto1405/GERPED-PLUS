@@ -9,6 +9,7 @@ import re
 from typing import Optional, List
 from pathlib import Path
 import mimetypes
+from ..models import Coleta, db
 
 coletas_bp = Blueprint('coletas', __name__, url_prefix='/coletas')
 from .services.coleta_service import ColetaService
@@ -279,6 +280,7 @@ def processar_coleta(pedido_id):
                             break
                 
                 coleta_data = {
+                    'coleta_id': coleta.id,
                     'pedido_id': pedido_id,
                     'data_coleta': coleta.data_coleta if hasattr(coleta, 'data_coleta') else None,
                     'status': coleta.status.value if hasattr(coleta, 'status') else 'PROCESSADA',
@@ -301,6 +303,14 @@ def processar_coleta(pedido_id):
                         return redirect(status_url)
                     
                     pdf_path = ReceiptService.gerar_recibo_pdf(coleta_data)
+                    try:
+                        coleta.recibo_documento = os.path.basename(pdf_path)
+                        db.session.commit()
+                    except Exception as persist_err:
+                        db.session.rollback()
+                        current_app.logger.error(
+                            f"Erro ao salvar caminho do recibo da coleta #{coleta.id}: {persist_err}"
+                        )
                     download_url = url_for(
                         'coletas.visualizar_recibo',
                         filename=os.path.basename(pdf_path),
@@ -378,7 +388,19 @@ def status_recibo(job_id):
     if status_info.get('status') == 'finished':
         result = status_info.get('result') or {}
         arquivo_path = result.get('pdf_path') or result.get('image_path')
+        coleta_id = result.get('coleta_id')
         if arquivo_path and os.path.exists(arquivo_path):
+            if coleta_id:
+                try:
+                    coleta = Coleta.query.get(coleta_id)
+                    if coleta:
+                        coleta.recibo_documento = os.path.basename(arquivo_path)
+                        db.session.commit()
+                except Exception as persist_err:
+                    db.session.rollback()
+                    current_app.logger.error(
+                        f"Erro ao atualizar recibo da coleta #{coleta_id}: {persist_err}"
+                    )
             mimetype = mimetypes.guess_type(arquivo_path)[0] or 'application/octet-stream'
             return send_file(arquivo_path, mimetype=mimetype)
         

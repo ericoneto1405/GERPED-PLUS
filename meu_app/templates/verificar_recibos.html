@@ -62,7 +62,7 @@
                                 {% endif %}
                             </td>
                             <td>
-                                {% if coleta.caminho_recibo_pdf %}
+                                {% if coleta.recibo_documento %}
                                     <span class="badge bg-success">
                                         <i class="fas fa-check-circle"></i> Salvo
                                     </span>
@@ -74,12 +74,12 @@
                             </td>
                             <td>
                                 <div class="btn-group" role="group">
-                                    <a href="{{ url_for('logistica.gerar_pdf_coleta', coleta_id=coleta.id) }}" 
-                                       class="btn btn-primary btn-sm" target="_blank" title="Gerar Novo PDF">
-                                        <i class="fas fa-file-pdf"></i> Gerar
+                                    <a href="{{ url_for('coletas.processar_coleta', pedido_id=pedido.id) }}"
+                                       class="btn btn-primary btn-sm" title="Reprocessar coleta para gerar recibo">
+                                        <i class="fas fa-file-pdf"></i> Reprocessar
                                     </a>
-                                    {% if coleta.caminho_recibo_pdf %}
-                                        <a href="{{ url_for('logistica.visualizar_recibo', coleta_id=coleta.id) }}" 
+                                    {% if coleta.recibo_documento %}
+                                        <a href="{{ url_for('coletas.visualizar_recibo', filename=coleta.recibo_documento) }}"
                                            class="btn btn-success btn-sm" target="_blank" title="Visualizar Recibo Salvo">
                                             <i class="fas fa-eye"></i> Ver Salvo
                                         </a>

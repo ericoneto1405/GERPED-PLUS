@@ -134,6 +134,7 @@ def generate_receipt_task(coleta_data: Dict) -> Dict:
                 'image_path': image_path,
                 'pdf_path': pdf_path,
                 'pedido_id': coleta_data.get('pedido_id'),
+                'coleta_id': coleta_data.get('coleta_id'),
             }
 
     except Exception as exc:  # pragma: no cover - executa em worker externo

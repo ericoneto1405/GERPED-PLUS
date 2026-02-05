@@ -103,7 +103,11 @@
                 <tr class="align-middle pedido-row" data-details-id="details-{{ pedido.id }}">
                     <td>#{{ pedido.numero_exibicao }}</td>
                     <td class="cliente-cell">{{ pedido.cliente.nome }}</td>
-                    <td>{{ pedido.data.strftime('%d/%m/%Y %H:%M') }}</td>
+                    <td>
+                        <span class="js-utc" data-utc="{{ pedido.data|datetime_utc_iso }}" data-format="DD/MM/YYYY HH:mm">
+                            {{ pedido.data.strftime('%d/%m/%Y %H:%M') }}
+                        </span>
+                    </td>
                     <td class="{% if item.status == 'PAGO' %}status-financeiro{% elif item.status == 'PAGO PARCIAL' %}status-coleta{% elif item.status == 'AGUARDANDO' %}status-pendente{% else %}status-secundario{% endif %}">
                         {{ item.status }}
                     </td>
@@ -150,7 +154,11 @@
                                     <tbody>
                                     {% for pagamento in pedido.pagamentos %}
                                         <tr>
-                                            <td>{{ pagamento.data_pagamento.strftime('%d/%m/%Y %H:%M') }}</td>
+                                            <td>
+                                                <span class="js-utc" data-utc="{{ pagamento.data_pagamento|datetime_utc_iso }}" data-format="DD/MM/YYYY HH:mm">
+                                                    {{ pagamento.data_pagamento.strftime('%d/%m/%Y %H:%M') }}
+                                                </span>
+                                            </td>
                                             <td><strong>{{ pagamento.valor | currency_brl }}</strong></td>
                                             <td><em>{{ pagamento.metodo_pagamento }}</em></td>
                                             <td>

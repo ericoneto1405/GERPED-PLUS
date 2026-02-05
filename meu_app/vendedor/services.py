@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from sqlalchemy import func, desc
 from meu_app.models import Cliente, Pedido, ItemPedido, Produto
@@ -195,6 +195,19 @@ class VendedorService:
             return datetime.strptime(valor, '%Y-%m-%d').date()
         except (TypeError, ValueError):
             return None
+
+    @staticmethod
+    def _to_utc_iso(value):
+        """
+        Converte datetime para ISO-8601 UTC (com Z). Assume UTC se naive.
+        """
+        if not value or not isinstance(value, datetime):
+            return None
+        if value.tzinfo is None or value.tzinfo.utcoffset(value) is None:
+            value = value.replace(tzinfo=timezone.utc)
+        else:
+            value = value.astimezone(timezone.utc)
+        return value.isoformat().replace('+00:00', 'Z')
 
     @staticmethod
     def get_rankings(periodo='todos', data_inicio=None, data_fim=None):
@@ -472,7 +485,7 @@ class VendedorService:
                 if recorrencia_media is None or recorrencia_media >= limite_fieis:
                     continue
             
-            ultima_compra_iso = cliente.ultima_compra.isoformat() if cliente.ultima_compra else None
+            ultima_compra_iso = VendedorService._to_utc_iso(cliente.ultima_compra)
             resultado.append({
                 'id': cliente.id,
                 'nome': cliente.nome,
@@ -580,7 +593,8 @@ class VendedorService:
             quantidade_total = int(item.quantidade_total or 0)
             valor_total = float(item.valor_total or 0)
             preco_medio = valor_total / quantidade_total if quantidade_total else 0.0
-            ultima_venda = item.ultima_venda.strftime('%d/%m/%Y') if item.ultima_venda else None
+            ultima_venda_fmt = item.ultima_venda.strftime('%d/%m/%Y') if item.ultima_venda else None
+            ultima_venda_utc = VendedorService._to_utc_iso(item.ultima_venda)
             resultados.append({
                 'id': item.id,
                 'nome': item.nome,
@@ -589,7 +603,8 @@ class VendedorService:
                 'quantidade_total': quantidade_total,
                 'valor_total': valor_total,
                 'preco_medio': preco_medio,
-                'ultima_venda': ultima_venda
+                'ultima_venda': ultima_venda_fmt,
+                'ultima_venda_utc': ultima_venda_utc
             })
 
         intervalo = {
@@ -618,6 +633,7 @@ class VendedorService:
                 'id': pedido.id,
                 'numero_exibicao': pedido.numero_exibicao,
                 'data': pedido.data.strftime('%d/%m/%Y'),
+                'data_utc': VendedorService._to_utc_iso(pedido.data),
                 'valor_total': float(valor_total),
                 'status': pedido.status.value if pedido.status else 'N/A'
             })
@@ -648,7 +664,8 @@ class VendedorService:
             'produto': p.nome,
             'quantidade_total': p.quantidade_total,
             'preco_medio': float(p.preco_medio),
-            'ultima_compra': p.ultima_compra.strftime('%d/%m/%Y')
+            'ultima_compra': p.ultima_compra.strftime('%d/%m/%Y'),
+            'ultima_compra_utc': VendedorService._to_utc_iso(p.ultima_compra)
         } for p in produtos]
 
     @staticmethod
@@ -673,5 +690,6 @@ class VendedorService:
         return [{
             'produto': item.produto,
             'preco': float(item.preco or 0),
-            'data': item.data.strftime('%d/%m/%Y')
+            'data': item.data.strftime('%d/%m/%Y'),
+            'data_utc': VendedorService._to_utc_iso(item.data)
         } for item in itens]

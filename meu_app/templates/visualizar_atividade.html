@@ -59,7 +59,11 @@
                     <div class="info-icon"><i class="bi bi-calendar-event icon-text"></i></div>
                     <div class="info-content">
                         <div class="info-label">Data e Hora</div>
-                        <div class="info-value">{{ atividade.data_hora.strftime('%d/%m/%Y %H:%M:%S') }}</div>
+                        <div class="info-value">
+                            <span class="js-utc" data-utc="{{ atividade.data_hora|datetime_utc_iso }}" data-format="DD/MM/YYYY HH:mm:ss">
+                                {{ atividade.data_hora.strftime('%d/%m/%Y %H:%M:%S') }}
+                            </span>
+                        </div>
                     </div>
                 </div>
 
@@ -104,7 +108,11 @@
                 <div class="timeline-item">
                     <div class="timeline-marker timeline-marker-primary"></div>
                     <div class="timeline-content">
-                        <div class="timeline-time">{{ atividade.data_hora.strftime('%d/%m/%Y %H:%M:%S') }}</div>
+                        <div class="timeline-time">
+                            <span class="js-utc" data-utc="{{ atividade.data_hora|datetime_utc_iso }}" data-format="DD/MM/YYYY HH:mm:ss">
+                                {{ atividade.data_hora.strftime('%d/%m/%Y %H:%M:%S') }}
+                            </span>
+                        </div>
                         <div class="timeline-title">Atividade Registrada</div>
                         <div class="timeline-desc">Esta atividade foi registrada no sistema</div>
                     </div>
@@ -548,7 +556,7 @@ function exportarAtividade() {
         descricao: {{ atividade.descricao|tojson }},
         modulo: {{ atividade.modulo|tojson }},
         usuario: {{ (atividade.usuario.nome if atividade.usuario else 'Sistema')|tojson }},
-        data_hora: {{ atividade.data_hora.strftime('%d/%m/%Y %H:%M:%S')|tojson }},
+        data_hora: window.formatUtcToLocal ? window.formatUtcToLocal({{ atividade.data_hora|datetime_utc_iso|tojson }}, 'DD/MM/YYYY HH:mm:ss') : {{ atividade.data_hora|datetime_utc_iso|tojson }},
         {% if atividade.ip_address %}
         ip_address: {{ atividade.ip_address|tojson }},
         {% endif %}

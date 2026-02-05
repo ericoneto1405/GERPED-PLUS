@@ -150,7 +150,11 @@
     <div class="dados">
         <p><strong>Pedido:</strong> #{{ coleta.pedido.numero_exibicao }}</p>
         <p><strong>Cliente:</strong> {{ coleta.pedido.cliente.nome }}</p>
-        <p><strong>Data da Coleta:</strong> {{ coleta.data_coleta.strftime('%d/%m/%Y %H:%M') }}</p>
+        <p><strong>Data da Coleta:</strong>
+            <span class="js-utc" data-utc="{{ coleta.data_coleta|datetime_utc_iso }}" data-format="DD/MM/YYYY HH:mm">
+                {{ coleta.data_coleta.strftime('%d/%m/%Y %H:%M') }}
+            </span>
+        </p>
         <p><strong>Coletado por:</strong> {{ coleta.coletado_por }}</p>
         <p><strong>Liberado por:</strong> {{ coleta.liberado_por }}</p>
     </div>

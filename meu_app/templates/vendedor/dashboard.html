@@ -836,6 +836,13 @@ function abrirModalCliente(clienteId, clienteNome) {
 
 // Carregar pedidos do cliente
 function carregarPedidos(clienteId) {
+    function formatUtc(iso, fallback, format) {
+        if (window.formatUtcToLocal && iso) {
+            return window.formatUtcToLocal(iso, format || 'DD/MM/YYYY');
+        }
+        return fallback || '';
+    }
+
     const loading = document.getElementById('loadingPedidos');
     const tabela = document.getElementById('tabelaPedidos');
     const tbody = document.getElementById('corpoTabelaPedidos');
@@ -854,8 +861,9 @@ function carregarPedidos(clienteId) {
             tbody.innerHTML = '';
             data.pedidos.forEach(pedido => {
                 const tr = document.createElement('tr');
+                const dataExibida = formatUtc(pedido.data_utc, pedido.data, 'DD/MM/YYYY');
                 tr.innerHTML = `
-                    <td>${pedido.data}</td>
+                    <td>${dataExibida}</td>
                     <td>#${pedido.numero_exibicao || pedido.id}</td>
                     <td>R$ ${pedido.valor_total.toFixed(2)}</td>
                     <td><span class="badge">${pedido.status}</span></td>
@@ -889,11 +897,12 @@ function carregarProdutos(clienteId) {
             tbody.innerHTML = '';
             data.produtos.forEach(produto => {
                 const tr = document.createElement('tr');
+                const ultimaCompra = formatUtc(produto.ultima_compra_utc, produto.ultima_compra, 'DD/MM/YYYY');
                 tr.innerHTML = `
                     <td>${produto.produto}</td>
                     <td>${produto.quantidade_total}</td>
                     <td>R$ ${produto.preco_medio.toFixed(2)}</td>
-                    <td>${produto.ultima_compra}</td>
+                    <td>${ultimaCompra}</td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -931,10 +940,11 @@ function carregarPrecos(clienteId) {
             data.precos.forEach(registro => {
                 const preco = Number(registro.preco || 0);
                 const tr = document.createElement('tr');
+                const dataExibida = formatUtc(registro.data_utc, registro.data, 'DD/MM/YYYY');
                 tr.innerHTML = `
                     <td>${registro.produto}</td>
                     <td>R$ ${preco.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                    <td>${registro.data}</td>
+                    <td>${dataExibida}</td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -1106,7 +1116,11 @@ document.addEventListener('DOMContentLoaded', function() {
             totalTd.textContent = formatarMoeda(produto.valor_total);
 
             const ultimaTd = document.createElement('td');
-            ultimaTd.textContent = produto.ultima_venda || '-';
+            if (window.formatUtcToLocal && produto.ultima_venda_utc) {
+                ultimaTd.textContent = window.formatUtcToLocal(produto.ultima_venda_utc, 'DD/MM/YYYY');
+            } else {
+                ultimaTd.textContent = produto.ultima_venda || '-';
+            }
 
             tr.appendChild(produtoTd);
             tr.appendChild(precoTd);

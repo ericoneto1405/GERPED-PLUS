@@ -71,7 +71,15 @@
                             <span class="stock-label">cxs.</span>
                         </div>
                     </td>
-                    <td>{{ estoque.data_modificacao.strftime('%d/%m/%Y %H:%M') if estoque.data_modificacao else 'N/A' }}</td>
+                    <td>
+                        {% if estoque.data_modificacao %}
+                        <span class="js-utc" data-utc="{{ estoque.data_modificacao|datetime_utc_iso }}" data-format="DD/MM/YYYY HH:mm">
+                            {{ estoque.data_modificacao.strftime('%d/%m/%Y %H:%M') }}
+                        </span>
+                        {% else %}
+                        N/A
+                        {% endif %}
+                    </td>
                     <td>{{ estoque.conferente }}</td>
                     <td>
                         <span class="status-badge status-{{ estoque.status.lower().replace(' ', '-') }}">

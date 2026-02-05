@@ -26,7 +26,11 @@
                     </tr>
                     <tr>
                         <td><strong>Data:</strong></td>
-                        <td>{{ detalhes.pedido.data.strftime('%d/%m/%Y %H:%M') }}</td>
+                        <td>
+                            <span class="js-utc" data-utc="{{ detalhes.pedido.data|datetime_utc_iso }}" data-format="DD/MM/YYYY HH:mm">
+                                {{ detalhes.pedido.data.strftime('%d/%m/%Y %H:%M') }}
+                            </span>
+                        </td>
                     </tr>
                     <tr>
                         <td><strong>Status:</strong></td>

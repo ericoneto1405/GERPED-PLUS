@@ -90,7 +90,9 @@
                             <td class="currency-value" data-value="{{ produto.preco_medio_compra or 0 }}">{{ produto.preco_medio_compra | currency_brl }}</td>
                             <td class="atualizado-em" data-atualizado="{{ produto.preco_atualizado_em.isoformat() if produto.preco_atualizado_em else '' }}">
                                 {% if produto.preco_atualizado_em %}
-                                    {{ produto.preco_atualizado_em.strftime('%d/%m/%Y %H:%M') }}
+                                    <span class="js-utc" data-utc="{{ produto.preco_atualizado_em|datetime_utc_iso }}" data-format="DD/MM/YYYY HH:mm">
+                                        {{ produto.preco_atualizado_em.strftime('%d/%m/%Y %H:%M') }}
+                                    </span>
                                 {% else %}
                                     -
                                 {% endif %}

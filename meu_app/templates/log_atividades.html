@@ -134,8 +134,16 @@
                         <tr>
                             <td>#{{ atividade.id }}</td>
                             <td>
-                                <div class="fw-semibold">{{ atividade.data_hora.strftime('%d/%m/%Y') }}</div>
-                                <small class="text-muted">{{ atividade.data_hora.strftime('%H:%M:%S') }}</small>
+                                <div class="fw-semibold">
+                                    <span class="js-utc" data-utc="{{ atividade.data_hora|datetime_utc_iso }}" data-format="DD/MM/YYYY">
+                                        {{ atividade.data_hora.strftime('%d/%m/%Y') }}
+                                    </span>
+                                </div>
+                                <small class="text-muted">
+                                    <span class="js-utc" data-utc="{{ atividade.data_hora|datetime_utc_iso }}" data-format="HH:mm:ss">
+                                        {{ atividade.data_hora.strftime('%H:%M:%S') }}
+                                    </span>
+                                </small>
                             </td>
                             <td>{{ atividade.usuario.nome if atividade.usuario else 'Sistema' }}</td>
                             <td>

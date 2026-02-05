@@ -64,7 +64,13 @@
                                 </div>
                             </td>
                             <td>
-                                {{ data_ref.strftime('%d/%m/%Y') if data_ref else '-' }}
+                                {% if data_ref %}
+                                <span class="js-utc" data-utc="{{ data_ref|datetime_utc_iso }}" data-format="DD/MM/YYYY">
+                                    {{ data_ref.strftime('%d/%m/%Y') }}
+                                </span>
+                                {% else %}
+                                -
+                                {% endif %}
                             </td>
                             <td>
                                 <span class="badge status-soft {{ status_class }}">{{ status_label }}</span>
@@ -141,7 +147,15 @@
                         <div class="coleta-meta">
                             <div>
                                 <div class="meta-label">Data</div>
-                                <div class="meta-value">{{ data_ref.strftime('%d/%m/%Y') if data_ref else '-' }}</div>
+                                <div class="meta-value">
+                                    {% if data_ref %}
+                                    <span class="js-utc" data-utc="{{ data_ref|datetime_utc_iso }}" data-format="DD/MM/YYYY">
+                                        {{ data_ref.strftime('%d/%m/%Y') }}
+                                    </span>
+                                    {% else %}
+                                    -
+                                    {% endif %}
+                                </div>
                             </div>
                             <div class="text-end">
                                 <div class="meta-label">Total</div>

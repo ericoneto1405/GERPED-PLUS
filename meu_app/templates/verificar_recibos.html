@@ -10,7 +10,10 @@
         <h3><i class="fas fa-receipt"></i> Recibos de Coleta - Pedido #{{ pedido.numero_exibicao }}</h3>
         <p class="text-muted mb-0">
             <strong>Cliente:</strong> {{ pedido.cliente.nome }} | 
-            <strong>Data do Pedido:</strong> {{ pedido.data.strftime('%d/%m/%Y') }}
+            <strong>Data do Pedido:</strong>
+            <span class="js-utc" data-utc="{{ pedido.data|datetime_utc_iso }}" data-format="DD/MM/YYYY">
+                {{ pedido.data.strftime('%d/%m/%Y') }}
+            </span>
         </p>
     </div>
     
@@ -39,7 +42,11 @@
                         {% for coleta in coletas %}
                         <tr>
                             <td><strong>#{{ coleta.id }}</strong></td>
-                            <td>{{ coleta.data_coleta.strftime('%d/%m/%Y %H:%M') }}</td>
+                            <td>
+                                <span class="js-utc" data-utc="{{ coleta.data_coleta|datetime_utc_iso }}" data-format="DD/MM/YYYY HH:mm">
+                                    {{ coleta.data_coleta.strftime('%d/%m/%Y %H:%M') }}
+                                </span>
+                            </td>
                             <td>{{ coleta.coletado_por }}</td>
                             <td>{{ coleta.liberado_por }}</td>
                             <td>{{ coleta.documento_coletor }}</td>

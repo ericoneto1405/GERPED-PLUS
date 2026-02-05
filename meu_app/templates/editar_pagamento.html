@@ -219,7 +219,9 @@
                  data-observacoes="{{ (pagamento.observacoes or '')|e }}"
                  data-recibo="{{ (principal.caminho if principal else (pagamento.caminho_recibo or ''))|e }}">
                 <strong>Pagamento #{{ pagamento.id }}</strong>
-                <span class="badge">{{ pagamento.data_pagamento.strftime('%d/%m/%Y %H:%M') }}</span>
+                <span class="badge js-utc" data-utc="{{ pagamento.data_pagamento|datetime_utc_iso }}" data-format="DD/MM/YYYY HH:mm">
+                    {{ pagamento.data_pagamento.strftime('%d/%m/%Y %H:%M') }}
+                </span>
                 <br>
                 <span>Valor: {{ pagamento.valor | currency_brl }}</span> | 
                 <span>Método: {{ pagamento.metodo_pagamento }}</span>

@@ -165,7 +165,10 @@
                     </h3>
                     <p class="text-muted mb-0">
                         <strong>Cliente:</strong> {{ detalhes.cliente.nome }} | 
-                        <strong>Data do Pedido:</strong> {{ detalhes.pedido.data.strftime('%d/%m/%Y') }}
+                        <strong>Data do Pedido:</strong>
+                        <span class="js-utc" data-utc="{{ detalhes.pedido.data|datetime_utc_iso }}" data-format="DD/MM/YYYY">
+                            {{ detalhes.pedido.data.strftime('%d/%m/%Y') }}
+                        </span>
                     </p>
                 </div>
                 

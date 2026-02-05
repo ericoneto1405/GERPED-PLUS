@@ -412,7 +412,11 @@
                         {% if anexos %}
                             {% for anexo in anexos %}
                             <tr>
-                                <td>{{ pagamento.data_pagamento.strftime('%d/%m/%Y %H:%M') }}</td>
+                                <td>
+                                    <span class="js-utc" data-utc="{{ pagamento.data_pagamento|datetime_utc_iso }}" data-format="DD/MM/YYYY HH:mm">
+                                        {{ pagamento.data_pagamento.strftime('%d/%m/%Y %H:%M') }}
+                                    </span>
+                                </td>
                                 {% set valor_anexo = anexo.valor if anexo.valor is not none else None %}
                                 <td>{{ (valor_anexo if valor_anexo is not none else pagamento.valor) | currency_brl }}</td>
                                 <td>{{ pagamento.metodo_pagamento }}</td>
@@ -428,7 +432,11 @@
                             {% endfor %}
                         {% else %}
                             <tr>
-                                <td>{{ pagamento.data_pagamento.strftime('%d/%m/%Y %H:%M') }}</td>
+                                <td>
+                                    <span class="js-utc" data-utc="{{ pagamento.data_pagamento|datetime_utc_iso }}" data-format="DD/MM/YYYY HH:mm">
+                                        {{ pagamento.data_pagamento.strftime('%d/%m/%Y %H:%M') }}
+                                    </span>
+                                </td>
                                 <td>{{ pagamento.valor | currency_brl }}</td>
                                 <td>{{ pagamento.metodo_pagamento }}</td>
                                 <td><span class="text-muted">Sem comprovante</span></td>

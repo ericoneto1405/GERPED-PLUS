@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app, session, jsonify
+from ..time_utils import to_utc_iso
 
 log_atividades_bp = Blueprint('log_atividades', __name__, url_prefix='/log_atividades')
 from .services import LogAtividadesService
@@ -221,7 +222,7 @@ def exportar_logs():
                 'titulo': atividade.titulo,
                 'descricao': atividade.descricao,
                 'modulo': atividade.modulo,
-                'data_criacao': atividade.data_criacao.strftime('%d/%m/%Y %H:%M:%S') if atividade.data_criacao else 'N/A',
+                'data_criacao': to_utc_iso(atividade.data_criacao) if atividade.data_criacao else None,
                 'dados_extras': atividade.dados_extras
             })
         

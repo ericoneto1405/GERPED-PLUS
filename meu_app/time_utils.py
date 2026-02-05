@@ -35,6 +35,17 @@ def to_local(value: datetime, tz_name: Optional[str] = None) -> datetime:
     return value.astimezone(_get_timezone(tz_name))
 
 
+def to_utc_iso(value: Optional[datetime]) -> Optional[str]:
+    """Converte datetime para ISO-8601 UTC (com Z). Assume UTC se naive."""
+    if value is None or not isinstance(value, datetime):
+        return None
+    if value.tzinfo is None or value.tzinfo.utcoffset(value) is None:
+        value = value.replace(tzinfo=timezone.utc)
+    else:
+        value = value.astimezone(timezone.utc)
+    return value.isoformat().replace('+00:00', 'Z')
+
+
 def local_now(tz_name: Optional[str] = None) -> datetime:
     """Agora no fuso local (timezone-aware), derivado da fonte UTC."""
     return to_local(now_utc(), tz_name)

@@ -9,7 +9,7 @@ Autor: Sistema de Gestão Empresarial
 Data: 2024
 """
 from ..models import db, LogAtividade, Usuario
-from ..time_utils import utcnow
+from ..time_utils import utcnow, to_utc_iso
 from flask import current_app, session, request
 from typing import Dict, List, Tuple, Optional, Any
 import json
@@ -521,7 +521,7 @@ class LogAtividadesService:
                         atividade.titulo,
                         atividade.descricao,
                         atividade.modulo,
-                        atividade.data_hora.strftime('%Y-%m-%d %H:%M:%S'),
+                        to_utc_iso(atividade.data_hora) or '',
                         atividade.ip_address or '',
                         atividade.dados_extras or ''
                     ])

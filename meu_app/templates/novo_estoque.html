@@ -42,8 +42,8 @@
 
             <div class="form-group">
                 <label for="data_entrada">Data de Entrada</label>
-                <input type="datetime-local" name="data_entrada" id="data_entrada" class="form-control" 
-                       required>
+                <input type="datetime-local" name="data_entrada" id="data_entrada" class="form-control"
+                       required data-utc="{{ now_utc|datetime_utc_iso if now_utc else '' }}">
             </div>
 
             <div class="form-group">
@@ -219,10 +219,18 @@ $(document).ready(function() {
     // Auto-completar conferente com o nome do usuário logado
     $('#conferente').val('{{ session.usuario_nome }}');
     
-    // Definir data atual como padrão
-    var now = new Date();
-    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-    $('#data_entrada').val(now.toISOString().slice(0,16));
+    // Definir data atual como padrão (UTC -> local do usuário)
+    var dataEntradaEl = document.getElementById('data_entrada');
+    if (dataEntradaEl && !dataEntradaEl.value) {
+        const utcValue = dataEntradaEl.getAttribute('data-utc');
+        if (window.formatUtcToLocalInput && utcValue) {
+            dataEntradaEl.value = window.formatUtcToLocalInput(utcValue);
+        } else {
+            var now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            dataEntradaEl.value = now.toISOString().slice(0,16);
+        }
+    }
     
     // Verificar estoque atual quando produto for selecionado
     $('#produto_id').on('change', function() {

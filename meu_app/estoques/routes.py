@@ -4,6 +4,7 @@ from flask_login import current_user
 estoques_bp = Blueprint('estoques', __name__, url_prefix='/estoques')
 from .services import EstoqueService
 from ..models import Produto, Estoque
+from ..time_utils import now_utc
 from functools import wraps
 from ..decorators import login_obrigatorio, permissao_necessaria, admin_necessario
 
@@ -42,7 +43,7 @@ def novo_estoque():
         except (ValueError, TypeError):
             flash('Dados inválidos fornecidos', 'error')
             produtos = Produto.query.all()
-            return render_template('novo_estoque.html', produtos=produtos)
+            return render_template('novo_estoque.html', produtos=produtos, now_utc=now_utc())
         
         # Verificar se já existe estoque para este produto
         estoque_existente = Estoque.query.filter_by(produto_id=produto_id).first()
@@ -75,11 +76,11 @@ def novo_estoque():
         else:
             flash(mensagem, 'error')
             produtos = Produto.query.all()
-            return render_template('novo_estoque.html', produtos=produtos)
+            return render_template('novo_estoque.html', produtos=produtos, now_utc=now_utc())
     
     # GET: Mostrar formulário
     produtos = Produto.query.all()
-    return render_template('novo_estoque.html', produtos=produtos)
+    return render_template('novo_estoque.html', produtos=produtos, now_utc=now_utc())
 
 @estoques_bp.route('/editar/<int:id>', methods=['GET', 'POST'])
 @login_obrigatorio

@@ -8,6 +8,7 @@ from .services import FinanceiroService
 from functools import wraps
 from ..decorators import login_obrigatorio, permissao_necessaria, admin_necessario
 from ..models import Pagamento, PagamentoAnexo, Pedido, CarteiraCredito, Usuario
+from ..time_utils import to_utc_iso
 from meu_app.auth.rbac import requires_financeiro
 from ..upload_security import FileUploadValidator
 from .ocr_service import OcrService
@@ -431,6 +432,7 @@ def registrar_pagamento(pedido_id):
                     'nome': anexo.get('original_name') or caminho,
                     'valor': float(pagamento.valor or 0),
                     'data_pagamento': pagamento.data_pagamento.strftime('%d/%m/%Y %H:%M') if pagamento.data_pagamento else '',
+                    'data_pagamento_utc': to_utc_iso(pagamento.data_pagamento) if pagamento.data_pagamento else None,
                     'metodo_pagamento': pagamento.metodo_pagamento,
                     'url': url_for('financeiro.ver_recibo', filename=caminho)
                 })

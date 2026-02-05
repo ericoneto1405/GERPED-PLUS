@@ -19,7 +19,7 @@ from sqlalchemy import inspect as sa_inspect
 from sqlalchemy.exc import SQLAlchemyError
 
 from ..models import db, Pedido, Pagamento, StatusPedido, PagamentoAnexo, CarteiraCredito
-from ..time_utils import local_now_naive, utcnow
+from ..time_utils import local_now_naive, utcnow, to_utc_iso
 from .config import FinanceiroConfig
 from .exceptions import (
     FinanceiroValidationError, 
@@ -488,9 +488,12 @@ class FinanceiroService:
                     'valor_sugerido': float(comp.valor),
                     'id_transacao': comp.id_transacao,
                     'data_pagamento': comp.data_pagamento.strftime('%d/%m/%Y %H:%M') if comp.data_pagamento else '-',
+                    'data_pagamento_utc': to_utc_iso(comp.data_pagamento),
                     'data_comprovante': comp.data_comprovante.strftime('%d/%m/%Y') if comp.data_comprovante else None,
+                    'data_comprovante_utc': to_utc_iso(comp.data_comprovante),
                     'compartilhado_por': comp.compartilhado_por,
                     'compartilhado_em': comp.compartilhado_em.strftime('%d/%m/%Y %H:%M') if comp.compartilhado_em else None,
+                    'compartilhado_em_utc': to_utc_iso(comp.compartilhado_em),
                     'banco_emitente': comp.banco_emitente,
                     'caminho_recibo': caminho
                 })
@@ -548,6 +551,7 @@ class FinanceiroService:
                     'valor': valor,
                     'valor_formatado': f"R$ {valor:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'),
                     'data': credito.criado_em.strftime('%d/%m/%Y %H:%M') if credito.criado_em else '-',
+                    'data_utc': to_utc_iso(credito.criado_em),
                     'pedido_origem': credito.pedido_origem_id,
                     'observacao': f"Crédito do pedido #{credito.pedido_origem_id}" if credito.pedido_origem_id else 'Crédito disponível'
                 })

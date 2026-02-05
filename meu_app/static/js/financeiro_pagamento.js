@@ -84,6 +84,12 @@ document.addEventListener('DOMContentLoaded', () => {
     let carteiraSelecionada = null;
 
     const anexosPersistidos = [];
+    const formatUtc = (iso, fallback, format) => {
+        if (window.formatUtcToLocal && iso) {
+            return window.formatUtcToLocal(iso, format || 'DD/MM/YYYY HH:mm');
+        }
+        return fallback || '';
+    };
     const anexosExistentesData = form.dataset.anexosExistentes;
     if (anexosExistentesData) {
         try {
@@ -96,7 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         id: String(info.id),
                         nome: info.nome || 'Comprovante',
                         valor: Number.isFinite(valorNumero) ? valorNumero : null,
-                        data: info.data_pagamento || info.data || '',
+                        data: formatUtc(info.data_pagamento_utc, info.data_pagamento || info.data || '', 'DD/MM/YYYY HH:mm'),
                         metodo: info.metodo_pagamento || info.metodo || '',
                         servidor: true,
                         serverUrl: info.url,
@@ -738,9 +744,9 @@ document.addEventListener('DOMContentLoaded', () => {
             card.innerHTML = `
                 <strong>Pedido #${item.pedido_id} · ${item.cliente}</strong>
                 <span>Valor sugerido: <strong>${formatBRL(item.valor_sugerido || 0)}</strong></span>
-                <span>Data do comprovante: ${item.data_comprovante || '—'}</span>
+                <span>Data do comprovante: ${formatUtc(item.data_comprovante_utc, item.data_comprovante || '—', 'DD/MM/YYYY')}</span>
                 ${item.id_transacao ? `<span>ID: ${item.id_transacao}</span>` : ''}
-                <span>Disponibilizado por ${item.compartilhado_por || 'Financeiro'} em ${item.compartilhado_em || '-'}</span>
+                <span>Disponibilizado por ${item.compartilhado_por || 'Financeiro'} em ${formatUtc(item.compartilhado_em_utc, item.compartilhado_em || '-', 'DD/MM/YYYY HH:mm')}</span>
                 <div class="fila-actions">
                     <button type="button" class="btn btn-secondary" data-action="usar" data-id="${item.id}">Usar</button>
                     <button type="button" class="btn btn-secondary" data-action="descartar" data-id="${item.id}">Descartar</button>
@@ -773,7 +779,11 @@ document.addEventListener('DOMContentLoaded', () => {
             idTransacaoInput.value = item.id_transacao || '';
         }
         if (dataComprovanteInput) {
-            dataComprovanteInput.value = item.data_comprovante || '';
+            if (window.formatUtcToLocal && item.data_comprovante_utc) {
+                dataComprovanteInput.value = window.formatUtcToLocal(item.data_comprovante_utc, 'YYYY-MM-DD');
+            } else {
+                dataComprovanteInput.value = item.data_comprovante || '';
+            }
         }
         if (bancoEmitenteInput) bancoEmitenteInput.value = item.banco_emitente || '';
         if (avisoCompartilhado) {

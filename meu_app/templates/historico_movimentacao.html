@@ -38,7 +38,11 @@
             <tbody>
                 {% for mov in movimentacoes %}
                     <tr class="movimentacao-row movimentacao-{{ mov.tipo_movimentacao.lower() }}">
-                        <td>{{ mov.data_movimentacao.strftime('%d/%m/%Y %H:%M') }}</td>
+                        <td>
+                            <span class="js-utc" data-utc="{{ mov.data_movimentacao|datetime_utc_iso }}" data-format="DD/MM/YYYY HH:mm">
+                                {{ mov.data_movimentacao.strftime('%d/%m/%Y %H:%M') }}
+                            </span>
+                        </td>
                         <td>
                             {% if 'ENTRADA DE NF DO FORNECEDOR' in mov.motivo %}
                                 <span class="movimentacao-badge movimentacao-entrada-fornecedor">ENTRADA DE NF DO FORNECEDOR</span>

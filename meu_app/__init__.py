@@ -11,7 +11,7 @@ Data: Outubro 2025
 import logging
 import os
 import traceback
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from logging.handlers import RotatingFileHandler
 
 from dotenv import load_dotenv
@@ -397,6 +397,19 @@ def register_custom_filters(app):
         tz_name = app.config.get('APP_TIMEZONE', 'America/Sao_Paulo')
         local_value = to_local(value, tz_name)
         return local_value.strftime(fmt)
+
+    @app.template_filter('datetime_utc_iso')
+    def datetime_utc_iso_filter(value):
+        """Converte datetime para ISO-8601 UTC (com Z) para uso no frontend."""
+        if value is None:
+            return ''
+        if not isinstance(value, datetime):
+            return value
+        if value.tzinfo is None or value.tzinfo.utcoffset(value) is None:
+            value = value.replace(tzinfo=timezone.utc)
+        else:
+            value = value.astimezone(timezone.utc)
+        return value.isoformat().replace('+00:00', 'Z')
 
 
 def register_template_context(app):

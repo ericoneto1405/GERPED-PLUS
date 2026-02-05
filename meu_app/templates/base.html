@@ -229,6 +229,42 @@
     <script nonce="{{ nonce }}">
         moment.locale('pt-br');
         const notificationSystem = new NotificationSystem();
+
+        function formatUtcToLocal(isoString, format) {
+            if (!isoString) return '';
+            const m = moment.utc(isoString);
+            if (!m.isValid()) return '';
+            return m.local().format(format || 'DD/MM/YYYY HH:mm');
+        }
+
+        function formatUtcToLocalInput(isoString) {
+            if (!isoString) return '';
+            const m = moment.utc(isoString);
+            if (!m.isValid()) return '';
+            return m.local().format('YYYY-MM-DDTHH:mm');
+        }
+
+        function aplicarDatasUtcNoDom(root) {
+            const elements = (root || document).querySelectorAll('[data-utc]');
+            elements.forEach((el) => {
+                const iso = el.getAttribute('data-utc');
+                const fmt = el.getAttribute('data-format');
+                if (!iso) return;
+                if (el.tagName === 'INPUT' && el.type === 'datetime-local') {
+                    el.value = formatUtcToLocalInput(iso);
+                } else {
+                    el.textContent = formatUtcToLocal(iso, fmt);
+                }
+            });
+        }
+
+        window.formatUtcToLocal = formatUtcToLocal;
+        window.formatUtcToLocalInput = formatUtcToLocalInput;
+        window.aplicarDatasUtcNoDom = aplicarDatasUtcNoDom;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            aplicarDatasUtcNoDom(document);
+        });
         
         // Mensagens Flash do Flask
         {% with messages = get_flashed_messages(with_categories=true) %}

@@ -10,7 +10,6 @@ from flask import current_app
 from .config import FinanceiroConfig
 from .exceptions import OcrProcessingError
 from .vision_service import VisionOcrService
-from .local_ocr import LocalOcrFallback
 from .. import db
 from ..models import OcrQuota
 from ..time_utils import local_now_naive
@@ -88,51 +87,6 @@ class OcrService:
         Processa um arquivo de recibo usando APENAS Google Vision.
         Retorna um dicionário com todos os dados encontrados.
         """
-        def _force_fallback_via_fitz(pdf_or_image_path: str) -> Optional[dict]:
-            """
-            Fallback direto usando PyMuPDF (fitz) para extrair texto e reaproveitar
-            os parsers do VisionOcrService. Retorna None em caso de falha.
-            """
-            try:
-                import fitz  # type: ignore
-                with fitz.open(pdf_or_image_path) as doc:
-                    text_parts = []
-                    for page in doc:
-                        t = page.get_text("text") or ""
-                        if t.strip():
-                            text_parts.append(t)
-                if not text_parts:
-                    return None
-                full_text = "\n".join(text_parts)
-
-                amount = VisionOcrService._find_amount_in_text(full_text)
-                transaction_id = VisionOcrService._find_transaction_id_in_text(full_text)
-                date = VisionOcrService._find_date_in_text(full_text)
-                bank_info = VisionOcrService._find_bank_info_in_text(full_text)
-
-                validacao_recebedor = None
-                from .config import FinanceiroConfig  # lazy import
-                if FinanceiroConfig.validar_recebedor_habilitado():
-                    recebedor_esperado = FinanceiroConfig.get_recebedor_esperado()
-                    validacao_recebedor = VisionOcrService._validar_recebedor(bank_info, recebedor_esperado)
-
-                return {
-                    'amount': amount,
-                    'transaction_id': transaction_id,
-                    'date': date,
-                    'bank_info': bank_info,
-                    'validacao_recebedor': validacao_recebedor,
-                    'backend': 'local_fallback_fitz',
-                    'fallback_used': True,
-                    'raw_text': full_text,
-                    'error': None,
-                }
-            except Exception as exc:
-                try:
-                    current_app.logger.warning(f"Fallback fitz falhou: {exc}")
-                except Exception:
-                    pass
-                return None
 
         def _convert_pdf_to_image(pdf_path: str) -> Optional[str]:
             """Converte a primeira página do PDF em imagem temporária."""
@@ -303,18 +257,6 @@ class OcrService:
             # Incrementar quota após processamento bem-sucedido
             if not result.get('error') and result.get('fallback_used') is not True and not use_local_only:
                 cls._increment_quota()
-
-            # Se o Vision falhar com erro conhecido de imagem, tentar fallback local
-            if result.get('error') and 'bad image data' in str(result.get('error')).lower():
-                try:
-                    current_app.logger.warning("OCR: Vision retornou 'bad image data'. Tentando fallback local.")
-                except Exception:
-                    pass
-                fallback = LocalOcrFallback.process(original_path)
-                if not fallback:
-                    fallback = _force_fallback_via_fitz(original_path if original_path else file_path)
-                if fallback:
-                    return fallback
 
             return result
             

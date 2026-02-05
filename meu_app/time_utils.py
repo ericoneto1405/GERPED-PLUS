@@ -1,5 +1,5 @@
 import os
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, date
 from typing import Optional
 
 try:
@@ -36,8 +36,12 @@ def to_local(value: datetime, tz_name: Optional[str] = None) -> datetime:
 
 
 def to_utc_iso(value: Optional[datetime]) -> Optional[str]:
-    """Converte datetime para ISO-8601 UTC (com Z). Assume UTC se naive."""
-    if value is None or not isinstance(value, datetime):
+    """Converte datetime (ou date) para ISO-8601 UTC (com Z). Assume UTC se naive."""
+    if value is None:
+        return None
+    if isinstance(value, date) and not isinstance(value, datetime):
+        value = datetime.combine(value, datetime.min.time(), tzinfo=timezone.utc)
+    elif not isinstance(value, datetime):
         return None
     if value.tzinfo is None or value.tzinfo.utcoffset(value) is None:
         value = value.replace(tzinfo=timezone.utc)

@@ -4,7 +4,7 @@ from flask_login import current_user
 estoques_bp = Blueprint('estoques', __name__, url_prefix='/estoques')
 from .services import EstoqueService
 from ..models import Produto, Estoque
-from ..time_utils import now_utc
+from ..time_utils import now_utc, to_utc_iso
 from functools import wraps
 from ..decorators import login_obrigatorio, permissao_necessaria, admin_necessario
 
@@ -235,7 +235,8 @@ def estoque_atual(produto_id):
                     'quantidade': estoque.quantidade,
                     'conferente': estoque.conferente,
                     'status': estoque.status,
-                    'data_modificacao': estoque.data_modificacao.strftime('%d/%m/%Y %H:%M') if estoque.data_modificacao else None
+                    'data_modificacao': estoque.data_modificacao.strftime('%d/%m/%Y %H:%M') if estoque.data_modificacao else None,
+                    'data_modificacao_utc': to_utc_iso(estoque.data_modificacao) if estoque.data_modificacao else None
                 }
             })
         else:

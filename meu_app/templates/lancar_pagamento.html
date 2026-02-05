@@ -105,7 +105,7 @@
                                         <strong>{{ credito.valor_formatado }}</strong>
                                         <span>Origem: pedido #{{ credito.pedido_origem or '-' }}</span>
                                         <small>
-                                            <span class="js-utc" data-utc="{{ credito.data_utc }}" data-format="DD/MM/YYYY HH:mm">
+                                            <span class="js-utc" data-utc="{{ credito.data_utc or '' }}" data-format="DD/MM/YYYY HH:mm">
                                                 {{ credito.data }}
                                             </span>
                                         </small>

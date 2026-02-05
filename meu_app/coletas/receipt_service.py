@@ -13,6 +13,21 @@ from flask import current_app
 from meu_app.exceptions import ConfigurationError, FileProcessingError
 from meu_app.time_utils import local_now, to_local, now_utc
 
+
+def _get_recibos_dir(output_dir: Optional[str] = None) -> str:
+    """
+    Diretório permanente para recibos de coleta.
+    Pode ser sobrescrito via COLETAS_RECIBO_DIR.
+    """
+    if output_dir:
+        os.makedirs(output_dir, exist_ok=True)
+        return output_dir
+    base_dir = current_app.root_path
+    configured = os.getenv('COLETAS_RECIBO_DIR', 'uploads/recibos_coleta')
+    target_dir = os.path.join(base_dir, '..', configured)
+    os.makedirs(target_dir, exist_ok=True)
+    return target_dir
+
 try:  # pragma: no cover - Pillow pode estar ausente em ambientes limitados
     from PIL import Image, ImageDraw, ImageFont
     PIL_AVAILABLE = True
@@ -92,7 +107,7 @@ class ReceiptService:
                 details={'missing_dependency': 'Pillow', 'original_error': str(erro)}
             )
 
-        receipts_dir = output_dir or os.path.join(current_app.instance_path, 'recibos')
+        receipts_dir = _get_recibos_dir(output_dir)
         os.makedirs(receipts_dir, exist_ok=True)
         ReceiptService.limpar_recibos_antigos(receipts_dir)
 
@@ -390,11 +405,13 @@ class ReceiptService:
     @staticmethod
     def limpar_recibos_antigos(output_dir: Optional[str] = None, ttl_hours: Optional[int] = None) -> int:
         """Remove recibos antigos com base na configuração de TTL."""
-        ttl = ttl_hours or current_app.config.get('COLETAS_RECIBO_TTL_HORAS', 24)
+        ttl = ttl_hours if ttl_hours is not None else current_app.config.get('COLETAS_RECIBO_TTL_HORAS', 0)
         if ttl <= 0:
             return 0
 
-        diretorio = Path(output_dir or os.path.join(current_app.instance_path, 'recibos'))
+        if ttl_hours is None or ttl_hours <= 0:
+            return 0
+        diretorio = Path(_get_recibos_dir(output_dir))
         if not diretorio.exists():
             return 0
 

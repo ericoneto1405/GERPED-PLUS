@@ -13,7 +13,7 @@ from ..models import Coleta, db
 
 coletas_bp = Blueprint('coletas', __name__, url_prefix='/coletas')
 from .services.coleta_service import ColetaService
-from .receipt_service import ReceiptService
+from .receipt_service import ReceiptService, _get_recibos_dir
 import os
 from ..clientes.services import ClienteService
 from meu_app.exceptions import ConfigurationError, FileProcessingError
@@ -435,7 +435,7 @@ def status_recibo(job_id):
 @requires_logistica
 def visualizar_recibo(filename):
     """Exibe o recibo gerado em formato JPG."""
-    recibos_dir = Path(current_app.instance_path) / 'recibos'
+    recibos_dir = Path(_get_recibos_dir())
     try:
         safe_dir = recibos_dir.resolve()
         file_path = (safe_dir / filename).resolve()

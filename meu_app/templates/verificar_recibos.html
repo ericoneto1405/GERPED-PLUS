@@ -74,10 +74,6 @@
                             </td>
                             <td>
                                 <div class="btn-group" role="group">
-                                    <a href="{{ url_for('coletas.processar_coleta', pedido_id=pedido.id) }}"
-                                       class="btn btn-primary btn-sm" title="Reprocessar coleta para gerar recibo">
-                                        <i class="fas fa-file-pdf"></i> Reprocessar
-                                    </a>
                                     {% if coleta.recibo_documento %}
                                         <a href="{{ url_for('coletas.visualizar_recibo', filename=coleta.recibo_documento) }}"
                                            class="btn btn-success btn-sm" target="_blank" title="Visualizar Recibo Salvo">

@@ -322,7 +322,11 @@
         </div>
         <div class="info-card">
             <span>Data do pedido</span>
-            <strong>{{ pedido.data | datetime_local('%d/%m/%Y %H:%M') }}</strong>
+            <strong>
+                <span class="js-utc" data-utc="{{ pedido.data|datetime_utc_iso }}" data-format="DD/MM/YYYY HH:mm">
+                    {{ pedido.data.strftime('%d/%m/%Y %H:%M') }}
+                </span>
+            </strong>
             <small>ID interno #{{ pedido.id }}</small>
         </div>
         <div class="info-card">

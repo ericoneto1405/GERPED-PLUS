@@ -31,7 +31,11 @@
     <div class="alert alert-info">
         <h5 class="alert-heading"><i class="bi bi-clipboard icon-text"></i>Informações do Pedido</h5>
         <p class="mb-1"><strong>Cliente:</strong> {{ pedido.cliente.nome }}</p>
-        <p class="mb-1"><strong>Data de Criação:</strong> {{ pedido.data | datetime_local('%d/%m/%Y às %H:%M') }}</p>
+        <p class="mb-1"><strong>Data de Criação:</strong>
+            <span class="js-utc" data-utc="{{ pedido.data|datetime_utc_iso }}" data-format="DD/MM/YYYY [às] HH:mm">
+                {{ pedido.data.strftime('%d/%m/%Y às %H:%M') }}
+            </span>
+        </p>
         <p class="mb-0"><strong>Status:</strong> <span class="badge bg-info text-dark">{{ pedido.status }}</span></p>
     </div>
 

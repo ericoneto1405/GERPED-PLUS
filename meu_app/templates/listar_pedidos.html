@@ -792,7 +792,11 @@
         <tr id="linha-pedido-{{ item.pedido.id }}">
             <td>#{{ item.pedido.numero_exibicao }}</td>
             <td>{{ item.pedido.cliente.nome }}</td>
-            <td>{{ item.pedido.data | datetime_local('%d/%m/%Y %H:%M') }}</td>
+            <td>
+                <span class="js-utc" data-utc="{{ item.pedido.data|datetime_utc_iso }}" data-format="DD/MM/YYYY HH:mm">
+                    {{ item.pedido.data.strftime('%d/%m/%Y %H:%M') }}
+                </span>
+            </td>
             <td>{{ item.total_venda | currency_brl }}</td>
             <td>{{ (item.saldo_investimento or 0) | currency_brl }}</td>
             <td class="{% if item.status_codigo == 'liberado_coleta' %}status-financeiro{% elif item.status_codigo in ['coletado_parcial', 'coleta_concluida'] %}status-coleta{% elif item.status_codigo == 'cancelado' %}status-cancelado{% else %}status-pendente{% endif %}">

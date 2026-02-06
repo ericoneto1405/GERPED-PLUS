@@ -126,6 +126,13 @@ def _configure_talisman(app) -> None:
     hsts_include_subdomains = app.config.get("HSTS_INCLUDE_SUBDOMAINS", True)
     hsts_preload = app.config.get("HSTS_PRELOAD", True)
 
+    # Se nao estamos forçando HTTPS, nao podemos enviar CSP que "upgrada" tudo para https,
+    # senao o browser vai tentar buscar /static via https e quebrar a tela (CSS/imagens/JS).
+    if not force_https and isinstance(csp, dict):
+        csp = dict(csp)
+        csp.pop("upgrade-insecure-requests", None)
+        csp.pop("block-all-mixed-content", None)
+
     _talisman = Talisman(
         app,
         content_security_policy=csp,

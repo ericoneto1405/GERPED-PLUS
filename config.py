@@ -208,15 +208,17 @@ class ProductionConfig(BaseConfig):
     WTF_CSRF_SSL_STRICT = True
     LOG_LEVEL = 'INFO'
     
-    # Forçar HTTPS
-    FORCE_HTTPS = True
-    PREFERRED_URL_SCHEME = 'https'
+    # Forçar HTTPS (pode ser sobrescrito via env)
+    _force_https_env = os.getenv('FORCE_HTTPS')
+    FORCE_HTTPS = True if _force_https_env is None else _force_https_env.lower() == 'true'
+    PREFERRED_URL_SCHEME = 'https' if FORCE_HTTPS else 'http'
     
     # HSTS (HTTP Strict Transport Security)
-    HSTS_ENABLED = True
-    HSTS_MAX_AGE = 31536000  # 1 ano
-    HSTS_INCLUDE_SUBDOMAINS = True
-    HSTS_PRELOAD = True
+    _hsts_env = os.getenv('HSTS_ENABLED')
+    HSTS_ENABLED = (True if _hsts_env is None else _hsts_env.lower() == 'true') and FORCE_HTTPS
+    HSTS_MAX_AGE = int(os.getenv('HSTS_MAX_AGE', '31536000'))  # 1 ano
+    HSTS_INCLUDE_SUBDOMAINS = os.getenv('HSTS_INCLUDE_SUBDOMAINS', 'true').lower() == 'true'
+    HSTS_PRELOAD = os.getenv('HSTS_PRELOAD', 'true').lower() == 'true'
     
     # Validação estrita em produção
     @classmethod

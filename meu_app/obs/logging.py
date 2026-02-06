@@ -142,6 +142,7 @@ def setup_structured_logging(app):
     file_handler.setLevel(log_level)
     
     # Handler para console em desenvolvimento (formato legível)
+    console_handler = None
     if app.debug:
         console_handler = logging.StreamHandler()
         
@@ -159,10 +160,11 @@ def setup_structured_logging(app):
     app.logger.addHandler(file_handler)
     app.logger.setLevel(log_level)
     
-    # Remover handlers padrão do Flask
-    app.logger.handlers = [h for h in app.logger.handlers if h in [file_handler, console_handler] if app.debug]
-    if not app.debug:
-        app.logger.handlers = [file_handler]
+    # Remover handlers padrão do Flask e manter apenas os configurados
+    handlers = [file_handler]
+    if console_handler is not None:
+        handlers.append(console_handler)
+    app.logger.handlers = handlers
     
     app.logger.info(
         'Sistema de logging estruturado inicializado',

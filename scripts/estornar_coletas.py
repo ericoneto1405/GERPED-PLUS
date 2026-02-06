@@ -72,6 +72,11 @@ def main():
         default="Sistema (estorno coletas)",
         help="Nome do responsável para registrar na movimentação de estoque.",
     )
+    parser.add_argument(
+        "--criar-estoque",
+        action="store_true",
+        help="Cria registro de estoque quando não existir para um produto.",
+    )
     args = parser.parse_args()
 
     app = create_app()
@@ -100,9 +105,18 @@ def main():
                     .first()
                 )
                 if not estoque:
-                    raise RuntimeError(
-                        f"Estoque não encontrado para produto_id={produto_id}"
+                    if not args.criar_estoque:
+                        raise RuntimeError(
+                            f"Estoque não encontrado para produto_id={produto_id}"
+                        )
+                    estoque = Estoque(
+                        produto_id=produto_id,
+                        quantidade=0,
+                        conferente=args.responsavel,
+                        status="Contagem",
                     )
+                    db.session.add(estoque)
+                    db.session.flush()
                 quantidade_anterior = estoque.quantidade
                 quantidade_atual = quantidade_anterior + qtd
 

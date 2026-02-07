@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Recibo de Coleta</title>
-    <style>
+    <style nonce="{{ nonce }}">
         @page {
             size: A4;
             margin: 0;
@@ -197,7 +197,7 @@
         Documento de Identificação
     </div>
 
-    <script>
+    <script nonce="{{ nonce }}">
         const originalTitle = document.title;
         window.addEventListener('beforeprint', () => {
             document.title = '';

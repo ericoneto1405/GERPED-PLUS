@@ -267,7 +267,7 @@
 </div>
 
 <style>
-@import url('https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css');
+@import url('{{ url_for('static', filename='vendor/select2/4.1.0-rc.0/css/select2.min.css') }}');
 
 /* Estilos das Abas */
 .tabs-container {
@@ -770,7 +770,7 @@ table tbody tr:hover {
 
 {% block scripts %}
 {{ super() }}
-<script nonce="{{ nonce }}" src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script nonce="{{ nonce }}" src="{{ url_for('static', filename='vendor/select2/4.1.0-rc.0/js/select2.min.js') }}"></script>
 <script nonce="{{ nonce }}">
 document.addEventListener('DOMContentLoaded', () => {
     const tabela = document.querySelector('.produtos-table');

@@ -399,7 +399,7 @@
 </div>
 
 <!-- Scripts do Dashboard -->
-<script nonce="{{ nonce }}" src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script nonce="{{ nonce }}" src="{{ url_for('static', filename='vendor/chart.js/chart.min.js') }}"></script>
 <script nonce="{{ nonce }}" src="{{ url_for('static', filename='dashboard.js') }}"></script>
 
 <!-- Dados para o JavaScript -->

@@ -4,7 +4,7 @@
 {% block title %}Processar Coleta - Pedido {{ detalhes.pedido.numero_exibicao }}{% endblock %}
 
 {% block extra_head %}
-<script src="https://cdn.jsdelivr.net/npm/imask@6.4.3/dist/imask.min.js" nonce="{{ nonce }}"></script>
+<script src="{{ url_for('static', filename='vendor/imask/6.4.3/imask.min.js') }}" nonce="{{ nonce }}"></script>
 {% endblock %}
 
 {% block styles %}

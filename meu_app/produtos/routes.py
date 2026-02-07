@@ -142,7 +142,32 @@ def upload_produtos():
         if not sucesso_upload:
             return jsonify({'success': False, 'message': f'Erro no upload: {mensagem_upload}'}), 400
         
-        # Usar o serviço para importar produtos com arquivo seguro
+        # Preferir processamento assíncrono para não travar a aplicação
+        try:
+            from meu_app.queue import get_redis
+            from rq import Queue
+            from meu_app.queue.tasks import import_produtos_planilha_task
+
+            redis_conn = get_redis()
+            if redis_conn is not None:
+                imports_queue = Queue('imports', connection=redis_conn, default_timeout=900)
+                job = imports_queue.enqueue(
+                    import_produtos_planilha_task,
+                    file_path,
+                    job_timeout=900,
+                    result_ttl=3600,
+                    failure_ttl=86400,
+                )
+                return jsonify({
+                    'success': True,
+                    'async': True,
+                    'job_id': job.id,
+                    'message': 'Importação iniciada. Aguarde o processamento.',
+                }), 202
+        except Exception as e:
+            current_app.logger.warning(f"Fila indisponível; importação será síncrona. Motivo: {e}")
+
+        # Fallback síncrono
         sucesso, mensagem, dados = ImportacaoServiceSeguro.importar_produtos_planilha_seguro(file_path)
         
         if sucesso:
@@ -236,9 +261,54 @@ def upload_precos_produtos():
             return jsonify({'success': False, 'message': 'Nenhum arquivo enviado'})
         
         file = request.files['file']
-        
-        # Usar o serviço para importar preços
-        sucesso, mensagem, dados = ImportacaoService.importar_precos_planilha(file)
+
+        # Tentar salvar e enfileirar (assíncrono). Se falhar, faz síncrono.
+        file_path = None
+        try:
+            sucesso_upload, mensagem_upload, file_path = validate_excel_upload(file)
+            if not sucesso_upload:
+                return jsonify({'success': False, 'message': f'Erro no upload: {mensagem_upload}'}), 400
+
+            from meu_app.queue import get_redis
+            from rq import Queue
+            from meu_app.queue.tasks import import_precos_planilha_task
+
+            redis_conn = get_redis()
+            if redis_conn is not None:
+                imports_queue = Queue('imports', connection=redis_conn, default_timeout=900)
+                job = imports_queue.enqueue(
+                    import_precos_planilha_task,
+                    file_path,
+                    job_timeout=900,
+                    result_ttl=3600,
+                    failure_ttl=86400,
+                )
+                return jsonify({
+                    'success': True,
+                    'async': True,
+                    'job_id': job.id,
+                    'message': 'Importação de preços iniciada. Aguarde o processamento.',
+                }), 202
+        except Exception as e:
+            current_app.logger.warning(f"Fila indisponível; importação de preços será síncrona. Motivo: {e}")
+            # Se já salvou em disco, segue síncrono lendo do path.
+            if file_path:
+                # Criar um pseudo-file para manter compatibilidade (somente para leitura do pandas).
+                # ImportacaoService lê via pandas, então basta abrir o path.
+                try:
+                    with open(file_path, 'rb') as fh:
+                        from werkzeug.datastructures import FileStorage
+                        fs = FileStorage(stream=fh, filename='precos.xlsx', content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                        sucesso, mensagem, dados = ImportacaoService.importar_precos_planilha(fs)
+                finally:
+                    try:
+                        import os
+                        if file_path and os.path.exists(file_path):
+                            os.remove(file_path)
+                    except Exception:
+                        pass
+            else:
+                sucesso, mensagem, dados = ImportacaoService.importar_precos_planilha(file)
         
         if sucesso:
             # Registrar atividade

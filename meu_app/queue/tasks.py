@@ -191,3 +191,153 @@ def cleanup_receipts_task(ttl_hours: Optional[int] = None) -> Dict:
             'success': False,
             'error': error_msg,
         }
+
+
+def import_produtos_planilha_task(file_path: str) -> Dict:
+    """
+    Task assíncrona para importar produtos via planilha (xlsx) sem travar o request.
+    """
+    from rq import get_current_job
+
+    job = get_current_job()
+    app = _get_app()
+
+    try:
+        with app.app_context():
+            if job:
+                job.meta['progress'] = 5
+                job.meta['stage'] = 'Iniciando importação de produtos'
+                job.save_meta()
+
+            if not os.path.exists(file_path):
+                raise FileNotFoundError(f"Arquivo não encontrado: {file_path}")
+
+            if job:
+                job.meta['progress'] = 20
+                job.meta['stage'] = 'Lendo planilha'
+                job.save_meta()
+
+            from meu_app.produtos.services import ImportacaoServiceSeguro
+
+            sucesso, mensagem, dados = ImportacaoServiceSeguro.importar_produtos_planilha_seguro(file_path)
+
+            if job:
+                job.meta['progress'] = 100
+                job.meta['stage'] = 'Concluído' if sucesso else 'Concluído com erros'
+                job.save_meta()
+
+            return {
+                'success': bool(sucesso),
+                'message': mensagem,
+                'duplicados': dados.get('produtos_duplicados', []),
+                'invalidos': dados.get('produtos_invalidos', []),
+                'atualizados': dados.get('produtos_atualizados', []),
+                'categorias_alteradas': dados.get('categorias_alteradas', []),
+                'criados': dados.get('produtos_criados', 0),
+                'erros': dados.get('erros', []),
+            }
+    except Exception as exc:  # pragma: no cover
+        error_msg = f"Erro na importação de produtos: {exc}"
+        if job:
+            job.meta['error'] = error_msg
+            job.meta['stage'] = 'Falha'
+            job.save_meta()
+        return {'success': False, 'message': error_msg}
+
+
+def import_precos_planilha_task(file_path: str) -> Dict:
+    """
+    Task assíncrona para importar preços médios via planilha (xlsx).
+    """
+    from rq import get_current_job
+
+    job = get_current_job()
+    app = _get_app()
+
+    try:
+        with app.app_context():
+            if job:
+                job.meta['progress'] = 5
+                job.meta['stage'] = 'Iniciando importação de preços'
+                job.save_meta()
+
+            if not os.path.exists(file_path):
+                raise FileNotFoundError(f"Arquivo não encontrado: {file_path}")
+
+            if job:
+                job.meta['progress'] = 20
+                job.meta['stage'] = 'Lendo planilha'
+                job.save_meta()
+
+            import pandas as pd
+            from meu_app.models import Produto, db
+            from meu_app.time_utils import utcnow
+
+            df = pd.read_excel(file_path)
+
+            colunas_necessarias = ['CÓDIGO INTERNO', 'PREÇO MÉDIO']
+            if not all(col in df.columns for col in colunas_necessarias):
+                return {
+                    'success': False,
+                    'message': "Colunas necessárias: CÓDIGO INTERNO, PREÇO MÉDIO",
+                    'atualizados': 0,
+                    'nao_encontrados': [],
+                    'invalidos': [],
+                }
+
+            produtos_atualizados = 0
+            produtos_nao_encontrados = []
+            produtos_invalidos = []
+
+            total = int(getattr(df, 'shape', [0])[0] or 0) or 1
+            for idx, row in df.iterrows():
+                try:
+                    codigo_interno = str(row['CÓDIGO INTERNO']).strip() if pd.notna(row['CÓDIGO INTERNO']) else None
+                    preco_medio = float(row['PREÇO MÉDIO']) if pd.notna(row['PREÇO MÉDIO']) else 0.0
+
+                    if not codigo_interno:
+                        continue
+
+                    produto = Produto.query.filter_by(codigo_interno=codigo_interno).first()
+                    if produto:
+                        produto.preco_medio_compra = preco_medio
+                        produto.preco_atualizado_em = utcnow()
+                        produtos_atualizados += 1
+                    else:
+                        produtos_nao_encontrados.append({'codigo_interno': codigo_interno, 'linha': int(idx) + 2})
+                except Exception as e:
+                    produtos_invalidos.append({'linha': int(idx) + 2, 'erro': str(e)})
+
+                if job and (idx % 50 == 0):
+                    progress = min(95, int(20 + (idx / total) * 70))
+                    job.meta['progress'] = progress
+                    job.meta['stage'] = 'Atualizando produtos'
+                    job.save_meta()
+
+            db.session.commit()
+
+            if job:
+                job.meta['progress'] = 100
+                job.meta['stage'] = 'Concluído'
+                job.save_meta()
+
+            return {
+                'success': True,
+                'message': f"Preços atualizados com sucesso! {produtos_atualizados} produtos foram atualizados.",
+                'atualizados': produtos_atualizados,
+                'nao_encontrados': produtos_nao_encontrados,
+                'invalidos': produtos_invalidos,
+            }
+    except Exception as exc:  # pragma: no cover
+        error_msg = f"Erro na importação de preços: {exc}"
+        if job:
+            job.meta['error'] = error_msg
+            job.meta['stage'] = 'Falha'
+            job.save_meta()
+        return {'success': False, 'message': error_msg}
+    finally:
+        try:
+            if file_path and os.path.exists(file_path):
+                os.remove(file_path)
+        except Exception:
+            pass

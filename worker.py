@@ -50,7 +50,9 @@ def main():
     
     # Criar worker
     with Connection(redis_conn):
-        queues = [Queue('ocr')]
+        # Use multiple queues so long-running tasks don't block request threads.
+        # 'imports' handles planilha processing (produtos/precos), 'pdf' handles receipts.
+        queues = [Queue('ocr'), Queue('pdf'), Queue('imports')]
         worker = Worker(queues)
         
         print("✅ Worker iniciado, aguardando jobs...")

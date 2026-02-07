@@ -37,18 +37,21 @@ def _vectorize(tokens: list[str], vocab: Dict[str, int]) -> "torch.Tensor":
     return vector
 
 
-class _ValidatorNet(nn.Module):  # pragma: no cover - rede já testada em treinamento
-    def __init__(self, input_dim: int, num_classes: int, hidden_dim: int = 256):
-        super().__init__()
-        self.model = nn.Sequential(
-            nn.Linear(input_dim, hidden_dim),
-            nn.ReLU(),
-            nn.Dropout(0.2),
-            nn.Linear(hidden_dim, num_classes),
-        )
+if nn is not None:
+    class _ValidatorNet(nn.Module):  # pragma: no cover - rede já testada em treinamento
+        def __init__(self, input_dim: int, num_classes: int, hidden_dim: int = 256):
+            super().__init__()
+            self.model = nn.Sequential(
+                nn.Linear(input_dim, hidden_dim),
+                nn.ReLU(),
+                nn.Dropout(0.2),
+                nn.Linear(hidden_dim, num_classes),
+            )
 
-    def forward(self, x: "torch.Tensor") -> "torch.Tensor":
-        return self.model(x)
+        def forward(self, x: "torch.Tensor") -> "torch.Tensor":
+            return self.model(x)
+else:  # pragma: no cover - ambiente sem PyTorch
+    _ValidatorNet = None  # type: ignore[assignment]
 
 
 class PaymentValidatorService:

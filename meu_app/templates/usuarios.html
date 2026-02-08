@@ -24,6 +24,11 @@
                     <i class="bi bi-eye-slash eye-closed" aria-hidden="true"></i>
                 </button>
             </div>
+            <ul class="senha-regras" data-senha-regras-for="senha" aria-live="polite">
+                <li data-regra="len" class="regra regra-pendente">Minimo 6 caracteres</li>
+                <li data-regra="letter" class="regra regra-pendente">Pelo menos 1 letra</li>
+                <li data-regra="number" class="regra regra-pendente">Pelo menos 1 numero</li>
+            </ul>
         </div>
 
         <div class="form-group">
@@ -237,6 +242,11 @@
                             <i class="bi bi-eye-slash eye-closed" aria-hidden="true"></i>
                         </button>
                     </div>
+                    <ul class="senha-regras" data-senha-regras-for="novaSenha" aria-live="polite">
+                        <li data-regra="len" class="regra regra-pendente">Minimo 6 caracteres</li>
+                        <li data-regra="letter" class="regra regra-pendente">Pelo menos 1 letra</li>
+                        <li data-regra="number" class="regra regra-pendente">Pelo menos 1 numero</li>
+                    </ul>
                     <small class="form-text">Mínimo 6 caracteres, deve conter letras e números</small>
                 </div>
                 
@@ -294,6 +304,11 @@
                             <i class="bi bi-eye-slash eye-closed" aria-hidden="true"></i>
                         </button>
                     </div>
+                    <ul class="senha-regras" data-senha-regras-for="novaSenhaRedefinir" aria-live="polite">
+                        <li data-regra="len" class="regra regra-pendente">Minimo 6 caracteres</li>
+                        <li data-regra="letter" class="regra regra-pendente">Pelo menos 1 letra</li>
+                        <li data-regra="number" class="regra regra-pendente">Pelo menos 1 numero</li>
+                    </ul>
                     <small class="form-text">Mínimo 6 caracteres, deve conter letras e números</small>
                 </div>
             </div>
@@ -308,6 +323,52 @@
 <style nonce="{{ nonce }}">
 .form-inline {
     display: inline;
+}
+
+.senha-regras {
+    list-style: none;
+    padding-left: 0;
+    margin: 8px 0 0;
+    display: grid;
+    gap: 4px;
+    font-size: 0.9em;
+    color: #6c757d;
+}
+
+.senha-regras .regra {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.senha-regras .regra::before {
+    content: '•';
+    font-weight: 900;
+    width: 12px;
+    display: inline-block;
+    color: #adb5bd;
+}
+
+.senha-regras .regra-ok {
+    color: #198754;
+}
+
+.senha-regras .regra-ok::before {
+    content: '✓';
+    color: #198754;
+}
+
+.senha-regras .regra-bad {
+    color: #dc3545;
+}
+
+.senha-regras .regra-bad::before {
+    content: '✕';
+    color: #dc3545;
+}
+
+.senha-regras .regra-pendente {
+    color: #6c757d;
 }
 
 .action-buttons {
@@ -436,6 +497,56 @@
 document.addEventListener('DOMContentLoaded', function() {
     let usuarioIdAtual = null;
 
+    // Validador simples de senha (somente as 3 regras solicitadas).
+    function avaliarSenhaBasico(senha) {
+        const s = String(senha || '');
+        return {
+            len: s.length >= 6,
+            letter: /[A-Za-z]/.test(s),
+            number: /[0-9]/.test(s)
+        };
+    }
+
+    function atualizarUIRegrasSenha(inputId) {
+        const input = document.getElementById(inputId);
+        if (!input) return;
+
+        const container = document.querySelector(`[data-senha-regras-for="${inputId}"]`);
+        if (!container) return;
+
+        const checks = avaliarSenhaBasico(input.value);
+        const ok = Boolean(checks.len && checks.letter && checks.number);
+
+        container.querySelectorAll('[data-regra]').forEach((li) => {
+            const regra = li.getAttribute('data-regra');
+            const passou = Boolean(checks[regra]);
+            li.classList.remove('regra-ok', 'regra-bad', 'regra-pendente');
+            li.classList.add(passou ? 'regra-ok' : 'regra-bad');
+        });
+
+        // Desabilitar somente os botoes de submit do formulario que contem este input.
+        const form = input.closest('form');
+        if (form) {
+            form.querySelectorAll('button[type="submit"], input[type="submit"]').forEach((btn) => {
+                btn.disabled = !ok;
+            });
+        }
+    }
+
+    function bindSenhaRules(inputId) {
+        const input = document.getElementById(inputId);
+        if (!input) return;
+        const handler = () => atualizarUIRegrasSenha(inputId);
+        input.addEventListener('input', handler);
+        input.addEventListener('blur', handler);
+        // Inicializa ao carregar, para nao deixar o botao habilitado com senha vazia.
+        handler();
+    }
+
+    bindSenhaRules('senha');
+    bindSenhaRules('novaSenha');
+    bindSenhaRules('novaSenhaRedefinir');
+
     // Event listeners para botões Editar
     document.querySelectorAll('.btn-editar-usuario').forEach(function(btn) {
         btn.addEventListener('click', function() {
@@ -533,6 +644,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('senhaAtual').value = '';
         document.getElementById('novaSenha').value = '';
         document.getElementById('confirmarSenha').value = '';
+        atualizarUIRegrasSenha('novaSenha');
     }
 
     function abrirModalRedefinirSenha(id, nome) {
@@ -548,6 +660,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Limpar campos
         document.getElementById('senhaAdmin').value = '';
         document.getElementById('novaSenhaRedefinir').value = '';
+        atualizarUIRegrasSenha('novaSenhaRedefinir');
     }
 
     function fecharModal(modalId) {

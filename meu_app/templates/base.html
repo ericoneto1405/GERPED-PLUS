@@ -192,14 +192,39 @@
         </nav>
     </aside>
 
-    <!-- Main Content -->
-    <main class="main-content">
-        <div class="content-wrapper">
-            <!-- Mensagens Flash do Flask serão processadas após carregamento do Moment.js -->
-            
-            {% block content %}{% endblock %}
-        </div>
-    </main>
+	    <!-- Main Content -->
+	    <main class="main-content">
+	        <div class="content-wrapper">
+	            <!-- Mensagens Flash do Flask (CSP-safe) -->
+	            {% with messages = get_flashed_messages(with_categories=true) %}
+	                {% if messages %}
+	                    <div id="flash-message-data" hidden>
+	                        {% for category, message in messages %}
+	                            {% if category == 'error' %}
+	                                {% set title = 'Erro' %}
+	                                {% set duration = 7000 %}
+	                            {% elif category == 'success' %}
+	                                {% set title = 'Sucesso' %}
+	                                {% set duration = 5000 %}
+	                            {% elif category == 'warning' %}
+	                                {% set title = 'Aviso' %}
+	                                {% set duration = 6000 %}
+	                            {% elif category == 'info' %}
+	                                {% set title = 'Informacao' %}
+	                                {% set duration = 5000 %}
+	                            {% else %}
+	                                {% set title = 'Mensagem' %}
+	                                {% set duration = 5000 %}
+	                            {% endif %}
+	                            <div data-flash-message="{{ message|e }}" data-flash-type="{{ category }}" data-flash-title="{{ title }}" data-flash-duration="{{ duration }}"></div>
+	                        {% endfor %}
+	                    </div>
+	                {% endif %}
+	            {% endwith %}
+	            
+	            {% block content %}{% endblock %}
+	        </div>
+	    </main>
 
     <!-- Sistema de Notificações Personalizado -->
     <div id="notification-container" class="notification-container"></div>
@@ -255,25 +280,8 @@
         });
         
         // Mensagens Flash do Flask
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                document.addEventListener('DOMContentLoaded', function() {
-                    {% for category, message in messages %}
-                        {% if category == 'error' %}
-                            notificationSystem.error('Erro', '{{ message }}', 7000);
-                        {% elif category == 'success' %}
-                            notificationSystem.success('Sucesso', '{{ message }}', 5000);
-                        {% elif category == 'warning' %}
-                            notificationSystem.warning('Aviso', '{{ message }}', 6000);
-                        {% elif category == 'info' %}
-                            notificationSystem.info('Informação', '{{ message }}', 5000);
-                        {% else %}
-                            notificationSystem.info('Mensagem', '{{ message }}', 5000);
-                        {% endif %}
-                    {% endfor %}
-                });
-            {% endif %}
-        {% endwith %}
+        // CSP-safe + evita quebrar JS com aspas/caracteres especiais no texto.
+        // As mensagens sao renderizadas como data-attributes e o notifications.js as processa no DOMContentLoaded.
 
         window.updateAlert = function(message, status) {
             const alertContainer = document.getElementById('header-alert');

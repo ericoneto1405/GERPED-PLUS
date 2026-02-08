@@ -131,7 +131,7 @@
                         
                         <!-- Botão Excluir -->
                         {% if usuario.nome != 'admin' %}
-                            <form method="POST" action="{{ url_for('usuarios.excluir_usuario', id=usuario.id) }}" style="display:inline;" class="form-excluir-usuario">
+                            <form method="POST" action="{{ url_for('usuarios.excluir_usuario', id=usuario.id) }}" class="form-excluir-usuario form-inline">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="btn btn-danger btn-sm"><i class="bi bi-trash icon-text"></i> Excluir</button>
                             </form>
@@ -151,7 +151,7 @@
 </div>
 
 <!-- Modal Editar Usuário -->
-<div id="modalEditarUsuario" class="modal" style="display: none;">
+<div id="modalEditarUsuario" class="modal" aria-hidden="true" hidden>
     <div class="modal-content">
         <div class="modal-header">
             <h3 class="modal-title"><i class="bi bi-pencil icon-text"></i> Editar Usuário</h3>
@@ -208,7 +208,7 @@
 </div>
 
 <!-- Modal Alterar Senha -->
-<div id="modalAlterarSenha" class="modal" style="display: none;">
+<div id="modalAlterarSenha" class="modal" aria-hidden="true" hidden>
     <div class="modal-content">
         <div class="modal-header">
             <h3 class="modal-title"><i class="bi bi-key icon-text"></i> Alterar Senha</h3>
@@ -260,7 +260,7 @@
 </div>
 
 <!-- Modal Redefinir Senha -->
-<div id="modalRedefinirSenha" class="modal" style="display: none;">
+<div id="modalRedefinirSenha" class="modal" aria-hidden="true" hidden>
     <div class="modal-content">
         <div class="modal-header">
             <h3 class="modal-title"><i class="bi bi-arrow-repeat icon-text"></i> Redefinir Senha</h3>
@@ -306,6 +306,10 @@
 </div>
 
 <style nonce="{{ nonce }}">
+.form-inline {
+    display: inline;
+}
+
 .action-buttons {
     display: flex;
     gap: 5px;
@@ -508,14 +512,22 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('editAcessoLogistica').checked = acessos.acesso_logistica;
         
         document.getElementById('formEditarUsuario').action = `/usuarios/editar/${id}`;
-        document.getElementById('modalEditarUsuario').style.display = 'block';
+        const modal = document.getElementById('modalEditarUsuario');
+        if (modal) {
+            modal.hidden = false;
+            modal.setAttribute('aria-hidden', 'false');
+        }
     }
 
     function abrirModalAlterarSenha(id, nome) {
         usuarioIdAtual = id;
         
         document.getElementById('formAlterarSenha').action = `/usuarios/alterar_senha/${id}`;
-        document.getElementById('modalAlterarSenha').style.display = 'block';
+        const modal = document.getElementById('modalAlterarSenha');
+        if (modal) {
+            modal.hidden = false;
+            modal.setAttribute('aria-hidden', 'false');
+        }
         
         // Limpar campos
         document.getElementById('senhaAtual').value = '';
@@ -527,7 +539,11 @@ document.addEventListener('DOMContentLoaded', function() {
         usuarioIdAtual = id;
         
         document.getElementById('formRedefinirSenha').action = `/usuarios/redefinir_senha/${id}`;
-        document.getElementById('modalRedefinirSenha').style.display = 'block';
+        const modal = document.getElementById('modalRedefinirSenha');
+        if (modal) {
+            modal.hidden = false;
+            modal.setAttribute('aria-hidden', 'false');
+        }
         
         // Limpar campos
         document.getElementById('senhaAdmin').value = '';
@@ -535,7 +551,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function fecharModal(modalId) {
-        document.getElementById(modalId).style.display = 'none';
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.hidden = true;
+            modal.setAttribute('aria-hidden', 'true');
+        }
         usuarioIdAtual = null;
     }
 

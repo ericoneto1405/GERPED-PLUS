@@ -15,7 +15,7 @@ class UsuarioService:
         """Inicializa o serviço com seu repository"""
         self.repository = UsuarioRepository()
     
-    def criar_usuario(self, nome: str, senha: str, tipo: str, acessos: Dict[str, bool]) -> Tuple[bool, str, Optional[Usuario]]:
+    def criar_usuario(self, nome: str, email: str, senha: str, tipo: str, acessos: Dict[str, bool]) -> Tuple[bool, str, Optional[Usuario]]:
         """
         Cria um novo usuário
         
@@ -32,6 +32,12 @@ class UsuarioService:
             # Validações
             if not nome or not nome.strip():
                 return False, "Nome do usuário é obrigatório", None
+
+            email_norm = (email or "").strip().lower()
+            if not email_norm:
+                return False, "E-mail é obrigatório", None
+            if "@" not in email_norm or "." not in email_norm.split("@", 1)[-1]:
+                return False, "E-mail inválido", None
             
             if not senha or not senha.strip():
                 return False, "Senha é obrigatória", None
@@ -45,10 +51,13 @@ class UsuarioService:
             # Verificar se já existe usuário com mesmo nome (usando repository)
             if self.repository.verificar_nome_existe(nome.strip()):
                 return False, f"Já existe um usuário com o nome '{nome}'", None
+            if self.repository.verificar_email_existe(email_norm):
+                return False, "Já existe um usuário com este e-mail", None
             
             # Criar usuário
             novo_usuario = Usuario(
                 nome=nome.strip(),
+                email=email_norm,
                 senha_hash='',  # Será definido pelo método set_senha
                 tipo=tipo,
                 acesso_clientes=acessos.get('acesso_clientes', False),
@@ -70,7 +79,7 @@ class UsuarioService:
                 titulo="Usuário Criado",
                 descricao=f"Usuário: {nome} - Tipo: {tipo}",
                 modulo="Usuários",
-                dados_extras={"usuario_id": novo_usuario.id, "nome": nome, "tipo": tipo}
+                dados_extras={"usuario_id": novo_usuario.id, "nome": nome, "email": email_norm, "tipo": tipo}
             )
             
             current_app.logger.info(f"Usuário criado: {novo_usuario.nome} (ID: {novo_usuario.id})")
@@ -257,7 +266,7 @@ class UsuarioService:
         
         return True, "Senha válida"
     
-    def editar_usuario(self, usuario_id: int, nome: str, tipo: str, acessos: Dict[str, bool]) -> Tuple[bool, str]:
+    def editar_usuario(self, usuario_id: int, nome: str, email: str, tipo: str, acessos: Dict[str, bool]) -> Tuple[bool, str]:
         """
         Edita um usuário existente
         
@@ -290,6 +299,14 @@ class UsuarioService:
             # Atualizar dados
             usuario.nome = nome.strip()
             usuario.tipo = tipo
+            email_norm = (email or "").strip().lower()
+            if not email_norm:
+                return False, "E-mail é obrigatório"
+            if "@" not in email_norm or "." not in email_norm.split("@", 1)[-1]:
+                return False, "E-mail inválido"
+            if self.repository.verificar_email_existe(email_norm, excluir_id=usuario_id):
+                return False, "Já existe um usuário com este e-mail"
+            usuario.email = email_norm
             usuario.acesso_clientes = acessos.get('acesso_clientes', False)
             usuario.acesso_produtos = acessos.get('acesso_produtos', False)
             usuario.acesso_pedidos = acessos.get('acesso_pedidos', False)

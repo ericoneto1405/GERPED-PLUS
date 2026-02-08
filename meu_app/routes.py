@@ -103,9 +103,15 @@ def login():
         session['login_attempts'] = attempts
     
     if request.method == 'POST':
-        nome = request.form['usuario']
+        identificador = (request.form.get('usuario') or '').strip()
         senha = request.form['senha']
-        usuario = Usuario.query.filter_by(nome=nome).first()
+        usuario = None
+        if identificador:
+            ident_lower = identificador.lower()
+            # Novo padrao: login por e-mail. Mantemos fallback por nome durante transicao.
+            usuario = Usuario.query.filter(func.lower(Usuario.email) == ident_lower).first()
+            if not usuario and "@" not in identificador:
+                usuario = Usuario.query.filter(func.lower(Usuario.nome) == ident_lower).first()
         if usuario and usuario.check_senha(senha):
             login_user(usuario)
             session['usuario_id'] = usuario.id
@@ -120,7 +126,7 @@ def login():
             session.permanent = True
             session.modified = True
             session.pop('login_attempts', None)
-            current_app.logger.info(f"Login bem-sucedido: {nome} (IP: {request.remote_addr})")
+            current_app.logger.info(f"Login bem-sucedido: {usuario.nome} (IP: {request.remote_addr})")
             return redirect(url_for('main.painel'))
         else:
             max_attempts = current_app.config.get('LOGIN_MAX_ATTEMPTS', 5)
@@ -133,11 +139,11 @@ def login():
                 attempts['count'] = 0
                 current_app.logger.warning(
                     "Acesso bloqueado temporariamente após tentativas falhas (usuario=%s, IP=%s)",
-                    nome,
+                    identificador,
                     request.remote_addr,
                 )
             session['login_attempts'] = attempts
-            current_app.logger.warning(f"Tentativa de login falhou: {nome} (IP: {request.remote_addr})")
+            current_app.logger.warning(f"Tentativa de login falhou: {identificador} (IP: {request.remote_addr})")
             return render_template('login.html', erro="Usuário ou senha inválidos.")
     return render_template('login.html', erro=mensagem_expirou)
 
@@ -160,7 +166,7 @@ def _enviar_email_reset(usuario, token):
         current_app.logger.error('Biblioteca requests não está disponível para enviar e-mail.')
         return
     api_key = current_app.config.get('SENDGRID_API_KEY') or os.getenv('SENDGRID_API_KEY')
-    from_email = current_app.config.get('SENDGRID_FROM_EMAIL') or os.getenv('SENDGRID_FROM_EMAIL') or 'erico.neto@gruposertao.com'
+    from_email = current_app.config.get('SENDGRID_FROM_EMAIL') or os.getenv('SENDGRID_FROM_EMAIL') or 'no-reply@gerpedplus.com.br'
     reset_url = url_for('main.reset_password', token=token, _external=True)
     subject = 'GerpedPlus - Redefinição de Senha'
     conteudo = f"Olá {usuario.nome},\n\nRecebemos uma solicitação para redefinir sua senha no GerpedPlus. Clique no link abaixo para continuar:\n{reset_url}\n\nSe você não fez esta solicitação, ignore este e-mail. O link expira em 1 hora."
@@ -172,7 +178,7 @@ def _enviar_email_reset(usuario, token):
     data = {
         "personalizations": [
             {
-                "to": [{"email": usuario.nome}],
+                "to": [{"email": usuario.email}],
                 "subject": subject,
             }
         ],
@@ -200,13 +206,13 @@ def forgot_password():
     mensagem = None
     erro = None
     if request.method == 'POST':
-        identificador = request.form.get('identificador', '').strip()
+        identificador = (request.form.get('identificador', '') or '').strip().lower()
         if not identificador:
-            erro = 'Informe seu usuário (e-mail) para continuar.'
+            erro = 'Informe seu e-mail para continuar.'
         else:
-            usuario = Usuario.query.filter(func.lower(Usuario.nome) == identificador.lower()).first()
-            mensagem = 'Se este usuário estiver cadastrado, enviaremos um e-mail com instruções.'
-            if usuario:
+            usuario = Usuario.query.filter(func.lower(Usuario.email) == identificador).first()
+            mensagem = 'Se este e-mail estiver cadastrado, enviaremos um e-mail com instruções.'
+            if usuario and usuario.email:
                 token = _criar_token_reset(usuario)
                 _enviar_email_reset(usuario, token)
     return render_template('forgot_password.html', mensagem=mensagem, erro=erro)

@@ -16,6 +16,11 @@
         </div>
 
         <div class="form-group">
+            <label for="email">E-mail (para login)</label>
+            <input type="email" id="email" name="email" required placeholder="exemplo@empresa.com">
+        </div>
+
+        <div class="form-group">
             <label for="senha">Senha</label>
             <div class="password-field">
                 <input type="password" id="senha" name="senha" required>
@@ -109,6 +114,7 @@
                         <button class="btn btn-primary btn-sm btn-editar-usuario" 
                                 data-id="{{ usuario.id }}" 
                                 data-nome="{{ usuario.nome }}" 
+                                data-email="{{ usuario.email or '' }}"
                                 data-tipo="{{ usuario.tipo }}"
                                 data-acesso-clientes="{{ usuario.acesso_clientes|tojson|safe }}"
                                 data-acesso-produtos="{{ usuario.acesso_produtos|tojson|safe }}"
@@ -168,6 +174,11 @@
                 <div class="form-group">
                     <label for="editNome">Nome do Usuário</label>
                     <input type="text" id="editNome" name="nome" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="editEmail">E-mail (para login)</label>
+                    <input type="email" id="editEmail" name="email" required>
                 </div>
                 
                 <div class="form-group">
@@ -552,6 +563,7 @@ document.addEventListener('DOMContentLoaded', function() {
         btn.addEventListener('click', function() {
             const id = this.dataset.id;
             const nome = this.dataset.nome;
+            const email = this.dataset.email || '';
             const tipo = this.dataset.tipo;
             const acessos = {
                 acesso_clientes: this.dataset.acessoClientes === 'true',
@@ -560,7 +572,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 acesso_financeiro: this.dataset.acessoFinanceiro === 'true',
                 acesso_logistica: this.dataset.acessoLogistica === 'true'
             };
-            abrirModalEditarUsuario(id, nome, tipo, acessos);
+            abrirModalEditarUsuario(id, nome, email, tipo, acessos);
         });
     });
 
@@ -610,10 +622,12 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Funções auxiliares
-    function abrirModalEditarUsuario(id, nome, tipo, acessos) {
+    function abrirModalEditarUsuario(id, nome, email, tipo, acessos) {
         usuarioIdAtual = id;
         
         document.getElementById('editNome').value = nome;
+        const editEmail = document.getElementById('editEmail');
+        if (editEmail) editEmail.value = email || '';
         document.getElementById('editTipo').value = tipo;
         
         document.getElementById('editAcessoClientes').checked = acessos.acesso_clientes;

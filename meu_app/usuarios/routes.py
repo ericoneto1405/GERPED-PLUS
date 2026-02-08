@@ -14,6 +14,7 @@ def listar_usuarios():
     if request.method == 'POST':
         # Extrair dados do formulário
         nome = request.form.get('nome', '').strip()
+        email = request.form.get('email', '').strip()
         senha = request.form.get('senha', '').strip()
         tipo = request.form.get('tipo', 'comum')
         
@@ -28,7 +29,7 @@ def listar_usuarios():
         
         # Usar o serviço para criar o usuário
         service = UsuarioService()
-        sucesso, mensagem, usuario = service.criar_usuario(nome, senha, tipo, acessos)
+        sucesso, mensagem, usuario = service.criar_usuario(nome, email, senha, tipo, acessos)
         
         if sucesso:
             current_app.logger.info(f"Usuário criado por {session.get('usuario_nome', 'N/A')}")
@@ -68,6 +69,7 @@ def alterar_senha_usuario(id):
 def editar_usuario(id):
     """Edita um usuário"""
     nome = request.form.get('nome')
+    email = request.form.get('email')
     tipo = request.form.get('tipo')
     
     acessos = {
@@ -79,7 +81,7 @@ def editar_usuario(id):
     }
     
     service = UsuarioService()
-    sucesso, mensagem = service.editar_usuario(id, nome, tipo, acessos)
+    sucesso, mensagem = service.editar_usuario(id, nome, email, tipo, acessos)
     
     if sucesso:
         current_app.logger.info(f"Usuário editado (ID: {id}) por {session.get('usuario_nome', 'N/A')}")

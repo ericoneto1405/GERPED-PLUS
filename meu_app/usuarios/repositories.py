@@ -31,6 +31,14 @@ class UsuarioRepository:
         except SQLAlchemyError as e:
             print(f"Erro ao buscar usuário por nome '{nome}': {str(e)}")
             return None
+
+    def buscar_por_email(self, email: str) -> Optional[Usuario]:
+        """Busca usuário por email (único)."""
+        try:
+            return Usuario.query.filter_by(email=email).first()
+        except SQLAlchemyError as e:
+            print(f"Erro ao buscar usuário por email '{email}': {str(e)}")
+            return None
     
     def listar_todos(self) -> List[Usuario]:
         """Lista todos os usuários."""
@@ -99,6 +107,17 @@ class UsuarioRepository:
         except SQLAlchemyError as e:
             print(f"Erro ao verificar nome '{nome}': {str(e)}")
             return False
+
+    def verificar_email_existe(self, email: str, excluir_id: Optional[int] = None) -> bool:
+        """Verifica se já existe usuário com o email."""
+        try:
+            query = Usuario.query.filter_by(email=email)
+            if excluir_id:
+                query = query.filter(Usuario.id != excluir_id)
+            return query.first() is not None
+        except SQLAlchemyError as e:
+            print(f"Erro ao verificar email '{email}': {str(e)}")
+            return False
     
     def contar_total(self) -> int:
         """Conta total de usuários."""
@@ -107,4 +126,3 @@ class UsuarioRepository:
         except SQLAlchemyError as e:
             print(f"Erro ao contar usuários: {str(e)}")
             return 0
-

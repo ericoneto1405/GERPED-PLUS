@@ -82,6 +82,7 @@
             <tr>
                 <th>ID</th>
                 <th>Nome</th>
+                <th>E-mail</th>
                 <th>Tipo</th>
                 <th>Permissões</th>
                 <th>Ações</th>
@@ -92,6 +93,7 @@
             <tr>
                 <td>{{ usuario.id }}</td>
                 <td>{{ usuario.nome }}</td>
+                <td>{{ usuario.email or '-' }}</td>
                 <td>
                     {% if usuario.tipo == 'admin' %}
                         <span class="badge badge-admin"><i class="bi bi-person icon-text"></i> Admin</span>
@@ -154,7 +156,7 @@
             </tr>
             {% else %}
             <tr>
-                <td colspan="5" class="text-center">Nenhum usuário cadastrado.</td>
+                <td colspan="6" class="text-center">Nenhum usuário cadastrado.</td>
             </tr>
             {% endfor %}
         </tbody>

@@ -435,6 +435,8 @@ class ItemColetado(db.Model):
 class Usuario(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String(50), nullable=False, unique=True)
+    # Email para login/reset. Armazenar em minusculo no backend.
+    email = db.Column(db.String(255), unique=True, nullable=True)
     senha_hash = db.Column(db.String(128), nullable=False)  # Renomeado de 'senha' para 'senha_hash'
     tipo = db.Column(db.String(20), nullable=False)  # admin ou comum
     acesso_clientes = db.Column(db.Boolean, default=False)

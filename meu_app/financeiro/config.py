@@ -27,7 +27,9 @@ class FinanceiroConfig:
     
     # Configurações de quota OCR
     OCR_ENFORCE_LIMIT = True
-    OCR_MONTHLY_LIMIT = 1000
+    # Mantemos uma folga abaixo do free tier do Google (1000 unidades/mês),
+    # para absorver reprocessamentos e variações (ex.: PDFs com múltiplas páginas).
+    OCR_MONTHLY_LIMIT = int(os.getenv('FINANCEIRO_OCR_MONTHLY_LIMIT', '950'))
     USE_LOCAL_OCR_ONLY = os.getenv('FINANCEIRO_OCR_LOCAL_ONLY', 'False').lower() == 'true'
     
     # Configurações Google Vision

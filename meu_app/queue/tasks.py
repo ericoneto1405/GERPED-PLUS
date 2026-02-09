@@ -33,12 +33,13 @@ def process_ocr_task(file_path: str, pedido_id: int, pagamento_id: Optional[int]
     Returns:
         Dict com resultado do OCR
     """
-    from meu_app.financeiro.vision_service import VisionOcrService
     from rq import get_current_job
     
     job = get_current_job()
     
     try:
+        app = _get_app()
+
         # Atualizar progresso
         if job:
             job.meta['progress'] = 10
@@ -55,8 +56,11 @@ def process_ocr_task(file_path: str, pedido_id: int, pagamento_id: Optional[int]
             job.meta['stage'] = 'Processando OCR'
             job.save_meta()
         
-        # Processar OCR
-        result = VisionOcrService.process_receipt(file_path)
+        # Processar OCR dentro do app context para garantir logging/config e quota.
+        from meu_app.financeiro.ocr_service import OcrService
+
+        with app.app_context():
+            result = OcrService.process_receipt(file_path)
         
         # Atualizar progresso
         if job:

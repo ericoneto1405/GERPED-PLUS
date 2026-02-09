@@ -18,6 +18,16 @@ class OcrService:
     """Serviço de OCR usando APENAS Google Vision API"""
 
     @classmethod
+    def _is_google_configured(cls) -> bool:
+        api_key = FinanceiroConfig.get_google_api_key()
+        credentials_path = FinanceiroConfig.get_google_credentials_path()
+        if api_key:
+            return True
+        if credentials_path and os.path.exists(credentials_path):
+            return True
+        return False
+
+    @classmethod
     def _check_quota(cls) -> bool:
         """
         Verifica se ainda há quota disponível para OCR no mês atual.
@@ -54,12 +64,16 @@ class OcrService:
             return True
     
     @classmethod
-    def _increment_quota(cls):
+    def _reserve_quota(cls) -> bool:
         """
-        Incrementa o contador de quota para o mês atual.
+        Reserva 1 unidade da quota para o mês atual.
+
+        Motivo: o Google pode cobrar uma chamada mesmo quando ela falha, então contar
+        apenas "sucessos" pode deixar o contador interno menor que o consumo real.
+        Este método reserva a cota antes de chamar o provider remoto.
         """
         if not FinanceiroConfig.is_ocr_limit_enforced():
-            return
+            return True
         
         try:
             now = local_now_naive()
@@ -70,16 +84,35 @@ class OcrService:
             quota = OcrQuota.query.filter_by(ano=ano, mes=mes).first()
             
             if quota is None:
-                quota = OcrQuota(ano=ano, mes=mes, contador=1)
+                quota = OcrQuota(ano=ano, mes=mes, contador=0)
                 db.session.add(quota)
-            else:
-                quota.contador += 1
-            
+
+            limite = FinanceiroConfig.get_ocr_monthly_limit()
+            if quota.contador >= limite:
+                try:
+                    db.session.rollback()
+                except Exception:
+                    pass
+                return False
+
+            quota.contador += 1
             db.session.commit()
-            print(f"Quota OCR atualizada: {quota.contador}/{FinanceiroConfig.get_ocr_monthly_limit()}")
-            
+            try:
+                current_app.logger.info(
+                    f"OCR: quota reservada {quota.contador}/{limite} para {mes:02d}/{ano}"
+                )
+            except Exception:
+                print(f"OCR: quota reservada {quota.contador}/{limite} para {mes:02d}/{ano}")
+            return True
+
         except Exception as e:
-            print(f"Erro ao incrementar quota OCR: {e}")
+            try:
+                db.session.rollback()
+            except Exception:
+                pass
+            print(f"Erro ao reservar quota OCR: {e}")
+            # Em caso de erro, permitir o processamento (fail-open)
+            return True
 
     @classmethod
     def process_receipt(cls, file_path: str) -> dict:
@@ -193,6 +226,19 @@ class OcrService:
 
             result = {}
             if not use_local_only:
+                if not cls._is_google_configured():
+                    return {
+                        'amount': None,
+                        'transaction_id': None,
+                        'date': None,
+                        'bank_info': {},
+                        'error': (
+                            'Credenciais do Google Vision não configuradas. '
+                            'Defina GOOGLE_VISION_API_KEY ou GOOGLE_APPLICATION_CREDENTIALS/FINANCEIRO_GVISION_CREDENTIALS_PATH.'
+                        ),
+                        'backend': 'google_vision'
+                    }
+
                 try:
                     current_app.logger.info(f"OCR: iniciando processamento - file={file_path}, sha256={sha256}")
                 except Exception:
@@ -231,6 +277,18 @@ class OcrService:
                             'backend': 'google_vision'
                         }
 
+                # Reserva a quota imediatamente antes da chamada ao provider remoto.
+                # Assim, evitamos que chamadas cobradas pelo Google fiquem "sem contagem" local.
+                if not cls._reserve_quota():
+                    return {
+                        'amount': None,
+                        'transaction_id': None,
+                        'date': None,
+                        'bank_info': {},
+                        'error': f'Limite mensal de OCR atingido ({FinanceiroConfig.get_ocr_monthly_limit()} chamadas). Tente novamente no próximo mês.',
+                        'backend': 'google_vision'
+                    }
+
                 result = VisionOcrService.process_receipt(file_path)
             else:
                 result = {
@@ -253,10 +311,6 @@ class OcrService:
                         json.dump(result, cf, ensure_ascii=False)
                 except Exception:
                     pass
-
-            # Incrementar quota após processamento bem-sucedido
-            if not result.get('error') and result.get('fallback_used') is not True and not use_local_only:
-                cls._increment_quota()
 
             return result
             

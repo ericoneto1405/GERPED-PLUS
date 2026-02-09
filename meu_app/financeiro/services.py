@@ -8,6 +8,8 @@ import mimetypes
 import os
 import shutil
 import json
+import re
+import unicodedata
 from decimal import Decimal
 from datetime import datetime, timedelta
 from typing import Dict, List, Tuple, Optional
@@ -33,6 +35,48 @@ class FinanceiroService:
     """Serviço para operações relacionadas ao financeiro"""
     
     _anexo_table_ready = False
+
+    @staticmethod
+    def _normalizar_metodo_pagamento(texto: str) -> str:
+        texto = (texto or "").strip().lower()
+        if not texto:
+            return ""
+        texto = unicodedata.normalize("NFD", texto)
+        return "".join(ch for ch in texto if unicodedata.category(ch) != "Mn")
+
+    @staticmethod
+    def _metodo_exige_id_transacao(metodo_pagamento: str) -> bool:
+        """
+        Regras simples:
+        - Exige ID para PIX / transferência (TED/DOC).
+        - Não exige para dinheiro/espécie/permuta etc.
+        """
+        metodo = FinanceiroService._normalizar_metodo_pagamento(metodo_pagamento)
+        if not metodo:
+            return False
+        if any(termo in metodo for termo in ("dinheiro", "especie", "troca", "permuta", "mercadoria")):
+            return False
+        return any(
+            termo in metodo
+            for termo in ("pix", "transfer", "transferencia", "ted", "doc")
+        )
+
+    @staticmethod
+    def _normalizar_id_transacao(raw: Optional[str]) -> Optional[str]:
+        """
+        Normaliza para comparação/armazenamento (reduz falsos duplicados por formatação):
+        - remove prefixos comuns (E2E:, ID:, Protocolo:)
+        - remove caracteres não alfanuméricos
+        - uppercase
+        """
+        if not raw:
+            return None
+        texto = str(raw).strip()
+        if not texto:
+            return None
+        texto = re.sub(r"(?i)\\b(e2e|id|identificador|protocolo)\\b\\s*[:\\-#]*\\s*", "", texto)
+        texto = re.sub(r"[^A-Za-z0-9]", "", texto).upper()
+        return texto or None
 
     @staticmethod
     def _ensure_pagamento_anexo_table() -> bool:
@@ -227,16 +271,20 @@ class FinanceiroService:
             if FinanceiroConfig.is_pix_payment_requiring_receipt() and 'pix' in forma_pagamento.lower() and not caminho_recibo:
                 raise ComprovanteObrigatorioError("Para pagamentos com PIX, o envio do comprovante é obrigatório.")
 
-            # VERIFICAÇÃO DE DUPLICIDADE PELO ID DA TRANSAÇÃO
-            if id_transacao and id_transacao.strip():
-                id_transacao_limpo = id_transacao.strip()
+            # ID transação: exigir para PIX/transferência + normalizar para comparação.
+            id_transacao_limpo = FinanceiroService._normalizar_id_transacao(id_transacao)
+            if FinanceiroService._metodo_exige_id_transacao(forma_pagamento) and not id_transacao_limpo:
+                raise FinanceiroValidationError(
+                    "Para pagamentos via PIX/transferência, informe o ID da transação (E2E/protocolo) para evitar duplicidade."
+                )
+
+            # VERIFICAÇÃO DE DUPLICIDADE PELO ID DA TRANSAÇÃO (normalizado)
+            if id_transacao_limpo:
                 pagamento_existente = Pagamento.query.filter_by(id_transacao=id_transacao_limpo).first()
                 if pagamento_existente:
                     mensagem_erro = f"Este recibo (ID: {id_transacao_limpo}) já foi utilizado no pagamento do pedido #{pagamento_existente.pedido_id} em {pagamento_existente.data_pagamento.strftime('%d/%m/%Y')}."
                     current_app.logger.warning(mensagem_erro)
                     raise PagamentoDuplicadoError(mensagem_erro)
-            else:
-                id_transacao_limpo = None
 
             # Converter valor para Decimal para consistência com o banco
             valor_decimal = Decimal(str(valor))

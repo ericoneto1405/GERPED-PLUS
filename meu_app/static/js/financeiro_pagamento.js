@@ -123,6 +123,28 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (ch) => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;',
+    }[ch] || ch));
+
+    const normalizarMetodoPagamento = (texto) => (texto || '')
+        .toString()
+        .trim()
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
+
+    const metodoExigeIdTransacao = (metodoPagamento) => {
+        const metodo = normalizarMetodoPagamento(metodoPagamento);
+        if (!metodo) return false;
+        if (/(dinheiro|especie|troca|permuta|mercadoria)/.test(metodo)) return false;
+        return /(pix|transfer|transferencia|ted|doc)/.test(metodo);
+    };
+
     const formatBytes = (bytes) => {
         if (bytes === 0) return '0 B';
         const k = 1024;
@@ -610,6 +632,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const cnpjValor = (item.result && item.result.cnpj_recebedor) ? item.result.cnpj_recebedor : '—';
         const idValor = (item.result && item.result.id_transacao_encontrado) ? item.result.id_transacao_encontrado : '—';
         const idState = (item.result && item.result.id_transacao_encontrado) ? 'ok' : 'unknown';
+        const idManualValue = item.id_transacao
+            ? item.id_transacao
+            : (item.result && item.result.id_transacao_encontrado ? item.result.id_transacao_encontrado : '');
 
             const statusIcon = (state) => (state === 'ok' ? '🟢' : state === 'fail' ? '🔴' : '⚪');
 
@@ -661,6 +686,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="fila-resumo">
                     <div><strong>Valor do Comprovante:</strong> ${valorReconhecido}</div>
                     <div><strong>ID.:</strong> ${idReconhecido} ${statusIcon(idState)} ${idState === 'ok' ? '(ID VALIDADO)' : ''}</div>
+                    <div class="fila-id-edit">
+                        <label>
+                            <span>ID da transação (E2E/protocolo)</span>
+                            <input type="text"
+                                   inputmode="text"
+                                   autocomplete="off"
+                                   data-action="id-transacao"
+                                   data-id="${item.id}"
+                                   placeholder="Cole aqui o ID da transação"
+                                   value="${escapeHtml(idManualValue)}">
+                        </label>
+                        <small class="text-muted">Se o OCR não encontrar, você pode colar o ID manualmente.</small>
+                    </div>
                     <div><strong>DATA:</strong> ${dataReconhecida}</div>
                 </div>
                 <div class="highlight-list">
@@ -1279,6 +1317,18 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    if (filaLista) {
+        filaLista.addEventListener('input', (event) => {
+            const idInput = event.target.closest('input[data-action="id-transacao"]');
+            if (!idInput) return;
+            const id = idInput.dataset.id;
+            if (!id) return;
+            const item = fila.find((i) => i.id === id);
+            if (!item) return;
+            item.id_transacao = (idInput.value || '').trim();
+        });
+    }
+
     if (masterSelectCheckbox && filaLista) {
         masterSelectCheckbox.addEventListener('change', () => {
             bulkSelecting = true;
@@ -1352,6 +1402,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     form.addEventListener('submit', (event) => {
         let anexosMeta = [];
+        const exigeId = metodoExigeIdTransacao(metodoPagamentoInput ? metodoPagamentoInput.value : '');
         if (reciboInput && (!campoCompartilhadoId || !campoCompartilhadoId.value)) {
             const selecionados = getSelecionarCheckboxes().filter((cb) => cb.checked);
             if (selecionados.length) {
@@ -1361,12 +1412,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (item && item.file) {
                         dt.items.add(item.file);
                         const valorSelecionado = selecionadosValores.get(cb.dataset.id);
+                        const idManual = item.id_transacao ? item.id_transacao : null;
+                        const idOcr = item.result && item.result.id_transacao_encontrado
+                            ? item.result.id_transacao_encontrado
+                            : null;
+                        const idFinal = idManual || idOcr;
+                        if (exigeId && !idFinal) {
+                            window.alert(`Informe o ID da transação (E2E/protocolo) para o comprovante: ${item.file.name}`);
+                            event.preventDefault();
+                        }
                         return {
                             nome: item.file.name,
                             valor: Number.isFinite(valorSelecionado) ? valorSelecionado : null,
-                            id_transacao: item.result && item.result.id_transacao_encontrado
-                                ? item.result.id_transacao_encontrado
-                                : null,
+                            id_transacao: idFinal,
                         };
                     }
                     return null;
@@ -1374,6 +1432,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (dt.files.length) {
                     reciboInput.files = dt.files;
                 }
+            }
+        }
+
+        // Caso de comprovante compartilhado (sem fila): exige ID no hidden se método exigir.
+        if (exigeId && campoCompartilhadoId && campoCompartilhadoId.value) {
+            const idFinal = idTransacaoInput ? (idTransacaoInput.value || '').trim() : '';
+            if (!idFinal) {
+                window.alert('Informe o ID da transação (E2E/protocolo) para pagamentos via PIX/transferência.');
+                event.preventDefault();
             }
         }
         if (anexosValoresInput) {

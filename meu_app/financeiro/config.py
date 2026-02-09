@@ -39,6 +39,11 @@ class FinanceiroConfig:
     GOOGLE_VISION_INPUT_PREFIX = 'financeiro/ocr/input'
     GOOGLE_VISION_OUTPUT_BUCKET = 'gerped-ocr-output'
     GOOGLE_VISION_OUTPUT_PREFIX = 'financeiro/ocr/output'
+
+    # Provider OCR (provisório)
+    # - google (default): usa Google Vision
+    # - ocr_space: usa OCR.Space
+    OCR_PROVIDER = os.getenv('FINANCEIRO_OCR_PROVIDER', 'google').strip().lower()
     
     # Configurações de validação
     PIX_REQUIRES_RECEIPT = False
@@ -159,6 +164,14 @@ class FinanceiroConfig:
     def get_google_credentials_path(cls) -> str | None:
         """Retorna caminho das credenciais de serviço, se configurado."""
         return os.getenv('GOOGLE_APPLICATION_CREDENTIALS', cls.GOOGLE_VISION_CREDENTIALS_PATH)
+
+    @classmethod
+    def get_ocr_provider(cls) -> str:
+        value = os.getenv('FINANCEIRO_OCR_PROVIDER')
+        if value is not None:
+            value = (value or '').strip().lower()
+            return value or 'google'
+        return cls.OCR_PROVIDER or 'google'
 
     @classmethod
     def get_gcs_input_bucket(cls) -> str:

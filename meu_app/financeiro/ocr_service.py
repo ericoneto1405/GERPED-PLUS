@@ -10,6 +10,7 @@ from flask import current_app
 from .config import FinanceiroConfig
 from .exceptions import OcrProcessingError
 from .vision_service import VisionOcrService
+from .ocr_space_service import OcrSpaceService
 from .. import db
 from ..models import OcrQuota
 from ..time_utils import local_now_naive
@@ -24,6 +25,13 @@ class OcrService:
         if api_key:
             return True
         if credentials_path and os.path.exists(credentials_path):
+            return True
+        return False
+
+    @classmethod
+    def _should_use_ocr_space(cls) -> bool:
+        provider = (FinanceiroConfig.get_ocr_provider() or "google").strip().lower()
+        if provider == "ocr_space":
             return True
         return False
 
@@ -226,7 +234,8 @@ class OcrService:
 
             result = {}
             if not use_local_only:
-                if not cls._is_google_configured():
+                use_ocr_space = cls._should_use_ocr_space()
+                if not use_ocr_space and not cls._is_google_configured():
                     return {
                         'amount': None,
                         'transaction_id': None,
@@ -234,7 +243,8 @@ class OcrService:
                         'bank_info': {},
                         'error': (
                             'Credenciais do Google Vision não configuradas. '
-                            'Defina GOOGLE_VISION_API_KEY ou GOOGLE_APPLICATION_CREDENTIALS/FINANCEIRO_GVISION_CREDENTIALS_PATH.'
+                            'Defina GOOGLE_VISION_API_KEY ou GOOGLE_APPLICATION_CREDENTIALS/FINANCEIRO_GVISION_CREDENTIALS_PATH, '
+                            'ou configure FINANCEIRO_OCR_PROVIDER=ocr_space com FINANCEIRO_OCR_SPACE_API_KEY.'
                         ),
                         'backend': 'google_vision'
                     }
@@ -252,11 +262,13 @@ class OcrService:
                         'date': None,
                         'bank_info': {},
                         'error': f'Limite mensal de OCR atingido ({FinanceiroConfig.get_ocr_monthly_limit()} chamadas). Tente novamente no próximo mês.',
-                        'backend': 'google_vision'
+                        'backend': 'ocr'
                     }
 
                 # PDFs: obrigatoriamente converter para imagem antes do Vision
-                if _is_pdf_file(original_path):
+                # Para Google Vision: convertemos PDF->imagem para reduzir variações.
+                # Para OCR.Space: ele aceita PDF diretamente; não convertemos aqui.
+                if not use_ocr_space and _is_pdf_file(original_path):
                     image_path = _convert_pdf_to_image(original_path)
                     if image_path:
                         file_path = image_path
@@ -286,10 +298,35 @@ class OcrService:
                         'date': None,
                         'bank_info': {},
                         'error': f'Limite mensal de OCR atingido ({FinanceiroConfig.get_ocr_monthly_limit()} chamadas). Tente novamente no próximo mês.',
-                        'backend': 'google_vision'
+                        'backend': 'ocr'
                     }
 
-                result = VisionOcrService.process_receipt(file_path)
+                if use_ocr_space:
+                    text = OcrSpaceService.extract_text(file_path)
+                    # Reutiliza as rotinas de parsing do VisionOcrService (sem chamar o Google).
+                    amount = VisionOcrService._find_amount_in_text(text)  # type: ignore[attr-defined]
+                    transaction_id = VisionOcrService._find_transaction_id_in_text(text)  # type: ignore[attr-defined]
+                    date = VisionOcrService._find_date_in_text(text)  # type: ignore[attr-defined]
+                    bank_info = VisionOcrService._find_bank_info_in_text(text)  # type: ignore[attr-defined]
+                    validacao_recebedor = None
+                    try:
+                        if FinanceiroConfig.validar_recebedor_habilitado():
+                            recebedor_esperado = FinanceiroConfig.get_recebedor_esperado()
+                            validacao_recebedor = VisionOcrService._validar_recebedor(bank_info, recebedor_esperado)  # type: ignore[attr-defined]
+                    except Exception:
+                        validacao_recebedor = None
+
+                    result = {
+                        'amount': amount,
+                        'transaction_id': transaction_id,
+                        'date': date,
+                        'bank_info': bank_info,
+                        'validacao_recebedor': validacao_recebedor,
+                        'backend': 'ocr_space',
+                        'raw_text': text,
+                    }
+                else:
+                    result = VisionOcrService.process_receipt(file_path)
             else:
                 result = {
                     'amount': None,
@@ -302,7 +339,7 @@ class OcrService:
 
             result['bank_info'] = result.get('bank_info') or {}
             result.setdefault('fallback_used', False)
-            result.setdefault('backend', 'google_vision')
+            result.setdefault('backend', 'ocr')
 
             # Gravar cache
             if FinanceiroConfig.OCR_CACHE_ENABLED and sha256 and cache_path and not result.get('error'):

@@ -12,10 +12,12 @@ import logging
 import os
 import traceback
 from datetime import datetime, timedelta, timezone, date
+from functools import lru_cache
 from logging.handlers import RotatingFileHandler
 
 from dotenv import load_dotenv
 from flask import Flask, jsonify, request, render_template, session, redirect, url_for, g
+from flask import url_for as flask_url_for
 from flask_caching import Cache as FlaskCache
 from flask_login import LoginManager
 from flask_migrate import Migrate
@@ -416,6 +418,34 @@ def register_custom_filters(app):
 
 def register_template_context(app):
     """Registra dados globais que devem estar disponíveis nos templates."""
+
+    static_root = os.path.join(app.root_path, 'static')
+
+    @lru_cache(maxsize=2048)
+    def _static_mtime(filename: str) -> str | None:
+        """Gera um versionamento simples para estaticos (mtime).
+
+        Usado para cache longo no Nginx: quando o arquivo muda no deploy,
+        a URL muda (?v=...) e o navegador baixa a nova versao.
+        """
+        try:
+            return str(int(os.path.getmtime(os.path.join(static_root, filename))))
+        except OSError:
+            return None
+
+    def versioned_url_for(endpoint: str, **values):
+        if endpoint == 'static':
+            filename = values.get('filename')
+            if filename:
+                version = _static_mtime(filename)
+                if version:
+                    values.setdefault('v', version)
+        return flask_url_for(endpoint, **values)
+
+    @app.context_processor
+    def inject_versioned_url_for():
+        # Sobrescreve url_for no contexto do Jinja, sem afetar url_for no Python.
+        return {'url_for': versioned_url_for}
 
     @app.context_processor
     def inject_inventory_alert():

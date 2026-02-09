@@ -215,8 +215,12 @@ class LogAtividadesService:
             }
             
         except ValidationError:
+            # Não deixa transação aberta em caso de validação
+            db.session.rollback()
             raise
         except Exception as e:
+            # Qualquer erro em SQL aborta a transação no Postgres até rollback.
+            db.session.rollback()
             db_error = handle_database_error(e, 'listar_atividades')
             current_app.logger.error(f"Erro ao listar atividades: {str(e)}")
             raise db_error
@@ -293,6 +297,7 @@ class LogAtividadesService:
             modulos = db.session.query(LogAtividade.modulo).distinct().all()
             return [modulo[0] for modulo in modulos if modulo[0]]
         except Exception as e:
+            db.session.rollback()
             current_app.logger.error(f"Erro ao listar módulos: {str(e)}")
             return []
     
@@ -382,14 +387,30 @@ class LogAtividadesService:
             ).group_by(LogAtividade.tipo_atividade).order_by(func.count(LogAtividade.id).desc()).all()
             
             # Hora pico (última semana)
+            # strftime funciona em SQLite, mas não existe em Postgres.
+            # Usar uma expressão compatível com o banco atual.
+            bind = db.session.get_bind()
+            dialect = getattr(getattr(bind, "dialect", None), "name", None)
+            if dialect == "sqlite":
+                hora_expr = func.strftime('%H', LogAtividade.data_hora)
+            else:
+                hora_expr = func.extract('hour', LogAtividade.data_hora)
+
             hora_pico = db.session.query(
-                func.strftime('%H', LogAtividade.data_hora).label('hora'),
+                hora_expr.label('hora'),
                 func.count(LogAtividade.id).label('count')
             ).filter(
                 LogAtividade.data_hora >= data_7_dias
             ).group_by('hora').order_by(func.count(LogAtividade.id).desc()).first()
             
-            hora_pico_str = f"{hora_pico[0]}h" if hora_pico else "N/A"
+            if hora_pico:
+                try:
+                    hora_val = int(float(hora_pico[0]))
+                    hora_pico_str = f"{hora_val:02d}h"
+                except Exception:
+                    hora_pico_str = f"{hora_pico[0]}h"
+            else:
+                hora_pico_str = "N/A"
             
             return {
                 'total_atividades': total_atividades,
@@ -403,6 +424,7 @@ class LogAtividadesService:
             }
             
         except Exception as e:
+            db.session.rollback()
             current_app.logger.error(f"Erro ao obter estatísticas: {str(e)}")
             return {
                 'total_atividades': 0,

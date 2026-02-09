@@ -74,7 +74,8 @@ class FinanceiroService:
         texto = str(raw).strip()
         if not texto:
             return None
-        texto = re.sub(r"(?i)\\b(e2e|id|identificador|protocolo)\\b\\s*[:\\-#]*\\s*", "", texto)
+        # '-' precisa ficar no começo da classe para não virar "range".
+        texto = re.sub(r"(?i)\\b(e2e|id|identificador|protocolo)\\b\\s*[-:#]*\\s*", "", texto)
         texto = re.sub(r"[^A-Za-z0-9]", "", texto).upper()
         return texto or None
 

@@ -113,7 +113,7 @@
                 <td>
                     <div class="action-buttons">
                         <!-- Botão Editar -->
-                        <button class="btn btn-primary btn-sm btn-editar-usuario" 
+                        <button type="button" class="btn btn-primary btn-sm btn-editar-usuario" 
                                 data-id="{{ usuario.id }}" 
                                 data-nome="{{ usuario.nome }}" 
                                 data-email="{{ usuario.email or '' }}"
@@ -127,7 +127,7 @@
                         </button>
                         
                         <!-- Botão Alterar Senha -->
-                        <button class="btn btn-warning btn-sm btn-alterar-senha" 
+                        <button type="button" class="btn btn-warning btn-sm btn-alterar-senha" 
                                 data-id="{{ usuario.id }}" 
                                 data-nome="{{ usuario.nome }}">
                             <i class="bi bi-key icon-text"></i> Senha
@@ -135,7 +135,7 @@
                         
                         <!-- Botão Redefinir Senha (apenas para admins) -->
                         {% if session.usuario_tipo == 'admin' %}
-                        <button class="btn btn-info btn-sm btn-redefinir-senha" 
+                        <button type="button" class="btn btn-info btn-sm btn-redefinir-senha" 
                                 data-id="{{ usuario.id }}" 
                                 data-nome="{{ usuario.nome }}">
                             <i class="bi bi-arrow-repeat icon-text"></i> Redefinir
@@ -434,6 +434,16 @@
     width: 100%;
     height: 100%;
     background-color: rgba(0,0,0,0.5);
+}
+
+/* Visibilidade do modal controlada por aria-hidden/hidden (CSP-safe, sem style inline). */
+.modal[aria-hidden="true"],
+.modal[hidden] {
+    display: none;
+}
+
+.modal[aria-hidden="false"] {
+    display: block;
 }
 
 .modal-content {

@@ -757,6 +757,35 @@ button[type="submit"]:focus-visible,
     gap: 6px;
 }
 
+.fila-id-edit {
+    margin-top: 10px;
+}
+
+.fila-id-edit label {
+    display: grid;
+    gap: 6px;
+}
+
+.fila-id-edit label span {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.fila-id-edit input[type="text"] {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: #fff;
+}
+
+.fila-id-edit .text-muted {
+    display: block;
+    margin-top: 6px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
 .fila-footer {
     display: flex;
     justify-content: flex-end;

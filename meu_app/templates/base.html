@@ -4,7 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     {% set csrf_token_value = csrf_token() %}
-    <link rel="icon" href="{{ url_for('static', filename='images/gerped_plus.png') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='images/favicon-32.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='images/favicon-16.png') }}">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='images/apple-touch-icon.png') }}">
     <link rel="stylesheet" href="{{ url_for("static", filename="style.css") }}">
     <meta name="csrf-token" content="{{ csrf_token_value }}">
     <script nonce="{{ nonce }}">

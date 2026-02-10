@@ -7,6 +7,11 @@
         <div class="header-title">
             <h2><i class="bi bi-clipboard icon-text"></i> Todos os Pedidos</h2>
             <div class="page-actions">
+                {# --- Importacao em massa (DESATIVADA) ---
+                   Removido da interface por decisao de negocio.
+                   Mantido comentado para referencia futura.
+                #}
+                {#
                 <form id="formImportarHistorico" class="action-form" method="POST" action="{{ url_for('pedidos.importar_historico') }}" enctype="multipart/form-data">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <label for="arquivoHistorico" class="sr-only">Selecionar arquivo histórico</label>
@@ -27,6 +32,7 @@
                         <span>Estornar importação</span>
                     </button>
                 </form>
+                #}
             </div>
         </div>
         <a href="{{ url_for('pedidos.novo_pedido') }}" class="btn-primary"><i class="bi bi-plus-lg icon-text"></i> Novo Pedido</a>
@@ -869,16 +875,20 @@
 
 <a href="{{ url_for('main.painel') }}" class="botao"><i class="bi bi-arrow-left icon-text"></i> Voltar ao Painel</a>
 
+{# Importacao em massa (DESATIVADA): overlay de upload #}
+{#
 <div class="loading-upload" id="loadingUpload">
     <div class="spinner"></div>
     <p>Enviando histórico...</p>
 </div>
+#}
 
 <script nonce="{{ nonce }}">
 let acaoAtual = '';
 let pedidoId = null;
 
-// Importar histórico direto
+// Importacao em massa (DESATIVADA): Importar histórico direto
+/*
 document.addEventListener('DOMContentLoaded', () => {
     const btnImportarHistorico = document.getElementById('btnImportarHistorico');
     const inputHistorico = document.getElementById('arquivoHistorico');
@@ -894,6 +904,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+*/
 
 // Persistência de filtros
 document.addEventListener('DOMContentLoaded', () => {

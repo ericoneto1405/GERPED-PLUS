@@ -88,9 +88,11 @@ def listar_pedidos():
             percentual_investimento=0
         )
 
-@pedidos_bp.route('/importar-historico', methods=['POST'])
-@login_obrigatorio
-@permissao_necessaria('acesso_pedidos')
+# --- Importacao em massa (DESATIVADA) ---
+# Mantido no codigo (comentado) para referencia, mas sem rota publica.
+# @pedidos_bp.route('/importar-historico', methods=['POST'])
+# @login_obrigatorio
+# @permissao_necessaria('acesso_pedidos')
 def importar_historico():
     """Importa pedidos históricos; não há página separada, apenas upload direto."""
     if 'arquivo' not in request.files or not request.files['arquivo'].filename:
@@ -195,9 +197,11 @@ def importar_historico():
         return redirect(url_for('pedidos.listar_pedidos'))
 
 
-@pedidos_bp.route('/importar/estornar', methods=['POST'])
-@login_obrigatorio
-@permissao_necessaria('acesso_pedidos')
+# --- Importacao em massa (DESATIVADA) ---
+# Mantido no codigo (comentado) para referencia, mas sem rota publica.
+# @pedidos_bp.route('/importar/estornar', methods=['POST'])
+# @login_obrigatorio
+# @permissao_necessaria('acesso_pedidos')
 def estornar_importacao():
     """Remove pedidos importados para permitir novo upload."""
     try:
@@ -727,9 +731,11 @@ def download_exemplo():
         return redirect(url_for('pedidos.importar_pedidos'))
 
 # Modelo simplificado (.xlsx) para importação em massa
-@pedidos_bp.route('/download_modelo_pedidos')
-@login_obrigatorio
-@permissao_necessaria('acesso_pedidos')
+# --- Importacao em massa (DESATIVADA) ---
+# Mantido no codigo (comentado) para referencia, mas sem rota publica.
+# @pedidos_bp.route('/download_modelo_pedidos')
+# @login_obrigatorio
+# @permissao_necessaria('acesso_pedidos')
 def download_modelo_pedidos():
     """Gera planilha-modelo com cabeçalhos solicitados e data em padrão brasileiro."""
     from datetime import datetime

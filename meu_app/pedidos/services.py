@@ -18,7 +18,7 @@ from ..models import (
     MovimentacaoEstoque,
     Apuracao,
 )
-from flask import current_app, session
+from flask import current_app, session, has_app_context
 from typing import Dict, List, Tuple, Optional
 from datetime import datetime, timedelta
 import json
@@ -365,7 +365,8 @@ class PedidoService:
                 total_venda = sum(i.valor_total_venda for i in pedido.itens)
                 total_pago = sum(p.valor for p in pedido.pagamentos)
                 total_compra = sum(
-                    (item.quantidade or 0) * (item.produto.preco_medio_compra or 0)
+                    (getattr(item, 'quantidade', 0) or 0)
+                    * (getattr(getattr(item, 'produto', None), 'preco_medio_compra', 0) or 0)
                     for item in pedido.itens
                 )
                 saldo_investimento = total_venda - total_compra
@@ -374,9 +375,10 @@ class PedidoService:
                     if pedido.sincronizar_status_financeiro(total_venda, total_pago):
                         correcoes_status = True
                 except Exception as sync_err:
-                    current_app.logger.warning(
-                        f"Falha ao sincronizar status financeiro do pedido #{pedido.id}: {sync_err}"
-                    )
+                    if has_app_context():
+                        current_app.logger.warning(
+                            f"Falha ao sincronizar status financeiro do pedido #{pedido.id}: {sync_err}"
+                        )
 
                 # Determinar status exibido e código de fase (usado para filtros)
                 fase_status = 'AGUARDANDO FINANCEIRO'
@@ -445,12 +447,16 @@ class PedidoService:
                     db.session.commit()
                 except Exception as commit_err:
                     db.session.rollback()
-                    current_app.logger.error(f"Erro ao salvar correções de status financeiro: {commit_err}")
+                    if has_app_context():
+                        current_app.logger.error(
+                            f"Erro ao salvar correções de status financeiro: {commit_err}"
+                        )
 
             return resultado
             
         except Exception as e:
-            current_app.logger.error(f"Erro ao listar pedidos: {str(e)}")
+            if has_app_context():
+                current_app.logger.error(f"Erro ao listar pedidos: {str(e)}")
             return []
     
     @staticmethod

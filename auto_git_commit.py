@@ -15,7 +15,8 @@ from pathlib import Path
 REPO_DIR = Path(__file__).parent.absolute()
 CHECK_INTERVAL = 300  # 5 minutos
 LOG_FILE = REPO_DIR / '.git-auto-commit.log'
-DEFAULT_BRANCH = 'main'
+PRODUCTION_BRANCH = os.getenv('AUTO_COMMIT_PRODUCTION_BRANCH', 'main')
+PUSH_BRANCH = os.getenv('AUTO_COMMIT_PUSH_BRANCH', 'review/autocommit')
 
 # Setup logging
 logging.basicConfig(
@@ -101,14 +102,21 @@ def auto_commit_and_push():
         
         logger.info("Commit realizado")
         
-        # Push
-        returncode, _, stderr = run_command(f"git push origin {DEFAULT_BRANCH}")
+        # Push sempre para branch de revisão (não produção), salvo configuração explícita.
+        # O merge para PRODUCTION_BRANCH deve acontecer via revisão humana.
+        returncode, _, stderr = run_command(f"git push origin HEAD:{PUSH_BRANCH}")
         
         if returncode != 0:
             logger.warning(f"Falha no push: {stderr}")
             return False
         
-        logger.info("Push realizado!")
+        if PUSH_BRANCH == PRODUCTION_BRANCH:
+            logger.warning(
+                "Push enviado direto para branch de produção (%s). "
+                "Considere usar AUTO_COMMIT_PUSH_BRANCH separado para exigir revisão.",
+                PRODUCTION_BRANCH,
+            )
+        logger.info("Push realizado para origin/%s", PUSH_BRANCH)
         return True
         
     except Exception as e:

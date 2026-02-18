@@ -30,6 +30,10 @@
     <dict>
         <key>PATH</key>
         <string>/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/homebrew/bin</string>
+        <key>AUTO_COMMIT_PRODUCTION_BRANCH</key>
+        <string>main</string>
+        <key>AUTO_COMMIT_PUSH_BRANCH</key>
+        <string>review/autocommit</string>
     </dict>
 </dict>
 </plist>

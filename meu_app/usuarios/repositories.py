@@ -6,6 +6,7 @@ Implementa o padrão Repository para acesso a dados de usuários.
 
 from typing import List, Optional
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy import text
 from ..models import db, Usuario
 
 
@@ -85,6 +86,20 @@ class UsuarioRepository:
             return True
         except SQLAlchemyError as e:
             self.db.session.rollback()
+            erro_msg = str(e).lower()
+            # Compatibilidade com bases antigas que ainda não possuem a tabela
+            # password_reset_token.
+            if "password_reset_token" in erro_msg and "does not exist" in erro_msg:
+                try:
+                    self.db.session.execute(
+                        text("DELETE FROM usuario WHERE id = :usuario_id"),
+                        {"usuario_id": usuario.id},
+                    )
+                    self.db.session.commit()
+                    return True
+                except SQLAlchemyError:
+                    self.db.session.rollback()
+                    raise
             print(f"Erro ao excluir usuário: {str(e)}")
             raise
     

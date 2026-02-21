@@ -7,7 +7,7 @@ mypy==1.11.2
 codespell==2.3.0
 bandit==1.7.9
 pip-audit==2.7.3
-pre-commit==3.7.0
+pre-commit==4.3.0
 
 # Testes
 pytest>=8.0.0
